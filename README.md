@@ -30,6 +30,10 @@ Saving: pick Save game in the pause menu (three slots). The game also autosaves 
 - Maps: each area is a plain text file in `maps/` (legend at the top of the file). Edit the
   characters to move paths, bushes, rocks, signs, spawns and the party start; paths get smooth
   edges automatically from `shaders/terrain_blend.gdshader`.
+- Hollowmark (`maps/hollowmark.txt`, `scripts/hub.gd`) is the walkable hub. Its `@prop` lines place
+  buildings and town props, and its `@mark` lines mark recruit posts and the Command Table. Where each
+  recruit stands, their look and their town lines come from `data/recruits.json`. Town art is
+  placeholder until the PixelLab pass (#3): every sprite is one line in `scripts/prop.gd`.
 - Territory: provinces live in `data/provinces.json` (name, seed point, owner, Fray, output, sites,
   missions). Province shapes and borders are generated from the seed points by `scripts/territory.gd`,
   so moving a seed or changing its weight reshapes the map and its adjacency together.

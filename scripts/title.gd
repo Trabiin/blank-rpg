@@ -28,7 +28,7 @@ func _ready() -> void:
 	if latest != "":
 		items.append({"id": "continue", "label": "Continue", "detail": Saves.describe(latest)})
 	items.append({"id": "new", "label": "New Game"})
-	items.append({"id": "command", "label": "Command Table (preview)"})
+	items.append({"id": "command", "label": "Hollowmark (preview)", "detail": "the town and the Command Table"})
 	items.append({"id": "load", "label": "Load Game", "enabled": latest != "", "note": "(no saves yet)"})
 	items.append({"id": "options", "label": "Options", "enabled": false, "note": "(coming soon)"})
 	items.append({"id": "credits", "label": "Credits"})
@@ -79,7 +79,7 @@ func _on_choice(id: String) -> void:
 		"command":
 			Saves.pending = {}
 			Empire.reset()
-			get_tree().change_scene_to_file("res://scenes/command.tscn")
+			get_tree().change_scene_to_file(Saves.HUB_SCENE)
 		"credits":
 			menu.visible = false
 			credits.visible = true

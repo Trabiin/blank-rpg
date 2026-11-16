@@ -63,6 +63,14 @@ static func tile_region(cx: int, cy: int, w := 1, h := 1) -> AtlasTexture:
 	return t
 
 
+## Any pixel rect of the overworld sheet, for art that is not on the 16px grid.
+static func region(r: Rect2) -> AtlasTexture:
+	var t := AtlasTexture.new()
+	t.atlas = OVERWORLD
+	t.region = r
+	return t
+
+
 static func _lum(c: Color) -> float:
 	return 0.299 * c.r + 0.587 * c.g + 0.114 * c.b
 

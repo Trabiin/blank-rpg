@@ -21,8 +21,12 @@ var blank_x := 1e9
 var party_start := Vector2.ZERO
 var spawns: Array[Vector2] = []
 var props: Array = []
+var markers := {}  # id -> Array of tile-centre positions (@mark lines: posts, the Command Table)
 var _rows: PackedStringArray = []
 var _signs := {}
+var _custom := {}  # char -> [kind, plate text] from @prop lines
+var _marks := {}  # char -> marker id
+var _dirt_chars := ":@"
 
 
 func world_size() -> Vector2:
@@ -36,7 +40,8 @@ func build(path: String, entities: Node2D) -> void:
 	_build_objects(entities)
 	var words := Node2D.new()
 	add_child(words)
-	words.draw.connect(_draw_words.bind(words))
+	if blank_x < 1e8:
+		words.draw.connect(_draw_words.bind(words))
 
 
 func _parse(path: String) -> void:
@@ -60,6 +65,13 @@ func _parse(path: String) -> void:
 				blank_x = float(val) * 16.0
 			elif key.begins_with("sign"):
 				_signs[key.substr(4)] = val.replace("|", "\n")
+			elif key.begins_with("prop"):
+				# @propH house|TOWN HALL  ->  H places a house with that name board
+				_custom[key.substr(4)] = [val.get_slice("|", 0), val.get_slice("|", 1) if val.contains("|") else ""]
+			elif key.begins_with("mark"):
+				_marks[key.substr(4)] = val
+			elif key == "dirt":
+				_dirt_chars += val  # these characters sit on the dirt layer too
 	size_tiles = Vector2i(_rows[0].length(), _rows.size())
 
 
@@ -71,7 +83,7 @@ func _cell(x: int, y: int) -> String:
 
 func _is_dirt(x: int, y: int) -> int:
 	var ch := _cell(x, y)
-	return 1 if ch == ":" or ch == "@" else 0
+	return 1 if _dirt_chars.contains(ch) else 0
 
 
 func _layer(tex: Texture2D, coords: Array) -> TileMapLayer:
@@ -129,16 +141,23 @@ func _build_objects(entities: Node2D) -> void:
 				party_start = center
 			elif ch == "e":
 				spawns.append(center)
-			elif PROP_CHARS.has(ch) or _signs.has(ch):
+			elif _marks.has(ch):
+				if not markers.has(_marks[ch]):
+					markers[_marks[ch]] = []
+				markers[_marks[ch]].append(center)
+			elif PROP_CHARS.has(ch) or _signs.has(ch) or _custom.has(ch):
 				var kind: String = PROP_CHARS.get(ch, "sign")
-				var big: bool = PropScript.KINDS[kind][2] == 2
 				var prop = PropScript.new()
+				if _custom.has(ch):
+					kind = _custom[ch][0]
+					prop.text = _custom[ch][1]
+				elif kind == "sign":
+					prop.text = _signs[ch]
 				prop.kind = kind
 				prop.seed_v = x * 31 + y
-				# Origin = bottom-centre of the footprint (2x2 props anchor at their top-left tile).
-				prop.position = Vector2(x * 16 + 16, y * 16 + 29) if big else Vector2(x * 16 + 8, y * 16 + 13)
-				if kind == "sign":
-					prop.text = _signs[ch]
+				# Origin = bottom-centre of the footprint. Big props anchor at their top-left tile.
+				var fp: Vector2i = PropScript.footprint(kind)
+				prop.position = Vector2(x * 16 + fp.x * 8, y * 16 + fp.y * 16 - 3)
 				entities.add_child(prop)
 				props.append(prop)
 

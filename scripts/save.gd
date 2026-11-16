@@ -10,6 +10,7 @@ const VERSION := 1
 const SLOTS := ["auto", "1", "2", "3"]
 const GAME_SCENE := "res://scenes/main.tscn"
 const COMMAND_SCENE := "res://scenes/command.tscn"
+const HUB_SCENE := "res://scenes/hub.tscn"
 
 ## Snapshot for the game scene to apply on its next _ready(), then clear.
 var pending: Dictionary = {}
