@@ -1,0 +1,378 @@
+extends Control
+## The Command Table: the territory map of the Inklands and a panel for the selected province.
+##
+## The map is rasterised from Territory at half resolution and shown at 2x, so it reads as
+## pixel art. Owner colours, borders, the Blank's whitening (Fray) and roads are all baked or
+## drawn in code. Keyboard, gamepad, mouse and touch all select provinces.
+
+const TITLE_SCENE := "res://scenes/title.tscn"
+const CELL := 2  # screen pixels per map cell
+const MAP_ORIGIN := Vector2(4, 22)
+const MAP_CELLS := Vector2i(214, 166)
+const PANEL_X := 440.0
+
+const OWNER_NAMES := {
+	"you": "Held by you", "free": "Unclaimed", "concord": "The Gilded Concord",
+	"coven": "The Gutterwood Coven", "guild": "The Mercenary Guild", "erased": "Erased by the Blank",
+}
+const OWNER_COLORS := {
+	"you": Color("6f9a5a"), "free": Color("7a7060"), "concord": Color("a8833e"),
+	"coven": Color("4d6e66"), "guild": Color("8a5a4a"), "erased": Color("eeebe2"),
+}
+const SEA_COLOR := Color("15111b")
+const BORDER_COLOR := Color("1c1722")
+const PAPER := Color("eeebe2")
+const GOLD := Color("ffd166")
+const RES_NAMES := {"gilt": "Gilt", "supplies": "Supplies", "ink": "Ink"}
+
+var territory: Territory
+var map_tex: ImageTexture
+var selected := 0
+var hovered := -1
+var outlines: Array = []  # per province: PackedVector2Array of border cells
+var blank_edge := PackedVector2Array()  # white cells touching colour: where static crawls
+var t := 0.0
+var font: Font
+
+
+func _ready() -> void:
+	set_anchors_preset(Control.PRESET_FULL_RECT)
+	get_tree().paused = false
+	font = ThemeDB.fallback_font
+	territory = Territory.new()
+	territory.build_grid(MAP_CELLS)
+	_bake()
+	var hm := territory.find("hollowmark")
+	selected = hm.get("index", 0)
+
+
+func _map_rect() -> Rect2:
+	return Rect2(MAP_ORIGIN, Vector2(MAP_CELLS * CELL))
+
+
+func _province_screen_pos(p: Dictionary) -> Vector2:
+	return MAP_ORIGIN + (p["center"] as Vector2) * Vector2(MAP_CELLS * CELL)
+
+
+# ---------------------------------------------------------------- baking
+
+func _bake() -> void:
+	var w := MAP_CELLS.x
+	var h := MAP_CELLS.y
+	var img := Image.create(w, h, false, Image.FORMAT_RGBA8)
+	var grain := FastNoiseLite.new()
+	grain.seed = 3
+	grain.frequency = 0.09
+	var patch := FastNoiseLite.new()
+	patch.seed = 11
+	patch.frequency = 0.06
+	patch.fractal_octaves = 2
+	# Bounding boxes, so Fray can whiten each province from its eastern (Blank-facing) side.
+	var minx := []
+	var maxx := []
+	for p in territory.provinces:
+		minx.append(1e9)
+		maxx.append(-1e9)
+	for y in h:
+		for x in w:
+			var r := territory.cell(x, y)
+			if r >= 0:
+				minx[r] = minf(minx[r], x)
+				maxx[r] = maxf(maxx[r], x)
+	outlines = []
+	for p in territory.provinces:
+		outlines.append(PackedVector2Array())
+	var white := PackedByteArray()
+	white.resize(w * h)
+	for y in h:
+		for x in w:
+			var r := territory.cell(x, y)
+			var g := grain.get_noise_2d(x, y)
+			var col: Color
+			var is_white := false
+			# The Blank itself: a wobbling wall of paper down the far east edge, over land and sea.
+			var edge := 0.94 + sin(y * 0.11) * 0.012 + sin(y * 0.031 + 1.0) * 0.02
+			if float(x) / w > edge:
+				col = PAPER
+				is_white = true
+			elif r == territory.SEA:
+				col = SEA_COLOR.lightened(0.04 if int(x + y * 0.5 + g * 6.0) % 9 == 0 else 0.0)
+			else:
+				var p: Dictionary = territory.provinces[r]
+				var fray: float = float(p["fray"]) / 100.0
+				var east := (x - float(minx[r])) / maxf(float(maxx[r]) - float(minx[r]), 1.0)
+				var n := (patch.get_noise_2d(x, y) + 1.0) * 0.5
+				if p["owner"] == "erased" or fray >= 1.0 or fray > (1.0 - east) * 0.75 + n * 0.45:
+					col = PAPER.darkened(0.05 if g > 0.3 else 0.0)
+					is_white = true
+				else:
+					col = (OWNER_COLORS[p["owner"]] as Color).lightened(g * 0.08)
+					# Fray also drains colour from the whole province, like the field shader does.
+					var grey := col.get_luminance()
+					col = col.lerp(Color(grey, grey, grey), fray * 0.6)
+				if _is_border(x, y, r):
+					col = BORDER_COLOR
+					is_white = false
+					outlines[r].append(Vector2(x, y))
+			img.set_pixel(x, y, col)
+			white[y * w + x] = 1 if is_white else 0
+	blank_edge = PackedVector2Array()
+	for y in range(1, h - 1):
+		for x in range(1, w - 1):
+			if white[y * w + x] == 1 and (white[y * w + x - 1] == 0 or white[y * w + x + 1] == 0 or white[(y - 1) * w + x] == 0 or white[(y + 1) * w + x] == 0):
+				blank_edge.append(Vector2(x, y))
+	map_tex = ImageTexture.create_from_image(img)
+
+
+func _is_border(x: int, y: int, r: int) -> bool:
+	for o in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+		if territory.cell(x + o.x, y + o.y) != r:
+			return true
+	return false
+
+
+# ---------------------------------------------------------------- input
+
+func _process(delta: float) -> void:
+	t += delta
+	var dir := Vector2.ZERO
+	if Input.is_action_just_pressed("move_left") or Input.is_action_just_pressed("ui_left"):
+		dir = Vector2.LEFT
+	elif Input.is_action_just_pressed("move_right") or Input.is_action_just_pressed("ui_right"):
+		dir = Vector2.RIGHT
+	elif Input.is_action_just_pressed("move_up") or Input.is_action_just_pressed("ui_up"):
+		dir = Vector2.UP
+	elif Input.is_action_just_pressed("move_down") or Input.is_action_just_pressed("ui_down"):
+		dir = Vector2.DOWN
+	if dir != Vector2.ZERO:
+		_step(dir)
+	if Input.is_action_just_pressed("ui_accept"):
+		_activate(selected)
+	elif Input.is_action_just_pressed("ui_cancel") or Input.is_action_just_pressed("pause"):
+		get_tree().change_scene_to_file(TITLE_SCENE)
+		return
+	queue_redraw()
+
+
+## Moves the selection to the best province in a direction: close, and roughly that way.
+func _step(dir: Vector2) -> void:
+	var from: Vector2 = territory.provinces[selected]["center"]
+	var best := -1
+	var best_score := 1e9
+	for p in territory.provinces:
+		if p["index"] == selected:
+			continue
+		var d: Vector2 = (p["center"] as Vector2) - from
+		var cosang := d.normalized().dot(dir)
+		if cosang < 0.35:
+			continue
+		var score := d.length() / (cosang * cosang)
+		if score < best_score:
+			best_score = score
+			best = p["index"]
+	if best >= 0:
+		selected = best
+
+
+func _gui_input(event: InputEvent) -> void:
+	if event is InputEventMouseMotion:
+		hovered = _province_at(event.position)
+	elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		var i := _province_at(event.position)
+		if i >= 0:
+			if i == selected:
+				_activate(i)  # second tap on the selected province plays its mission
+			selected = i
+		elif _play_rect().has_point(event.position):
+			_activate(selected)
+		elif Rect2(Vector2(size.x - 70, 2), Vector2(68, 16)).has_point(event.position):
+			get_tree().change_scene_to_file(TITLE_SCENE)
+
+
+func _province_at(pos: Vector2) -> int:
+	if not _map_rect().has_point(pos):
+		return -1
+	var c := ((pos - MAP_ORIGIN) / CELL).floor()
+	return territory.cell(int(c.x), int(c.y))
+
+
+func _mission(i: int) -> Dictionary:
+	var ms: Array = territory.provinces[i].get("missions", [])
+	return ms[0] if not ms.is_empty() else {}
+
+
+func _activate(i: int) -> void:
+	var m := _mission(i)
+	if not m.is_empty():
+		get_tree().change_scene_to_file(m["scene"])
+
+
+func _play_rect() -> Rect2:
+	return Rect2(PANEL_X, size.y - 34, size.x - PANEL_X - 6, 26)
+
+
+# ---------------------------------------------------------------- drawing
+
+func _text(pos: Vector2, s: String, fsize: int, col: Color, outline := 0) -> void:
+	if outline > 0:
+		draw_string_outline(font, pos, s, HORIZONTAL_ALIGNMENT_LEFT, -1, fsize, outline, Color(0, 0, 0, 0.85 * col.a))
+	draw_string(font, pos, s, HORIZONTAL_ALIGNMENT_LEFT, -1, fsize, col)
+
+
+func _text_c(center: Vector2, s: String, fsize: int, col: Color, outline := 0) -> void:
+	var w := font.get_string_size(s, HORIZONTAL_ALIGNMENT_LEFT, -1, fsize).x
+	_text(center - Vector2(w / 2.0, 0), s, fsize, col, outline)
+
+
+func _draw() -> void:
+	var vs := size
+	draw_rect(Rect2(Vector2.ZERO, vs), Color("0e0b12"))
+	# Map
+	draw_texture_rect(map_tex, _map_rect(), false)
+	_draw_roads()
+	_draw_static()
+	_draw_outline(selected, GOLD)
+	if hovered >= 0 and hovered != selected:
+		_draw_outline(hovered, Color(1, 1, 1, 0.55))
+	_draw_labels()
+	draw_rect(_map_rect(), Color(0.3, 0.27, 0.33), false, 1.0)
+	# Top bar
+	_text(Vector2(6, 15), "THE INKLANDS", 12, Color("ece6da"))
+	_text(Vector2(100, 15), "Command Table", 9, Color(0.6, 0.58, 0.6))
+	_text(Vector2(vs.x - 66, 14), "Esc: back", 9, Color(0.6, 0.58, 0.6))
+	_draw_legend()
+	_draw_panel()
+
+
+func _draw_roads() -> void:
+	var drawn := {}
+	for p in territory.provinces:
+		var a: int = p["index"]
+		for b in territory.neighbors[a]:
+			var key := Vector2i(mini(a, b), maxi(a, b))
+			if drawn.has(key):
+				continue
+			drawn[key] = true
+			var q: Dictionary = territory.provinces[b]
+			var p1 := _province_screen_pos(p)
+			var p2 := _province_screen_pos(q)
+			var lost: bool = p["owner"] == "erased" or q["owner"] == "erased"
+			var col := Color(0.12, 0.1, 0.14, 0.35 if lost else 0.75)
+			# Dashed road.
+			var n := int(p1.distance_to(p2) / 6.0)
+			for i in n:
+				if i % 2 == 0:
+					draw_line(p1.lerp(p2, float(i) / n), p1.lerp(p2, float(i + 1) / n), col, 1.5)
+
+
+func _draw_static() -> void:
+	if blank_edge.is_empty():
+		return
+	var rng := RandomNumberGenerator.new()
+	rng.seed = int(t * 10.0)
+	for i in 90:
+		var c: Vector2 = blank_edge[rng.randi() % blank_edge.size()]
+		var pos := MAP_ORIGIN + c * CELL + Vector2(rng.randf_range(-3, 3), rng.randf_range(-3, 3))
+		var col := Color(0.06, 0.05, 0.07, 0.75) if rng.randf() < 0.5 else Color(0.98, 0.97, 0.94, 0.9)
+		draw_rect(Rect2(pos, Vector2(2, 2)), col)
+
+
+func _draw_outline(i: int, col: Color) -> void:
+	var pulse := 0.75 + 0.25 * sin(t * 4.0) if col == GOLD else 1.0
+	var c := Color(col, col.a * pulse)
+	for cell in outlines[i]:
+		draw_rect(Rect2(MAP_ORIGIN + cell * CELL, Vector2(CELL, CELL)), c)
+
+
+func _draw_labels() -> void:
+	for p in territory.provinces:
+		var pos := _province_screen_pos(p)
+		var col := Color("f3efe4")
+		if p["owner"] == "erased":
+			col = Color(0.35, 0.34, 0.36)
+		if p["owner"] == "you":
+			# A little ink-black tower for the capital.
+			draw_rect(Rect2(pos + Vector2(-3, -15), Vector2(6, 8)), Color("15111b"))
+			draw_colored_polygon(PackedVector2Array([pos + Vector2(-4, -15), pos + Vector2(4, -15), pos + Vector2(0, -20)]), Color("15111b"))
+			draw_rect(Rect2(pos + Vector2(-1, -12), Vector2(2, 3)), GOLD)
+		else:
+			draw_circle(pos + Vector2(0, -9), 2.0, Color("15111b"))
+		_text_c(pos + Vector2(0, 2), p["name"], 9, col, 0 if p["owner"] == "erased" else 4)
+
+
+func _draw_legend() -> void:
+	var x := MAP_ORIGIN.x + 4
+	var y := MAP_ORIGIN.y + MAP_CELLS.y * CELL - 8
+	for k in ["you", "free", "concord", "coven", "guild"]:
+		draw_rect(Rect2(x, y - 6, 6, 6), OWNER_COLORS[k])
+		draw_rect(Rect2(x, y - 6, 6, 6), BORDER_COLOR, false, 1.0)
+		var label: String = {"you": "Yours", "free": "Unclaimed", "concord": "Concord", "coven": "Coven", "guild": "Guild"}[k]
+		_text(Vector2(x + 9, y), label, 8, Color(0.85, 0.83, 0.78), 3)
+		x += 13 + font.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1, 8).x + 6
+
+
+func _draw_panel() -> void:
+	var p: Dictionary = territory.provinces[selected]
+	var x := PANEL_X
+	var w := size.x - PANEL_X - 6
+	draw_rect(Rect2(x - 4, 22, w + 8, size.y - 26), Color(0.07, 0.06, 0.09))
+	draw_rect(Rect2(x - 4, 22, w + 8, size.y - 26), Color(0.3, 0.27, 0.33), false, 1.0)
+	var y := 42.0
+	_text(Vector2(x, y), p["name"], 15, Color("f3efe4"))
+	y += 15
+	var owner: String = p["owner"]
+	draw_rect(Rect2(x, y - 7, 7, 7), OWNER_COLORS[owner])
+	_text(Vector2(x + 11, y), OWNER_NAMES[owner], 9, Color(0.8, 0.78, 0.74))
+	y += 18
+
+	# Fray
+	var fray := int(p["fray"])
+	var state := "Safe" if fray < 25 else ("Fraying" if fray < 60 else ("Unravelling" if fray < 100 else "Erased"))
+	_text(Vector2(x, y), "Fray", 9, Color(0.7, 0.68, 0.7))
+	_text(Vector2(x + 30, y), "%d / 100   %s" % [fray, state], 9, Color("f3efe4") if fray < 60 else Color("ff9b8a"))
+	y += 5
+	draw_rect(Rect2(x, y, w, 5), Color(0.15, 0.13, 0.17))
+	draw_rect(Rect2(x, y, w * fray / 100.0, 5), Color(0.85, 0.84, 0.8).lerp(PAPER, fray / 100.0))
+	y += 18
+
+	# Output
+	var out: Dictionary = p.get("output", {})
+	var parts := []
+	for k in ["gilt", "supplies", "ink"]:
+		if out.has(k):
+			parts.append("+%d %s" % [out[k], RES_NAMES[k]])
+	var out_label := "Lost output" if owner == "erased" else ("Output per day" if owner == "you" else "Would give")
+	_text(Vector2(x, y), out_label, 9, Color(0.7, 0.68, 0.7))
+	y += 12
+	_text(Vector2(x, y), "   ".join(parts) if not parts.is_empty() else "nothing", 9, Color("e8d9a8") if owner != "erased" else Color(0.55, 0.54, 0.56))
+	y += 17
+
+	# Governor and sites
+	_text(Vector2(x, y), "Governor", 9, Color(0.7, 0.68, 0.7))
+	_text(Vector2(x + 52, y), "none posted" if owner == "you" else "-", 9, Color(0.85, 0.83, 0.78))
+	y += 13
+	var sites: Array = p.get("sites", [])
+	_text(Vector2(x, y), "Sites", 9, Color(0.7, 0.68, 0.7))
+	_text(Vector2(x + 52, y), ", ".join(sites) if not sites.is_empty() else "none left", 9, Color(0.85, 0.83, 0.78))
+	y += 13
+	var nb := []
+	for b in territory.neighbors[selected]:
+		nb.append(territory.provinces[b]["name"])
+	_text(Vector2(x, y), "Borders", 9, Color(0.7, 0.68, 0.7))
+	draw_multiline_string(font, Vector2(x + 52, y), ", ".join(nb), HORIZONTAL_ALIGNMENT_LEFT, w - 52, 9, -1, Color(0.85, 0.83, 0.78))
+	y += 13 * ceilf(font.get_string_size(", ".join(nb), HORIZONTAL_ALIGNMENT_LEFT, -1, 9).x / (w - 52)) + 8
+
+	# Flavour
+	draw_multiline_string(font, Vector2(x, y), p["blurb"], HORIZONTAL_ALIGNMENT_LEFT, w, 9, -1, Color(0.62, 0.6, 0.62))
+
+	# Mission button
+	var m := _mission(selected)
+	var r := _play_rect()
+	if not m.is_empty():
+		draw_rect(r, Color(0.22, 0.17, 0.08))
+		draw_rect(r, GOLD, false, 1.0)
+		_text_c(Vector2(r.get_center().x, r.position.y + 12), "Play: " + m["name"], 9, GOLD)
+		_text_c(Vector2(r.get_center().x, r.position.y + 22), "Enter / A / tap", 8, Color(0.75, 0.7, 0.55))
+	else:
+		var note := "Reclaim missions are coming soon" if owner == "erased" else "No missions here yet"
+		_text_c(Vector2(r.get_center().x, r.position.y + 16), note, 8, Color(0.45, 0.44, 0.47))

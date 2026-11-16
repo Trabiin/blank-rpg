@@ -24,6 +24,7 @@ func _ready() -> void:
 	add_child(menu)
 	menu.setup("", [
 		{"id": "new", "label": "New Game"},
+		{"id": "command", "label": "Command Table (preview)"},
 		{"id": "continue", "label": "Continue", "enabled": false, "note": "(saving comes soon)"},
 		{"id": "options", "label": "Options", "enabled": false, "note": "(coming soon)"},
 		{"id": "credits", "label": "Credits"},
@@ -48,6 +49,8 @@ func _on_choice(id: String) -> void:
 	match id:
 		"new":
 			get_tree().change_scene_to_file(GAME_SCENE)
+		"command":
+			get_tree().change_scene_to_file("res://scenes/command.tscn")
 		"credits":
 			menu.visible = false
 			credits.visible = true
