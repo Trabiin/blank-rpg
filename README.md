@@ -15,7 +15,7 @@ Reality is being eaten by a hungry Blank, and you are the one person it spat bac
 | Move | WASD / arrows | Left stick / d-pad | Drag on the left half |
 | Attack | J / Space / Z | A | ATTACK button |
 | Swap hero | Tab / Q | Y | SWAP button |
-| Restart | R | Start | Tap after a game over |
+| Pause menu | Esc / P | Start | Pause button (top right) |
 
 Attacks use a power gauge: swinging before it refills still hits, but for less damage.
 

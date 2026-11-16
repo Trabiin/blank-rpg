@@ -10,6 +10,7 @@ const HudScript := preload("res://scripts/hud.gd")
 const TouchScript := preload("res://scripts/touch.gd")
 
 const MAP := "res://maps/frayed_meadow.txt"
+const TITLE_SCENE := "res://scenes/title.tscn"
 const MAX_ENEMIES := 7
 const RESPAWN_TIME := 6.0
 
@@ -27,6 +28,8 @@ var shake_amount := 0.0
 var respawn_t := 0.0
 var blank_tick := 0.0
 var game_over := false
+var pause_menu: InkMenu
+var over_menu: InkMenu
 var banter_queue: Array = []
 var banter_t := 1.0
 var said_low_power := false
@@ -35,7 +38,6 @@ var said_first_kill := false
 
 func _ready() -> void:
 	randomize()
-	_setup_input()
 
 	entities = Node2D.new()
 	entities.y_sort_enabled = true
@@ -96,40 +98,35 @@ func _ready() -> void:
 	touch = TouchScript.new()
 	layer.add_child(touch)
 
+	# Menus live on their own layer above the HUD and keep running while the tree is paused.
+	var menu_layer := CanvasLayer.new()
+	menu_layer.layer = 5
+	menu_layer.process_mode = Node.PROCESS_MODE_ALWAYS
+	add_child(menu_layer)
+	pause_menu = InkMenu.new()
+	pause_menu.visible = false
+	menu_layer.add_child(pause_menu)
+	pause_menu.setup("Paused", [
+		{"id": "resume", "label": "Resume"},
+		{"id": "restart", "label": "Restart area"},
+		{"id": "title", "label": "Quit to title"},
+	], "Saving and options are coming soon.")
+	pause_menu.chosen.connect(_on_pause_choice)
+	over_menu = InkMenu.new()
+	over_menu.visible = false
+	over_menu.dim = 0.55
+	menu_layer.add_child(over_menu)
+	over_menu.setup("The party was erased.", [
+		{"id": "restart", "label": "Try again"},
+		{"id": "title", "label": "Quit to title"},
+	], "The Blank does not keep receipts.")
+	over_menu.chosen.connect(_on_over_choice)
+
 	banter_queue = [
 		["Bran", "Huh. A person. Or a very convincing smudge."],
 		["Bran", "You crawled out of the Blank? Nobody does that. Nobody's paid me to see that, either."],
 		["Bran", "Those white things eat. Hit them when your gauge is full. Or don't, and I'll bill your corpse."],
 	]
-
-
-func _setup_input() -> void:
-	_add_action("move_left", [KEY_A, KEY_LEFT], [JOY_BUTTON_DPAD_LEFT], JOY_AXIS_LEFT_X, -1.0)
-	_add_action("move_right", [KEY_D, KEY_RIGHT], [JOY_BUTTON_DPAD_RIGHT], JOY_AXIS_LEFT_X, 1.0)
-	_add_action("move_up", [KEY_W, KEY_UP], [JOY_BUTTON_DPAD_UP], JOY_AXIS_LEFT_Y, -1.0)
-	_add_action("move_down", [KEY_S, KEY_DOWN], [JOY_BUTTON_DPAD_DOWN], JOY_AXIS_LEFT_Y, 1.0)
-	_add_action("attack", [KEY_J, KEY_SPACE, KEY_Z], [JOY_BUTTON_A, JOY_BUTTON_X])
-	_add_action("swap", [KEY_TAB, KEY_Q], [JOY_BUTTON_Y])
-	_add_action("restart", [KEY_R], [JOY_BUTTON_START])
-
-
-func _add_action(action: String, keys: Array, buttons: Array, axis := -1, axis_value := 0.0) -> void:
-	if InputMap.has_action(action):
-		return
-	InputMap.add_action(action, 0.3)
-	for k in keys:
-		var ev := InputEventKey.new()
-		ev.physical_keycode = k
-		InputMap.action_add_event(action, ev)
-	for b in buttons:
-		var jb := InputEventJoypadButton.new()
-		jb.button_index = b
-		InputMap.action_add_event(action, jb)
-	if axis >= 0:
-		var jm := InputEventJoypadMotion.new()
-		jm.axis = axis
-		jm.axis_value = axis_value
-		InputMap.action_add_event(action, jm)
 
 
 func _build_walls() -> void:
@@ -200,7 +197,7 @@ func _on_hero_died(a: Actor) -> void:
 	var alive := heroes.filter(func(h): return not h.dead)
 	if alive.is_empty():
 		game_over = true
-		hud.center_text = "The party was erased.\nPress R / Start / tap to try again"
+		get_tree().create_timer(1.2).timeout.connect(func(): over_menu.visible = true)
 		return
 	if a == leader:
 		_set_leader(alive[0])
@@ -208,11 +205,40 @@ func _on_hero_died(a: Actor) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed("restart") or (game_over and event is InputEventScreenTouch and event.pressed):
-		get_tree().reload_current_scene()
+	if event.is_action_pressed("pause") and not game_over:
+		set_paused(true)
+		get_viewport().set_input_as_handled()
 		return
 	if event.is_action_pressed("swap") and not game_over:
 		_swap()
+
+
+func set_paused(on: bool) -> void:
+	get_tree().paused = on
+	pause_menu.visible = on
+	if on:
+		pause_menu.selected = 0
+		touch.release_all()
+
+
+func _on_pause_choice(id: String) -> void:
+	match id:
+		"resume", "cancel":
+			set_paused(false)
+		"restart":
+			get_tree().paused = false
+			get_tree().reload_current_scene()
+		"title":
+			get_tree().paused = false
+			get_tree().change_scene_to_file(TITLE_SCENE)
+
+
+func _on_over_choice(id: String) -> void:
+	match id:
+		"restart":
+			get_tree().reload_current_scene()
+		"title":
+			get_tree().change_scene_to_file(TITLE_SCENE)
 
 
 func _swap() -> void:
@@ -228,6 +254,8 @@ func _process(delta: float) -> void:
 	# The touch Swap button presses the action directly, which _unhandled_input does not see.
 	if touch_active() and Input.is_action_just_pressed("swap") and not game_over:
 		_swap()
+	if touch_active() and Input.is_action_just_pressed("pause") and not game_over and not get_tree().paused:
+		set_paused(true)
 
 	if camera and leader:
 		camera.global_position = leader.global_position + Vector2(0, -10)

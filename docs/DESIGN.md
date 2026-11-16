@@ -231,7 +231,7 @@ alcohol, innuendo and flirting. **No explicit sexual content.** Gore is stylized
 | Move | WASD / arrows | Left stick / d-pad | Left on-screen stick |
 | Attack | J / Space / Z | A (bottom face) | Attack button |
 | Swap hero | Tab / Q | Y (top face) | Swap button |
-| Restart (prototype) | R | Start | n/a |
+| Pause menu | Esc / P | Start | Pause button (top right) |
 
 ## 12. Milestones
 

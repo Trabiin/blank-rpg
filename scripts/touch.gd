@@ -22,6 +22,11 @@ func _attack_center() -> Vector2:
 	return Vector2(vs.x - 50, vs.y - 70)
 
 
+func _pause_center() -> Vector2:
+	var vs := get_viewport_rect().size
+	return Vector2(vs.x - 22, 22)
+
+
 func _swap_center() -> Vector2:
 	var vs := get_viewport_rect().size
 	return Vector2(vs.x - 110, vs.y - 40)
@@ -30,7 +35,7 @@ func _swap_center() -> Vector2:
 func _input(event: InputEvent) -> void:
 	if event is InputEventKey or event is InputEventJoypadButton:
 		if visible:
-			_release_all()
+			release_all()
 			visible = false
 		return
 	if event is InputEventScreenTouch:
@@ -40,6 +45,9 @@ func _input(event: InputEvent) -> void:
 			if pos.distance_to(_attack_center()) < BTN_ATTACK_R + 10.0:
 				button_touches[event.index] = "attack"
 				Input.action_press("attack")
+			elif pos.distance_to(_pause_center()) < 18.0:
+				button_touches[event.index] = "pause"
+				Input.action_press("pause")
 			elif pos.distance_to(_swap_center()) < BTN_SWAP_R + 10.0:
 				button_touches[event.index] = "swap"
 				Input.action_press("swap")
@@ -81,7 +89,7 @@ func _set_axis(neg: String, pos: String, value: float) -> void:
 		Input.action_release(pos)
 
 
-func _release_all() -> void:
+func release_all() -> void:
 	for a in button_touches.values():
 		Input.action_release(a)
 	button_touches.clear()
@@ -98,6 +106,10 @@ func _draw() -> void:
 	draw_circle(s, BTN_SWAP_R, Color(1, 1, 1, 0.18 if not button_touches.values().has("swap") else 0.4))
 	draw_arc(s, BTN_SWAP_R, 0, TAU, 32, Color(1, 1, 1, 0.5), 1.5)
 	draw_string(ThemeDB.fallback_font, s + Vector2(-12, 4), "SWAP", HORIZONTAL_ALIGNMENT_LEFT, -1, 9, Color(1, 1, 1, 0.8))
+	var pc := _pause_center()
+	draw_circle(pc, 13.0, Color(1, 1, 1, 0.18))
+	draw_rect(Rect2(pc + Vector2(-4, -5), Vector2(3, 10)), Color(1, 1, 1, 0.8))
+	draw_rect(Rect2(pc + Vector2(1, -5), Vector2(3, 10)), Color(1, 1, 1, 0.8))
 	if stick_index != -1:
 		draw_circle(stick_origin, STICK_R, Color(1, 1, 1, 0.12))
 		draw_arc(stick_origin, STICK_R, 0, TAU, 32, Color(1, 1, 1, 0.4), 1.5)

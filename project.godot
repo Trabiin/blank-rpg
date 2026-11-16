@@ -5,8 +5,12 @@ config_version=5
 
 config/name="Last Ink"
 config/description="Last Ink: action RPG prototype"
-run/main_scene="res://scenes/main.tscn"
+run/main_scene="res://scenes/title.tscn"
 config/features=PackedStringArray("4.3", "GL Compatibility")
+
+[autoload]
+
+Controls="*res://scripts/controls.gd"
 
 [display]
 
