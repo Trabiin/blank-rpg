@@ -46,6 +46,8 @@ func _ready() -> void:
 	blank.width = WORLD.x
 	add_child(blank)
 	ground.blank_x = blank.base_x
+	ground.build()
+	Art.world_material().set_shader_parameter("blank_x", blank.base_x)
 
 	entities = Node2D.new()
 	entities.y_sort_enabled = true
@@ -54,29 +56,29 @@ func _ready() -> void:
 	_build_walls()
 	_build_props()
 
-	var ash := _make_hero("Ash", Vector2(220, 470), {
-		"skin": Color("e8b796"), "hair": Color("d9d4e8"), "outfit": Color("3b3f6b"),
-		"trim": Color("9fb7ff"), "weapon": Color("dfe8f0"), "boots": Color("2a2433"),
+	# Same body and animation rig for everyone; outfit layer + colors make the hero.
+	var ash := _make_hero("Ash", Vector2(220, 470), "archer", {
+		"skin": Color("efd2bd"), "cloth": Color("4b4f86"), "leather": Color("3b3346"),
+		"boots": Color("2a2433"), "trim": Color("dcd8ee"),
 	})
 	ash.base_damage = 10
-	var bran := _make_hero("Bran", Vector2(190, 500), {
-		"skin": Color("c98e6a"), "hair": Color("8a3b22"), "outfit": Color("5a4a3a"),
-		"trim": Color("b84a3a"), "weapon": Color("a9a9a9"), "boots": Color("2e2620"),
+	var bran := _make_hero("Bran", Vector2(195, 495), "warrior", {
+		"skin": Color("c98e6a"), "metal": Color("8c7f72"), "accent": Color("b0442f"),
+		"boots": Color("3a2c22"),
 	})
-	bran.body_scale = 1.15
-	bran.has_beard = true
 	bran.max_hp = 60
 	bran.hp = 60
-	bran.move_speed = 74.0
+	bran.move_speed = 62.0
 	bran.base_damage = 14
 	bran.power_rate = 0.75
-	bran.reach = 32.0
+	bran.reach = 21.0
 	_set_leader(ash)
 
 	for i in 5:
 		_spawn_enemy(Vector2(randf_range(600, 1000), randf_range(140, 820)))
 
 	camera = Camera2D.new()
+	camera.zoom = Vector2(2, 2)
 	camera.position_smoothing_enabled = true
 	camera.position_smoothing_speed = 7.0
 	camera.limit_left = 0
@@ -155,24 +157,29 @@ func _build_props() -> void:
 	rng.seed = 42
 	var placed := 0
 	var tries := 0
-	while placed < 70 and tries < 2000:
+	var kinds := ["bush", "bush", "bush", "shrub", "shrub", "rock", "rock_big", "stump"]
+	while placed < 150 and tries < 4000:
 		tries += 1
 		var p := Vector2(rng.randf_range(30, WORLD.x - 60), rng.randf_range(30, WORLD.y - 20))
-		var path_y := 480.0 + sin(p.x * 0.006) * 90.0 + sin(p.x * 0.017) * 20.0
-		if absf(p.y - path_y) < 40.0 or p.distance_to(Vector2(210, 480)) < 90.0:
+		var path_y: float = GroundScript.path_y(p.x)
+		if absf(p.y - path_y) < 34.0 or p.distance_to(Vector2(210, 480)) < 70.0:
 			continue
 		var ok := true
 		for q in props:
-			if (q as Node2D).position.distance_to(p) < 34.0:
+			if (q as Node2D).position.distance_to(p) < 30.0:
 				ok = false
 				break
 		if not ok:
 			continue
-		_add_prop("tree" if rng.randf() < 0.75 else "rock", p, rng.randi())
+		_add_prop(kinds[rng.randi() % kinds.size()], p, rng.randi())
 		placed += 1
-	var sign1 = _add_prop("sign", Vector2(300, 440), 0)
+	# Leftovers of people the Blank already ate.
+	for i in 14:
+		var p := Vector2(rng.randf_range(blank.base_x - 260.0, blank.base_x - 20.0), rng.randf_range(40, WORLD.y - 40))
+		_add_prop("skull" if i % 3 == 0 else "bones", p, i)
+	var sign1 = _add_prop("sign", Vector2(290, 452), 0)
 	sign1.text = "WELCOME TO THE FRAYED MEADOW\npop. 212   pop. 40   pop. ?"
-	var sign2 = _add_prop("sign", Vector2(960, 515), 0)
+	var sign2 = _add_prop("sign", Vector2(960, 540), 0)
 	sign2.text = "HOLLOWMARK  ->  (east)\n(east is gone)"
 
 
@@ -181,16 +188,17 @@ func _add_prop(kind: String, p: Vector2, seed_v: int):
 	prop.kind = kind
 	prop.position = p
 	prop.seed_v = seed_v
-	prop.erased = clampf((p.x - (blank.base_x - 220.0)) / 220.0, 0.0, 0.85)
 	entities.add_child(prop)
 	props.append(prop)
 	return prop
 
 
-func _make_hero(hero_name: String, pos: Vector2, palette: Dictionary) -> Hero:
+func _make_hero(hero_name: String, pos: Vector2, outfit: String, colors: Dictionary) -> Hero:
 	var h: Hero = HeroScript.new()
 	h.hero_name = hero_name
-	h.palette = palette
+	h.outfit = outfit
+	h.colors = colors
+	h.move_speed = 68.0
 	h.party = self
 	h.position = pos
 	h.add_to_group("heroes")

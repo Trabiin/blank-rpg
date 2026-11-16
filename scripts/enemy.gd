@@ -5,12 +5,12 @@ extends Actor
 
 enum State { WANDER, CHASE, WINDUP, LUNGE, RECOVER, STAGGER }
 
-const AGGRO := 130.0
-const LOSE := 230.0
-const LUNGE_RANGE := 42.0
+const AGGRO := 110.0
+const LOSE := 200.0
+const LUNGE_RANGE := 30.0
 const WINDUP_TIME := 0.5
 const LUNGE_TIME := 0.22
-const LUNGE_SPEED := 230.0
+const LUNGE_SPEED := 190.0
 const DAMAGE := 6
 
 var state: int = State.WANDER
@@ -21,21 +21,38 @@ var lunge_dir := Vector2.ZERO
 var hit_this_lunge: Array = []
 var home := Vector2.ZERO
 var static_seed := 0
+var sprite: Sprite2D
+var overlay: Node2D
+var dying_t := -1.0
+
+## Puny's green slime, recolored into a scrap of the Blank: paper-white with an ink-black core.
+const SLIME_COLORS := {"body": Color("e4e1d8"), "core": Color("15101a"), "shine": Color("ffffff")}
 
 
 func _ready() -> void:
 	max_hp = 28
-	move_speed = 46.0
-	radius = 6.0
+	move_speed = 40.0
+	radius = 5.0
 	super._ready()
 	collision_layer = 4
 	number_color = Color.WHITE
 	add_to_group("enemies")
 	home = global_position
 	static_seed = randi()
+	sprite = Sprite2D.new()
+	sprite.texture = Art.SLIME
+	sprite.hframes = 15
+	sprite.offset = Vector2(0, -4)
+	sprite.material = Art.recolor_material("slime", SLIME_COLORS)
+	add_child(sprite)
+	overlay = Node2D.new()
+	add_child(overlay)
+	overlay.draw.connect(_draw_overlay)
 
 
 func _physics_process(delta: float) -> void:
+	if dying_t >= 0.0:
+		return
 	anim_t += delta
 	flash_t = max(flash_t - delta, 0.0)
 	state_t -= delta
@@ -124,49 +141,55 @@ func _on_hit() -> void:
 
 
 func _on_death() -> void:
-	Fx.burst(get_parent(), global_position + Vector2(0, -8), [Color.WHITE, Color("d9d9d9"), Color.BLACK], 22, 110.0)
-	queue_free()
+	Fx.burst(get_parent(), global_position + Vector2(0, -6), [Color.WHITE, Color("d9d9d9"), Color.BLACK], 16, 80.0)
+	remove_from_group("enemies")
+	collision_layer = 0
+	dying_t = 0.0
+
+
+func _process(delta: float) -> void:
+	# Slime sheet: 0-2 squish, 3-5 hop, 6 hurt flash, 7-8 land, 10-14 burst.
+	var f := 0
+	if dying_t >= 0.0:
+		dying_t += delta
+		f = 10 + int(dying_t * 14.0)
+		if f > 14:
+			queue_free()
+			return
+	elif flash_t > 0.0:
+		f = 6
+	else:
+		match state:
+			State.WINDUP:
+				f = 2
+			State.LUNGE:
+				f = 3 + clampi(int((1.0 - state_t / LUNGE_TIME) * 3.0), 0, 2)
+			State.RECOVER:
+				f = 7 if state_t > 0.45 else 8
+			_:
+				f = [0, 1, 2, 1][int(anim_t * 6.0) % 4]
+	sprite.frame = f
+	sprite.position = Vector2(randf_range(-0.7, 0.7), 0) if state == State.WINDUP else Vector2.ZERO
+	queue_redraw()
+	overlay.queue_redraw()
 
 
 func _draw() -> void:
-	draw_shadow(7.0)
-	var shake := Vector2.ZERO
-	if state == State.WINDUP:
-		shake = Vector2(randf_range(-1, 1), 0)
-	var squash := 1.0 + sin(anim_t * 9.0) * 0.08
-	var center := Vector2(0, -8) + shake
-	var body_col := c(Color("f4f1ea"))
-	draw_set_transform(center, 0.0, Vector2(squash, 2.0 - squash))
-	draw_circle(Vector2.ZERO, 8.0, Color.BLACK)
-	draw_circle(Vector2.ZERO, 7.0, body_col)
-	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+	if dying_t < 0.0:
+		draw_shadow(5.0)
 
-	# Mouth: a jagged black gash facing the target; gapes during wind-up.
-	var open := 2.6 + absf(sin(anim_t * 6.0)) * 1.5
-	if state == State.WINDUP:
-		open = 4.0
-	elif state == State.LUNGE:
-		open = 5.0
-	var m := center + facing * 2.5
-	var w := 5.0
-	var pts := PackedVector2Array()
-	for i in 7:
-		var x := -w + i * (2.0 * w / 6.0)
-		pts.append(m + Vector2(x, -open * 0.5 + (0.8 if i % 2 == 0 else 0.0)))
-	for i in 7:
-		var x := w - i * (2.0 * w / 6.0)
-		pts.append(m + Vector2(x, open * 0.5 - (0.8 if i % 2 == 0 else 0.0)))
-	draw_colored_polygon(pts, Color("120d14"))
 
+func _draw_overlay() -> void:
+	if dying_t >= 0.0:
+		return
 	# Static flecks: the Blank leaking out of it.
 	var rng := RandomNumberGenerator.new()
 	rng.seed = static_seed + int(anim_t * 12.0)
-	for i in 4:
-		var p := center + Vector2(rng.randf_range(-11, 11), rng.randf_range(-10, 8))
-		draw_rect(Rect2(p, Vector2(1, 1)), Color(1, 1, 1, 0.8) if i % 2 else Color(0, 0, 0, 0.6))
-
+	for i in 3:
+		var p := Vector2(rng.randf_range(-8, 8), rng.randf_range(-12, 2))
+		overlay.draw_rect(Rect2(p, Vector2(1, 1)), Color(1, 1, 1, 0.9) if i % 2 else Color(0, 0, 0, 0.7))
 	if state == State.WINDUP:
-		draw_string(ThemeDB.fallback_font, center + Vector2(-2, -12), "!", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color("ff5d5d"))
+		overlay.draw_string(ThemeDB.fallback_font, Vector2(-2, -12), "!", HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color("ff5d5d"))
 	if hp < max_hp:
-		draw_rect(Rect2(-8, -22, 16, 2), Color(0, 0, 0, 0.6))
-		draw_rect(Rect2(-8, -22, 16.0 * hp / max_hp, 2), Color("ff6b6b"))
+		overlay.draw_rect(Rect2(-6, -14, 12, 2), Color(0, 0, 0, 0.6))
+		overlay.draw_rect(Rect2(-6, -14, 12.0 * hp / max_hp, 2), Color("ff6b6b"))

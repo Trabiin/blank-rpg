@@ -1,18 +1,21 @@
 class_name Hero
 extends Actor
 ## A party member. Either player-controlled or driven by the ally AI.
-## Visuals are a code-drawn "paper doll": one shared body rig recolored from `palette`.
+## Visuals are a paper doll: CC0 Puny Characters body + outfit layers, recolored per hero.
 
 const SWING_TIME := 0.24
 const REVIVE_TIME := 2.5
 
 var hero_name := "Ash"
-var palette := {
-	"skin": Color("e8b796"), "hair": Color("2b2233"), "outfit": Color("3d5a80"),
-	"trim": Color("e0c36b"), "weapon": Color("d8e3ec"), "boots": Color("3a2f2a"),
+## Paper doll: the shared body layer plus one outfit layer, both recolored in code.
+var outfit := "archer"
+var colors := {
+	"skin": Color("e9c4a6"), "cloth": Color("4a4f8a"), "leather": Color("5a4636"),
+	"boots": Color("2e2838"), "trim": Color("d9d4e8"),
 }
-var body_scale := 1.0
-var has_beard := false
+var body_sprite: Sprite2D
+var outfit_sprite: Sprite2D
+var overlay: Node2D
 var controlled := false
 var party  # main.gd: gives access to leader, shake()
 
@@ -20,7 +23,7 @@ var party  # main.gd: gives access to leader, shake()
 var power := 1.0
 var power_rate := 0.95
 var base_damage := 10
-var reach := 30.0
+var reach := 20.0
 var arc := deg_to_rad(70.0)
 var swing_t := 0.0
 var swing_power := 1.0
@@ -38,7 +41,9 @@ var revive_progress := 0.0
 
 
 func _ready() -> void:
+	radius = 5.0
 	super._ready()
+	build_doll()
 	collision_layer = 2
 	number_color = Color("ff6b6b")
 
@@ -191,83 +196,74 @@ func _nearest_enemy(from: Vector2, max_dist: float) -> Enemy:
 	return best
 
 
-# ---------------------------------------------------------------- drawing
+# ---------------------------------------------------------------- paper doll
+
+func build_doll() -> void:
+	body_sprite = _layer(Art.BODY, Art.recolor_material("body", colors))
+	outfit_sprite = _layer(Art.OUTFITS[outfit], Art.recolor_material(outfit, colors))
+	overlay = Node2D.new()
+	add_child(overlay)
+	overlay.draw.connect(_draw_overlay)
+
+
+func _layer(tex: Texture2D, mat: ShaderMaterial) -> Sprite2D:
+	var s := Sprite2D.new()
+	s.texture = tex
+	s.hframes = 24
+	s.vframes = 8
+	s.offset = Vector2(0, -7)  # feet of the 32x32 Puny frame sit on the node origin
+	s.material = mat
+	add_child(s)
+	return s
+
+
+## Puny Characters sheet: rows are 8 directions clockwise from facing down,
+## columns 0-3 walk, 4-7 sword swing, 19 hurt flash, 22-23 knocked down.
+static func dir_row(v: Vector2) -> int:
+	return posmod(roundi((PI / 2.0 - v.angle()) / (PI / 4.0)), 8)
+
+
+func _update_frame() -> void:
+	if body_sprite == null:
+		return
+	var col := 0
+	if dead:
+		col = 23
+	elif flash_t > 0.0:
+		col = 19
+	elif swing_t > 0.0:
+		col = 4 + clampi(int((1.0 - swing_t / SWING_TIME) * 4.0), 0, 3)
+	elif moving:
+		col = int(anim_t * 9.0) % 4
+	var frame := dir_row(facing) * 24 + col
+	body_sprite.frame = frame
+	outfit_sprite.frame = frame
+	var blink := invuln_t > 0.0 and not dead and int(invuln_t * 20.0) % 2 == 0
+	modulate.a = 0.45 if blink else 1.0
+
+
+func _process(_delta: float) -> void:
+	_update_frame()
+	queue_redraw()
+	if overlay:
+		overlay.queue_redraw()
+
 
 func _draw() -> void:
-	draw_shadow(7.0 * body_scale)
-	if invuln_t > 0.0 and not dead and int(invuln_t * 20.0) % 2 == 0:
-		modulate.a = 0.45
-	else:
-		modulate.a = 1.0
+	# Drawn before the child sprites, so it sits underneath them.
+	draw_shadow(5.5)
 
+
+func _draw_overlay() -> void:
 	if dead:
-		draw_set_transform(Vector2(0, -4), PI / 2.0, Vector2.ONE * body_scale)
-		_draw_body(false)
-		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 		if revive_progress > 0.0:
-			draw_arc(Vector2(0, -10), 12.0, -PI / 2.0, -PI / 2.0 + TAU * revive_progress / REVIVE_TIME, 24, Color("ffe08a"), 2.0)
+			overlay.draw_arc(Vector2(0, -6), 10.0, -PI / 2.0, -PI / 2.0 + TAU * revive_progress / REVIVE_TIME, 24, Color("ffe08a"), 1.5)
 		return
-
-	var bob := -absf(sin(anim_t * 12.0)) * 1.5 if moving else 0.0
-	draw_set_transform(Vector2(0, bob), 0.0, Vector2.ONE * body_scale)
-	var weapon_behind := facing.y < -0.3
-	if weapon_behind:
-		_draw_weapon()
-	_draw_body(true)
-	if not weapon_behind:
-		_draw_weapon()
-	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
-
 	if controlled:
-		var y := -34.0 * body_scale + sin(anim_t * 4.0) * 1.5
-		draw_colored_polygon(PackedVector2Array([Vector2(-3, y - 4), Vector2(3, y - 4), Vector2(0, y)]), Color("ffd166"))
-
-
-func _draw_body(alive: bool) -> void:
-	var p := palette
-	var step := sin(anim_t * 12.0) * 2.0 if moving else 0.0
-	# legs / boots
-	draw_rect(Rect2(-4, -7 + minf(step, 0.0), 3, 7), c(p["boots"]))
-	draw_rect(Rect2(1, -7 + minf(-step, 0.0), 3, 7), c(p["boots"]))
-	# torso
-	draw_rect(Rect2(-5, -16, 10, 10), c(p["outfit"]))
-	draw_rect(Rect2(-5, -9, 10, 2), c(p["trim"]))
-	# arms
-	draw_rect(Rect2(-7, -15, 2, 7), c(p["outfit"].darkened(0.2)))
-	draw_rect(Rect2(5, -15, 2, 7), c(p["outfit"].darkened(0.2)))
-	# head
-	var head := Vector2(0, -21)
-	draw_circle(head, 5.0, c(p["skin"]))
-	var up := facing.y < -0.5
-	if up:
-		draw_circle(head, 5.2, c(p["hair"]))
-	else:
-		draw_arc(head + Vector2(0, -1), 4.6, PI, TAU, 12, c(p["hair"]), 3.0)
-		if alive:
-			var eye := Color("1a1420")
-			if absf(facing.x) > 0.6:
-				draw_rect(Rect2(signf(facing.x) * 2.0 - 0.5, -22, 1.5, 2), eye)
-			else:
-				draw_rect(Rect2(-2.5, -22, 1.5, 2), eye)
-				draw_rect(Rect2(1.0, -22, 1.5, 2), eye)
-		if has_beard:
-			draw_rect(Rect2(-4, -19, 8, 4), c(p["hair"]))
-
-
-func _draw_weapon() -> void:
-	var wcol: Color = c(palette["weapon"])
-	var hand := Vector2(0, -12)
-	if swing_t > 0.0:
+		var y := -21.0 + sin(anim_t * 4.0) * 1.0
+		overlay.draw_colored_polygon(PackedVector2Array([Vector2(-2.5, y - 3), Vector2(2.5, y - 3), Vector2(0, y)]), Color("ffd166"))
+	# A full-power swing gets a gold arc on top of the sprite's own slash.
+	if swing_t > 0.0 and swing_power >= 1.0:
 		var t := 1.0 - swing_t / SWING_TIME
 		var a0 := facing.angle() - arc
-		var ang := a0 + 2.0 * arc * t
-		var tip := hand + Vector2.RIGHT.rotated(ang) * (reach - 4.0)
-		draw_line(hand, tip, wcol, 2.0)
-		# slash trail
-		var trail := Color(1, 1, 1, 0.75 * (0.4 + 0.6 * swing_power))
-		draw_arc(hand, reach - 6.0, a0, ang, 16, trail, 3.0)
-		if swing_power >= 1.0:
-			draw_arc(hand, reach - 2.0, a0, ang, 16, Color("ffe08a", 0.6), 1.5)
-	else:
-		var side := 1.0 if facing.x >= 0.0 else -1.0
-		draw_line(Vector2(6 * side, -10), Vector2(9 * side, -22), wcol, 2.0)
+		overlay.draw_arc(Vector2(0, -6), reach - 3.0, a0, a0 + 2.0 * arc * t, 16, Color("ffe08a", 0.7), 1.5)
