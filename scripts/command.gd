@@ -70,7 +70,7 @@ func _ready() -> void:
 	var roster_layer := CanvasLayer.new()
 	roster_layer.layer = 4
 	add_child(roster_layer)
-	roster_view = RosterView.new()
+	roster_view = RosterView.new()  # opened from the map or carried over from town
 	roster_view.visible = false
 	roster_layer.add_child(roster_view)
 
@@ -92,6 +92,8 @@ func _ready() -> void:
 	over_menu.dim = 0.6
 	layer.add_child(over_menu)
 	over_menu.chosen.connect(_on_over)
+	if Empire.territory().find("hollowmark").get("owner", "") == "erased":
+		call_deferred("_show_lost")  # lost while walking around town
 
 
 func _on_day_passed(d: int) -> void:
@@ -143,6 +145,7 @@ func _on_ledger_settled(net: Dictionary) -> void:
 func _menu_items(note := "") -> void:
 	menu.setup("Command", [
 		{"id": "resume", "label": "Resume"},
+		{"id": "town", "label": "Back to Hollowmark", "detail": "walk around town"},
 		{"id": "save", "label": "Save game"},
 		{"id": "load", "label": "Load game", "enabled": Saves.latest_slot() != "", "note": "(no saves yet)"},
 		{"id": "title", "label": "Quit to title"},
@@ -171,6 +174,8 @@ func _on_menu(id: String) -> void:
 			menu.visible = false
 			slot_menu.setup("Save to which slot?" if id == "save" else "Load which save?", Saves.slot_items(id == "save"))
 			slot_menu.visible = true
+		"town":
+			_leave(Saves.HUB_SCENE)
 		"title":
 			_leave(TITLE_SCENE)
 
@@ -377,6 +382,8 @@ func _gui_input(event: InputEvent) -> void:
 			_activate(selected)
 		elif _roster_button_rect().has_point(event.position):
 			roster_view.open()
+		elif _town_button_rect().has_point(event.position):
+			_leave(Saves.HUB_SCENE)
 		elif _res_rect().has_point(event.position):
 			show_ledger = not show_ledger
 		elif _menu_button_rect().has_point(event.position):
@@ -407,6 +414,11 @@ func _activate(i: int) -> void:
 
 func _roster_button_rect() -> Rect2:
 	return Rect2(Vector2(MAP_ORIGIN.x + MAP_CELLS.x * CELL - 74, MAP_ORIGIN.y + 4), Vector2(70, 16))
+
+
+func _town_button_rect() -> Rect2:
+	var rb := _roster_button_rect()
+	return Rect2(rb.position - Vector2(70, 0), Vector2(66, 16))
 
 
 func _speed_rect(i: int) -> Rect2:
@@ -454,6 +466,10 @@ func _draw() -> void:
 	draw_rect(rb, Color(0.1, 0.09, 0.12, 0.92))
 	draw_rect(rb, Color(0.45, 0.4, 0.48), false, 1.0)
 	_text_c(Vector2(rb.get_center().x, rb.position.y + 12), "Roster (%d)  R" % Empire.recruits.size(), 9, Color(0.85, 0.82, 0.76))
+	var tb := _town_button_rect()
+	draw_rect(tb, Color(0.1, 0.09, 0.12, 0.92))
+	draw_rect(tb, Color(0.45, 0.4, 0.48), false, 1.0)
+	_text_c(Vector2(tb.get_center().x, tb.position.y + 12), "To town", 9, Color(0.85, 0.82, 0.76))
 	_draw_legend()
 	_draw_panel()
 	if toast_t > 0.0:

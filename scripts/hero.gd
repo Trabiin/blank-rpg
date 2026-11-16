@@ -17,7 +17,8 @@ var body_sprite: Sprite2D
 var outfit_sprite: Sprite2D
 var overlay: Node2D
 var controlled := false
-var party  # main.gd: gives access to leader, shake()
+var party  # main.gd or hub.gd: gives access to leader, shake()
+var peaceful := false  # in town the attack button talks instead
 
 # Mana-style attack power gauge: refills after each swing; early swings hit weaker.
 var power := 1.0
@@ -71,7 +72,7 @@ func _physics_process(delta: float) -> void:
 	var dir := Vector2.ZERO
 	if controlled:
 		dir = Input.get_vector("move_left", "move_right", "move_up", "move_down")
-		if Input.is_action_just_pressed("attack"):
+		if Input.is_action_just_pressed("attack") and not peaceful:
 			try_attack()
 	else:
 		dir = _ai(delta)
