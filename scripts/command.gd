@@ -46,6 +46,8 @@ var show_ledger := false
 var ledger_hover := false
 var deltas := {}  # resource -> net change shown floating by the bar after dawn
 var deltas_t := 0.0
+var notices: Array = []  # [text, warning, time left]
+var over_menu: InkMenu
 var autosave_t := AUTOSAVE_EVERY
 
 
@@ -60,6 +62,8 @@ func _ready() -> void:
 	Saves.pending = {}  # Empire.from_dict already restored everything Command needs
 	Empire.day_passed.connect(_on_day_passed)
 	Empire.ledger_settled.connect(_on_ledger_settled)
+	Empire.notice.connect(_on_notice)
+	Empire.hollowmark_lost.connect(_on_hollowmark_lost)
 
 	var layer := CanvasLayer.new()
 	layer.layer = 5
@@ -74,12 +78,50 @@ func _ready() -> void:
 	slot_menu.top = 0.2
 	layer.add_child(slot_menu)
 	slot_menu.chosen.connect(_on_slot)
+	over_menu = InkMenu.new()
+	over_menu.visible = false
+	over_menu.dim = 0.6
+	layer.add_child(over_menu)
+	over_menu.chosen.connect(_on_over)
 
 
 func _on_day_passed(d: int) -> void:
+	_bake()  # the Blank moved: re-whiten the map
 	toast = "Day %d begins." % d
 	toast2 = "Supplies ran out. People are going hungry." if Empire.hungry else ""
 	toast_t = 3.5 if toast2 == "" else 5.0
+
+
+func _on_notice(text: String, warning: bool) -> void:
+	notices.append([text, warning, 7.0])
+	if notices.size() > 4:
+		notices.pop_front()
+
+
+func _on_hollowmark_lost() -> void:
+	# Defer: this arrives mid-tick, and the menu pauses the tree.
+	call_deferred("_show_lost")
+
+
+func _show_lost() -> void:
+	over_menu.setup("Hollowmark has been erased.", [
+		{"id": "load", "label": "Load game", "enabled": Saves.latest_slot() != ""},
+		{"id": "title", "label": "Quit to title"},
+	], "No town, no table, no one left to write you down.")
+	over_menu.visible = true
+	get_tree().paused = true
+
+
+func _on_over(id: String) -> void:
+	match id:
+		"load":
+			over_menu.visible = false
+			slot_mode = "load"
+			slot_menu.setup("Load which save?", Saves.slot_items(false))
+			slot_menu.visible = true
+		"title":
+			get_tree().paused = false
+			get_tree().change_scene_to_file(TITLE_SCENE)  # no autosave: the town is gone
 
 
 func _on_ledger_settled(net: Dictionary) -> void:
@@ -127,7 +169,7 @@ func _on_menu(id: String) -> void:
 func _on_slot(id: String) -> void:
 	if id == "back" or id == "cancel":
 		slot_menu.visible = false
-		menu.visible = true
+		(over_menu if Empire.territory().find("hollowmark")["owner"] == "erased" else menu).visible = true
 		return
 	if slot_mode == "load":
 		Saves.load_and_play(id)
@@ -252,6 +294,9 @@ func _process(delta: float) -> void:
 	Empire.playtime += delta
 	toast_t = maxf(toast_t - delta, 0.0)
 	deltas_t = maxf(deltas_t - delta, 0.0)
+	for n in notices:
+		n[2] -= delta
+	notices = notices.filter(func(n): return n[2] > 0.0)
 	autosave_t -= delta
 	if autosave_t <= 0.0:
 		autosave_t = AUTOSAVE_EVERY
@@ -393,6 +438,11 @@ func _draw() -> void:
 		_text_c(Vector2(_map_rect().get_center().x, MAP_ORIGIN.y + 22), toast, 12, Color(1, 0.95, 0.85, a), 4)
 		if toast2 != "":
 			_text_c(Vector2(_map_rect().get_center().x, MAP_ORIGIN.y + 36), toast2, 9, Color(1, 0.55, 0.5, a), 4)
+	var ny := MAP_ORIGIN.y + (52.0 if toast_t > 0.0 else 22.0)
+	for n in notices:
+		var a := clampf(float(n[2]) / 0.6, 0.0, 1.0)
+		_text_c(Vector2(_map_rect().get_center().x, ny), n[0], 9, Color(1, 0.62, 0.55, a) if n[1] else Color(0.92, 0.9, 0.84, a), 4)
+		ny += 13.0
 	if show_ledger or ledger_hover:
 		_draw_ledger()
 	if Empire.SPEEDS[Empire.speed] == 0:
@@ -557,6 +607,12 @@ func _draw_labels() -> void:
 		else:
 			draw_circle(pos + Vector2(0, -9), 2.0, Color("15111b"))
 		_text_c(pos + Vector2(0, 2), p["name"], 9, col, 0 if p["owner"] == "erased" else 4)
+		if Empire.surge.get("id", "") == p["id"]:
+			# A gathering surge: a pulsing red ring and a countdown.
+			var pulse := 0.5 + 0.5 * sin(t * 5.0)
+			draw_arc(pos + Vector2(0, -6), 14.0 + pulse * 3.0, 0, TAU, 32, Color(1, 0.35, 0.3, 0.5 + 0.4 * pulse), 2.0)
+			var dl := Empire.surge_days_left()
+			_text_c(pos + Vector2(0, 13), "Surge %s" % ("today" if dl <= 0 else "in %d day%s" % [dl, "" if dl == 1 else "s"]), 8, Color(1, 0.55, 0.5), 3)
 
 
 func _draw_legend() -> void:
@@ -592,7 +648,26 @@ func _draw_panel() -> void:
 	y += 5
 	draw_rect(Rect2(x, y, w, 5), Color(0.15, 0.13, 0.17))
 	draw_rect(Rect2(x, y, w * fray / 100.0, 5), Color(0.85, 0.84, 0.8).lerp(PAPER, fray / 100.0))
-	y += 18
+	y += 16
+	if owner != "erased":
+		var rate := Empire.fray_rate(p)
+		var rcol := Color("ff8a7a") if rate > 0 else (Color("9fd18b") if rate < 0 else Color(0.7, 0.68, 0.7))
+		var eta := ""
+		if rate > 0:
+			eta = "   erased in ~%d days" % ceili((100.0 - fray) / rate)
+		_text(Vector2(x, y), "Per day: %s%d%s" % ["+" if rate > 0 else "", rate, eta], 9, rcol)
+		y += 11
+		for src in Empire.fray_sources(p):
+			var v := int(src[1])
+			_text(Vector2(x + 6, y), ("+%d" if v > 0 else "%d") % v, 8, Color("ff9b8a") if v > 0 else Color("9fd18b"))
+			_text(Vector2(x + 24, y), src[0], 8, Color(0.7, 0.68, 0.7))
+			y += 10
+		if Empire.surge.get("id", "") == p["id"]:
+			_text(Vector2(x, y + 1), "Surge gathering: +%d Fray when it lands" % Empire.SURGE_FRAY, 8, Color(1, 0.55, 0.5))
+			y += 11
+		y += 6
+	else:
+		y += 2
 
 	# Output
 	var out: Dictionary = p.get("output", {})
