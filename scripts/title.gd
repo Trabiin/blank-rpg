@@ -1,11 +1,12 @@
 extends Control
 ## Title screen: the Blank slowly eating a black page, the Last Ink logo bleeding ink,
-## and a plain list menu (New Game, Continue, Options, Credits).
+## and a plain list menu (Continue, New Game, Load Game, Options, Credits).
 
 const GAME_SCENE := "res://scenes/main.tscn"
 
 var menu: InkMenu
 var credits: InkMenu
+var slots: InkMenu
 var t := 0.0
 var drips: Array = []  # [x offset in logo, length, speed]
 
@@ -22,13 +23,23 @@ func _ready() -> void:
 	menu.dim = 0.0
 	menu.top = 0.42
 	add_child(menu)
-	menu.setup("", [
-		{"id": "new", "label": "New Game"},
-		{"id": "continue", "label": "Continue", "enabled": false, "note": "(saving comes soon)"},
-		{"id": "options", "label": "Options", "enabled": false, "note": "(coming soon)"},
-		{"id": "credits", "label": "Credits"},
-	])
+	var latest := Saves.latest_slot()
+	var items := []
+	if latest != "":
+		items.append({"id": "continue", "label": "Continue", "detail": Saves.describe(latest)})
+	items.append({"id": "new", "label": "New Game"})
+	items.append({"id": "load", "label": "Load Game", "enabled": latest != "", "note": "(no saves yet)"})
+	items.append({"id": "options", "label": "Options", "enabled": false, "note": "(coming soon)"})
+	items.append({"id": "credits", "label": "Credits"})
+	menu.setup("", items)
 	menu.chosen.connect(_on_choice)
+
+	slots = InkMenu.new()
+	slots.visible = false
+	slots.dim = 0.85
+	slots.top = 0.2
+	add_child(slots)
+	slots.chosen.connect(_on_slot)
 
 	credits = InkMenu.new()
 	credits.visible = false
@@ -39,6 +50,14 @@ func _ready() -> void:
 	credits.chosen.connect(_close_credits)
 
 
+func _on_slot(id: String) -> void:
+	if id == "back" or id == "cancel":
+		slots.visible = false
+		menu.visible = true
+	else:
+		Saves.load_and_play(id)
+
+
 func _close_credits(_id: String) -> void:
 	credits.visible = false
 	menu.visible = true
@@ -47,7 +66,14 @@ func _close_credits(_id: String) -> void:
 func _on_choice(id: String) -> void:
 	match id:
 		"new":
+			Saves.pending = {}
 			get_tree().change_scene_to_file(GAME_SCENE)
+		"continue":
+			Saves.load_and_play(Saves.latest_slot())
+		"load":
+			slots.setup("Load which save?", Saves.slot_items(false))
+			menu.visible = false
+			slots.visible = true
 		"credits":
 			menu.visible = false
 			credits.visible = true
