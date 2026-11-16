@@ -42,8 +42,11 @@ var speed := 1  # index into SPEEDS
 var playtime := 0.0  # real seconds played, across Command and missions
 var res := START.duplicate()
 var hungry := false  # supplies ran out at the last dawn
-## Placeholder roster until recruits exist (#44): Ash and Bran eat like everyone else.
-var roster := ["Ash", "Bran"]
+## Recruits who have joined: id -> {"role": idle|party|governor, "target": province id, "injured": days}.
+## Static facts (name, stats, traits) live in data/recruits.json, see recruit().
+var recruits := {}
+var recruit_data := {}  # id -> Dictionary from the JSON, in file order
+var trait_data := {}
 var surge := {}  # {"id": province id, "day": day it lands} while one is gathering
 var next_surge_day := 4
 var rng := RandomNumberGenerator.new()
@@ -65,7 +68,14 @@ func reset() -> void:
 	playtime = 0.0
 	res = START.duplicate()
 	hungry = false
-	roster = ["Ash", "Bran"]
+	_load_recruit_data()
+	recruits = {}
+	for id in recruit_data:
+		if recruit_data[id].get("start", false):
+			recruits[id] = {"role": "idle", "target": "", "injured": 0}
+	for id in ["ash", "bran"]:
+		if recruits.has(id):
+			recruits[id]["role"] = "party"
 	surge = {}
 	next_surge_day = 4
 	rng.seed = 1234
@@ -80,6 +90,7 @@ func tick(delta: float) -> void:
 	while day_t >= 1.0:
 		day_t -= 1.0
 		day += 1
+		_heal()
 		_settle()
 		_advance_blank()
 		day_passed.emit(day)
@@ -99,7 +110,12 @@ func ledger() -> Array:
 		if keep < 0.99:
 			line["note"] = "-%d%% from Fray" % int(round((1.0 - keep) * 100.0))
 		lines.append(line)
-	lines.append({"label": "Upkeep (%d people)" % roster.size(), "gilt": 0, "supplies": -UPKEEP_SUPPLIES * roster.size(), "ink": 0, "note": ""})
+	for p in territory().provinces:
+		var gov := governor_of(p["id"])
+		if p["owner"] == "you" and gov != "":
+			var e := governor_effect(gov)
+			lines.append({"label": "  Governor %s" % recruit(gov)["name"], "gilt": e["gilt"], "supplies": e["supplies"], "ink": 0, "note": ""})
+	lines.append({"label": "Upkeep (%d people)" % recruits.size(), "gilt": 0, "supplies": -UPKEEP_SUPPLIES * recruits.size(), "ink": 0, "note": ""})
 	return lines
 
 
@@ -144,7 +160,11 @@ func fray_sources(p: Dictionary) -> Array:
 	if float(p["fray"]) > 50.0:
 		out.append(["Unravelling feeds itself", FRAY_MOMENTUM])
 	if p["owner"] == "you":
-		out.append(["No governor posted", FRAY_UNGOVERNED])
+		var gov := governor_of(p["id"])
+		if gov == "":
+			out.append(["No governor posted", FRAY_UNGOVERNED])
+		else:
+			out.append(["Governed by %s" % recruit(gov)["name"], governor_effect(gov)["fray"]])
 		out.append(["Tended by your people", FRAY_TENDED])
 	elif p["owner"] == "free":
 		out.append(["Nobody holds it", FRAY_UNHELD])
@@ -178,6 +198,10 @@ func _advance_blank() -> void:
 
 func _erase(p: Dictionary) -> void:
 	var was_yours: bool = p["owner"] == "you"
+	var gov := governor_of(p["id"])
+	if gov != "":
+		recruits[gov] = {"role": "idle", "target": "", "injured": 3}
+		notice.emit("%s fled %s, hurt. Out of action for 3 days." % [recruit(gov)["name"], p["name"]], true)
 	p["owner"] = "erased"
 	p["fray"] = 100
 	p["scar"] = 0
@@ -223,6 +247,129 @@ func surge_days_left() -> int:
 	return int(surge["day"]) - day if not surge.is_empty() else -1
 
 
+# ---------------------------------------------------------------- recruits and roles
+
+const PARTY_SIZE := 3
+const ROLE_NAMES := {"idle": "Idle", "party": "Party", "governor": "Governor", "staff": "Building staff",
+	"expedition": "Expedition", "researcher": "Researcher", "envoy": "Envoy"}
+
+
+func _load_recruit_data() -> void:
+	if not recruit_data.is_empty():
+		return
+	var f := FileAccess.open("res://data/recruits.json", FileAccess.READ)
+	var parsed = JSON.parse_string(f.get_as_text())
+	trait_data = parsed["traits"]
+	for r in parsed["recruits"]:
+		recruit_data[r["id"]] = r
+
+
+func recruit(id: String) -> Dictionary:
+	_load_recruit_data()
+	return recruit_data.get(id, {})
+
+
+## Joined recruits in roster order (the order of data/recruits.json).
+func roster_ids() -> Array:
+	return recruit_data.keys().filter(func(id): return recruits.has(id))
+
+
+func role_of(id: String) -> String:
+	return recruits.get(id, {}).get("role", "idle")
+
+
+func party_ids() -> Array:
+	return roster_ids().filter(func(id): return role_of(id) == "party")
+
+
+func governor_of(province_id: String) -> String:
+	for id in recruits:
+		if recruits[id]["role"] == "governor" and recruits[id]["target"] == province_id:
+			return id
+	return ""
+
+
+func has_trait(id: String, t: String) -> bool:
+	return t in recruit(id).get("traits", [])
+
+
+## What a recruit does for a province they govern: Fray change per day and extra output.
+func governor_effect(id: String) -> Dictionary:
+	var st: Dictionary = recruit(id)["stats"]
+	var fray := -(1 + int(st["grit"]) / 4)
+	if has_trait(id, "stubborn"):
+		fray -= 1
+	if has_trait(id, "coward"):
+		fray += 1
+	var gilt := int(st["charm"]) / 3 + (2 if has_trait(id, "greedy") else 0)
+	return {"fray": fray, "gilt": gilt, "supplies": int(st["craft"]) / 3}
+
+
+## Everything a recruit could be assigned to right now, with what it would do.
+## Each: {"role", "target", "label", "enabled", "note", "preview"}.
+func role_options(id: String) -> Array:
+	var r := recruit(id)
+	var st: Dictionary = recruits[id]
+	var out := []
+	var hurt := int(st["injured"]) > 0
+	var locked: bool = r.get("locked_party", false)
+	out.append({"role": "idle", "target": "", "label": "Idle in Hollowmark", "enabled": not locked,
+		"note": "Ash always leads the party" if locked else "", "preview": "Rests. Still eats."})
+	var in_party := party_ids().size()
+	var can_fight: bool = r["tier"] == "field"
+	var party_note := ""
+	if not can_fight:
+		party_note = "not a fighter"
+	elif role_of(id) != "party" and in_party >= PARTY_SIZE:
+		party_note = "party is full (%d/%d)" % [in_party, PARTY_SIZE]
+	elif hurt:
+		party_note = "injured"
+	out.append({"role": "party", "target": "", "label": "Party (%d/%d)" % [in_party, PARTY_SIZE],
+		"enabled": party_note == "" and not locked, "note": party_note, "preview": "Goes on missions with Ash."})
+	for p in territory().provinces:
+		if p["owner"] != "you":
+			continue
+		var e := governor_effect(id)
+		var current := governor_of(p["id"])
+		var replaces := "" if current == "" or current == id else "  (replaces %s)" % recruit(current)["name"]
+		var preview := "%s: Fray %d/day instead of +%d, +%d Gilt, +%d Supplies a day%s" % [p["name"], e["fray"], FRAY_UNGOVERNED, e["gilt"], e["supplies"], replaces]
+		out.append({"role": "governor", "target": p["id"], "label": "Govern %s" % p["name"],
+			"enabled": not locked and not hurt, "note": "injured" if hurt else "", "preview": preview})
+	for locked_role in [["staff", "needs buildings (#45)"], ["expedition", "needs a Guildhall"], ["researcher", "needs a Scriptorium"], ["envoy", "needs a faction contact"]]:
+		out.append({"role": locked_role[0], "target": "", "label": ROLE_NAMES[locked_role[0]], "enabled": false, "note": locked_role[1], "preview": ""})
+	return out
+
+
+func assign(id: String, role: String, target := "") -> bool:
+	for o in role_options(id):
+		if o["role"] == role and o["target"] == target and o["enabled"]:
+			if role == "governor":
+				var current := governor_of(target)
+				if current != "" and current != id:
+					recruits[current]["role"] = "idle"
+					recruits[current]["target"] = ""
+			recruits[id]["role"] = role
+			recruits[id]["target"] = target
+			return true
+	return false
+
+
+func role_label(id: String) -> String:
+	var st: Dictionary = recruits[id]
+	var label: String = ROLE_NAMES.get(st["role"], st["role"])
+	if st["role"] == "governor":
+		label = "Governor of %s" % territory().find(st["target"]).get("name", "?")
+	if int(st["injured"]) > 0:
+		label += "  (injured, %d days)" % int(st["injured"])
+	return label
+
+
+func _heal() -> void:
+	for id in recruits:
+		if int(recruits[id]["injured"]) > 0:
+			recruits[id]["injured"] = int(recruits[id]["injured"]) - 1
+
+
 func can_afford(cost: Dictionary) -> bool:
 	for k in cost:
 		if int(res.get(k, 0)) < int(cost[k]):
@@ -260,7 +407,7 @@ func to_dict() -> Dictionary:
 	for p in territory().provinces:
 		ps.append({"id": p["id"], "owner": p["owner"], "fray": p["fray"], "scar": p.get("scar", 0)})
 	return {"day": day, "day_t": day_t, "speed": speed, "playtime": playtime, "provinces": ps,
-		"res": res, "hungry": hungry, "roster": roster, "surge": surge, "next_surge_day": next_surge_day,
+		"res": res, "hungry": hungry, "recruits": recruits, "surge": surge, "next_surge_day": next_surge_day,
 		"rng_state": str(rng.state)}
 
 
@@ -276,7 +423,13 @@ func from_dict(d: Dictionary) -> void:
 	for k in START:
 		res[k] = int(saved_res.get(k, START[k]))
 	hungry = bool(d.get("hungry", false))
-	roster = d.get("roster", roster)
+	var saved_recruits = d.get("recruits", {})
+	if typeof(saved_recruits) == TYPE_DICTIONARY and not saved_recruits.is_empty():
+		recruits = {}
+		for id in saved_recruits:
+			if recruit_data.has(id):
+				var r: Dictionary = saved_recruits[id]
+				recruits[id] = {"role": r.get("role", "idle"), "target": r.get("target", ""), "injured": int(r.get("injured", 0))}
 	surge = d.get("surge", {})
 	next_surge_day = int(d.get("next_surge_day", 4))
 	if d.has("rng_state"):
