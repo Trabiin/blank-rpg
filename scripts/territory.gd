@@ -8,6 +8,7 @@ extends RefCounted
 
 const DATA := "res://data/provinces.json"
 const SEA := -1
+const BLANK_EDGE := 0.94  # map x (0-1) where the Blank's wall begins
 
 var provinces: Array = []  # Dictionaries from the JSON, plus "index" and "center"
 var neighbors: Array = []  # neighbors[i] = Array of province indices bordering i
@@ -42,6 +43,7 @@ func reload_data() -> void:
 	for i in mini(fresh.size(), provinces.size()):
 		for k in ["owner", "fray"]:
 			provinces[i][k] = fresh[i][k]
+		provinces[i]["scar"] = 0
 
 
 func find(id: String) -> Dictionary:
@@ -78,6 +80,7 @@ func build_grid(size: Vector2i) -> void:
 	var counts := []
 	neighbors = []
 	for i in provinces.size():
+		provinces[i]["at_edge"] = false
 		counts.append(0)
 		neighbors.append([])
 	for y in size.y:
@@ -86,6 +89,8 @@ func build_grid(size: Vector2i) -> void:
 			grid[y * size.x + x] = r
 			if r != SEA:
 				counts[r] += 1
+				if float(x) / size.x > BLANK_EDGE - 0.03:
+					provinces[r]["at_edge"] = true  # touches the wall of Blank down the east side
 	for y in size.y:
 		for x in size.x:
 			var a := grid[y * size.x + x]
