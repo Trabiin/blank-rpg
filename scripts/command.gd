@@ -40,7 +40,12 @@ var slot_menu: InkMenu
 var slot_mode := ""
 var menu_closed_frame := -1
 var toast := ""
+var toast2 := ""  # second, warning line (hunger and the like)
 var toast_t := 0.0
+var show_ledger := false
+var ledger_hover := false
+var deltas := {}  # resource -> net change shown floating by the bar after dawn
+var deltas_t := 0.0
 var autosave_t := AUTOSAVE_EVERY
 
 
@@ -54,6 +59,7 @@ func _ready() -> void:
 	selected = hm.get("index", 0)
 	Saves.pending = {}  # Empire.from_dict already restored everything Command needs
 	Empire.day_passed.connect(_on_day_passed)
+	Empire.ledger_settled.connect(_on_ledger_settled)
 
 	var layer := CanvasLayer.new()
 	layer.layer = 5
@@ -72,7 +78,13 @@ func _ready() -> void:
 
 func _on_day_passed(d: int) -> void:
 	toast = "Day %d begins." % d
-	toast_t = 3.0
+	toast2 = "Supplies ran out. People are going hungry." if Empire.hungry else ""
+	toast_t = 3.5 if toast2 == "" else 5.0
+
+
+func _on_ledger_settled(net: Dictionary) -> void:
+	deltas = net
+	deltas_t = 2.5
 
 
 # ---------------------------------------------------------------- menu and saving
@@ -239,6 +251,7 @@ func _process(delta: float) -> void:
 	Empire.tick(delta)
 	Empire.playtime += delta
 	toast_t = maxf(toast_t - delta, 0.0)
+	deltas_t = maxf(deltas_t - delta, 0.0)
 	autosave_t -= delta
 	if autosave_t <= 0.0:
 		autosave_t = AUTOSAVE_EVERY
@@ -253,6 +266,8 @@ func _process(delta: float) -> void:
 		Empire.set_speed(Empire.speed - 1)
 	elif Input.is_action_just_pressed("clock_faster"):
 		Empire.set_speed(Empire.speed + 1)
+	if Input.is_action_just_pressed("ledger"):
+		show_ledger = not show_ledger
 	var dir := Vector2.ZERO
 	if Input.is_action_just_pressed("move_left") or Input.is_action_just_pressed("ui_left"):
 		dir = Vector2.LEFT
@@ -293,6 +308,7 @@ func _step(dir: Vector2) -> void:
 func _gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:
 		hovered = _province_at(event.position)
+		ledger_hover = _res_rect().has_point(event.position)
 	elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		var i := _province_at(event.position)
 		if i >= 0:
@@ -301,6 +317,8 @@ func _gui_input(event: InputEvent) -> void:
 			selected = i
 		elif _play_rect().has_point(event.position):
 			_activate(selected)
+		elif _res_rect().has_point(event.position):
+			show_ledger = not show_ledger
 		elif _menu_button_rect().has_point(event.position):
 			_open_menu()
 		else:
@@ -365,16 +383,98 @@ func _draw() -> void:
 	_draw_labels()
 	draw_rect(_map_rect(), Color(0.3, 0.27, 0.33), false, 1.0)
 	# Top bar
-	_text(Vector2(6, 15), "THE INKLANDS", 12, Color("ece6da"))
-	_text(Vector2(100, 15), "Command Table", 9, Color(0.6, 0.58, 0.6))
+	_text(MAP_ORIGIN + Vector2(6, 14), "THE INKLANDS", 10, Color(0.85, 0.82, 0.76, 0.8), 3)
+	_draw_resources()
 	_draw_clock()
 	_draw_legend()
 	_draw_panel()
 	if toast_t > 0.0:
 		var a := clampf(toast_t / 0.5, 0.0, 1.0)
 		_text_c(Vector2(_map_rect().get_center().x, MAP_ORIGIN.y + 22), toast, 12, Color(1, 0.95, 0.85, a), 4)
+		if toast2 != "":
+			_text_c(Vector2(_map_rect().get_center().x, MAP_ORIGIN.y + 36), toast2, 9, Color(1, 0.55, 0.5, a), 4)
+	if show_ledger or ledger_hover:
+		_draw_ledger()
 	if Empire.SPEEDS[Empire.speed] == 0:
 		_text_c(Vector2(_map_rect().get_center().x, MAP_ORIGIN.y + MAP_CELLS.y * CELL - 24), "TIME PAUSED", 11, Color(1, 1, 1, 0.55 + 0.25 * sin(t * 3.0)), 4)
+
+
+func _res_rect() -> Rect2:
+	return Rect2(Vector2(2, 1), Vector2(222, 19))
+
+
+const RES_COLORS := {"gilt": Color("e8c66a"), "supplies": Color("b7c98a"), "ink": Color("8fa7e8"), "renown": Color("e8a0c8")}
+
+
+func _draw_res_icon(k: String, c: Vector2) -> void:
+	var col: Color = RES_COLORS[k]
+	match k:
+		"gilt":  # a coin
+			draw_circle(c, 4.0, col)
+			draw_circle(c, 2.0, col.darkened(0.35))
+		"supplies":  # a sack
+			draw_rect(Rect2(c + Vector2(-3, -2), Vector2(6, 6)), col)
+			draw_rect(Rect2(c + Vector2(-1.5, -4), Vector2(3, 2)), col.darkened(0.3))
+		"ink":  # a drop
+			draw_circle(c + Vector2(0, 1), 3.0, col)
+			draw_colored_polygon(PackedVector2Array([c + Vector2(-2.6, 0), c + Vector2(2.6, 0), c + Vector2(0, -5)]), col)
+		"renown":  # a star-ish diamond
+			draw_colored_polygon(PackedVector2Array([c + Vector2(0, -5), c + Vector2(4, 0), c + Vector2(0, 5), c + Vector2(-4, 0)]), col)
+
+
+func _draw_resources() -> void:
+	var net := Empire.daily_net()
+	var x := 8.0
+	for k in ["gilt", "supplies", "ink", "renown"]:
+		_draw_res_icon(k, Vector2(x + 3, 10))
+		var v := int(Empire.res[k])
+		var col := Color("ece6da")
+		if k == "supplies" and (Empire.hungry or v + int(net["supplies"]) < 0):
+			col = Color("ff8a7a")
+		_text(Vector2(x + 10, 15), str(v), 10, col)
+		var w := font.get_string_size(str(v), HORIZONTAL_ALIGNMENT_LEFT, -1, 10).x
+		if net.has(k) and int(net[k]) != 0:
+			var n := int(net[k])
+			_text(Vector2(x + 12 + w, 15), ("+%d" if n > 0 else "%d") % n, 8, Color("9fd18b") if n > 0 else Color("ff8a7a"))
+		if deltas_t > 0.0 and deltas.has(k) and int(deltas[k]) != 0:
+			var d := int(deltas[k])
+			var rise := (2.5 - deltas_t) * 6.0
+			_text(Vector2(x + 10, 30 - rise + 10), ("+%d" if d > 0 else "%d") % d, 10, Color(0.62, 0.82, 0.55, minf(deltas_t, 1.0)) if d > 0 else Color(1, 0.55, 0.5, minf(deltas_t, 1.0)), 3)
+		x += 56.0
+
+
+## The ledger: where every point of daily income and upkeep comes from.
+func _draw_ledger() -> void:
+	var lines := Empire.ledger()
+	var r := Rect2(Vector2(6, 22), Vector2(300, 54 + 13 * lines.size()))
+	draw_rect(r, Color(0.06, 0.05, 0.08, 0.95))
+	draw_rect(r, Color(0.45, 0.4, 0.48), false, 1.0)
+	var y := r.position.y + 14
+	_text(Vector2(r.position.x + 8, y), "Daily ledger", 10, Color("f3efe4"))
+	_text(Vector2(r.position.x + 150, y), "Gilt", 8, RES_COLORS["gilt"])
+	_text(Vector2(r.position.x + 182, y), "Supplies", 8, RES_COLORS["supplies"])
+	_text(Vector2(r.position.x + 226, y), "Ink", 8, RES_COLORS["ink"])
+	y += 14
+	for line in lines:
+		_text(Vector2(r.position.x + 8, y), line["label"], 9, Color(0.85, 0.83, 0.78))
+		if line["note"] != "":
+			_text(Vector2(r.position.x + 248, y), line["note"], 7, Color(0.6, 0.58, 0.6))
+		var cx := [150, 182, 226]
+		var ks := ["gilt", "supplies", "ink"]
+		for i in 3:
+			var v := int(line[ks[i]])
+			if v != 0:
+				_text(Vector2(r.position.x + cx[i], y), ("+%d" if v > 0 else "%d") % v, 9, Color("9fd18b") if v > 0 else Color("ff8a7a"))
+		y += 13
+	draw_line(Vector2(r.position.x + 8, y - 8), Vector2(r.end.x - 8, y - 8), Color(0.3, 0.27, 0.33))
+	var net := Empire.daily_net()
+	_text(Vector2(r.position.x + 8, y + 3), "Each dawn", 9, Color("f3efe4"))
+	var cx2 := [150, 182, 226]
+	var ks2 := ["gilt", "supplies", "ink"]
+	for i in 3:
+		var v := int(net[ks2[i]])
+		_text(Vector2(r.position.x + cx2[i], y + 3), ("+%d" if v >= 0 else "%d") % v, 9, Color("9fd18b") if v > 0 else (Color("ff8a7a") if v < 0 else Color(0.6, 0.58, 0.6)))
+	_text(Vector2(r.position.x + 8, r.end.y - 6), "L / Back / tap the bar to toggle", 7, Color(0.5, 0.48, 0.52))
 
 
 func _draw_clock() -> void:
