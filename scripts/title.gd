@@ -68,6 +68,7 @@ func _on_choice(id: String) -> void:
 	match id:
 		"new":
 			Saves.pending = {}
+			Empire.reset()
 			get_tree().change_scene_to_file(GAME_SCENE)
 		"continue":
 			Saves.load_and_play(Saves.latest_slot())
@@ -76,6 +77,8 @@ func _on_choice(id: String) -> void:
 			menu.visible = false
 			slots.visible = true
 		"command":
+			Saves.pending = {}
+			Empire.reset()
 			get_tree().change_scene_to_file("res://scenes/command.tscn")
 		"credits":
 			menu.visible = false

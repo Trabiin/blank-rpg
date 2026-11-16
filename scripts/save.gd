@@ -9,6 +9,7 @@ extends Node
 const VERSION := 1
 const SLOTS := ["auto", "1", "2", "3"]
 const GAME_SCENE := "res://scenes/main.tscn"
+const COMMAND_SCENE := "res://scenes/command.tscn"
 
 ## Snapshot for the game scene to apply on its next _ready(), then clear.
 var pending: Dictionary = {}
@@ -25,6 +26,8 @@ func slot_label(slot: String) -> String:
 func save(slot: String, data: Dictionary) -> bool:
 	data["version"] = VERSION
 	data["saved_at"] = int(Time.get_unix_time_from_system())
+	data["playtime"] = Empire.playtime
+	data["empire"] = Empire.to_dict()
 	var f := FileAccess.open(_path(slot), FileAccess.WRITE)
 	if f == null:
 		push_warning("Could not write save %s: %s" % [slot, error_string(FileAccess.get_open_error())])
@@ -65,7 +68,8 @@ func describe(slot: String) -> String:
 	if d.is_empty():
 		return "(empty)"
 	var mins := int(float(d.get("playtime", 0.0)) / 60.0)
-	return "%s   %dm played   (%s)" % [d.get("area_name", "?"), mins, _ago(int(d["saved_at"]))]
+	var day := int(d.get("empire", {}).get("day", 1))
+	return "Day %d   %s   %dm played   (%s)" % [day, d.get("area_name", "?"), mins, _ago(int(d["saved_at"]))]
 
 
 func _ago(t: int) -> String:
@@ -79,14 +83,19 @@ func _ago(t: int) -> String:
 	return "%d days ago" % (s / 86400)
 
 
-## Loads a slot into `pending` and starts the game scene. Returns false if the slot is empty.
+## Loads a slot and starts the scene it was saved in (a mission or the Command Table).
+## The empire state is restored right away; scene-specific data waits in `pending`.
+## Returns false if the slot is empty.
 func load_and_play(slot: String) -> bool:
 	var d := read(slot)
 	if d.is_empty():
 		return false
+	Empire.from_dict(d.get("empire", {}))
+	if not d.has("empire"):
+		Empire.playtime = float(d.get("playtime", 0.0))
 	pending = d
 	get_tree().paused = false
-	get_tree().change_scene_to_file(GAME_SCENE)
+	get_tree().change_scene_to_file(d.get("scene", GAME_SCENE))
 	return true
 
 

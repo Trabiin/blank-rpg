@@ -12,6 +12,11 @@ func _ready() -> void:
 	_add_action("attack", [KEY_J, KEY_SPACE, KEY_Z], [JOY_BUTTON_A, JOY_BUTTON_X])
 	_add_action("swap", [KEY_TAB, KEY_Q], [JOY_BUTTON_Y])
 	_add_action("pause", [KEY_ESCAPE, KEY_P], [JOY_BUTTON_START])
+	# Command clock: 1-4 pick pause/1x/2x/4x, shoulders step slower/faster.
+	_add_action("clock_slower", [], [JOY_BUTTON_LEFT_SHOULDER])
+	_add_action("clock_faster", [], [JOY_BUTTON_RIGHT_SHOULDER])
+	for i in 4:
+		_add_action("clock_speed_%d" % i, [KEY_1 + i, KEY_KP_1 + i], [])
 	# Menus use Godot's ui_* actions; also let WASD, J and the stick drive them.
 	_extend("ui_up", [KEY_W], JOY_AXIS_LEFT_Y, -1.0)
 	_extend("ui_down", [KEY_S], JOY_AXIS_LEFT_Y, 1.0)
