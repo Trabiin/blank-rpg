@@ -4,7 +4,7 @@
 - Paper-doll layers: every Puny Characters class sheet is diffed against the bare
   Character-Base sheet, so each outfit becomes its own transparent layer that the
   game stacks on the body and recolors in code.
-- Tiles: the overworld sheet is copied as-is; the game picks tiles by grid position.
+- Tiles: the overworld sheet is copied as-is, and the dirt tile is saved separately for the terrain blend shader.
 
 Run from the repo root:  python3 tools/import_art.py   (needs Pillow)
 """
@@ -41,7 +41,14 @@ def outfit_layers():
 
 
 def tiles():
-    Image.open(SRC / "zeldalike" / "Overworld.png").convert("RGBA").save(TILES / "overworld.png")
+    ow = Image.open(SRC / "zeldalike" / "Overworld.png").convert("RGBA")
+    ow.save(TILES / "overworld.png")
+    dirt_transitions(ow)
+
+
+def dirt_transitions(ow):
+    """The dirt tile on its own, so the terrain shader can repeat it under smooth path masks."""
+    ow.crop((1 * T, 30 * T, 2 * T, 31 * T)).save(TILES / "dirt.png")
 
 
 if __name__ == "__main__":
