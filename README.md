@@ -3,7 +3,7 @@
 A short action RPG in the spirit of 90s Secret of Mana and Final Fantasy, with modern quality of life.
 Reality is being eaten by a hungry Blank, and you are the one person it spat back out.
 
-**Play in your browser:** https://trabiin.github.io/blank-rpg/ (rebuilt automatically on every push to `main`)
+**Play in your browser:** https://trabiin.github.io/last-ink/ (rebuilt automatically on every push to `main`)
 
 - Design document: [docs/DESIGN.md](docs/DESIGN.md)
 - Asset credits: [CREDITS.md](CREDITS.md)
@@ -22,5 +22,7 @@ Attacks use a power gauge: swinging before it refills still hits, but for less d
 ## Development
 
 - Engine: Godot 4.3 (open `project.godot`).
+- Art: CC0 packs in `assets/source/` (see [CREDITS.md](CREDITS.md)). After changing them, run
+  `python3 tools/import_art.py` to rebuild the paper-doll layers in `assets/characters/`.
 - Web export: `godot --headless --export-release "Web" build/web/index.html` (needs the 4.3 web export templates).
 - CI: `.github/workflows/deploy-web.yml` builds every push and PR, and deploys `main` to GitHub Pages.

@@ -36,7 +36,7 @@ func take_hit(amount: int, from: Vector2, force := 160.0) -> bool:
 		away = Vector2.RIGHT.rotated(randf() * TAU)
 	knockback = away.normalized() * force
 	flash_t = 0.12
-	Fx.damage_number(get_parent(), global_position + Vector2(0, -26), str(amount), number_color)
+	Fx.damage_number(get_parent(), global_position + Vector2(0, -16), str(amount), number_color)
 	_on_hit()
 	if hp <= 0:
 		dead = true

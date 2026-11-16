@@ -3,7 +3,7 @@
 > A short, complete action RPG in the spirit of 90s Secret of Mana and Final Fantasy,
 > with modern quality of life. Weird, dark, funny. Rated Mature.
 >
-> Title: **Last Ink**. The repo is still named `blank-rpg` for now; it can be renamed on GitHub any time.
+> Title: **Last Ink**. Repo: `Trabiin/last-ink` (renamed from `blank-rpg`).
 
 ---
 
@@ -38,8 +38,12 @@ Web builds use Godot's single-threaded export, so they run on GitHub Pages witho
 | Portraits | AI-generated stills for dialogue and menus, one consistent style prompt, cleaned up per hero |
 | FX and UI | Drawn in code (slashes, damage numbers, the Blank's static, menus) |
 
-The current prototype uses **code-drawn placeholder art only** (shapes with palette colors). The paper-doll
-system already drives hero colors from a palette dictionary, so swapping in sprite layers later is a contained change.
+**Status (art feasibility pass):** the meadow now uses ArMM1998's CC0 Zelda-like overworld tiles, graded darker
+by a shader, and the Blank drains them to paper-white as it approaches. Heroes use Shade's CC0 *Puny Characters*:
+`tools/import_art.py` diffs each class sheet against the bare body sheet to produce separate outfit layers, and a
+palette-swap shader recolors the body and outfit per hero (skin, cloth, metal, accent...). Every hero shares the
+same 8-direction walk, swing, hurt and knockdown animations. Nibblers are Puny's slime recolored to blank-white.
+Ash = body + archer layer in indigo; Bran = body + warrior layer in bronze and rust.
 
 ## 4. Combat
 

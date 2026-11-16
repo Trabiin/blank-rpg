@@ -40,7 +40,7 @@ func _process(delta: float) -> void:
 		queue_free()
 		return
 	if kind == Kind.NUMBER:
-		position.y -= 28.0 * delta
+		position.y -= 20.0 * delta
 	else:
 		for p in particles:
 			p[0] += p[1] * delta
@@ -52,7 +52,7 @@ func _draw() -> void:
 	var a := 1.0 - life / max_life
 	if kind == Kind.NUMBER:
 		var font := ThemeDB.fallback_font
-		var size := 11
+		var size := 8
 		var w := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x
 		for o in [Vector2(-1, 0), Vector2(1, 0), Vector2(0, -1), Vector2(0, 1)]:
 			draw_string(font, Vector2(-w / 2.0, 0) + o, text, HORIZONTAL_ALIGNMENT_LEFT, -1, size, Color(0, 0, 0, a))
