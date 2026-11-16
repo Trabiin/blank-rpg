@@ -1,0 +1,64 @@
+class_name Actor
+extends CharacterBody2D
+## Shared base for heroes and enemies: HP, knockback, hit flash.
+
+signal died(actor: Actor)
+
+var max_hp := 40
+var hp := 40
+var move_speed := 80.0
+var facing := Vector2.DOWN
+var knockback := Vector2.ZERO
+var flash_t := 0.0
+var invuln_t := 0.0
+var dead := false
+var radius := 6.0
+var number_color := Color.WHITE
+var anim_t := 0.0
+
+
+func _ready() -> void:
+	hp = max_hp
+	var shape := CircleShape2D.new()
+	shape.radius = radius
+	var col := CollisionShape2D.new()
+	col.shape = shape
+	add_child(col)
+	collision_mask = 1
+
+
+func take_hit(amount: int, from: Vector2, force := 160.0) -> bool:
+	if dead or invuln_t > 0.0:
+		return false
+	hp = max(hp - amount, 0)
+	var away := global_position - from
+	if away.length() < 0.01:
+		away = Vector2.RIGHT.rotated(randf() * TAU)
+	knockback = away.normalized() * force
+	flash_t = 0.12
+	Fx.damage_number(get_parent(), global_position + Vector2(0, -26), str(amount), number_color)
+	_on_hit()
+	if hp <= 0:
+		dead = true
+		_on_death()
+		died.emit(self)
+	return true
+
+
+func _on_hit() -> void:
+	pass
+
+
+func _on_death() -> void:
+	pass
+
+
+## Returns WHITE while the hit flash is active, else the given color.
+func c(col: Color) -> Color:
+	return Color.WHITE if flash_t > 0.0 else col
+
+
+func draw_shadow(r := 7.0) -> void:
+	draw_set_transform(Vector2.ZERO, 0.0, Vector2(1.0, 0.4))
+	draw_circle(Vector2.ZERO, r, Color(0, 0, 0, 0.3))
+	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
