@@ -5,12 +5,11 @@ extends Node2D
 const HeroScript := preload("res://scripts/hero.gd")
 const EnemyScript := preload("res://scripts/enemy.gd")
 const PropScript := preload("res://scripts/prop.gd")
-const GroundScript := preload("res://scripts/ground.gd")
 const BlankScript := preload("res://scripts/blank.gd")
 const HudScript := preload("res://scripts/hud.gd")
 const TouchScript := preload("res://scripts/touch.gd")
 
-const WORLD := Vector2(1280, 960)
+const MAP := "res://maps/frayed_meadow.txt"
 const MAX_ENEMIES := 7
 const RESPAWN_TIME := 6.0
 
@@ -21,7 +20,8 @@ var blank: Blank
 var camera: Camera2D
 var hud  # hud.gd
 var touch  # touch.gd
-var props: Array = []
+var area: Area
+var world := Vector2.ZERO
 var kills := 0
 var shake_amount := 0.0
 var respawn_t := 0.0
@@ -37,32 +37,31 @@ func _ready() -> void:
 	randomize()
 	_setup_input()
 
-	var ground = GroundScript.new()
-	ground.size = WORLD
-	add_child(ground)
-
-	blank = Blank.new()
-	blank.height = WORLD.y
-	blank.width = WORLD.x
-	add_child(blank)
-	ground.blank_x = blank.base_x
-	ground.build()
-	Art.world_material().set_shader_parameter("blank_x", blank.base_x)
-
 	entities = Node2D.new()
 	entities.y_sort_enabled = true
+	area = Area.new()
+	add_child(area)
+	area.build(MAP, entities)
+	world = area.world_size()
+
+	blank = Blank.new()
+	blank.base_x = area.blank_x
+	blank.height = world.y
+	blank.width = world.x
+	add_child(blank)
+	Art.world_material().set_shader_parameter("blank_x", blank.base_x)
+
 	add_child(entities)
-
 	_build_walls()
-	_build_props()
 
+	var start := area.party_start
 	# Same body and animation rig for everyone; outfit layer + colors make the hero.
-	var ash := _make_hero("Ash", Vector2(220, 470), "archer", {
+	var ash := _make_hero("Ash", start, "archer", {
 		"skin": Color("efd2bd"), "cloth": Color("4b4f86"), "leather": Color("3b3346"),
 		"boots": Color("2a2433"), "trim": Color("dcd8ee"),
 	})
 	ash.base_damage = 10
-	var bran := _make_hero("Bran", Vector2(195, 495), "warrior", {
+	var bran := _make_hero("Bran", start + Vector2(-20, 14), "warrior", {
 		"skin": Color("c98e6a"), "metal": Color("8c7f72"), "accent": Color("b0442f"),
 		"boots": Color("3a2c22"),
 	})
@@ -74,8 +73,8 @@ func _ready() -> void:
 	bran.reach = 21.0
 	_set_leader(ash)
 
-	for i in 5:
-		_spawn_enemy(Vector2(randf_range(600, 1000), randf_range(140, 820)))
+	for p in area.spawns:
+		_spawn_enemy(p)
 
 	camera = Camera2D.new()
 	camera.zoom = Vector2(2, 2)
@@ -83,8 +82,8 @@ func _ready() -> void:
 	camera.position_smoothing_speed = 7.0
 	camera.limit_left = 0
 	camera.limit_top = 0
-	camera.limit_right = int(WORLD.x)
-	camera.limit_bottom = int(WORLD.y)
+	camera.limit_right = int(world.x)
+	camera.limit_bottom = int(world.y)
 	add_child(camera)
 	camera.global_position = leader.global_position
 	camera.reset_smoothing()
@@ -139,10 +138,10 @@ func _build_walls() -> void:
 	add_child(walls)
 	var t := 40.0
 	for r in [
-		Rect2(-t, -t, WORLD.x + 2 * t, t),
-		Rect2(-t, WORLD.y, WORLD.x + 2 * t, t),
-		Rect2(-t, 0, t, WORLD.y),
-		Rect2(WORLD.x, 0, t, WORLD.y),
+		Rect2(-t, -t, world.x + 2 * t, t),
+		Rect2(-t, world.y, world.x + 2 * t, t),
+		Rect2(-t, 0, t, world.y),
+		Rect2(world.x, 0, t, world.y),
 	]:
 		var shape := RectangleShape2D.new()
 		shape.size = r.size
@@ -150,47 +149,6 @@ func _build_walls() -> void:
 		col.shape = shape
 		col.position = r.position + r.size / 2.0
 		walls.add_child(col)
-
-
-func _build_props() -> void:
-	var rng := RandomNumberGenerator.new()
-	rng.seed = 42
-	var placed := 0
-	var tries := 0
-	var kinds := ["bush", "bush", "bush", "shrub", "shrub", "rock", "rock_big", "stump"]
-	while placed < 150 and tries < 4000:
-		tries += 1
-		var p := Vector2(rng.randf_range(30, WORLD.x - 60), rng.randf_range(30, WORLD.y - 20))
-		var path_y: float = GroundScript.path_y(p.x)
-		if absf(p.y - path_y) < 34.0 or p.distance_to(Vector2(210, 480)) < 70.0:
-			continue
-		var ok := true
-		for q in props:
-			if (q as Node2D).position.distance_to(p) < 30.0:
-				ok = false
-				break
-		if not ok:
-			continue
-		_add_prop(kinds[rng.randi() % kinds.size()], p, rng.randi())
-		placed += 1
-	# Leftovers of people the Blank already ate.
-	for i in 14:
-		var p := Vector2(rng.randf_range(blank.base_x - 260.0, blank.base_x - 20.0), rng.randf_range(40, WORLD.y - 40))
-		_add_prop("skull" if i % 3 == 0 else "bones", p, i)
-	var sign1 = _add_prop("sign", Vector2(290, 452), 0)
-	sign1.text = "WELCOME TO THE FRAYED MEADOW\npop. 212   pop. 40   pop. ?"
-	var sign2 = _add_prop("sign", Vector2(960, 540), 0)
-	sign2.text = "HOLLOWMARK  ->  (east)\n(east is gone)"
-
-
-func _add_prop(kind: String, p: Vector2, seed_v: int):
-	var prop = PropScript.new()
-	prop.kind = kind
-	prop.position = p
-	prop.seed_v = seed_v
-	entities.add_child(prop)
-	props.append(prop)
-	return prop
 
 
 func _make_hero(hero_name: String, pos: Vector2, outfit: String, colors: Dictionary) -> Hero:
@@ -329,7 +287,7 @@ func _update_respawn(delta: float) -> void:
 	respawn_t -= delta
 	if respawn_t <= 0.0:
 		respawn_t = RESPAWN_TIME
-		var y := randf_range(80, WORLD.y - 80)
+		var y := randf_range(80, world.y - 80)
 		_spawn_enemy(Vector2(blank.edge_x(y) - 16.0, y))
 
 
@@ -349,7 +307,7 @@ func _update_banter(delta: float) -> void:
 func _update_signs() -> void:
 	var txt := ""
 	if leader:
-		for p in props:
+		for p in area.props:
 			if p.kind == "sign" and (p as Node2D).global_position.distance_to(leader.global_position) < 34.0:
 				txt = p.text
 	hud.sign_text = txt

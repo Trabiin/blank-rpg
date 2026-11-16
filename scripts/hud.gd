@@ -70,7 +70,7 @@ func _draw() -> void:
 		x += 118.0
 
 	# Area name, top-left
-	_text(Vector2(8, 14), "The Frayed Meadow", 10, Color(0.9, 0.88, 0.8))
+	_text(Vector2(8, 14), party.area.area_name, 10, Color(0.9, 0.88, 0.8))
 	_text(Vector2(8, 26), "Nibblers dispersed: %d" % party.kills, 8, Color(0.75, 0.75, 0.75))
 
 	if banter_t > 0.0:

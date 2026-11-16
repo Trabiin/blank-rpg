@@ -11,7 +11,10 @@ const KINDS := {
 	"skull": [28, 2, 1, 1, 0.0],
 	"bones": [29, 2, 1, 1, 0.0],
 	"sign": [34, 2, 1, 1, 5.0],
+	"pond": [2, 9, 2, 2, 13.0],
 }
+## Flat things lie on the ground: always drawn under characters.
+const FLAT := ["pond", "bones", "skull"]
 
 var kind := "bush"
 var text := ""
@@ -20,6 +23,8 @@ var seed_v := 0
 
 func _ready() -> void:
 	collision_layer = 1
+	if kind in FLAT:
+		z_index = -1
 	var k: Array = KINDS[kind]
 	var spr := Sprite2D.new()
 	spr.texture = Art.tile_region(k[0], k[1], k[2], k[3])
