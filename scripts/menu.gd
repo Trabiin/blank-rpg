@@ -8,7 +8,7 @@ signal chosen(id: String)
 
 var title := ""
 var subtitle := ""
-var items: Array = []  # each: {"id": String, "label": String, "enabled": bool, "note": String}
+var items: Array = []  # each: {"id", "label", "enabled", "note" (beside, when disabled), "detail" (line below)}
 var selected := 0
 var dim := 0.7
 var title_size := 22
@@ -142,4 +142,9 @@ func _draw() -> void:
 			draw_colored_polygon(PackedVector2Array([Vector2(mx - 2.6, y - 5.5), Vector2(mx + 2.6, y - 5.5), Vector2(mx, y - 10.5)]), Color("ffd166"))
 		if not enabled and it.get("note", "") != "":
 			draw_string(font, Vector2(r.end.x + 6.0, y - 1.0), it["note"], HORIZONTAL_ALIGNMENT_LEFT, -1, 8, Color(0.55, 0.55, 0.58))
+		if it.get("detail", "") != "":
+			# A second, smaller line under the label (save slot info and the like).
+			_centered(font, y + 11.0, it["detail"], 8, Color(0.62, 0.6, 0.6) if enabled else Color(0.45, 0.45, 0.48))
+			_rects[i] = r.merge(Rect2(r.position.x, y, r.size.x, 12.0))
+			y += 11.0
 		y += 20.0
