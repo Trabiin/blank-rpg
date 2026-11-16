@@ -25,12 +25,23 @@ func _init() -> void:
 	_coast.seed = 19
 	_coast.frequency = 0.02
 	_coast.fractal_octaves = 3
-	var f := FileAccess.open(DATA, FileAccess.READ)
-	assert(f != null, "Missing " + DATA)
-	var parsed = JSON.parse_string(f.get_as_text())
-	provinces = parsed["provinces"]
+	provinces = _read()
 	for i in provinces.size():
 		provinces[i]["index"] = i
+
+
+func _read() -> Array:
+	var f := FileAccess.open(DATA, FileAccess.READ)
+	assert(f != null, "Missing " + DATA)
+	return JSON.parse_string(f.get_as_text())["provinces"]
+
+
+## Puts the changeable fields (owner, Fray) back to their starting values. Shapes stay.
+func reload_data() -> void:
+	var fresh := _read()
+	for i in mini(fresh.size(), provinces.size()):
+		for k in ["owner", "fray"]:
+			provinces[i][k] = fresh[i][k]
 
 
 func find(id: String) -> Dictionary:

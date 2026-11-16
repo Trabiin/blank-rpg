@@ -35,7 +35,6 @@ var banter_queue: Array = []
 var banter_t := 1.0
 var said_low_power := false
 var said_first_kill := false
-var playtime := 0.0
 var autosave_t := 3.0  # first autosave a few seconds into a new game
 var slot_menu: InkMenu
 var slot_mode := ""  # "save" or "load"
@@ -317,7 +316,7 @@ func snapshot() -> Dictionary:
 	return {
 		"map": MAP,
 		"area_name": area.area_name,
-		"playtime": playtime,
+		"scene": "res://scenes/main.tscn",
 		"kills": kills,
 		"leader": heroes.find(leader),
 		"heroes": hs,
@@ -328,7 +327,6 @@ func snapshot() -> Dictionary:
 
 
 func _apply_snapshot(d: Dictionary) -> void:
-	playtime = float(d.get("playtime", 0.0))
 	kills = int(d.get("kills", 0))
 	banter_queue = d.get("banter", [])
 	said_first_kill = bool(d.get("said_first_kill", false))
@@ -397,7 +395,7 @@ func _process(delta: float) -> void:
 		shake_amount = maxf(shake_amount - 20.0 * delta, 0.0)
 		camera.offset = Vector2(randf_range(-1, 1), randf_range(-1, 1)) * shake_amount
 
-	playtime += delta
+	Empire.playtime += delta
 	autosave_t -= delta
 	if autosave_t <= 0.0:
 		if can_autosave():

@@ -1,5 +1,6 @@
 extends Control
-## The Command Table: the territory map of the Inklands and a panel for the selected province.
+## The Command Table: the territory map of the Inklands, a panel for the selected province,
+## and the day clock (which only runs while this scene is open and unpaused).
 ##
 ## The map is rasterised from Territory at half resolution and shown at 2x, so it reads as
 ## pixel art. Owner colours, borders, the Blank's whitening (Fray) and roads are all baked or
@@ -8,7 +9,8 @@ extends Control
 const TITLE_SCENE := "res://scenes/title.tscn"
 const CELL := 2  # screen pixels per map cell
 const MAP_ORIGIN := Vector2(4, 22)
-const MAP_CELLS := Vector2i(214, 166)
+const MAP_CELLS := Empire.MAP_CELLS
+const AUTOSAVE_EVERY := 60.0
 const PANEL_X := 440.0
 
 const OWNER_NAMES := {
@@ -33,17 +35,116 @@ var outlines: Array = []  # per province: PackedVector2Array of border cells
 var blank_edge := PackedVector2Array()  # white cells touching colour: where static crawls
 var t := 0.0
 var font: Font
+var menu: InkMenu
+var slot_menu: InkMenu
+var slot_mode := ""
+var menu_closed_frame := -1
+var toast := ""
+var toast_t := 0.0
+var autosave_t := AUTOSAVE_EVERY
 
 
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	get_tree().paused = false
 	font = ThemeDB.fallback_font
-	territory = Territory.new()
-	territory.build_grid(MAP_CELLS)
+	territory = Empire.territory()
 	_bake()
 	var hm := territory.find("hollowmark")
 	selected = hm.get("index", 0)
+	Saves.pending = {}  # Empire.from_dict already restored everything Command needs
+	Empire.day_passed.connect(_on_day_passed)
+
+	var layer := CanvasLayer.new()
+	layer.layer = 5
+	layer.process_mode = Node.PROCESS_MODE_ALWAYS
+	add_child(layer)
+	menu = InkMenu.new()
+	menu.visible = false
+	layer.add_child(menu)
+	menu.chosen.connect(_on_menu)
+	slot_menu = InkMenu.new()
+	slot_menu.visible = false
+	slot_menu.top = 0.2
+	layer.add_child(slot_menu)
+	slot_menu.chosen.connect(_on_slot)
+
+
+func _on_day_passed(d: int) -> void:
+	toast = "Day %d begins." % d
+	toast_t = 3.0
+
+
+# ---------------------------------------------------------------- menu and saving
+
+func _menu_items(note := "") -> void:
+	menu.setup("Command", [
+		{"id": "resume", "label": "Resume"},
+		{"id": "save", "label": "Save game"},
+		{"id": "load", "label": "Load game", "enabled": Saves.latest_slot() != "", "note": "(no saves yet)"},
+		{"id": "title", "label": "Quit to title"},
+	], note)
+
+
+func _open_menu() -> void:
+	_menu_items()
+	menu.visible = true
+	get_tree().paused = true
+
+
+func _close_menu() -> void:
+	menu.visible = false
+	slot_menu.visible = false
+	get_tree().paused = false
+	menu_closed_frame = Engine.get_process_frames()  # the closing key must not also act on the map
+
+
+func _on_menu(id: String) -> void:
+	match id:
+		"resume", "cancel":
+			_close_menu()
+		"save", "load":
+			slot_mode = id
+			menu.visible = false
+			slot_menu.setup("Save to which slot?" if id == "save" else "Load which save?", Saves.slot_items(id == "save"))
+			slot_menu.visible = true
+		"title":
+			_leave(TITLE_SCENE)
+
+
+func _on_slot(id: String) -> void:
+	if id == "back" or id == "cancel":
+		slot_menu.visible = false
+		menu.visible = true
+		return
+	if slot_mode == "load":
+		Saves.load_and_play(id)
+		return
+	var ok := Saves.save(id, snapshot())
+	slot_menu.visible = false
+	_menu_items(("Saved to %s." % Saves.slot_label(id)) if ok else "Saving failed. Your browser may be blocking storage.")
+	menu.visible = true
+
+
+func snapshot() -> Dictionary:
+	return {"scene": Saves.COMMAND_SCENE, "area_name": "Command Table"}
+
+
+func autosave() -> void:
+	Saves.save("auto", snapshot())
+
+
+## Leaves Command for another scene, autosaving first so the empire is never lost.
+func _leave(scene: String) -> void:
+	autosave()
+	get_tree().paused = false
+	get_tree().change_scene_to_file(scene)
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_APPLICATION_FOCUS_OUT or what == NOTIFICATION_WM_CLOSE_REQUEST:
+		if is_inside_tree():
+			autosave()
 
 
 func _map_rect() -> Rect2:
@@ -135,6 +236,23 @@ func _is_border(x: int, y: int, r: int) -> bool:
 
 func _process(delta: float) -> void:
 	t += delta
+	Empire.tick(delta)
+	Empire.playtime += delta
+	toast_t = maxf(toast_t - delta, 0.0)
+	autosave_t -= delta
+	if autosave_t <= 0.0:
+		autosave_t = AUTOSAVE_EVERY
+		autosave()
+	queue_redraw()
+	if Engine.get_process_frames() == menu_closed_frame:
+		return
+	for i in Empire.SPEEDS.size():
+		if Input.is_action_just_pressed("clock_speed_%d" % i):
+			Empire.set_speed(i)
+	if Input.is_action_just_pressed("clock_slower"):
+		Empire.set_speed(Empire.speed - 1)
+	elif Input.is_action_just_pressed("clock_faster"):
+		Empire.set_speed(Empire.speed + 1)
 	var dir := Vector2.ZERO
 	if Input.is_action_just_pressed("move_left") or Input.is_action_just_pressed("ui_left"):
 		dir = Vector2.LEFT
@@ -149,9 +267,7 @@ func _process(delta: float) -> void:
 	if Input.is_action_just_pressed("ui_accept"):
 		_activate(selected)
 	elif Input.is_action_just_pressed("ui_cancel") or Input.is_action_just_pressed("pause"):
-		get_tree().change_scene_to_file(TITLE_SCENE)
-		return
-	queue_redraw()
+		_open_menu()
 
 
 ## Moves the selection to the best province in a direction: close, and roughly that way.
@@ -185,8 +301,12 @@ func _gui_input(event: InputEvent) -> void:
 			selected = i
 		elif _play_rect().has_point(event.position):
 			_activate(selected)
-		elif Rect2(Vector2(size.x - 70, 2), Vector2(68, 16)).has_point(event.position):
-			get_tree().change_scene_to_file(TITLE_SCENE)
+		elif _menu_button_rect().has_point(event.position):
+			_open_menu()
+		else:
+			for sp in Empire.SPEEDS.size():
+				if _speed_rect(sp).has_point(event.position):
+					Empire.set_speed(sp)
 
 
 func _province_at(pos: Vector2) -> int:
@@ -204,7 +324,15 @@ func _mission(i: int) -> Dictionary:
 func _activate(i: int) -> void:
 	var m := _mission(i)
 	if not m.is_empty():
-		get_tree().change_scene_to_file(m["scene"])
+		_leave(m["scene"])  # the clock stops here: missions take no Command time
+
+
+func _speed_rect(i: int) -> Rect2:
+	return Rect2(Vector2(452 + i * 34, 3), Vector2(31, 15))
+
+
+func _menu_button_rect() -> Rect2:
+	return Rect2(Vector2(size.x - 46, 3), Vector2(42, 15))
 
 
 func _play_rect() -> Rect2:
@@ -239,9 +367,40 @@ func _draw() -> void:
 	# Top bar
 	_text(Vector2(6, 15), "THE INKLANDS", 12, Color("ece6da"))
 	_text(Vector2(100, 15), "Command Table", 9, Color(0.6, 0.58, 0.6))
-	_text(Vector2(vs.x - 66, 14), "Esc: back", 9, Color(0.6, 0.58, 0.6))
+	_draw_clock()
 	_draw_legend()
 	_draw_panel()
+	if toast_t > 0.0:
+		var a := clampf(toast_t / 0.5, 0.0, 1.0)
+		_text_c(Vector2(_map_rect().get_center().x, MAP_ORIGIN.y + 22), toast, 12, Color(1, 0.95, 0.85, a), 4)
+	if Empire.SPEEDS[Empire.speed] == 0:
+		_text_c(Vector2(_map_rect().get_center().x, MAP_ORIGIN.y + MAP_CELLS.y * CELL - 24), "TIME PAUSED", 11, Color(1, 1, 1, 0.55 + 0.25 * sin(t * 3.0)), 4)
+
+
+func _draw_clock() -> void:
+	# Day and time, with a little sun or moon and a bar through the day.
+	var x := 236.0
+	var night := Empire.day_t < 0.25 or Empire.day_t > 0.83
+	if night:
+		draw_circle(Vector2(x, 10), 4.0, Color("d8d4e8"))
+		draw_circle(Vector2(x + 2, 9), 3.5, Color("0e0b12"))
+	else:
+		draw_circle(Vector2(x, 10), 4.0, GOLD)
+	_text(Vector2(x + 9, 15), "Day %d" % Empire.day, 11, Color("ece6da"))
+	_text(Vector2(x + 58, 15), Empire.clock_text(), 9, Color(0.75, 0.72, 0.7))
+	draw_rect(Rect2(x + 92, 8, 100, 4), Color(0.18, 0.16, 0.2))
+	draw_rect(Rect2(x + 92, 8, 100 * Empire.day_t, 4), Color(0.75, 0.72, 0.68))
+	for i in Empire.SPEEDS.size():
+		var r := _speed_rect(i)
+		var on := i == Empire.speed
+		draw_rect(r, Color(0.22, 0.17, 0.08) if on else Color(0.1, 0.09, 0.12))
+		draw_rect(r, GOLD if on else Color(0.3, 0.27, 0.33), false, 1.0)
+		var label := "II" if i == 0 else "%dx" % Empire.SPEEDS[i]
+		_text_c(Vector2(r.get_center().x, r.position.y + 11), label, 9, GOLD if on else Color(0.75, 0.72, 0.7))
+	var mr := _menu_button_rect()
+	draw_rect(mr, Color(0.1, 0.09, 0.12))
+	draw_rect(mr, Color(0.3, 0.27, 0.33), false, 1.0)
+	_text_c(Vector2(mr.get_center().x, mr.position.y + 11), "Menu", 9, Color(0.75, 0.72, 0.7))
 
 
 func _draw_roads() -> void:
