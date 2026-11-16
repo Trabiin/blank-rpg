@@ -1,0 +1,51 @@
+{
+	"_comment": "Act 1 territory. pos = seed point on the map (0-1, x east, y south); weight > 1 grows a province. owner: you, free, concord, coven, guild, erased. Output is per day.",
+	"provinces": [
+		{
+			"id": "hollowmark", "name": "Hollowmark", "pos": [0.34, 0.50], "weight": 1.0,
+			"owner": "you", "fray": 4, "output": {"gilt": 6, "supplies": 4}, "sites": ["Command Table", "Tavern"],
+			"blurb": "A seedy market town nobody legally owns. Now it's yours, which is worse."
+		},
+		{
+			"id": "meadow", "name": "Frayed Meadow", "pos": [0.60, 0.44], "weight": 1.0,
+			"owner": "free", "fray": 38, "output": {"supplies": 3}, "sites": ["Lamp post (unlit)"],
+			"blurb": "Grass grows in half-sentences. You crawled out of the Blank here.",
+			"missions": [{"name": "Prologue: Spat Out", "scene": "res://scenes/main.tscn"}]
+		},
+		{
+			"id": "gutterwoods", "name": "Gutterwoods", "pos": [0.38, 0.80], "weight": 1.15,
+			"owner": "coven", "fray": 12, "output": {"supplies": 4}, "sites": ["Witch-market"],
+			"blurb": "Trees grow from discarded letters. The Coven decides who leaves."
+		},
+		{
+			"id": "oldmill", "name": "Old Mill Crossing", "pos": [0.40, 0.20], "weight": 1.0,
+			"owner": "free", "fray": 8, "output": {"supplies": 5}, "sites": ["Millrace", "Granary (looted)"],
+			"blurb": "The mill still turns. Nobody has seen the miller since the Blank came."
+		},
+		{
+			"id": "lampwick", "name": "Lampwick Hills", "pos": [0.66, 0.16], "weight": 0.95,
+			"owner": "free", "fray": 24, "output": {"ink": 1, "gilt": 2}, "sites": ["Ink spring"],
+			"blurb": "The only place for miles where ink still wells up from the ground."
+		},
+		{
+			"id": "saltreed", "name": "Saltreed Marsh", "pos": [0.66, 0.74], "weight": 1.0,
+			"owner": "free", "fray": 61, "output": {"supplies": 2, "gilt": 1}, "sites": ["Reed-cutters' stilts"],
+			"blurb": "Half the reeds have gone white. The other half are whispering about it."
+		},
+		{
+			"id": "gallows", "name": "Gallows Ferry", "pos": [0.12, 0.62], "weight": 1.05,
+			"owner": "guild", "fray": 2, "output": {"gilt": 6}, "sites": ["Toll ferry"],
+			"blurb": "Guild mercenaries run the river crossing and charge both ways."
+		},
+		{
+			"id": "tithe", "name": "Tithe Road", "pos": [0.14, 0.24], "weight": 1.05,
+			"owner": "concord", "fray": 0, "output": {"gilt": 5}, "sites": ["Concord tollhouse"],
+			"blurb": "The road to the capital. Concord clerks audit everyone who walks it."
+		},
+		{
+			"id": "whitewater", "name": "Whitewater", "pos": [0.88, 0.48], "weight": 1.1,
+			"owner": "erased", "fray": 100, "output": {"supplies": 3, "ink": 1}, "sites": [],
+			"blurb": "There was a village here. The Blank kept the outline and ate the rest."
+		}
+	]
+}

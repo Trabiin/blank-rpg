@@ -30,4 +30,7 @@ Saving: pick Save game in the pause menu (three slots). The game also autosaves 
 - Maps: each area is a plain text file in `maps/` (legend at the top of the file). Edit the
   characters to move paths, bushes, rocks, signs, spawns and the party start; paths get smooth
   edges automatically from `shaders/terrain_blend.gdshader`.
+- Territory: provinces live in `data/provinces.json` (name, seed point, owner, Fray, output, sites,
+  missions). Province shapes and borders are generated from the seed points by `scripts/territory.gd`,
+  so moving a seed or changing its weight reshapes the map and its adjacency together.
 - CI: `.github/workflows/deploy-web.yml` builds every push and PR, and deploys `main` to GitHub Pages.

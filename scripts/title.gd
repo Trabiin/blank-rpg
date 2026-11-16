@@ -28,6 +28,7 @@ func _ready() -> void:
 	if latest != "":
 		items.append({"id": "continue", "label": "Continue", "detail": Saves.describe(latest)})
 	items.append({"id": "new", "label": "New Game"})
+	items.append({"id": "command", "label": "Command Table (preview)"})
 	items.append({"id": "load", "label": "Load Game", "enabled": latest != "", "note": "(no saves yet)"})
 	items.append({"id": "options", "label": "Options", "enabled": false, "note": "(coming soon)"})
 	items.append({"id": "credits", "label": "Credits"})
@@ -74,6 +75,8 @@ func _on_choice(id: String) -> void:
 			slots.setup("Load which save?", Saves.slot_items(false))
 			menu.visible = false
 			slots.visible = true
+		"command":
+			get_tree().change_scene_to_file("res://scenes/command.tscn")
 		"credits":
 			menu.visible = false
 			credits.visible = true
