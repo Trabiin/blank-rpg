@@ -19,6 +19,8 @@ Reality is being eaten by a hungry Blank, and you are the one person it spat bac
 
 Attacks use a power gauge: swinging before it refills still hits, but for less damage.
 
+Saving: pick Save game in the pause menu (three slots). The game also autosaves every minute when no enemy is close and nobody is down, and when you quit to the title or switch away from the tab. Saves live in your browser's storage, so they stay on that browser and device.
+
 ## Development
 
 - Engine: Godot 4.3 (open `project.godot`).

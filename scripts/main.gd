@@ -13,6 +13,7 @@ const MAP := "res://maps/frayed_meadow.txt"
 const TITLE_SCENE := "res://scenes/title.tscn"
 const MAX_ENEMIES := 7
 const RESPAWN_TIME := 6.0
+const AUTOSAVE_EVERY := 60.0
 
 var heroes: Array = []
 var leader: Hero
@@ -34,6 +35,10 @@ var banter_queue: Array = []
 var banter_t := 1.0
 var said_low_power := false
 var said_first_kill := false
+var playtime := 0.0
+var autosave_t := 3.0  # first autosave a few seconds into a new game
+var slot_menu: InkMenu
+var slot_mode := ""  # "save" or "load"
 
 
 func _ready() -> void:
@@ -75,8 +80,11 @@ func _ready() -> void:
 	bran.reach = 21.0
 	_set_leader(ash)
 
-	for p in area.spawns:
-		_spawn_enemy(p)
+	banter_queue = [
+		["Bran", "Huh. A person. Or a very convincing smudge."],
+		["Bran", "You crawled out of the Blank? Nobody does that. Nobody's paid me to see that, either."],
+		["Bran", "Those white things eat. Hit them when your gauge is full. Or don't, and I'll bill your corpse."],
+	]
 
 	camera = Camera2D.new()
 	camera.zoom = Vector2(2, 2)
@@ -106,27 +114,29 @@ func _ready() -> void:
 	pause_menu = InkMenu.new()
 	pause_menu.visible = false
 	menu_layer.add_child(pause_menu)
-	pause_menu.setup("Paused", [
-		{"id": "resume", "label": "Resume"},
-		{"id": "restart", "label": "Restart area"},
-		{"id": "title", "label": "Quit to title"},
-	], "Saving and options are coming soon.")
+	pause_menu.setup("Paused", _pause_items(), "")
 	pause_menu.chosen.connect(_on_pause_choice)
+	slot_menu = InkMenu.new()
+	slot_menu.visible = false
+	slot_menu.top = 0.2
+	menu_layer.add_child(slot_menu)
+	slot_menu.chosen.connect(_on_slot_choice)
 	over_menu = InkMenu.new()
 	over_menu.visible = false
 	over_menu.dim = 0.55
 	menu_layer.add_child(over_menu)
-	over_menu.setup("The party was erased.", [
-		{"id": "restart", "label": "Try again"},
-		{"id": "title", "label": "Quit to title"},
-	], "The Blank does not keep receipts.")
 	over_menu.chosen.connect(_on_over_choice)
 
-	banter_queue = [
-		["Bran", "Huh. A person. Or a very convincing smudge."],
-		["Bran", "You crawled out of the Blank? Nobody does that. Nobody's paid me to see that, either."],
-		["Bran", "Those white things eat. Hit them when your gauge is full. Or don't, and I'll bill your corpse."],
-	]
+	var loaded := not Saves.pending.is_empty()
+	if loaded:
+		_apply_snapshot(Saves.pending)
+		Saves.pending = {}
+		camera.global_position = leader.global_position
+		camera.reset_smoothing()
+	for p in area.spawns:
+		# A loaded game can put the party anywhere: don't drop Nibblers on top of them.
+		if not loaded or p.distance_to(leader.global_position) > 120.0:
+			_spawn_enemy(p)
 
 
 func _build_walls() -> void:
@@ -197,11 +207,21 @@ func _on_hero_died(a: Actor) -> void:
 	var alive := heroes.filter(func(h): return not h.dead)
 	if alive.is_empty():
 		game_over = true
-		get_tree().create_timer(1.2).timeout.connect(func(): over_menu.visible = true)
+		get_tree().create_timer(1.2).timeout.connect(_show_game_over)
 		return
 	if a == leader:
 		_set_leader(alive[0])
 		hud.say("%s is down! You now control %s." % [(a as Hero).hero_name, leader.hero_name], 3.0)
+
+
+func _show_game_over() -> void:
+	var has_auto := Saves.exists("auto")
+	over_menu.setup("The party was erased.", [
+		{"id": "retry", "label": "Try again", "detail": "from the last autosave" if has_auto else "from the start of the area"},
+		{"id": "load", "label": "Load game", "enabled": Saves.latest_slot() != ""},
+		{"id": "title", "label": "Quit to title"},
+	], "The Blank does not keep receipts.")
+	over_menu.visible = true
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -216,29 +236,144 @@ func _unhandled_input(event: InputEvent) -> void:
 func set_paused(on: bool) -> void:
 	get_tree().paused = on
 	pause_menu.visible = on
+	slot_menu.visible = false
 	if on:
-		pause_menu.selected = 0
+		pause_menu.setup("Paused", _pause_items(), "")
 		touch.release_all()
+
+
+func _pause_items() -> Array:
+	return [
+		{"id": "resume", "label": "Resume"},
+		{"id": "save", "label": "Save game"},
+		{"id": "load", "label": "Load game", "enabled": Saves.latest_slot() != "", "note": "(no saves yet)"},
+		{"id": "restart", "label": "Restart area"},
+		{"id": "title", "label": "Quit to title"},
+	]
 
 
 func _on_pause_choice(id: String) -> void:
 	match id:
 		"resume", "cancel":
 			set_paused(false)
+		"save", "load":
+			_open_slots(id, pause_menu)
 		"restart":
 			get_tree().paused = false
 			get_tree().reload_current_scene()
 		"title":
+			autosave()
 			get_tree().paused = false
 			get_tree().change_scene_to_file(TITLE_SCENE)
 
 
 func _on_over_choice(id: String) -> void:
 	match id:
-		"restart":
-			get_tree().reload_current_scene()
+		"retry":
+			if not Saves.load_and_play("auto"):
+				get_tree().reload_current_scene()
+		"load":
+			_open_slots("load", over_menu)
 		"title":
 			get_tree().change_scene_to_file(TITLE_SCENE)
+
+
+var _slot_return: InkMenu
+
+
+func _open_slots(mode: String, from: InkMenu) -> void:
+	slot_mode = mode
+	_slot_return = from
+	from.visible = false
+	slot_menu.setup("Save to which slot?" if mode == "save" else "Load which save?", Saves.slot_items(mode == "save"))
+	slot_menu.visible = true
+
+
+func _on_slot_choice(id: String) -> void:
+	if id == "back" or id == "cancel":
+		slot_menu.visible = false
+		_slot_return.visible = true
+		return
+	if slot_mode == "load":
+		Saves.load_and_play(id)
+		return
+	var ok := Saves.save(id, snapshot())
+	slot_menu.visible = false
+	_slot_return.visible = true
+	pause_menu.setup("Paused", _pause_items(), ("Saved to %s." % Saves.slot_label(id)) if ok else "Saving failed. Your browser may be blocking storage.")
+	pause_menu.selected = 0
+
+
+# ---------------------------------------------------------------- saving
+
+## Everything needed to put the player back where they were. Enemies are not saved:
+## the area's Nibblers respawn on load, like any action RPG's screen refresh.
+func snapshot() -> Dictionary:
+	var hs := []
+	for h in heroes:
+		var hero: Hero = h
+		hs.append({"name": hero.hero_name, "hp": hero.hp, "x": hero.global_position.x, "y": hero.global_position.y,
+			"dead": hero.dead, "power": hero.power})
+	return {
+		"map": MAP,
+		"area_name": area.area_name,
+		"playtime": playtime,
+		"kills": kills,
+		"leader": heroes.find(leader),
+		"heroes": hs,
+		"banter": banter_queue,
+		"said_first_kill": said_first_kill,
+		"said_low_power": said_low_power,
+	}
+
+
+func _apply_snapshot(d: Dictionary) -> void:
+	playtime = float(d.get("playtime", 0.0))
+	kills = int(d.get("kills", 0))
+	banter_queue = d.get("banter", [])
+	said_first_kill = bool(d.get("said_first_kill", false))
+	said_low_power = bool(d.get("said_low_power", false))
+	var hs: Array = d.get("heroes", [])
+	for i in mini(hs.size(), heroes.size()):
+		var hero: Hero = heroes[i]
+		var hd: Dictionary = hs[i]
+		hero.global_position = Vector2(float(hd["x"]), float(hd["y"]))
+		hero.hp = clampi(int(hd["hp"]), 0, hero.max_hp)
+		hero.power = float(hd.get("power", 1.0))
+		if bool(hd.get("dead", false)) or hero.hp <= 0:
+			hero.hp = 0
+			hero.dead = true
+			hero._on_death()
+	var li := int(d.get("leader", 0))
+	if li >= 0 and li < heroes.size() and not heroes[li].dead:
+		_set_leader(heroes[li])
+	autosave_t = AUTOSAVE_EVERY
+	banter_t = 1.5
+	hud.say("Loaded. The Blank kept your place.", 2.5)
+
+
+## Autosaves only when it is safe to drop back in: nobody down and no Nibbler close.
+func can_autosave() -> bool:
+	if game_over or leader == null:
+		return false
+	for h in heroes:
+		if (h as Hero).dead:
+			return false
+	for e in get_tree().get_nodes_in_group("enemies"):
+		if (e as Node2D).global_position.distance_to(leader.global_position) < 110.0:
+			return false
+	return true
+
+
+func autosave() -> void:
+	if can_autosave():
+		Saves.save("auto", snapshot())
+
+
+func _notification(what: int) -> void:
+	# Switching away from the tab (or closing it) usually blurs the page first.
+	if what == NOTIFICATION_APPLICATION_FOCUS_OUT or what == NOTIFICATION_WM_CLOSE_REQUEST:
+		autosave()
 
 
 func _swap() -> void:
@@ -262,6 +397,14 @@ func _process(delta: float) -> void:
 		shake_amount = maxf(shake_amount - 20.0 * delta, 0.0)
 		camera.offset = Vector2(randf_range(-1, 1), randf_range(-1, 1)) * shake_amount
 
+	playtime += delta
+	autosave_t -= delta
+	if autosave_t <= 0.0:
+		if can_autosave():
+			autosave()
+			autosave_t = AUTOSAVE_EVERY
+		else:
+			autosave_t = 5.0  # try again soon, once things calm down
 	_update_blank_contact(delta)
 	_update_revive(delta)
 	_update_respawn(delta)
