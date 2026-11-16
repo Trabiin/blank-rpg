@@ -1,0 +1,57 @@
+{
+	"_comment": "Recruits. tier: field (can fight on missions), core (deep bonds), recruit (light). Stats 1-10: might, craft, lore, charm, grit. start: in the roster on a new game. locked_party: always in the party (Ash). Traits are defined below.",
+	"traits": {
+		"greedy": {"name": "Greedy", "desc": "Skims, but squeezes harder. +2 Gilt as governor."},
+		"stubborn": {"name": "Stubborn", "desc": "Will not give an inch. Governs with 1 more Fray resistance."},
+		"coward": {"name": "Coward", "desc": "Flees the edge. Governs with 1 less Fray resistance."},
+		"bookish": {"name": "Bookish", "desc": "Happier with paper than people. Research later counts double."},
+		"ex_concord": {"name": "Ex-Concord", "desc": "Knows the forms. The Concord hates them for it."},
+		"flirt": {"name": "Flirt", "desc": "Charm counts double with envoys and in the tavern."},
+		"night_owl": {"name": "Night Owl", "desc": "Does their best work after dark."},
+		"ink_sick": {"name": "Ink-sick", "desc": "The Blank got a taste once. Lore +2, but never fully well."},
+		"unwritten": {"name": "Unwritten", "desc": "No Ledger entry. The Blank treats them oddly. Leads every mission."},
+		"contract": {"name": "Contracted", "desc": "Paid by the job. Fights harder for coin, sulks without it."}
+	},
+	"recruits": [
+		{
+			"id": "ash", "name": "Ash", "title": "the Unwritten", "tier": "field", "start": true, "locked_party": true,
+			"stats": {"might": 6, "craft": 3, "lore": 5, "charm": 4, "grit": 8}, "traits": ["unwritten"],
+			"blurb": "Spat back out by the Blank with no name, no voice and no Ledger entry. Everyone projects something different onto the silence."
+		},
+		{
+			"id": "bran", "name": "Brannoc Coil", "title": "mercenary", "tier": "field", "start": true,
+			"stats": {"might": 8, "craft": 4, "lore": 2, "charm": 5, "grit": 7}, "traits": ["contract", "greedy"],
+			"blurb": "His contract is tattooed on his arm and tightens if he breaks it. Will sell you out if outbid, and tells you so."
+		},
+		{
+			"id": "quill", "name": "Quill Marrow", "title": "quartermaster", "tier": "core", "start": true,
+			"stats": {"might": 2, "craft": 6, "lore": 6, "charm": 6, "grit": 4}, "traits": ["ex_concord", "bookish"],
+			"blurb": "Kept Hollowmark's books for the Concord. Now cooks them for you. Knows where every coin is buried, and who buried it."
+		},
+		{
+			"id": "tobble", "name": "Old Tobble", "title": "tavern keeper", "tier": "core", "start": true,
+			"stats": {"might": 3, "craft": 5, "lore": 3, "charm": 8, "grit": 6}, "traits": ["stubborn", "night_owl"],
+			"blurb": "Has been about to retire for thirty years. Hears everything; sells most of it."
+		},
+		{
+			"id": "pell", "name": "Pell Undermoss", "title": "gravedigger", "tier": "recruit", "start": true,
+			"stats": {"might": 5, "craft": 6, "lore": 2, "charm": 2, "grit": 7}, "traits": ["night_owl"],
+			"blurb": "Digs too fast. Nobody has asked why the graves are always ready before anyone dies."
+		},
+		{
+			"id": "gristle", "name": "Mother Gristle", "title": "hedge-witch", "tier": "field", "start": false,
+			"stats": {"might": 3, "craft": 5, "lore": 8, "charm": 4, "grit": 6}, "traits": ["greedy"],
+			"blurb": "Heals the party and bills them for it. Her poisons and her medicines are the same bottles."
+		},
+		{
+			"id": "ninefingers", "name": "Corporal Daro", "title": "\"Ninefingers\", deserter", "tier": "field", "start": false,
+			"stats": {"might": 7, "craft": 4, "lore": 3, "charm": 3, "grit": 6}, "traits": ["ex_concord"],
+			"blurb": "Deserted the Concord army rather than strike out a village. Sharpest tongue in the Inklands."
+		},
+		{
+			"id": "abeyance", "name": "Sister Abeyance", "title": "runaway scribe", "tier": "core", "start": false,
+			"stats": {"might": 2, "craft": 3, "lore": 9, "charm": 5, "grit": 5}, "traits": ["bookish", "ink_sick"],
+			"blurb": "Ran from the Abbey with one stolen page that rewrites itself every night."
+		}
+	]
+}

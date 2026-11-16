@@ -48,6 +48,8 @@ var deltas := {}  # resource -> net change shown floating by the bar after dawn
 var deltas_t := 0.0
 var notices: Array = []  # [text, warning, time left]
 var over_menu: InkMenu
+var roster_view
+const RosterView := preload("res://scripts/roster_view.gd")
 var autosave_t := AUTOSAVE_EVERY
 
 
@@ -64,6 +66,13 @@ func _ready() -> void:
 	Empire.ledger_settled.connect(_on_ledger_settled)
 	Empire.notice.connect(_on_notice)
 	Empire.hollowmark_lost.connect(_on_hollowmark_lost)
+
+	var roster_layer := CanvasLayer.new()
+	roster_layer.layer = 4
+	add_child(roster_layer)
+	roster_view = RosterView.new()
+	roster_view.visible = false
+	roster_layer.add_child(roster_view)
 
 	var layer := CanvasLayer.new()
 	layer.layer = 5
@@ -302,7 +311,11 @@ func _process(delta: float) -> void:
 		autosave_t = AUTOSAVE_EVERY
 		autosave()
 	queue_redraw()
-	if Engine.get_process_frames() == menu_closed_frame:
+	var frame := Engine.get_process_frames()
+	if frame == menu_closed_frame or roster_view.visible or frame == roster_view.closed_frame:
+		return
+	if Input.is_action_just_pressed("roster"):
+		roster_view.open()
 		return
 	for i in Empire.SPEEDS.size():
 		if Input.is_action_just_pressed("clock_speed_%d" % i):
@@ -362,6 +375,8 @@ func _gui_input(event: InputEvent) -> void:
 			selected = i
 		elif _play_rect().has_point(event.position):
 			_activate(selected)
+		elif _roster_button_rect().has_point(event.position):
+			roster_view.open()
 		elif _res_rect().has_point(event.position):
 			show_ledger = not show_ledger
 		elif _menu_button_rect().has_point(event.position):
@@ -388,6 +403,10 @@ func _activate(i: int) -> void:
 	var m := _mission(i)
 	if not m.is_empty():
 		_leave(m["scene"])  # the clock stops here: missions take no Command time
+
+
+func _roster_button_rect() -> Rect2:
+	return Rect2(Vector2(MAP_ORIGIN.x + MAP_CELLS.x * CELL - 74, MAP_ORIGIN.y + 4), Vector2(70, 16))
 
 
 func _speed_rect(i: int) -> Rect2:
@@ -431,6 +450,10 @@ func _draw() -> void:
 	_text(MAP_ORIGIN + Vector2(6, 14), "THE INKLANDS", 10, Color(0.85, 0.82, 0.76, 0.8), 3)
 	_draw_resources()
 	_draw_clock()
+	var rb := _roster_button_rect()
+	draw_rect(rb, Color(0.1, 0.09, 0.12, 0.92))
+	draw_rect(rb, Color(0.45, 0.4, 0.48), false, 1.0)
+	_text_c(Vector2(rb.get_center().x, rb.position.y + 12), "Roster (%d)  R" % Empire.recruits.size(), 9, Color(0.85, 0.82, 0.76))
 	_draw_legend()
 	_draw_panel()
 	if toast_t > 0.0:
@@ -683,7 +706,11 @@ func _draw_panel() -> void:
 
 	# Governor and sites
 	_text(Vector2(x, y), "Governor", 9, Color(0.7, 0.68, 0.7))
-	_text(Vector2(x + 52, y), "none posted" if owner == "you" else "-", 9, Color(0.85, 0.83, 0.78))
+	var gov := Empire.governor_of(p["id"])
+	var gov_text := "-"
+	if owner == "you":
+		gov_text = Empire.recruit(gov)["name"] if gov != "" else "none posted (Roster: R)"
+	_text(Vector2(x + 52, y), gov_text, 9, Color(0.85, 0.83, 0.78))
 	y += 13
 	var sites: Array = p.get("sites", [])
 	_text(Vector2(x, y), "Sites", 9, Color(0.7, 0.68, 0.7))
