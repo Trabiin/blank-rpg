@@ -17,7 +17,7 @@ const FRAY_FIRST_ERASED_NEIGHBOR := 3
 const FRAY_MORE_ERASED_NEIGHBORS := 1  # each erased neighbour after the first
 const FRAY_AT_EDGE := 2
 const FRAY_UNHELD := 1
-const FRAY_UNGOVERNED := 1
+const FRAY_UNGOVERNED := 3  # nobody in charge: the Blank finds the gaps
 const FRAY_MOMENTUM := 1  # above 50, unravelling feeds itself
 const FRAY_TENDED := -2  # your people patch up what they can
 const SCAR_FRAY := 2  # per day while a surge scar lasts
@@ -32,6 +32,15 @@ const START := {"gilt": 120, "supplies": 40, "ink": 5, "renown": 0, "insight": 0
 const UPKEEP_SUPPLIES := 1  # per recruit per day
 ## A province keeps producing as it frays, but loses up to this share of its output.
 const FRAY_OUTPUT_LOSS := 0.5
+## A province you hold with no governor only delivers this share (nobody collects).
+const UNGOVERNED_OUTPUT := 0.75
+## Governor fit: the province's favoured stat (data/provinces.json "favors").
+const FIT_GOOD := 7  # this or more: +50% of the province's output and 1 less Fray a day
+const FIT_POOR := 3  # this or less: -25% of its output and 1 more Fray a day
+const FIT_BONUS := {"good": 0.5, "fair": 0.0, "poor": -0.25}
+const FIT_FRAY := {"good": -1, "fair": 0, "poor": 1}
+const STAT_NAMES := {"might": "Might", "craft": "Craft", "lore": "Lore", "charm": "Charm", "grit": "Grit"}
+const CLAIM_DEFAULT := {"gilt": 40, "supplies": 10}
 
 const DAY_SECONDS := 240.0  # real seconds per in-game day at 1x
 const SPEEDS := [0, 1, 2, 4]  # index 0 = paused
@@ -122,17 +131,21 @@ func ledger() -> Array:
 		if p["owner"] != "you":
 			continue
 		var keep := 1.0 - FRAY_OUTPUT_LOSS * float(p["fray"]) / 100.0
-		var line := {"label": p["name"], "note": ""}
+		var notes := []
+		if keep < 0.99:
+			notes.append("-%d%% from Fray" % int(round((1.0 - keep) * 100.0)))
+		var gov := governor_of(p["id"])
+		if gov == "":
+			keep *= UNGOVERNED_OUTPUT
+			notes.append("-%d%% no governor" % int(round((1.0 - UNGOVERNED_OUTPUT) * 100.0)))
+		var line := {"label": p["name"], "note": ", ".join(notes)}
 		for k in RESOURCES:
 			line[k] = int(round(float(p.get("output", {}).get(k, 0)) * keep))
-		if keep < 0.99:
-			line["note"] = "-%d%% from Fray" % int(round((1.0 - keep) * 100.0))
 		lines.append(line)
-	for p in territory().provinces:
-		var gov := governor_of(p["id"])
-		if p["owner"] == "you" and gov != "":
-			var e := governor_effect(gov)
-			lines.append({"label": "  Governor %s" % recruit(gov)["name"], "gilt": e["gilt"], "supplies": e["supplies"], "ink": 0, "note": ""})
+		if gov != "":
+			var e := governor_effect(gov, p["id"])
+			lines.append({"label": "  Governor %s" % recruit(gov)["name"], "gilt": e["gilt"], "supplies": e["supplies"], "ink": e["ink"],
+				"note": "%s fit" % e["fit"].capitalize()})
 	var upkeep := UPKEEP_SUPPLIES * recruits.size()
 	lines.append({"label": "Upkeep (%d people)" % recruits.size(), "gilt": 0, "supplies": -upkeep, "ink": 0, "note": ""})
 	var qm := current_effect("command_table")
@@ -174,9 +187,15 @@ func _settle() -> void:
 
 ## Every reason a province's Fray moves each day: [[label, change], ...]. The province panel
 ## shows exactly this list, so the player can always see why the Blank is moving.
-func fray_sources(p: Dictionary) -> Array:
+## gov: "-" = as things stand; otherwise "what if you held it with this governor" ("" = none).
+func fray_sources(p: Dictionary, gov := "-") -> Array:
 	var out := []
-	if p["owner"] == "erased":
+	var owner: String = p["owner"]
+	if gov != "-" and owner != "erased":
+		owner = "you"
+	elif gov == "-":
+		gov = governor_of(p["id"])
+	if owner == "erased":
 		return out
 	var t := territory()
 	var erased := []
@@ -191,23 +210,22 @@ func fray_sources(p: Dictionary) -> Array:
 		out.append(["Surge damage (%d more days)" % int(p["scar"]), SCAR_FRAY])
 	if float(p["fray"]) > 50.0:
 		out.append(["Unravelling feeds itself", FRAY_MOMENTUM])
-	if p["owner"] == "you":
-		var gov := governor_of(p["id"])
+	if owner == "you":
 		if gov == "":
 			out.append(["No governor posted", FRAY_UNGOVERNED])
 		else:
-			out.append(["Governed by %s" % recruit(gov)["name"], governor_effect(gov)["fray"]])
+			out.append(["Governed by %s" % recruit(gov)["name"], governor_effect(gov, p["id"])["fray"]])
 		out.append(["Tended by your people", FRAY_TENDED])
 		if int(lamps.get(p["id"], 0)) > 0:
 			out.append(["Wardlamp (level %d)" % int(lamps[p["id"]]), lamp_fray(int(lamps[p["id"]]))])
-	elif p["owner"] == "free":
+	elif owner == "free":
 		out.append(["Nobody holds it", FRAY_UNHELD])
 	return out
 
 
-func fray_rate(p: Dictionary) -> int:
+func fray_rate(p: Dictionary, gov := "-") -> int:
 	var total := 0
-	for src in fray_sources(p):
+	for src in fray_sources(p, gov):
 		total += int(src[1])
 	return total
 
@@ -330,16 +348,145 @@ func has_trait(id: String, t: String) -> bool:
 	return t in recruit(id).get("traits", [])
 
 
-## What a recruit does for a province they govern: Fray change per day and extra output.
-func governor_effect(id: String) -> Dictionary:
+## How well a recruit suits a province: "good", "fair" or "poor", from its favoured stat.
+func governor_fit(id: String, pid: String) -> String:
+	var p := territory().find(pid)
+	if p.is_empty():
+		return "fair"
+	var v := int(recruit(id)["stats"].get(p.get("favors", "charm"), 5))
+	return "good" if v >= FIT_GOOD else ("poor" if v <= FIT_POOR else "fair")
+
+
+## What a recruit does for a province they govern: Fray change per day, extra output, and
+## "why": [[text, good?], ...] so the screens can show every reason.
+func governor_effect(id: String, pid := "") -> Dictionary:
 	var st: Dictionary = recruit(id)["stats"]
-	var fray := -(1 + int(st["grit"]) / 4)
+	var p := territory().find(pid) if pid != "" else {}
+	var why := []
+	var grit := int(st["grit"])
+	var fray := -(1 + grit / 4)
+	why.append(["Grit %d: holds the line, Fray %d a day" % [grit, fray], true])
+	var gilt := int(st["charm"]) / 3
+	var supplies := int(st["craft"]) / 3
+	var ink := 0
+	why.append(["Charm %d: +%d Gilt, Craft %d: +%d Supplies" % [int(st["charm"]), gilt, int(st["craft"]), supplies], true])
+	var fit := "fair"
+	if not p.is_empty():
+		var fav: String = p.get("favors", "charm")
+		fit = governor_fit(id, pid)
+		var share: float = FIT_BONUS[fit]
+		var bonus := []
+		for k in RESOURCES:
+			var base := int(p.get("output", {}).get(k, 0))
+			var extra := int(round(base * share))
+			if base > 0 and share > 0.0:
+				extra = maxi(extra, 1)
+			if k == "gilt":
+				gilt += extra
+			elif k == "supplies":
+				supplies += extra
+			else:
+				ink += extra
+			if extra != 0:
+				bonus.append("%+d %s" % [extra, RES_NAMES[k]])
+		fray += FIT_FRAY[fit]
+		var label: String = {"good": "Good fit", "fair": "Fair fit", "poor": "Poor fit"}[fit]
+		var tail := ""
+		if fit != "fair":
+			tail = ": %s, Fray %+d" % [", ".join(bonus), FIT_FRAY[fit]]
+		why.append(["%s (%s %d; %s wants %s)%s" % [label, STAT_NAMES[fav], int(st[fav]), p["name"], STAT_NAMES[fav], tail], fit != "poor"])
 	if has_trait(id, "stubborn"):
 		fray -= 1
+		why.append(["Stubborn: will not give an inch, Fray -1", true])
 	if has_trait(id, "coward"):
-		fray += 1
-	var gilt := int(st["charm"]) / 3 + (2 if has_trait(id, "greedy") else 0)
-	return {"fray": fray, "gilt": gilt, "supplies": int(st["craft"]) / 3}
+		var c := 2 if not p.is_empty() and int(p["fray"]) >= 50 else 1
+		fray += c
+		why.append(["Coward: flinches%s, Fray +%d" % [" at the edge" if c > 1 else "", c], false])
+	if has_trait(id, "greedy"):
+		gilt += 2
+		why.append(["Greedy: squeezes harder, +2 Gilt", true])
+	if has_trait(id, "ink_sick") and not p.is_empty():
+		if int(p.get("output", {}).get("ink", 0)) > 0:
+			ink += 1
+			why.append(["Ink-sick: hears the spring, +1 Ink", true])
+		if int(p["fray"]) >= 25:
+			fray += 1
+			why.append(["Ink-sick: the Blank smells them, Fray +1", false])
+	if has_trait(id, "ex_concord") and not p.is_empty():
+		var t := territory()
+		for n in t.neighbors[p["index"]]:
+			if t.provinces[n]["owner"] == "concord":
+				gilt += 1
+				why.append(["Ex-Concord: knows the toll forms next door, +1 Gilt", true])
+				break
+	return {"fray": fray, "gilt": gilt, "supplies": supplies, "ink": ink, "fit": fit, "why": why}
+
+
+## A rough single number for sorting governor candidates (higher is better).
+func governor_score(id: String, pid: String) -> int:
+	var e := governor_effect(id, pid)
+	return -3 * int(e["fray"]) + int(e["gilt"]) + int(e["supplies"]) + 3 * int(e["ink"])
+
+
+## Why a recruit can't govern right now ("" = they can).
+func governor_blocker(id: String) -> String:
+	if recruit(id).get("locked_party", false):
+		return "Ash leads every mission"
+	if int(recruits[id]["injured"]) > 0:
+		return "injured"
+	return ""
+
+
+func claim_cost(pid: String) -> Dictionary:
+	return territory().find(pid).get("claim", CLAIM_DEFAULT)
+
+
+func borders_yours(pid: String) -> bool:
+	var t := territory()
+	var p := t.find(pid)
+	for n in t.neighbors[p["index"]]:
+		if t.provinces[n]["owner"] == "you":
+			return true
+	return false
+
+
+## Why a province can't be claimed right now ("" = it can, given a governor).
+func claim_blocker(pid: String) -> String:
+	var p := territory().find(pid)
+	match p.get("owner", ""):
+		"you":
+			return "already yours"
+		"erased":
+			return "Erased. Reclaim missions arrive with #51"
+		"concord", "coven", "guild":
+			return "Faction land. Diplomacy arrives with #49"
+	if not borders_yours(pid):
+		return "Too far. Claim the land in between first"
+	var miss := _missing(claim_cost(pid))
+	if miss != "":
+		return "Need " + miss
+	return ""
+
+
+## Plants your flag on an unclaimed province and posts a governor there in one go.
+func claim(pid: String, gov: String) -> bool:
+	if claim_blocker(pid) != "" or governor_blocker(gov) != "":
+		return false
+	if not spend(claim_cost(pid)):
+		return false
+	var p := territory().find(pid)
+	p["owner"] = "you"
+	assign(gov, "governor", pid)
+	notice.emit("%s is yours. %s governs it." % [p["name"], recruit(gov)["name"]], false)
+	return true
+
+
+## Takes the governor out of a province (they go back to Hollowmark, idle).
+func recall_governor(pid: String) -> void:
+	var gov := governor_of(pid)
+	if gov != "":
+		recruits[gov]["role"] = "idle"
+		recruits[gov]["target"] = ""
 
 
 ## Everything a recruit could be assigned to right now, with what it would do.
@@ -366,11 +513,15 @@ func role_options(id: String) -> Array:
 	for p in territory().provinces:
 		if p["owner"] != "you":
 			continue
-		var e := governor_effect(id)
+		var e := governor_effect(id, p["id"])
 		var current := governor_of(p["id"])
-		var replaces := "" if current == "" or current == id else "  (replaces %s)" % recruit(current)["name"]
-		var preview := "%s: Fray %d/day instead of +%d, +%d Gilt, +%d Supplies a day%s" % [p["name"], e["fray"], FRAY_UNGOVERNED, e["gilt"], e["supplies"], replaces]
-		out.append({"role": "governor", "target": p["id"], "label": "Govern %s" % p["name"],
+		var replaces := "" if current == "" or current == id else "  Replaces %s." % recruit(current)["name"]
+		var reasons := []
+		for w in e["why"]:
+			reasons.append(w[0])
+		var preview := "%s: Fray %+d/day there (now %+d). Governor adds %s a day.%s\n%s" % [p["name"], fray_rate(p, id), fray_rate(p),
+			output_text(e), replaces, "\n".join(reasons)]
+		out.append({"role": "governor", "target": p["id"], "label": "Govern %s  (%s fit)" % [p["name"], e["fit"]],
 			"enabled": not locked and not hurt, "note": "injured" if hurt else "", "preview": preview})
 	for bid in building_data:
 		var lv := level_of(bid)
@@ -411,6 +562,15 @@ func assign(id: String, role: String, target := "") -> bool:
 			recruits[id]["target"] = target
 			return true
 	return false
+
+
+## "+3 Gilt, +1 Supplies" (or "nothing").
+func output_text(e: Dictionary) -> String:
+	var parts := []
+	for k in RESOURCES:
+		if int(e.get(k, 0)) != 0:
+			parts.append("%+d %s" % [int(e[k]), RES_NAMES[k]])
+	return ", ".join(parts) if not parts.is_empty() else "nothing"
 
 
 func role_label(id: String) -> String:
