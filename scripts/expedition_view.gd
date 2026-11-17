@@ -183,7 +183,7 @@ func _pick(i: int) -> void:
 			var names := squad.map(func(id): return Empire.short_name(id))
 			if Empire.send_expedition(job_id, squad):
 				_go("board")
-				_say("%s set off: %s. Back in %d day%s." % [" and ".join(names) if names.size() <= 2 else ", ".join(names), j["name"], int(j["days"]), "" if int(j["days"]) == 1 else "s"])
+				_say("%s set off: %s. Back in %s." % [" and ".join(names) if names.size() <= 2 else ", ".join(names), j["name"], Empire.job_days_text(job_id)])
 
 
 func _send_blocker() -> String:
@@ -314,7 +314,7 @@ func _draw_board(vs: Vector2) -> void:
 				var col := TEXT if row["enabled"] else DIM
 				_text(base + Vector2(cols[0] - 8, 0), j["name"], 9, GOLD if on and row["enabled"] else col, cols[1] - cols[0] - 4)
 				_text(base + Vector2(cols[1] - 8, 0), j["kind"], 8, col if row["enabled"] else DIM)
-				_text(base + Vector2(cols[2] - 8, 0), str(int(j["days"])), 9, col)
+				_text(base + Vector2(cols[2] - 8, 0), Empire.job_days_text(row["id"]).get_slice(" ", 0), 9, col)
 				_danger_pips(base + Vector2(cols[3] - 8, 0), int(j["danger"]))
 				var full: bool = row["note"].begins_with("all squads")  # same for every job: say it once, up top
 				var pays: String = Empire.reward_text(row["id"]) if row["enabled"] or full else row["note"]
@@ -345,8 +345,8 @@ func _draw_board(vs: Vector2) -> void:
 		var wants := []
 		for k in j["stats"]:
 			wants.append(Empire.STAT_NAMES[k] + ("" if float(j["stats"][k]) >= 1.0 else " (counts half)"))
-		var line := "Wants: %s.   Takes %d day%s.   Rations: %d Supplies a person.   Danger: %s." % [", ".join(wants), int(j["days"]),
-			"" if int(j["days"]) == 1 else "s", int(j["rations"]), Empire.DANGER_NAMES[int(j["danger"])]]
+		var line := "Wants: %s.   Takes %s%s.   Rations: %d Supplies a person.   Danger: %s." % [", ".join(wants), Empire.job_days_text(row["id"]),
+			" (Waystations)" if Empire.has_research("log_waystations") else "", int(j["rations"]), Empire.DANGER_NAMES[int(j["danger"])]]
 		_text(Vector2(14, y + 14), line, 8, Color("cfe0b0"))
 		_text(Vector2(14, y + 26), "Pays: %s.%s" % [Empire.reward_text(row["id"]), "" if row["note"] == "" else "   Can't yet: %s." % row["note"]], 8,
 			Color("e8d9a8") if row["note"] == "" else BAD)
@@ -362,8 +362,8 @@ func _draw_squad(vs: Vector2) -> void:
 	var wants := []
 	for k in j["stats"]:
 		wants.append(Empire.STAT_NAMES[k] + ("" if float(j["stats"][k]) >= 1.0 else " (half)"))
-	_text(Vector2(8, 34), "Wants %s.  %d to %d people.  %d day%s, %s danger." % [", ".join(wants), Empire.SQUAD_MIN, Empire.SQUAD_MAX,
-		int(j["days"]), "" if int(j["days"]) == 1 else "s", Empire.DANGER_NAMES[int(j["danger"])].to_lower()], 8, GOLD)
+	_text(Vector2(8, 34), "Wants %s.  %d to %d people.  %s, %s danger." % [", ".join(wants), Empire.SQUAD_MIN, Empire.SQUAD_MAX,
+		Empire.job_days_text(job_id), Empire.DANGER_NAMES[int(j["danger"])].to_lower()], 8, GOLD)
 	var lw := 300.0
 	var y := 52.0
 	var hc := Color(0.55, 0.53, 0.56)

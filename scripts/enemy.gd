@@ -131,7 +131,7 @@ func _check_lunge_hits() -> void:
 			continue
 		if hero.global_position.distance_to(global_position) < radius + hero.radius + 4.0:
 			hit_this_lunge.append(hero)
-			hero.take_hit(DAMAGE, global_position, 200.0)
+			hero.take_hit(Empire.damage_to_party(DAMAGE), global_position, 200.0)
 
 
 func _on_hit() -> void:

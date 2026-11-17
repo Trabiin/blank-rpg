@@ -30,6 +30,7 @@ var respawn_t := 0.0
 var blank_tick := 0.0
 var game_over := false
 var pause_menu: InkMenu
+var boosts := {"damage": 0, "hp": 0, "revive": 1.0, "guard": 0.0, "power_rate": 1.0, "lines": []}  # from research
 var over_menu: InkMenu
 var banter_queue: Array = []
 var banter_t := 1.0
@@ -77,10 +78,13 @@ func _ready() -> void:
 	bran.base_damage = 14
 	bran.power_rate = 0.75
 	bran.reach = 21.0
-	# The Barracks sends the party out tougher.
+	# The Barracks sends the party out tougher; research sharpens and armours them.
+	boosts = Empire.mission_boosts()
 	for h in [ash, bran]:
-		h.max_hp += Empire.party_hp_bonus()
+		h.max_hp += Empire.party_hp_bonus() + int(boosts["hp"])
 		h.hp = h.max_hp
+		h.base_damage += int(boosts["damage"])
+		h.power_rate *= float(boosts["power_rate"])
 	_set_leader(ash)
 
 	banter_queue = [
@@ -445,7 +449,7 @@ func _update_revive(delta: float) -> void:
 		if not hero.dead:
 			continue
 		if not enemies_near and hero.global_position.distance_to(leader.global_position) < 28.0:
-			hero.revive_progress += delta
+			hero.revive_progress += delta * float(boosts["revive"])
 			if hero.revive_progress >= Hero.REVIVE_TIME:
 				hero.revive()
 				hud.say("%s is back on their feet." % hero.hero_name, 2.5)

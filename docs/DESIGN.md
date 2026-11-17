@@ -208,6 +208,15 @@ A small tree in the Scriptorium with four branches: **Wardcraft** (Fray resistan
 **Logistics** (upkeep, expedition speed and odds), **Inkcraft** (abilities and Ink magic for the party), **Arms**
 (gear tiers). About 12 nodes in the MVP, about 40 in the full game.
 
+**As built (MVP, PR for #48):** 4 branches of 3 nodes, each a chain (data/research.json; screen on T). A node costs
+Insight (the top tier also Ink and Scriptorium level 2), paid once when you first start it. Study then runs on the
+Command clock: 2/3/4 days at 100% pace, and pace is 100% + 5% per point of researcher Lore (Bookish counts double)
++ 25% per Scriptorium level past 1. One node at a time; switching sets the old one aside with its progress kept.
+No researcher at work = stalled. Effects: Wardcraft (Fray -1 in every held province; Wardlamps -1 more; surges
+warned a day sooner and hit for 8), Logistics (upkeep -1 per 4 people; expeditions 25% shorter; +10% expedition
+odds), Inkcraft (+1 Ink at the Inkworks; faster revives; -25% damage taken on missions), Arms (+2 damage; +10 max
+HP; +3 damage and a faster attack gauge). Reclaim costs and Ink abilities join these branches once #51 and #7 exist.
+
 ### 5.9 Diplomacy
 
 Factions each have a **standing** with you (hostile to allied). Envoys can open trade, ask for aid during a surge,

@@ -11,6 +11,7 @@ const TouchScript := preload("res://scripts/touch.gd")
 const RosterView := preload("res://scripts/roster_view.gd")
 const BuildingsView := preload("res://scripts/buildings_view.gd")
 const ExpeditionView := preload("res://scripts/expedition_view.gd")
+const ResearchView := preload("res://scripts/research_view.gd")
 const SiteScript := preload("res://scripts/building_site.gd")
 
 const MAP := "res://maps/hollowmark.txt"
@@ -40,6 +41,7 @@ var touch  # touch.gd
 var roster_view
 var buildings_view
 var expedition_view
+var research_view
 var sites := {}  # building id -> building_site.gd on its plot
 var lamp: Node2D  # Hollowmark's own Wardlamp, drawn once it is lit
 var menu: InkMenu
@@ -118,6 +120,9 @@ func _ready() -> void:
 	expedition_view.visible = false
 	roster_layer.add_child(expedition_view)
 	expedition_view.closed.connect(_place_people)
+	research_view = ResearchView.new()
+	research_view.visible = false
+	roster_layer.add_child(research_view)
 	Empire.expedition_returned.connect(func(_r): _place_people())
 
 	var menu_layer := CanvasLayer.new()
@@ -326,6 +331,8 @@ func _use(t: Dictionary) -> void:
 	if t["kind"] == "site":
 		if t["id"] == "guildhall" and Empire.level_of("guildhall") > 0:
 			expedition_view.open()  # the Guildhall's job board
+		elif t["id"] == "scriptorium" and Empire.level_of("scriptorium") > 0:
+			research_view.open()  # the Scriptorium's desks
 		else:
 			buildings_view.open(t["id"])
 		touch.release_all()
@@ -408,6 +415,7 @@ func open_menu(note := "") -> void:
 		{"id": "roster", "label": "Roster", "detail": "R"},
 		{"id": "buildings", "label": "Buildings", "detail": "B"},
 		{"id": "expeditions", "label": "Expeditions", "detail": "E"},
+		{"id": "research", "label": "Research", "detail": "T"},
 		{"id": "save", "label": "Save game"},
 		{"id": "load", "label": "Load game", "enabled": Saves.latest_slot() != "", "note": "(no saves yet)"},
 		{"id": "title", "label": "Quit to title"},
@@ -439,6 +447,9 @@ func _on_menu(id: String) -> void:
 		"expeditions":
 			_close_menu()
 			expedition_view.open()
+		"research":
+			_close_menu()
+			research_view.open()
 		"save", "load":
 			slot_mode = id
 			menu.visible = false
@@ -483,9 +494,9 @@ func _process(delta: float) -> void:
 		lamp.queue_redraw()
 
 	var frame := Engine.get_process_frames()
-	var screen_open: bool = roster_view.visible or buildings_view.visible or expedition_view.visible
+	var screen_open: bool = roster_view.visible or buildings_view.visible or expedition_view.visible or research_view.visible
 	if screen_open or frame == roster_view.closed_frame or frame == buildings_view.closed_frame \
-			or frame == expedition_view.closed_frame or frame == menu_closed_frame:
+			or frame == expedition_view.closed_frame or frame == research_view.closed_frame or frame == menu_closed_frame:
 		leader.controlled = not screen_open
 		return
 	leader.controlled = true
@@ -500,6 +511,9 @@ func _process(delta: float) -> void:
 		return
 	if Input.is_action_just_pressed("expeditions"):
 		expedition_view.open()
+		return
+	if Input.is_action_just_pressed("research"):
+		research_view.open()
 		return
 	for i in Empire.SPEEDS.size():
 		if Input.is_action_just_pressed("clock_speed_%d" % i):

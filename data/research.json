@@ -1,0 +1,71 @@
+{
+	"_comment": "The research tree, studied in the Scriptorium. Each branch is a short chain: a node needs the one before it (needs) and sometimes a Scriptorium level (scriptorium). cost is paid once, when you first start the node (Insight, sometimes Ink); days is study time at 100% pace (researchers' Lore speeds it up, see Empire.research_pace). effect is the one-line promise shown on the screen; the numbers themselves live in scripts/empire.gd (search for the node id) so the text and the game stay in step.",
+	"branches": [
+		{"id": "wardcraft", "name": "Wardcraft", "blurb": "Holding the line against the Blank."},
+		{"id": "logistics", "name": "Logistics", "blurb": "Feeding people and moving them about."},
+		{"id": "inkcraft", "name": "Inkcraft", "blurb": "What Ink can do, in the works and in a fight."},
+		{"id": "arms", "name": "Arms", "blurb": "Better kit for the party."}
+	],
+	"nodes": [
+		{
+			"id": "ward_margins", "branch": "wardcraft", "name": "Margin Wards", "cost": {"insight": 8}, "days": 2,
+			"effect": "Every province you hold: Fray -1 a day",
+			"blurb": "Little warding scribbles in the margins of every map and deed. The Blank reads the margins first, and it does not like what it finds."
+		},
+		{
+			"id": "ward_lampwright", "branch": "wardcraft", "name": "Lampwright's Grammar", "cost": {"insight": 16}, "days": 3, "needs": ["ward_margins"],
+			"effect": "Wardlamps burn brighter: Fray -1 more a day each",
+			"blurb": "Lamps that are written as well as lit. The flame spells something; nobody agrees what, but the Blank flinches."
+		},
+		{
+			"id": "ward_longwatch", "branch": "wardcraft", "name": "The Long Watch", "cost": {"insight": 28}, "days": 4, "needs": ["ward_lampwright"], "scriptorium": 2,
+			"effect": "Surges are seen 1 day sooner and hit for 8 Fray, not 12",
+			"blurb": "A rota of readers who stare at the edge of the white all night and write down when it twitches."
+		},
+		{
+			"id": "log_rations", "branch": "logistics", "name": "Ration Tables", "cost": {"insight": 8}, "days": 2,
+			"effect": "Upkeep: 1 less Supplies a day for every 4 people",
+			"blurb": "Somebody finally counted the bread. Half the town had been eating twice."
+		},
+		{
+			"id": "log_waystations", "branch": "logistics", "name": "Waystations", "cost": {"insight": 16}, "days": 3, "needs": ["log_rations"],
+			"effect": "Expeditions come back a quarter sooner",
+			"blurb": "Huts, water and a dry blanket a day's walk apart. Squads stop getting lost on the way home."
+		},
+		{
+			"id": "log_fieldmaps", "branch": "logistics", "name": "Field Maps", "cost": {"insight": 28}, "days": 4, "needs": ["log_waystations"], "scriptorium": 2,
+			"effect": "Every expedition: +10% success chance",
+			"blurb": "Maps that are redrawn every week, because the land keeps changing its mind."
+		},
+		{
+			"id": "ink_tap", "branch": "inkcraft", "name": "Spring Tapping", "cost": {"insight": 8}, "days": 2,
+			"effect": "The Inkworks makes +1 Ink a day (while it has a worker)",
+			"blurb": "A better way to draw ink from the springs: slowly, and while humming. The twins insist on the humming."
+		},
+		{
+			"id": "ink_blot", "branch": "inkcraft", "name": "Blotting Charm", "cost": {"insight": 16}, "days": 3, "needs": ["ink_tap"],
+			"effect": "Missions: downed allies get back up 40% faster",
+			"blurb": "A thumbprint of ink on the wrist. Press it to someone who has fallen and they remember they are written down."
+		},
+		{
+			"id": "ink_skin", "branch": "inkcraft", "name": "Inkskin", "cost": {"insight": 28, "ink": 3}, "days": 4, "needs": ["ink_blot"], "scriptorium": 2,
+			"effect": "Missions: the party takes 25% less damage",
+			"blurb": "Words painted on the skin under the armour. Blank teeth slide off a sentence that refuses to end."
+		},
+		{
+			"id": "arms_whetstone", "branch": "arms", "name": "Whetstones", "cost": {"insight": 8}, "days": 2,
+			"effect": "Missions: the party hits for +2 damage",
+			"blurb": "Proper stones, proper oil, and a lecture on angles. Blades stop bouncing off things."
+		},
+		{
+			"id": "arms_leather", "branch": "arms", "name": "Boiled Leather", "cost": {"insight": 16}, "days": 3, "needs": ["arms_whetstone"],
+			"effect": "Missions: the party starts with +10 max HP",
+			"blurb": "Smells terrible, stops a bite. Everyone gets a jerkin whether they want one or not."
+		},
+		{
+			"id": "arms_steel", "branch": "arms", "name": "Inked Steel", "cost": {"insight": 28, "ink": 4}, "days": 4, "needs": ["arms_leather"], "scriptorium": 2,
+			"effect": "Missions: +3 more damage and the attack gauge refills 20% faster",
+			"blurb": "Steel quenched in ink instead of water. It comes out black and slightly too eager."
+		}
+	]
+}
