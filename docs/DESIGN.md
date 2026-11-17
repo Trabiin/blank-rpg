@@ -180,7 +180,7 @@ one building is built or upgraded at a time; Wardlamps are put up by locals and 
 adds staff slots, and one stat drives each building: Command Table (Craft: quartermaster cuts upkeep; levels
 give earlier surge warnings), Barracks (Might: party max HP on missions), Infirmary (Lore: faster healing),
 Inkworks (Craft: Ink per day, needs a worker), Scriptorium (Lore: Insight banked for research, Bookish counts
-double), Guildhall (Charm: contract Gilt; expeditions and hiring arrive with their own features). Wardlamps
+double), Guildhall (Charm: contract Gilt; each level lets one more expedition squad be out at once; hiring arrives later). Wardlamps
 have 2 levels (-1 and -2 Fray a day) and go out if their province is erased.
 
 ### 5.7 Expeditions
@@ -190,6 +190,17 @@ Before sending, the panel shows the **success chance** and what drives it (stats
 back as a short written report, often funny, sometimes grim: loot, recruits, injuries, rarely a loss. Expeditions
 are how the non-fighters see the world and how the player gets value from a big roster without playing every
 mission by hand.
+
+**Expeditions in the MVP** (jobs in `data/expeditions.json`, rules in `scripts/empire.gd`, screen E): the Guildhall
+offers about 8 jobs tied to provinces (forage, salvage, escort, scouting, three rescues that bring in Mother
+Gristle, Sister Abeyance and Corporal Daro, and a deadly Ink run at the erased edge). Each job wants one or two
+stats; squad strength is the sum of those stats over the two strongest members plus half for each extra member, and every point above or below the job's target
+moves the chance 4% from 50% (5% to 95%). Traits and pairings add or subtract (Coward on dangerous jobs, Night Owl
+on scouting and rescues, Ink-sick near the Blank, Ex-Concord on Tithe Road, Bran and Daro together, Quill and
+Tobble bickering). Rations cost Supplies per person. People on an expedition leave their job and town until they
+are back. One squad out per Guildhall level. Success pays the job's reward (a fifth of the time half again);
+failure pays a quarter and hurts people; on deadly jobs a failed squad can lose a light recruit for good (core
+and field characters come back badly hurt instead). Every return writes a short report.
 
 ### 5.8 Research
 

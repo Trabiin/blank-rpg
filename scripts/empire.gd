@@ -11,6 +11,7 @@ signal ledger_settled(changes: Dictionary)  # resource -> net change applied at 
 signal notice(text: String, warning: bool)  # something the player should hear about
 signal hollowmark_lost
 signal building_finished(id: String)  # a Hollowmark building was built or upgraded
+signal expedition_returned(report: Dictionary)
 
 ## The Blank. Fray per day from each source; see fray_sources().
 const FRAY_FIRST_ERASED_NEIGHBOR := 3
@@ -68,6 +69,13 @@ var lamps := {}
 var lamp_jobs := {}
 var building_data := {}  # id -> Dictionary from the JSON, in file order
 var lamp_data := {}
+## Expeditions out right now: [{"job", "squad": [ids], "start", "finish"}] (days, like construction).
+var expeditions := []
+## Written reports from squads that came back, newest first: {"day", "job", "title", "outcome", "lines", "read"}.
+var reports := []
+var job_ready := {}  # job id -> first day it can be taken again
+var job_data := {}  # id -> Dictionary from data/expeditions.json
+var pair_data := []
 var rng := RandomNumberGenerator.new()
 var _territory: Territory
 
@@ -104,6 +112,10 @@ func reset() -> void:
 	construction = {}
 	lamps = {}
 	lamp_jobs = {}
+	_load_expedition_data()
+	expeditions = []
+	reports = []
+	job_ready = {}
 	rng.seed = 1234
 	if _territory != null:
 		_territory.reload_data()
@@ -121,6 +133,7 @@ func tick(delta: float) -> void:
 		_advance_blank()
 		day_passed.emit(day)
 	_advance_construction()
+	_advance_expeditions()
 
 
 ## Every line of the daily ledger: [{"label", "gilt", "supplies", "ink", "note"}].
@@ -432,6 +445,8 @@ func governor_score(id: String, pid: String) -> int:
 func governor_blocker(id: String) -> String:
 	if recruit(id).get("locked_party", false):
 		return "Ash leads every mission"
+	if role_of(id) == "expedition":
+		return "away on an expedition"
 	if int(recruits[id]["injured"]) > 0:
 		return "injured"
 	return ""
@@ -495,6 +510,12 @@ func role_options(id: String) -> Array:
 	var r := recruit(id)
 	var st: Dictionary = recruits[id]
 	var out := []
+	if st["role"] == "expedition":
+		var e := expedition_running(st["target"])
+		var back := job_left_text(e) if not e.is_empty() else "soon"
+		out.append({"role": "expedition", "target": st["target"], "label": "On expedition: %s" % job(st["target"]).get("name", "?"),
+			"enabled": false, "note": "back in %s" % back, "preview": "Away from Hollowmark. Back in %s; nothing can be changed until then." % back})
+		return out
 	var hurt := int(st["injured"]) > 0
 	var locked: bool = r.get("locked_party", false)
 	out.append({"role": "idle", "target": "", "label": "Idle in Hollowmark", "enabled": not locked,
@@ -544,7 +565,7 @@ func role_options(id: String) -> Array:
 		var preview := "%s: %s  (now: %s)" % [b["name"], building_effect(bid, lv, with_me)["text"], building_effect(bid, lv, staff)["text"]]
 		out.append({"role": "staff", "target": bid, "label": "Work the %s (%d/%d)" % [b["name"], staff.size(), slots_of(bid)],
 			"enabled": note == "", "note": note, "preview": preview})
-	var expedition_note := "expeditions arrive with #47" if level_of("guildhall") > 0 else "needs a Guildhall"
+	var expedition_note := "send squads from the Expeditions screen (E)" if level_of("guildhall") > 0 else "needs a Guildhall"
 	for locked_role in [["expedition", expedition_note], ["envoy", "needs a faction contact"]]:
 		out.append({"role": locked_role[0], "target": "", "label": ROLE_NAMES[locked_role[0]], "enabled": false, "note": locked_role[1], "preview": ""})
 	return out
@@ -581,6 +602,9 @@ func role_label(id: String) -> String:
 	elif st["role"] == "staff":
 		var b := building(st["target"])
 		label = "%s at the %s" % [b.get("staff_title", "Staff"), b.get("name", "?")]
+	elif st["role"] == "expedition":
+		var e := expedition_running(st["target"])
+		label = "Away: %s%s" % [job(st["target"]).get("name", "?"), (" (back in %s)" % job_left_text(e)) if not e.is_empty() else ""]
 	if int(st["injured"]) > 0:
 		label += "  (injured, %d days)" % int(st["injured"])
 	return label
@@ -591,6 +615,314 @@ func _heal() -> void:
 	for id in recruits:
 		if int(recruits[id]["injured"]) > 0:
 			recruits[id]["injured"] = maxi(int(recruits[id]["injured"]) - per_day, 0)
+
+
+# ---------------------------------------------------------------- expeditions
+
+const SQUAD_MIN := 2
+const SQUAD_MAX := 4
+const EXPEDITION_PER_POINT := 4  # % success per point of squad strength over or under the job's target
+const CHANCE_MIN := 5
+const CHANCE_MAX := 95
+const REPORTS_KEPT := 12
+const DANGER_NAMES := ["", "Low", "Risky", "Deadly"]
+
+
+func _load_expedition_data() -> void:
+	if not job_data.is_empty():
+		return
+	var f := FileAccess.open("res://data/expeditions.json", FileAccess.READ)
+	var parsed = JSON.parse_string(f.get_as_text())
+	for j in parsed["jobs"]:
+		job_data[j["id"]] = j
+	pair_data = parsed.get("pairs", [])
+
+
+func job(id: String) -> Dictionary:
+	_load_expedition_data()
+	return job_data.get(id, {})
+
+
+## Jobs worth listing: rescues vanish once the person has joined.
+func job_ids() -> Array:
+	_load_expedition_data()
+	return job_data.keys().filter(func(j): return not recruits.has(job_data[j].get("recruit", "")))
+
+
+## How many squads the Guildhall can have out at once (one per level).
+func expedition_slots() -> int:
+	return level_of("guildhall")
+
+
+func expedition_running(jid: String) -> Dictionary:
+	for e in expeditions:
+		if e["job"] == jid:
+			return e
+	return {}
+
+
+## Why a job can't be taken right now ("" = it can, given a squad).
+func job_blocker(jid: String) -> String:
+	var j := job(jid)
+	var needs: Dictionary = j.get("needs", {})
+	var gh := level_of("guildhall")
+	if gh <= 0:
+		return "build the Guildhall first (B)"
+	if gh < int(needs.get("guildhall", 1)):
+		return "needs Guildhall level %d" % int(needs["guildhall"])
+	var p := territory().find(j["province"])
+	if needs.get("erased", false):
+		if p.get("owner", "") != "erased":
+			return "only once %s is erased" % p.get("name", "?")
+	elif p.get("owner", "") == "erased":
+		return "%s has been erased" % p.get("name", "?")
+	if not expedition_running(jid).is_empty():
+		return "a squad is already out on it"
+	if int(job_ready.get(jid, 0)) > day:
+		var d := int(job_ready[jid]) - day
+		return "nothing new there for %d day%s" % [d, "" if d == 1 else "s"]
+	if expeditions.size() >= expedition_slots():
+		return "all squads are out (%d/%d). Upgrade the Guildhall for more" % [expeditions.size(), expedition_slots()]
+	return ""
+
+
+## Why a recruit can't join a squad ("" = they can).
+func squad_blocker(id: String) -> String:
+	if recruit(id).get("locked_party", false):
+		return "Ash leads every mission"
+	if role_of(id) == "expedition":
+		return "already away"
+	if int(recruits[id]["injured"]) > 0:
+		return "injured"
+	return ""
+
+
+func expedition_cost(jid: String, n: int) -> Dictionary:
+	return {"supplies": int(job(jid).get("rations", 1)) * n}
+
+
+## One recruit's strength for a job: their stats times the job's weights.
+func job_strength(jid: String, id: String) -> float:
+	var total := 0.0
+	var st: Dictionary = recruit(id)["stats"]
+	var w: Dictionary = job(jid)["stats"]
+	for k in w:
+		total += float(st.get(k, 0)) * float(w[k])
+	return total
+
+
+## Success chance for a squad, and every reason behind it: {"chance", "strength", "why": [[text, good?]]}.
+func expedition_odds(jid: String, squad: Array) -> Dictionary:
+	var j := job(jid)
+	var needs: Dictionary = j.get("needs", {})
+	var why := []
+	# The two strongest count in full; extra hands help, but only half as much.
+	var parts := squad.map(func(id): return job_strength(jid, id))
+	parts.sort()
+	parts.reverse()
+	var strength := 0.0
+	for i in parts.size():
+		strength += parts[i] * (1.0 if i < 2 else 0.5)
+	var target := float(j["target"])
+	var chance := 50.0 + (strength - target) * EXPEDITION_PER_POINT
+	var stat_names := []
+	for k in j["stats"]:
+		stat_names.append(STAT_NAMES[k] + ("" if float(j["stats"][k]) >= 1.0 else " (half)"))
+	why.append(["Squad %s: %d vs %d needed" % [" + ".join(stat_names), int(round(strength)), int(target)], strength >= target])
+	if squad.size() > 2:
+		why.append(["Extra hands: everyone past the strongest two counts half", true])
+	var danger := int(j["danger"])
+	for id in squad:
+		var n := short_name(id)
+		if has_trait(id, "coward") and danger >= 2:
+			chance -= 10
+			why.append(["%s is a Coward: bolts at the first noise, -10%%" % n, false])
+		if has_trait(id, "stubborn") and danger >= 2:
+			chance += 5
+			why.append(["%s is Stubborn: will not turn back, +5%%" % n, true])
+		if has_trait(id, "night_owl") and j["kind"] in ["Scouting", "Rescue"]:
+			chance += 5
+			why.append(["%s is a Night Owl: moves by dark, +5%%" % n, true])
+		if has_trait(id, "bookish"):
+			if j["kind"] == "Scouting":
+				chance += 5
+				why.append(["%s is Bookish: draws a proper map, +5%%" % n, true])
+			elif j["kind"] == "Escort":
+				chance -= 5
+				why.append(["%s is Bookish: reads through the ambush, -5%%" % n, false])
+		if has_trait(id, "contract") and j.get("reward", {}).has("gilt"):
+			chance += 5
+			why.append(["%s is Contracted: fights harder for coin, +5%%" % n, true])
+		if has_trait(id, "flirt") and j["kind"] == "Rescue":
+			chance += 5
+			why.append(["%s is a Flirt: rescues go smoother, +5%%" % n, true])
+		if has_trait(id, "ink_sick") and needs.get("blank", false):
+			chance += 10
+			why.append(["%s is Ink-sick: can feel where the Blank is thin, +10%%" % n, true])
+		if has_trait(id, "ex_concord") and needs.get("concord", false):
+			chance += 10
+			why.append(["%s is Ex-Concord: knows the toll posts, +10%%" % n, true])
+		if has_trait(id, "greedy") and j.get("reward", {}).has("gilt"):
+			why.append(["%s is Greedy: brings back 20%% more Gilt (and pockets some)" % n, true])
+	for pair in pair_data:
+		if pair["ids"][0] in squad and pair["ids"][1] in squad:
+			chance += int(pair["mod"])
+			why.append(["%s, %+d%%" % [pair["text"], int(pair["mod"])], int(pair["mod"]) > 0])
+	var c := clampi(int(round(chance)), CHANCE_MIN, CHANCE_MAX)
+	return {"chance": c, "strength": strength, "why": why}
+
+
+## "+16-24 Supplies, +1 Renown, a new recruit".
+func reward_text(jid: String) -> String:
+	var j := job(jid)
+	var parts := []
+	var rw: Dictionary = j.get("reward", {})
+	for k in ["gilt", "supplies", "ink", "insight", "renown"]:
+		if not rw.has(k):
+			continue
+		var v = rw[k]
+		if typeof(v) == TYPE_ARRAY:
+			parts.append("+%d-%d %s" % [int(v[0]), int(v[1]), RES_NAMES[k]] if int(v[0]) != int(v[1]) else "+%d %s" % [int(v[0]), RES_NAMES[k]])
+		else:
+			parts.append("+%d %s" % [int(v), RES_NAMES[k]])
+	if int(j.get("fray", 0)) != 0:
+		parts.append("%s Fray %d" % [territory().find(j["province"]).get("name", "?"), int(j["fray"])])
+	if j.get("recruit", "") != "":
+		parts.append("%s joins" % recruit(j["recruit"])["name"])
+	return ", ".join(parts)
+
+
+func send_expedition(jid: String, squad: Array) -> bool:
+	if job_blocker(jid) != "" or squad.size() < SQUAD_MIN or squad.size() > SQUAD_MAX:
+		return false
+	for id in squad:
+		if squad_blocker(id) != "":
+			return false
+	if not spend(expedition_cost(jid, squad.size())):
+		return false
+	var now := day + day_t
+	for id in squad:
+		recruits[id]["role"] = "expedition"
+		recruits[id]["target"] = jid
+	expeditions.append({"job": jid, "squad": squad.duplicate(), "start": now, "finish": now + float(job(jid)["days"])})
+	return true
+
+
+func unread_reports() -> int:
+	return reports.filter(func(r): return not r.get("read", false)).size()
+
+
+func _roll_amount(v) -> int:
+	if typeof(v) == TYPE_ARRAY:
+		return rng.randi_range(int(v[0]), int(v[1]))
+	return int(v)
+
+
+func _fill(s: String, squad: Array) -> String:
+	var names := squad.map(func(id): return short_name(id))
+	var all: String = ", ".join(names.slice(0, names.size() - 1)) + " and " + names[-1] if names.size() > 1 else names[0]
+	var b: String = names[1] if names.size() > 1 else names[0]
+	return s.replace("{lead}", names[0]).replace("{a}", names[0]).replace("{b}", b).replace("{squad}", all)
+
+
+## A squad comes home: roll the outcome, pay out, hurt people, write the report.
+func _resolve_expedition(e: Dictionary) -> void:
+	var jid: String = e["job"]
+	var j := job(jid)
+	var squad: Array = e["squad"].filter(func(id): return recruits.has(id))
+	for id in squad:
+		recruits[id]["role"] = "idle"
+		recruits[id]["target"] = ""
+	job_ready[jid] = day + int(j.get("cooldown", 1))
+	if squad.is_empty():
+		return
+	var odds := expedition_odds(jid, squad)
+	var roll := rng.randf() * 100.0
+	var outcome := "fail"
+	if roll < float(odds["chance"]):
+		outcome = "great" if roll < float(odds["chance"]) * 0.2 else "success"
+	var lines := []
+	var order := squad  # {lead} is whoever was picked first
+	var tales: Array = j["text"]["fail" if outcome == "fail" else "success"]
+	lines.append(_fill(tales[rng.randi_range(0, tales.size() - 1)], order))
+	if outcome == "great":
+		lines.append("A great haul: half again what anyone expected.")
+	# Loot
+	var mult: float = {"great": 1.5, "success": 1.0, "fail": 0.25}[outcome]
+	var loot := []
+	var greedy := squad.filter(func(id): return has_trait(id, "greedy")).size()
+	for k in ["gilt", "supplies", "ink", "insight", "renown"]:
+		if not j.get("reward", {}).has(k):
+			continue
+		var amount := int(round(_roll_amount(j["reward"][k]) * mult))
+		if k == "gilt" and greedy > 0:
+			amount = int(round(amount * (1.0 + 0.2 * greedy)))
+		if k == "renown" and outcome == "fail":
+			amount = 0
+		if amount > 0:
+			gain(k, amount)
+			loot.append("+%d %s" % [amount, RES_NAMES[k]])
+	lines.append("Brought back: %s." % (", ".join(loot) if not loot.is_empty() else "nothing but stories"))
+	if outcome != "fail":
+		var p := territory().find(j["province"])
+		if int(j.get("fray", 0)) != 0 and not p.is_empty() and p["owner"] != "erased":
+			p["fray"] = clampi(int(p["fray"]) + int(j["fray"]), 0, 100)
+			lines.append("%s's Fray %+d." % [p["name"], int(j["fray"])])
+		var rid: String = j.get("recruit", "")
+		if rid != "" and not recruits.has(rid) and recruit_data.has(rid):
+			recruits[rid] = {"role": "idle", "target": "", "injured": 0}
+			lines.append("%s joins your roster. Find them in Hollowmark or give them a job (R)." % recruit(rid)["name"])
+	# A quip from someone on the squad
+	var quippers := squad.filter(func(id): return not recruit(id).get("quips", []).is_empty())
+	if not quippers.is_empty():
+		var q: Array = recruit(quippers[rng.randi_range(0, quippers.size() - 1)])["quips"]
+		lines.append(q[rng.randi_range(0, q.size() - 1)])
+	# Injuries, and (rarely) a loss
+	var danger := int(j["danger"])
+	var hurt := []
+	if outcome == "fail":
+		for id in squad:
+			if rng.randf() < 0.2 * danger:
+				hurt.append(id)
+		if danger >= 3 and rng.randf() < 0.12:
+			var who: String = squad[rng.randi_range(0, squad.size() - 1)]
+			hurt.erase(who)
+			if recruit(who)["tier"] == "recruit":
+				recruits.erase(who)
+				lines.append("%s did not come back. The others waited a day at the edge. The white gave nothing back." % recruit(who)["name"])
+			else:
+				recruits[who]["injured"] = 8
+				lines.append("%s was dragged back from the white, barely. Out of action for 8 days." % short_name(who))
+	elif danger >= 2 and rng.randf() < 0.1 * (danger - 1):
+		hurt.append(squad[rng.randi_range(0, squad.size() - 1)])
+	for id in hurt:
+		var days := 1 + danger + rng.randi_range(0, 1)
+		recruits[id]["injured"] = maxi(int(recruits[id]["injured"]), days)
+		lines.append("%s came back hurt: out of action for %d days." % [short_name(id), days])
+	var title := "%s: %s" % [j["name"], {"great": "great success", "success": "success", "fail": "failed"}[outcome]]
+	reports.push_front({"day": day, "job": jid, "title": title, "outcome": outcome, "squad": squad,
+		"chance": int(odds["chance"]), "lines": lines, "read": false})
+	if reports.size() > REPORTS_KEPT:
+		reports.resize(REPORTS_KEPT)
+	notice.emit("Squad back from %s: %s. Report: E" % [territory().find(j["province"]).get("name", "?"), {"great": "great success", "success": "success", "fail": "it went badly"}[outcome]], outcome == "fail")
+	expedition_returned.emit(reports[0])
+
+
+func _advance_expeditions() -> void:
+	var now := day + day_t
+	for e in expeditions.duplicate():
+		if now >= float(e["finish"]):
+			expeditions.erase(e)
+			_resolve_expedition(e)
+
+
+## "Brannoc", "Old Tobble", "Mother Gristle": how people are named in reports.
+func short_name(id: String) -> String:
+	var n: String = recruit(id).get("name", "?")
+	for title in ["Old ", "Mother ", "Sister ", "Corporal "]:
+		if n.begins_with(title):
+			return n.get_slice(" ", 1) if title == "Corporal " else n
+	return n.get_slice(" ", 0)
 
 
 # ---------------------------------------------------------------- buildings and construction
@@ -860,6 +1192,7 @@ func to_dict() -> Dictionary:
 	return {"day": day, "day_t": day_t, "speed": speed, "playtime": playtime, "provinces": ps,
 		"res": res, "hungry": hungry, "recruits": recruits, "surge": surge, "next_surge_day": next_surge_day,
 		"buildings": buildings, "construction": construction, "lamps": lamps, "lamp_jobs": lamp_jobs,
+		"expeditions": expeditions, "reports": reports, "job_ready": job_ready,
 		"rng_state": str(rng.state)}
 
 
@@ -897,6 +1230,20 @@ func from_dict(d: Dictionary) -> void:
 	var saved_j: Dictionary = d.get("lamp_jobs", {})
 	for pid in saved_j:
 		lamp_jobs[pid] = {"start": float(saved_j[pid]["start"]), "finish": float(saved_j[pid]["finish"])}
+	for e in d.get("expeditions", []):
+		if job_data.has(e.get("job", "")):
+			var squad: Array = e.get("squad", []).filter(func(id): return recruits.has(id))
+			expeditions.append({"job": e["job"], "squad": squad, "start": float(e["start"]), "finish": float(e["finish"])})
+	for id in recruits:  # nobody is "away" without a squad to be away with
+		if recruits[id]["role"] == "expedition" and expedition_running(recruits[id]["target"]).is_empty():
+			recruits[id]["role"] = "idle"
+			recruits[id]["target"] = ""
+	for r in d.get("reports", []):
+		if typeof(r) == TYPE_DICTIONARY:
+			reports.append(r)
+	var saved_jr: Dictionary = d.get("job_ready", {})
+	for jid in saved_jr:
+		job_ready[jid] = int(saved_jr[jid])
 	if d.has("rng_state"):
 		rng.state = int(d["rng_state"])
 	for saved in d.get("provinces", []):

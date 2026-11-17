@@ -1,0 +1,95 @@
+{
+	"_comment": "Expeditions: off-screen squad jobs sent from the Guildhall (key E). stats: the stats that count and how much (squad strength = sum of stat x weight over the squad). target: the strength that gives a 50% chance; every point above or below moves it by Empire.EXPEDITION_PER_POINT. danger 1-3 drives injuries (and, at 3, a rare loss). rations: Supplies per person sent. reward: [min, max] per resource, or a flat number; fray: change to the job's province on success; recruit: who joins on success (the job disappears once they have joined). needs: guildhall level, erased (the province must be erased) and tags used by traits (blank, concord). text: {a} {b} = two squad members, {lead} = the first one picked, {squad} = everyone.",
+	"jobs": [
+		{
+			"id": "forage_meadow", "name": "Forage the Frayed Meadow", "kind": "Supply run", "province": "meadow",
+			"blurb": "Half the Meadow has gone pale, but the turnips in the other half don't know that yet. Dig fast, don't look at the white bits.",
+			"days": 1, "rations": 1, "stats": {"craft": 1.0, "grit": 0.5}, "target": 13, "danger": 1, "cooldown": 1,
+			"reward": {"supplies": [16, 24]},
+			"text": {
+				"success": ["{a} and {b} came back with sacks of turnips, a wheel of cheese and a goat nobody admits stealing.", "{lead} found a cellar the Blank had skipped. It was full of pickles. It is now empty of pickles."],
+				"fail": ["{a} dug up a turnip that had gone white inside. Everyone dropped everything and ran. The sacks are still out there.", "The field kept getting longer the further {lead} walked. They came back with one onion and a headache."]
+			}
+		},
+		{
+			"id": "salvage_mill", "name": "Salvage at Old Mill Crossing", "kind": "Salvage", "province": "oldmill",
+			"blurb": "The old millers left in a hurry. Their gears, nails and strongboxes did not. Bring a crowbar and a straight face.",
+			"days": 2, "rations": 2, "stats": {"craft": 1.0, "might": 0.5}, "target": 17, "danger": 1, "cooldown": 2,
+			"reward": {"gilt": [20, 35], "supplies": [6, 12], "ink": [0, 1]},
+			"text": {
+				"success": ["{a} pried open a strongbox while {b} held the door shut against something that turned out to be wind. Good haul.", "{lead} took the mill apart down to the nails and sold the nails back to the people who live nearby."],
+				"fail": ["The millwheel started turning on its own. {a} and {b} decided the gears could stay where they were.", "{lead} fell through the granary floor into a smaller, older granary. Climbing out took most of the trip."]
+			}
+		},
+		{
+			"id": "escort_ferry", "name": "Escort a barge to Gallows Ferry", "kind": "Escort", "province": "gallows",
+			"blurb": "A Guild barge needs bodies on deck. The pay is good because the river is not. Mercenaries respect people who show up.",
+			"days": 2, "rations": 2, "stats": {"might": 1.0, "grit": 0.5}, "target": 19, "danger": 2, "cooldown": 2,
+			"reward": {"gilt": [45, 65], "renown": 1},
+			"text": {
+				"success": ["River bandits tried the barge once. {a} threw one of them back. {b} threw the rest. The Guild paid in full and nearly smiled.", "{lead} stood at the prow looking menacing for two days straight. It worked. Nobody even tried."],
+				"fail": ["The barge was fine. The cargo was fine. {a} fell in, {b} went in after them, and the Guild docked the pay for 'swimming on contract time'.", "Bandits in the reeds. {lead} held them off but the cargo didn't make it. Half pay, and a lecture."]
+			}
+		},
+		{
+			"id": "scout_saltreed", "name": "Scout the Saltreed edge", "kind": "Scouting", "province": "saltreed",
+			"blurb": "The marsh is fraying fast. Someone should walk its edge, mark the paths that still hold and stake lanterns where the white starts.",
+			"days": 1, "rations": 1, "stats": {"lore": 1.0, "grit": 0.5}, "target": 16, "danger": 2, "cooldown": 2,
+			"reward": {"insight": [3, 5], "renown": 1}, "fray": -5,
+			"needs": {"blank": true},
+			"text": {
+				"success": ["{a} mapped the paths that still hold while {b} hammered stakes where the marsh went quiet. Saltreed frays a little slower for it.", "{lead} walked the whole edge and came back with a notebook full of drawings. Some of the drawings were drawn back."],
+				"fail": ["The paths moved while {a} was mapping them. {b} says the map now shows a different marsh. Possibly a better one.", "{lead} got lost in fog that was not quite fog. Found by the smell of Tobble's stew, two days later."]
+			}
+		},
+		{
+			"id": "rescue_gristle", "name": "Rumour: a witch in the Gutterwoods", "kind": "Rescue", "province": "gutterwoods",
+			"blurb": "Woodcutters say a hedge-witch is selling cures out of a hollow tree, and the Coven wants her gone. Find her before they do. Bring coin; she will ask.",
+			"days": 2, "rations": 2, "stats": {"charm": 1.0, "lore": 0.5}, "target": 17, "danger": 2, "cooldown": 2,
+			"reward": {"renown": 1}, "recruit": "gristle",
+			"text": {
+				"success": ["{a} found the hollow tree. {b} drank the tea before anyone could stop them and is mostly fine. Mother Gristle agreed to come, for a fee to be named later.", "{lead} talked Mother Gristle out of her tree with promises of steady work and sick people. She seemed delighted by the sick people."],
+				"fail": ["The witch sold {a} a 'map' and {b} a 'cure'. The map led in a circle. The cure was for a disease {b} now has.", "Coven sentries turned {lead} around at the treeline. Politely. With knives."]
+			}
+		},
+		{
+			"id": "rescue_abeyance", "name": "Rumour: a scribe hiding in Lampwick", "kind": "Rescue", "province": "lampwick",
+			"blurb": "A runaway from the Abbey is hiding in the Lampwick hills with a stolen page that will not stay written. The Abbey wants the page back, and the scribe.",
+			"days": 2, "rations": 2, "stats": {"lore": 1.0, "charm": 0.5}, "target": 18, "danger": 1, "cooldown": 2,
+			"reward": {"insight": [2, 4]}, "recruit": "abeyance",
+			"text": {
+				"success": ["{a} found Sister Abeyance by following the sound of someone arguing with a piece of paper. {b} carried her books. All of them.", "{lead} traded the Abbey trackers a forged page for the real scribe. Sister Abeyance says the page liked {lead}. That is new."],
+				"fail": ["{a} and {b} found the cave, a cold fire and a note that said 'not yet'. The note was in {a}'s handwriting.", "The Abbey's trackers got there first. {lead} came home with nothing but a strongly worded pamphlet."]
+			}
+		},
+		{
+			"id": "rescue_daro", "name": "Rumour: a deserter on Tithe Road", "kind": "Rescue", "province": "tithe",
+			"blurb": "A Concord corporal walked out on an Erasure order and is hiding somewhere along the Tithe Road toll posts. The Concord has posted a reward. Pay it to yourself.",
+			"days": 3, "rations": 2, "stats": {"might": 0.5, "charm": 1.0, "grit": 0.5}, "target": 22, "danger": 2, "cooldown": 3,
+			"reward": {"renown": 1}, "recruit": "ninefingers",
+			"needs": {"concord": true},
+			"text": {
+				"success": ["{a} waved forged papers at the toll post while {b} walked out the back with Corporal Daro, who complained about the paperwork the entire way home.", "{lead} found Daro in a ditch, sharpening a sword and insulting a crow. Daro says yes, mainly to annoy the Concord."],
+				"fail": ["The Concord asked {a} to fill in a form explaining the visit. Then another form explaining the first form. {b} gave up on day two.", "{lead} found the ditch, the sword and the crow. No Daro. The crow was very rude about it."]
+			}
+		},
+		{
+			"id": "paper_edge", "name": "Skim the paper edge at Whitewater", "kind": "Salvage", "province": "whitewater",
+			"blurb": "Whitewater is gone, but the Blank leaves Ink pooled at its edges like a tide line. Scoop it up and do not let it read you back.",
+			"days": 3, "rations": 3, "stats": {"lore": 1.0, "grit": 1.0}, "target": 30, "danger": 3, "cooldown": 3,
+			"reward": {"ink": [4, 7], "renown": 2},
+			"needs": {"guildhall": 2, "erased": true, "blank": true},
+			"text": {
+				"success": ["{a} skimmed Ink off the white while {b} kept talking, loudly, so the Blank would know they were still there. It works. Nobody knows why.", "{lead} came back with jars of Ink and an extra shadow. The shadow left after a bath."],
+				"fail": ["The white got hungry. {a} dropped the jars and pulled {b} back by the collar. {b} has a pale stripe in their hair now and will not discuss it.", "{lead} stared too long. Came back fine, apart from forgetting the word for 'spoon'. Nobody has had the heart to tell them."]
+			}
+		}
+	],
+	"pairs": [
+		{"ids": ["bran", "ninefingers"], "mod": 5, "text": "Old soldiers: Bran and Daro cover each other's blind side"},
+		{"ids": ["quill", "ninefingers"], "mod": 5, "text": "Two ex-Concord: they know where the forms are weakest"},
+		{"ids": ["pell", "abeyance"], "mod": 5, "text": "Pell and Abeyance both talk to the dead; the dead give directions"},
+		{"ids": ["quill", "tobble"], "mod": -5, "text": "Quill and Tobble argue about Tobble's bar tab the whole way"},
+		{"ids": ["gristle", "bran"], "mod": -5, "text": "Gristle bills Bran for every bandage; Bran refuses on principle"}
+	]
+}
