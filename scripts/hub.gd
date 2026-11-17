@@ -59,6 +59,7 @@ func _ready() -> void:
 	leader.collision_layer = 2
 	heroes = [leader]
 	_place_people()
+	call_deferred("_add_pixellab_preview")  # TEMPORARY art test (V key); remove with scripts/pixellab_preview.gd
 
 	var tags := Node2D.new()
 	tags.z_index = 20
@@ -468,3 +469,11 @@ func _draw_tags(canvas: Node2D) -> void:
 			var y := -33.0 + sin(Time.get_ticks_msec() * 0.006)
 			var tip := npc.global_position + Vector2(0, y)
 			canvas.draw_colored_polygon(PackedVector2Array([tip + Vector2(-2.5, -3), tip + Vector2(2.5, -3), tip]), Color("ffd166"))
+
+
+## TEMPORARY art test: lets V swap Ash's paper doll for the PixelLab test sprite.
+func _add_pixellab_preview() -> void:
+	var preview = load("res://scripts/pixellab_preview.gd").new()
+	preview.hero = leader
+	preview.hud = hud
+	add_child(preview)
