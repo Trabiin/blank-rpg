@@ -20,6 +20,7 @@ func _ready() -> void:
 	_add_action("ledger", [KEY_L], [JOY_BUTTON_BACK])
 	_add_action("roster", [KEY_R], [JOY_BUTTON_Y])
 	_add_action("buildings", [KEY_B], [JOY_BUTTON_LEFT_STICK])
+	_add_action("govern", [KEY_G], [JOY_BUTTON_X])
 	# Menus use Godot's ui_* actions; also let WASD, J and the stick drive them.
 	_extend("ui_up", [KEY_W], JOY_AXIS_LEFT_Y, -1.0)
 	_extend("ui_down", [KEY_S], JOY_AXIS_LEFT_Y, 1.0)

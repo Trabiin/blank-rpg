@@ -148,6 +148,15 @@ A recruit can hold **one role at a time**:
 Recruits come from story missions, rescue missions, reclaimed provinces, the Guildhall (hire for Gilt),
 buildings that attract certain people (open a cabaret and singers come), and faction deals.
 
+**Governors in the MVP** (numbers in `scripts/empire.gd` and `data/provinces.json`): each province **wants** one
+stat (Hollowmark Charm, Old Mill Craft, Lampwick Lore, the Meadow and Saltreed Grit, and so on). A governor with 7+
+in it is a **good fit** (+50% of the province's output, Fray 1 slower); 3 or less is a **poor fit** (-25%, Fray 1
+faster). On top of that Grit slows Fray, Charm adds Gilt, Craft adds Supplies, and traits chip in (Stubborn,
+Coward, Greedy, Ink-sick, Ex-Concord). A province you hold with **no governor** frays +3 a day and delivers 25%
+less. **Claiming:** an unclaimed province next to your land can be claimed from the Command Table (G) for Gilt and
+Supplies; someone has to go and run it, so every claim costs a recruit. Faction land waits for diplomacy, erased
+land for Reclaim missions.
+
 ### 5.6 Buildings (Hollowmark)
 
 Built and upgraded from the Command Table; each appears in the walkable town when finished.

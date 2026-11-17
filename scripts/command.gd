@@ -52,6 +52,8 @@ var roster_view
 const RosterView := preload("res://scripts/roster_view.gd")
 const BuildingsView := preload("res://scripts/buildings_view.gd")
 var buildings_view
+const GovernorView := preload("res://scripts/governor_view.gd")
+var governor_view
 var autosave_t := AUTOSAVE_EVERY
 
 
@@ -78,6 +80,10 @@ func _ready() -> void:
 	buildings_view = BuildingsView.new()
 	buildings_view.visible = false
 	roster_layer.add_child(buildings_view)
+	governor_view = GovernorView.new()
+	governor_view.visible = false
+	roster_layer.add_child(governor_view)
+	governor_view.closed.connect(_bake)  # a claim recolours the map
 
 	var layer := CanvasLayer.new()
 	layer.layer = 5
@@ -331,13 +337,17 @@ func _process(delta: float) -> void:
 	queue_redraw()
 	var frame := Engine.get_process_frames()
 	if frame == menu_closed_frame or roster_view.visible or frame == roster_view.closed_frame \
-			or buildings_view.visible or frame == buildings_view.closed_frame:
+			or buildings_view.visible or frame == buildings_view.closed_frame \
+			or governor_view.visible or frame == governor_view.closed_frame:
 		return
 	if Input.is_action_just_pressed("roster"):
 		roster_view.open()
 		return
 	if Input.is_action_just_pressed("buildings"):
 		buildings_view.open()
+		return
+	if Input.is_action_just_pressed("govern"):
+		_open_governor()
 		return
 	for i in Empire.SPEEDS.size():
 		if Input.is_action_just_pressed("clock_speed_%d" % i):
@@ -395,6 +405,8 @@ func _gui_input(event: InputEvent) -> void:
 			if i == selected:
 				_activate(i)  # second tap on the selected province plays its mission
 			selected = i
+		elif _governor_button_rect().has_point(event.position) and _can_govern(selected):
+			_open_governor()
 		elif _play_rect().has_point(event.position):
 			_activate(selected)
 		elif _roster_button_rect().has_point(event.position):
@@ -429,6 +441,23 @@ func _activate(i: int) -> void:
 	var m := _mission(i)
 	if not m.is_empty():
 		_leave(m["scene"])  # the clock stops here: missions take no Command time
+
+
+func _open_governor() -> void:
+	if _can_govern(selected):
+		governor_view.open(territory.provinces[selected]["id"])
+
+
+## The governor screen opens for your provinces and for unclaimed ones (to claim them).
+func _can_govern(i: int) -> bool:
+	return territory.provinces[i]["owner"] in ["you", "free"]
+
+
+var _gov_button_y := -100.0  # set while drawing the panel
+
+
+func _governor_button_rect() -> Rect2:
+	return Rect2(Vector2(size.x - 92, _gov_button_y - 10), Vector2(86, 14))
 
 
 func _roster_button_rect() -> Rect2:
@@ -753,9 +782,29 @@ func _draw_panel() -> void:
 	_text(Vector2(x, y), "Governor", 9, Color(0.7, 0.68, 0.7))
 	var gov := Empire.governor_of(p["id"])
 	var gov_text := "-"
+	var gov_col := Color(0.85, 0.83, 0.78)
 	if owner == "you":
-		gov_text = Empire.recruit(gov)["name"] if gov != "" else "none posted (Roster: R)"
-	_text(Vector2(x + 52, y), gov_text, 9, Color(0.85, 0.83, 0.78))
+		if gov != "":
+			gov_text = "%s (%s fit)" % [Empire.recruit(gov)["name"], Empire.governor_fit(gov, p["id"])]
+		else:
+			gov_text = "none posted!"
+			gov_col = Color("ff9b8a")
+	elif owner == "free":
+		gov_text = "claim it to post one"
+	_text(Vector2(x + 52, y), gov_text, 9, gov_col)
+	_gov_button_y = y if _can_govern(selected) else -100.0
+	if _can_govern(selected):
+		y += 13
+		var fav: String = p.get("favors", "charm")
+		_text(Vector2(x, y), "Wants", 9, Color(0.7, 0.68, 0.7))
+		_text(Vector2(x + 52, y), "high %s" % Empire.STAT_NAMES[fav], 9, Color(0.85, 0.83, 0.78))
+		var gb := _governor_button_rect()
+		gb.position.y += 13  # sits beside the "Wants" line, under the name
+		_gov_button_y += 13
+		draw_rect(gb, Color(0.22, 0.17, 0.08))
+		draw_rect(gb, GOLD, false, 1.0)
+		var label := ("Claim" if owner == "free" else ("Change" if gov != "" else "Post one")) + "  G"
+		_text_c(Vector2(gb.get_center().x, gb.position.y + 10), label, 8, GOLD)
 	y += 13
 	var sites: Array = p.get("sites", [])
 	_text(Vector2(x, y), "Sites", 9, Color(0.7, 0.68, 0.7))
