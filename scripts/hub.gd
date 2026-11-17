@@ -9,12 +9,23 @@ const HeroScript := preload("res://scripts/hero.gd")
 const HudScript := preload("res://scripts/hub_hud.gd")
 const TouchScript := preload("res://scripts/touch.gd")
 const RosterView := preload("res://scripts/roster_view.gd")
+const BuildingsView := preload("res://scripts/buildings_view.gd")
+const SiteScript := preload("res://scripts/building_site.gd")
 
 const MAP := "res://maps/hollowmark.txt"
 const TITLE_SCENE := "res://scenes/title.tscn"
 const AUTOSAVE_EVERY := 60.0
 const TALK_RANGE := 26.0
 const TABLE_SIZE := Vector2(46, 26)  # the Command Table, drawn in code (placeholder art)
+## What staff say about their building when you talk to them, before what it is doing right now.
+const STAFF_LINES := {
+	"command_table": "Every order crosses this table. I make sure fewer of them cost bread.",
+	"barracks": "Up, down, up, down. They hate me. They'll live longer.",
+	"infirmary": "Hold still. This will hurt, which is how you know it's working.",
+	"inkworks": "Soot, gall, a little blood. Don't ask whose.",
+	"scriptorium": "The margins are where the truth hides. I'm writing it down before the Blank does.",
+	"guildhall": "Everybody wants something done and nobody wants to do it. That's my cut.",
+}
 
 var heroes: Array = []  # just Ash: in town you walk alone
 var leader: Hero
@@ -26,6 +37,9 @@ var world := Vector2.ZERO
 var hud  # hub_hud.gd
 var touch  # touch.gd
 var roster_view
+var buildings_view
+var sites := {}  # building id -> building_site.gd on its plot
+var lamp: Node2D  # Hollowmark's own Wardlamp, drawn once it is lit
 var menu: InkMenu
 var slot_menu: InkMenu
 var slot_mode := ""
@@ -50,6 +64,7 @@ func _ready() -> void:
 	add_child(entities)
 	_build_walls()
 	_build_table()
+	_build_sites()
 
 	var look: Dictionary = Empire.recruit("ash").get("look", {})
 	leader = _make_person("ash", area.party_start, look)
@@ -92,6 +107,10 @@ func _ready() -> void:
 	roster_view.visible = false
 	roster_layer.add_child(roster_view)
 	roster_view.closed.connect(_place_people)
+	buildings_view = BuildingsView.new()
+	buildings_view.visible = false
+	roster_layer.add_child(buildings_view)
+	buildings_view.closed.connect(_place_people)
 
 	var menu_layer := CanvasLayer.new()
 	menu_layer.layer = 5
@@ -157,6 +176,27 @@ func _build_table() -> void:
 	entities.add_child(table_body)
 
 
+## Building plots from the map's site_<id> marks, and the spot for Hollowmark's Wardlamp.
+func _build_sites() -> void:
+	for id in Empire.building_ids():
+		var mark: String = Empire.building(id).get("site", "")
+		var spots: Array = area.markers.get(mark, [])
+		if mark == "" or spots.is_empty():
+			continue
+		var site = SiteScript.new()
+		site.id = id
+		# The mark is the plot's top-left tile centre; the site's origin is the plot's bottom-centre.
+		site.position = (spots[0] as Vector2) - Vector2(8, 8) + Vector2(40, 77)
+		entities.add_child(site)
+		sites[id] = site
+	var lamp_spots: Array = area.markers.get("lamp", [])
+	if not lamp_spots.is_empty():
+		lamp = Node2D.new()
+		lamp.position = lamp_spots[0]
+		lamp.draw.connect(_draw_lamp)
+		entities.add_child(lamp)
+
+
 func _make_person(id: String, pos: Vector2, look: Dictionary) -> Hero:
 	var h: Hero = HeroScript.new()
 	h.hero_name = Empire.recruit(id).get("name", id)
@@ -183,6 +223,10 @@ func post_of(id: String) -> String:
 		return "hall" if st.get("target", "") == "hollowmark" else ""  # elsewhere: not in town
 	if st.get("role", "") == "party":
 		return "gate"
+	if st.get("role", "") == "staff":
+		if st.get("target", "") == "command_table":
+			return "table_side"
+		return "bld:" + st.get("target", "") if sites.has(st.get("target", "")) else "tavern"
 	return Empire.recruit(id).get("post", "tavern")
 
 
@@ -195,6 +239,9 @@ func _place_people() -> void:
 			continue
 		var post := post_of(id)
 		var spots: Array = area.markers.get(post, [])
+		if post.begins_with("bld:"):
+			var n0: int = used.get(post, 0)
+			spots = [sites[post.substr(4)].post_pos(n0) - Vector2([0, 18, -18, 36, -36][n0 % 5], 0)]
 		if post == "" or spots.is_empty():
 			if npcs.has(id):
 				npcs[id].queue_free()
@@ -242,6 +289,21 @@ func _find_target() -> Dictionary:
 	var nearest := Vector2(clampf(p.x, tr.position.x, tr.end.x), clampf(p.y, tr.position.y, tr.end.y))
 	if nearest.distance_to(p) < minf(best_d, 18.0):
 		best = {"kind": "table", "id": "table", "pos": table_pos, "label": "Use the Command Table"}
+		best_d = nearest.distance_to(p)
+	for id in sites:
+		var site = sites[id]
+		site.highlight = false
+		var sr: Rect2 = site.plot_rect()
+		var np := Vector2(clampf(p.x, sr.position.x, sr.end.x), clampf(p.y, sr.position.y, sr.end.y))
+		var d := np.distance_to(p)
+		if d < minf(best_d, 14.0) and best.is_empty():
+			var b := Empire.building(id)
+			var lv := Empire.level_of(id)
+			var verb := "Check on" if lv > 0 or Empire.construction.get("id", "") == id else "Plan"
+			best = {"kind": "site", "id": id, "pos": site.global_position, "label": "%s the %s" % [verb, b["name"]]}
+			best_d = d
+	if best.get("kind", "") == "site":
+		sites[best["id"]].highlight = true
 	return best
 
 
@@ -250,6 +312,10 @@ func _use(t: Dictionary) -> void:
 		return
 	if t["kind"] == "table":
 		_leave(Saves.COMMAND_SCENE)
+		return
+	if t["kind"] == "site":
+		buildings_view.open(t["id"])
+		touch.release_all()
 		return
 	var id: String = t["id"]
 	var r := Empire.recruit(id)
@@ -262,6 +328,9 @@ func _use(t: Dictionary) -> void:
 		line = "Still stitching myself back together. Ask me again in %d days." % int(Empire.recruits[id]["injured"])
 	elif Empire.role_of(id) == "governor":
 		line = "I keep the hall and the ledgers. Hollowmark holds while I'm here. Mostly."
+	elif Empire.role_of(id) == "staff":
+		var bid: String = Empire.recruits[id]["target"]
+		line = "%s Right now: %s." % [STAFF_LINES.get(bid, "Working."), Empire.current_effect(bid)["text"].to_lower()]
 	elif not lines.is_empty():
 		var i: int = talk_index.get(id, 0)
 		line = lines[i % lines.size()]
@@ -323,7 +392,8 @@ func open_menu(note := "") -> void:
 	menu.setup("Hollowmark", [
 		{"id": "resume", "label": "Resume"},
 		{"id": "table", "label": "Command Table", "detail": "the territory map"},
-		{"id": "roster", "label": "Roster"},
+		{"id": "roster", "label": "Roster", "detail": "R"},
+		{"id": "buildings", "label": "Buildings", "detail": "B"},
 		{"id": "save", "label": "Save game"},
 		{"id": "load", "label": "Load game", "enabled": Saves.latest_slot() != "", "note": "(no saves yet)"},
 		{"id": "title", "label": "Quit to title"},
@@ -349,6 +419,9 @@ func _on_menu(id: String) -> void:
 		"roster":
 			_close_menu()
 			roster_view.open()
+		"buildings":
+			_close_menu()
+			buildings_view.open()
 		"save", "load":
 			slot_mode = id
 			menu.visible = false
@@ -389,10 +462,13 @@ func _process(delta: float) -> void:
 	target = _find_target()
 	(get_meta("tags") as Node2D).queue_redraw()
 	table_body.queue_redraw()
+	if lamp:
+		lamp.queue_redraw()
 
 	var frame := Engine.get_process_frames()
-	if roster_view.visible or frame == roster_view.closed_frame or frame == menu_closed_frame:
-		leader.controlled = not roster_view.visible
+	var screen_open: bool = roster_view.visible or buildings_view.visible
+	if screen_open or frame == roster_view.closed_frame or frame == buildings_view.closed_frame or frame == menu_closed_frame:
+		leader.controlled = not screen_open
 		return
 	leader.controlled = true
 	if Input.is_action_just_pressed("pause"):
@@ -400,6 +476,9 @@ func _process(delta: float) -> void:
 		return
 	if Input.is_action_just_pressed("roster"):
 		roster_view.open()
+		return
+	if Input.is_action_just_pressed("buildings"):
+		buildings_view.open()
 		return
 	for i in Empire.SPEEDS.size():
 		if Input.is_action_just_pressed("clock_speed_%d" % i):
@@ -447,6 +526,29 @@ func _draw_table() -> void:
 	c.draw_circle(Vector2(top.end.x - 5.5, top.position.y - 4), 1.6, Color(1.0, 0.8, 0.35, flick))
 	if target.get("kind", "") == "table":
 		c.draw_rect(top.grow(2), Color("ffd166"), false, 1.0)
+
+
+## Hollowmark's Wardlamp: an iron post with an ink-blue flame, brighter at level 2.
+func _draw_lamp() -> void:
+	var lv := int(Empire.lamps.get("hollowmark", 0))
+	var going_up := Empire.lamp_jobs.has("hollowmark")
+	if lv == 0 and not going_up:
+		return
+	var c := lamp
+	c.draw_set_transform(Vector2.ZERO, 0.0, Vector2(1.0, 0.4))
+	c.draw_circle(Vector2(0, 2), 6.0, Color(0, 0, 0, 0.25))
+	c.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+	var h := 30.0 if lv > 0 else 30.0 * Empire.job_progress(Empire.lamp_jobs["hollowmark"])
+	c.draw_rect(Rect2(-1.5, -h, 3, h), Color("2e2a33"))
+	c.draw_rect(Rect2(-4, -2, 8, 3), Color("2e2a33"))
+	if lv > 0:
+		var flick := 0.75 + 0.25 * sin(Time.get_ticks_msec() * 0.011)
+		var glow := 10.0 + 6.0 * lv
+		c.draw_circle(Vector2(0, -h - 4), glow, Color(0.55, 0.65, 1.0, 0.10 * flick))
+		c.draw_circle(Vector2(0, -h - 4), glow * 0.5, Color(0.6, 0.7, 1.0, 0.18 * flick))
+		c.draw_rect(Rect2(-4, -h - 9, 8, 8), Color("3a3442"))
+		c.draw_rect(Rect2(-2.5, -h - 7.5, 5, 5), Color(0.75, 0.82, 1.0, flick))
+		c.draw_colored_polygon(PackedVector2Array([Vector2(-5, -h - 9), Vector2(5, -h - 9), Vector2(0, -h - 13)]), Color("2e2a33"))
 
 
 func _draw_tags(canvas: Node2D) -> void:

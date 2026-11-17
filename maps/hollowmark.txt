@@ -1,7 +1,8 @@
 # Last Ink map: Hollowmark, the hub town (46 x 32 tiles of 16px)
 # Same legend as frayed_meadow.txt, plus the town lines below:
 #   @prop<char> kind|NAME   places a prop kind (see scripts/prop.gd) with an optional name board
-#   @mark<char> id          marks a spot: recruit posts and the Command Table
+#   @mark<char> id          marks a spot: recruit posts, the Command Table, building plots (top-left
+#                           tile of a 5x5 plot, site_<building id>) and the Wardlamp
 #   @dirt <chars>           characters that sit on the dirt layer (plaza markers)
 # Buildings and other big props anchor at their top-left tile; fill the rest with grass or dirt.
 @name Hollowmark
@@ -24,7 +25,13 @@
 @markw gate
 @markm market
 @markx table_side
-@dirt CFMPNVhvqwmx12
+@markA site_barracks
+@markB site_infirmary
+@markD site_inkworks
+@markE site_scriptorium
+@markK site_guildhall
+@markL lamp
+@dirt CFMPNVhvqwmx12L
 @sign1 THE INKLANDS  (south)|Missions leave from the Command Table
 @sign2 HOLLOWMARK|pop. 212   pop. 40   pop. you
 ---
@@ -39,7 +46,7 @@ t.............X..U...........U.......X.......t
 ..........::...........::........::...........
 t..t.....:::::::::::::::::2:::::::::::........
 ........::h:::::::::::::v:::::::::q::::......t
-t......:::V::::V:::::::::::::::::::::::.......
+t......:::V::::V::::L::::::::::::::::::.......
 t...f..::::C::::::F:::::::::::M::::::::......t
 t......:::::::x::::::::::::::::::::::::.T....t
 .......::::::::::::::::::::::::::::::::......t
@@ -49,12 +56,12 @@ t......::::::::::::N:::::::::::m:::::::......t
 t......:::::::::::::::::::::P::::::::::......t
 t......::::::::::::::::::::::::::::::::.......
 t.......::::::::::::::::::::::::::::::....t...
-t...:::::.............::::...................t
-t...:::.....t.........::::........f...........
+t...:::::..B....E.....::::.A......K.....D....t
+t...:::...............::::....................
 t.b.:::...............::::....................
-......g...t.....t.....:w::..........T........t
-...G.G.G..........f...::::....................
-t........G............::::....t..........T...t
+......g...t...........:w::...................t
+...G.G.G..............::::....................
+t........G............::::....t..............t
 t.............T......1::::.......r............
 ...G.G.G..............::::..f.........t......t
 t........k..r.........::::...................t

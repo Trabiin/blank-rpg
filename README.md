@@ -34,6 +34,11 @@ Saving: pick Save game in the pause menu (three slots). The game also autosaves 
   buildings and town props, and its `@mark` lines mark recruit posts and the Command Table. Where each
   recruit stands, their look and their town lines come from `data/recruits.json`. Town art is
   placeholder until the PixelLab pass (#3): every sprite is one line in `scripts/prop.gd`.
+- Buildings: `data/buildings.json` holds each building's levels (cost, build days, staff slots) and the
+  Wardlamp; what each building does is computed in `Empire.building_effect()` (`scripts/empire.gd`), so the
+  Buildings screen (`scripts/buildings_view.gd`, key B) always shows the real numbers. Plots in town are
+  `@mark` lines named `site_<building id>` in `maps/hollowmark.txt`; `scripts/building_site.gd` draws the
+  plot, scaffolding and finished building (one entry in its `LOOKS` table per building).
 - Territory: provinces live in `data/provinces.json` (name, seed point, owner, Fray, output, sites,
   missions). Province shapes and borders are generated from the seed points by `scripts/territory.gd`,
   so moving a seed or changing its weight reshapes the map and its adjacency together.
