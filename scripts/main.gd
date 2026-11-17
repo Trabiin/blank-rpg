@@ -77,6 +77,10 @@ func _ready() -> void:
 	bran.base_damage = 14
 	bran.power_rate = 0.75
 	bran.reach = 21.0
+	# The Barracks sends the party out tougher.
+	for h in [ash, bran]:
+		h.max_hp += Empire.party_hp_bonus()
+		h.hp = h.max_hp
 	_set_leader(ash)
 
 	banter_queue = [

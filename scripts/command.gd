@@ -50,6 +50,8 @@ var notices: Array = []  # [text, warning, time left]
 var over_menu: InkMenu
 var roster_view
 const RosterView := preload("res://scripts/roster_view.gd")
+const BuildingsView := preload("res://scripts/buildings_view.gd")
+var buildings_view
 var autosave_t := AUTOSAVE_EVERY
 
 
@@ -73,6 +75,9 @@ func _ready() -> void:
 	roster_view = RosterView.new()  # opened from the map or carried over from town
 	roster_view.visible = false
 	roster_layer.add_child(roster_view)
+	buildings_view = BuildingsView.new()
+	buildings_view.visible = false
+	roster_layer.add_child(buildings_view)
 
 	var layer := CanvasLayer.new()
 	layer.layer = 5
@@ -146,6 +151,8 @@ func _menu_items(note := "") -> void:
 	menu.setup("Command", [
 		{"id": "resume", "label": "Resume"},
 		{"id": "town", "label": "Back to Hollowmark", "detail": "walk around town"},
+		{"id": "roster", "label": "Roster", "detail": "R"},
+		{"id": "buildings", "label": "Buildings", "detail": "B"},
 		{"id": "save", "label": "Save game"},
 		{"id": "load", "label": "Load game", "enabled": Saves.latest_slot() != "", "note": "(no saves yet)"},
 		{"id": "title", "label": "Quit to title"},
@@ -176,6 +183,12 @@ func _on_menu(id: String) -> void:
 			slot_menu.visible = true
 		"town":
 			_leave(Saves.HUB_SCENE)
+		"roster":
+			_close_menu()
+			roster_view.open()
+		"buildings":
+			_close_menu()
+			buildings_view.open()
 		"title":
 			_leave(TITLE_SCENE)
 
@@ -317,10 +330,14 @@ func _process(delta: float) -> void:
 		autosave()
 	queue_redraw()
 	var frame := Engine.get_process_frames()
-	if frame == menu_closed_frame or roster_view.visible or frame == roster_view.closed_frame:
+	if frame == menu_closed_frame or roster_view.visible or frame == roster_view.closed_frame \
+			or buildings_view.visible or frame == buildings_view.closed_frame:
 		return
 	if Input.is_action_just_pressed("roster"):
 		roster_view.open()
+		return
+	if Input.is_action_just_pressed("buildings"):
+		buildings_view.open()
 		return
 	for i in Empire.SPEEDS.size():
 		if Input.is_action_just_pressed("clock_speed_%d" % i):
@@ -382,6 +399,8 @@ func _gui_input(event: InputEvent) -> void:
 			_activate(selected)
 		elif _roster_button_rect().has_point(event.position):
 			roster_view.open()
+		elif _buildings_button_rect().has_point(event.position):
+			buildings_view.open()
 		elif _town_button_rect().has_point(event.position):
 			_leave(Saves.HUB_SCENE)
 		elif _res_rect().has_point(event.position):
@@ -416,9 +435,14 @@ func _roster_button_rect() -> Rect2:
 	return Rect2(Vector2(MAP_ORIGIN.x + MAP_CELLS.x * CELL - 74, MAP_ORIGIN.y + 4), Vector2(70, 16))
 
 
-func _town_button_rect() -> Rect2:
+func _buildings_button_rect() -> Rect2:
 	var rb := _roster_button_rect()
-	return Rect2(rb.position - Vector2(70, 0), Vector2(66, 16))
+	return Rect2(rb.position - Vector2(80, 0), Vector2(76, 16))
+
+
+func _town_button_rect() -> Rect2:
+	var bb := _buildings_button_rect()
+	return Rect2(bb.position - Vector2(58, 0), Vector2(54, 16))
 
 
 func _speed_rect(i: int) -> Rect2:
@@ -466,6 +490,11 @@ func _draw() -> void:
 	draw_rect(rb, Color(0.1, 0.09, 0.12, 0.92))
 	draw_rect(rb, Color(0.45, 0.4, 0.48), false, 1.0)
 	_text_c(Vector2(rb.get_center().x, rb.position.y + 12), "Roster (%d)  R" % Empire.recruits.size(), 9, Color(0.85, 0.82, 0.76))
+	var bb := _buildings_button_rect()
+	draw_rect(bb, Color(0.1, 0.09, 0.12, 0.92))
+	draw_rect(bb, Color(0.45, 0.4, 0.48), false, 1.0)
+	var busy := "" if Empire.construction.is_empty() else " *"
+	_text_c(Vector2(bb.get_center().x, bb.position.y + 12), "Buildings%s  B" % busy, 9, GOLD if busy != "" else Color(0.85, 0.82, 0.76))
 	var tb := _town_button_rect()
 	draw_rect(tb, Color(0.1, 0.09, 0.12, 0.92))
 	draw_rect(tb, Color(0.45, 0.4, 0.48), false, 1.0)

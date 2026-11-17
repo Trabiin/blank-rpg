@@ -55,13 +55,17 @@ func roster_rect() -> Rect2:
 	return Rect2(_vs().x - 112, 6, 58, 16)
 
 
+func buildings_rect() -> Rect2:
+	return Rect2(_vs().x - 186, 6, 70, 16)
+
+
 func menu_rect() -> Rect2:
 	return Rect2(_vs().x - 50, 6, 44, 16)
 
 
 ## Taps and clicks on the two buttons. Touch does not emulate the mouse in this project.
 func _input(event: InputEvent) -> void:
-	if hub == null or get_tree().paused or hub.roster_view.visible:
+	if hub == null or get_tree().paused or hub.roster_view.visible or hub.buildings_view.visible:
 		return
 	var pos := Vector2.INF
 	if event is InputEventScreenTouch and event.pressed:
@@ -72,6 +76,9 @@ func _input(event: InputEvent) -> void:
 		return
 	if roster_rect().has_point(pos):
 		hub.roster_view.open()
+		get_viewport().set_input_as_handled()
+	elif buildings_rect().has_point(pos):
+		hub.buildings_view.open()
 		get_viewport().set_input_as_handled()
 	elif menu_rect().has_point(pos):
 		hub.open_menu()
@@ -121,6 +128,7 @@ func _draw() -> void:
 		_text(Vector2(x, 31), s, 8, col, false)
 		x += font.get_string_size(s, HORIZONTAL_ALIGNMENT_LEFT, -1, 8).x + 14.0
 	_button(roster_rect(), "Roster  R")
+	_button(buildings_rect(), "Buildings  B")
 	_button(menu_rect(), "Menu")
 
 	# What the attack button does right now.
@@ -163,6 +171,7 @@ func _draw() -> void:
 		_text(Vector2(vs.x - 236, 36), "Walk: WASD / arrows / stick", 8, Color(1, 1, 1, a4))
 		_text(Vector2(vs.x - 236, 47), "Talk / use: J, Space or Enter (gamepad A)", 8, Color(1, 1, 1, a4))
 		_text(Vector2(vs.x - 236, 58), "Clock: 1-4 (shoulders)   Menu: Esc", 8, Color(1, 1, 1, a4))
+		_text(Vector2(vs.x - 236, 69), "Roster: R   Buildings: B   Plots are south", 8, Color(1, 1, 1, a4))
 
 
 func _wrap_lines(s: String, width: float, size: int) -> PackedStringArray:

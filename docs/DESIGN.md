@@ -165,6 +165,15 @@ Built and upgraded from the Command Table; each appears in the walkable town whe
 | **Tavern / Cabaret** | Morale, relationship scenes, attracts certain recruits | Later (tavern is walkable from the start) |
 | **Wardlamp** (built in a province) | Slows Fray there | Yes |
 
+How it works in the MVP (numbers in `data/buildings.json`): every building has 3 levels, each costing Gilt,
+Supplies and sometimes Ink, and taking 1 to 4 days on the clock. Hollowmark has **one building crew**, so only
+one building is built or upgraded at a time; Wardlamps are put up by locals and can go up alongside. Each level
+adds staff slots, and one stat drives each building: Command Table (Craft: quartermaster cuts upkeep; levels
+give earlier surge warnings), Barracks (Might: party max HP on missions), Infirmary (Lore: faster healing),
+Inkworks (Craft: Ink per day, needs a worker), Scriptorium (Lore: Insight banked for research, Bookish counts
+double), Guildhall (Charm: contract Gilt; expeditions and hiring arrive with their own features). Wardlamps
+have 2 levels (-1 and -2 Fray a day) and go out if their province is erased.
+
 ### 5.7 Expeditions
 
 Send a squad of 2 to 4 recruits on a timed off-screen mission: scouting, salvage, escort, a supply run, a rescue.
