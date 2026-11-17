@@ -53,7 +53,7 @@
 		},
 		{
 			"id": "guildhall", "name": "Guildhall", "start_level": 0, "stat": "charm", "site": "site_guildhall", "look": "guildhall",
-			"blurb": "Where jobs get posted and coin changes hands. A charming broker brings in contract Gilt. Expeditions and hiring will run from here.",
+			"blurb": "Where jobs get posted and coin changes hands. A charming broker brings in contract Gilt. Squads go out on expeditions from here (E): one at a time per level.",
 			"staff_title": "Broker",
 			"levels": [
 				{"cost": {"gilt": 80, "supplies": 10}, "days": 2, "slots": 1},

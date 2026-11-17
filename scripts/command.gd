@@ -54,6 +54,8 @@ const BuildingsView := preload("res://scripts/buildings_view.gd")
 var buildings_view
 const GovernorView := preload("res://scripts/governor_view.gd")
 var governor_view
+const ExpeditionView := preload("res://scripts/expedition_view.gd")
+var expedition_view
 var autosave_t := AUTOSAVE_EVERY
 
 
@@ -84,6 +86,10 @@ func _ready() -> void:
 	governor_view.visible = false
 	roster_layer.add_child(governor_view)
 	governor_view.closed.connect(_bake)  # a claim recolours the map
+	expedition_view = ExpeditionView.new()
+	expedition_view.visible = false
+	roster_layer.add_child(expedition_view)
+	expedition_view.closed.connect(_bake)  # scouting can lower a province's Fray
 
 	var layer := CanvasLayer.new()
 	layer.layer = 5
@@ -159,6 +165,7 @@ func _menu_items(note := "") -> void:
 		{"id": "town", "label": "Back to Hollowmark", "detail": "walk around town"},
 		{"id": "roster", "label": "Roster", "detail": "R"},
 		{"id": "buildings", "label": "Buildings", "detail": "B"},
+		{"id": "expeditions", "label": "Expeditions", "detail": "E"},
 		{"id": "save", "label": "Save game"},
 		{"id": "load", "label": "Load game", "enabled": Saves.latest_slot() != "", "note": "(no saves yet)"},
 		{"id": "title", "label": "Quit to title"},
@@ -195,6 +202,9 @@ func _on_menu(id: String) -> void:
 		"buildings":
 			_close_menu()
 			buildings_view.open()
+		"expeditions":
+			_close_menu()
+			expedition_view.open()
 		"title":
 			_leave(TITLE_SCENE)
 
@@ -338,7 +348,8 @@ func _process(delta: float) -> void:
 	var frame := Engine.get_process_frames()
 	if frame == menu_closed_frame or roster_view.visible or frame == roster_view.closed_frame \
 			or buildings_view.visible or frame == buildings_view.closed_frame \
-			or governor_view.visible or frame == governor_view.closed_frame:
+			or governor_view.visible or frame == governor_view.closed_frame \
+			or expedition_view.visible or frame == expedition_view.closed_frame:
 		return
 	if Input.is_action_just_pressed("roster"):
 		roster_view.open()
@@ -348,6 +359,9 @@ func _process(delta: float) -> void:
 		return
 	if Input.is_action_just_pressed("govern"):
 		_open_governor()
+		return
+	if Input.is_action_just_pressed("expeditions"):
+		expedition_view.open()
 		return
 	for i in Empire.SPEEDS.size():
 		if Input.is_action_just_pressed("clock_speed_%d" % i):
@@ -413,6 +427,8 @@ func _gui_input(event: InputEvent) -> void:
 			roster_view.open()
 		elif _buildings_button_rect().has_point(event.position):
 			buildings_view.open()
+		elif _expeditions_button_rect().has_point(event.position):
+			expedition_view.open()
 		elif _town_button_rect().has_point(event.position):
 			_leave(Saves.HUB_SCENE)
 		elif _res_rect().has_point(event.position):
@@ -474,6 +490,11 @@ func _town_button_rect() -> Rect2:
 	return Rect2(bb.position - Vector2(58, 0), Vector2(54, 16))
 
 
+func _expeditions_button_rect() -> Rect2:
+	var tb := _town_button_rect()
+	return Rect2(tb.position - Vector2(86, 0), Vector2(82, 16))
+
+
 func _speed_rect(i: int) -> Rect2:
 	return Rect2(Vector2(452 + i * 34, 3), Vector2(31, 15))
 
@@ -528,6 +549,17 @@ func _draw() -> void:
 	draw_rect(tb, Color(0.1, 0.09, 0.12, 0.92))
 	draw_rect(tb, Color(0.45, 0.4, 0.48), false, 1.0)
 	_text_c(Vector2(tb.get_center().x, tb.position.y + 12), "To town", 9, Color(0.85, 0.82, 0.76))
+	var eb := _expeditions_button_rect()
+	draw_rect(eb, Color(0.1, 0.09, 0.12, 0.92))
+	draw_rect(eb, Color(0.45, 0.4, 0.48), false, 1.0)
+	var unread := Empire.unread_reports()
+	var out := Empire.expeditions.size()
+	var etext := "Expeditions  E"
+	if unread > 0:
+		etext = "Reports (%d)  E" % unread
+	elif out > 0:
+		etext = "Squads out: %d  E" % out
+	_text_c(Vector2(eb.get_center().x, eb.position.y + 12), etext, 9, GOLD if unread > 0 else Color(0.85, 0.82, 0.76))
 	_draw_legend()
 	_draw_panel()
 	if toast_t > 0.0:

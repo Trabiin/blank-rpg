@@ -39,6 +39,10 @@ Saving: pick Save game in the pause menu (three slots). The game also autosaves 
   Buildings screen (`scripts/buildings_view.gd`, key B) always shows the real numbers. Plots in town are
   `@mark` lines named `site_<building id>` in `maps/hollowmark.txt`; `scripts/building_site.gd` draws the
   plot, scaffolding and finished building (one entry in its `LOOKS` table per building).
+- Expeditions: jobs live in `data/expeditions.json` (stats wanted, target strength, danger, rations, rewards,
+  report lines, trait tags) along with squad pairings; odds and outcomes are in the expeditions section of
+  `scripts/empire.gd`, and the screen is `scripts/expedition_view.gd` (key E). Report quips per recruit are the
+  `quips` lists in `data/recruits.json`.
 - Territory: provinces live in `data/provinces.json` (name, seed point, owner, Fray, output, sites,
   missions). Province shapes and borders are generated from the seed points by `scripts/territory.gd`,
   so moving a seed or changing its weight reshapes the map and its adjacency together.
