@@ -1,0 +1,22 @@
+{
+	"_comment": "Charged techs (issue #8). With a full power gauge, hold Attack for about a second: the hero glows, chimes when ready, and releasing fires the tech. Letting go early is a normal full-power swing. Keyed by hero id (data/heroes.json). mult: damage as a multiple of the hero's full-power swing, so levels, gear and research carry over. reach: radius in px. arc: degrees either side of facing (180 = all round). offset: the blast is centred this many px in front of the hero (0 = on the hero). knock: knockback force. heal: optional HP patched onto every ally inside the blast. step: px the hero lunges forward as it fires. color: glow and blast colour.",
+	"hold": 1.0,
+	"techs": {
+		"ash": {
+			"name": "Full Stop", "mult": 2.4, "reach": 26, "arc": 180, "offset": 22, "knock": 300, "step": 10, "color": "9fd8ff",
+			"desc": "Ash jabs the quill-knife into the page and the full stop bursts: a blast just in front that hits everything around it."
+		},
+		"bran": {
+			"name": "Breach of Contract", "mult": 2.6, "reach": 40, "arc": 80, "offset": 0, "knock": 360, "step": 8, "color": "e0504a",
+			"desc": "Bran stops negotiating. A huge, slow cleaver arc in front of him that sends Nibblers flying."
+		},
+		"gristle": {
+			"name": "Stir the Pot", "mult": 2.0, "reach": 34, "arc": 180, "offset": 0, "knock": 240, "step": 0, "heal": 6, "color": "9fbf6a",
+			"desc": "A full turn of the bone ladle. Hits everything around her and splashes allies inside with 6 HP of broth."
+		},
+		"ninefingers": {
+			"name": "Skewer", "mult": 3.0, "reach": 62, "arc": 12, "offset": 0, "knock": 280, "step": 14, "color": "f2d36b",
+			"desc": "Daro lunges the full length of the pike. A very long, very narrow line that hits hardest of all. Aim it."
+		}
+	}
+}
