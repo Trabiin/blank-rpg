@@ -47,6 +47,8 @@ var found_flash := 0.0  # seconds the HUD's "Found" line stays lit after a picku
 var mission_time := 0.0
 var ending := false  # the results screen is up (or about to be)
 var results_view  # results_view.gd
+var quick_menu: QuickMenu  # quick_menu.gd: items, abilities, party, equip with time slowed (issue #6)
+var quick_open := false  # heroes read this: the menu has the controls while it is up
 
 
 func _ready() -> void:
@@ -87,6 +89,7 @@ func _ready() -> void:
 		var h := _make_hero(PartyPicker.short_of(ids[i]), start + offsets[i % offsets.size()],
 			look.get("outfit", "archer"), PartyPicker.look_colors(look))
 		PartyPicker.apply(h, ids[i])
+		h.ai_style = str(Empire.ai_presets.get(ids[i], h.ai_style))  # picked in the quick menu's Party tab
 	# The Barracks sends the party out tougher; research sharpens and armours them.
 	boosts = Empire.mission_boosts()
 	Empire.mission_kills_bonded = 0
@@ -150,6 +153,10 @@ func _ready() -> void:
 	results_view.visible = false
 	menu_layer.add_child(results_view)
 	results_view.confirmed.connect(_on_results_confirmed)
+	quick_menu = QuickMenu.new()
+	quick_menu.party = self
+	menu_layer.add_child(quick_menu)
+	quick_menu.closed.connect(func(): quick_open = false)
 
 	var loaded := not Saves.pending.is_empty()
 	if loaded:
@@ -176,6 +183,7 @@ func present() -> Array:
 ## Play a conversation in the dialogue box. The fight waits until it is over.
 func play_talk(talk_id: String) -> void:
 	if dialogue_box.play(talk_id):
+		quick_menu.close()
 		get_tree().paused = true
 		touch.release_all()
 
@@ -225,6 +233,12 @@ func _spawn_enemy(pos: Vector2) -> void:
 	e.died.connect(_on_enemy_died)
 
 
+## The quick menu's Party tab: take control of a standing hero.
+func take_control(h: Hero) -> void:
+	if h != null and not h.dead and h in heroes:
+		_set_leader(h)
+
+
 func _set_leader(h: Hero) -> void:
 	leader = h
 	for other in heroes:
@@ -250,6 +264,10 @@ func _on_enemy_died(_e: Actor) -> void:
 			found[k] = int(found.get(k, 0)) + int(got[k])
 		if not got.is_empty():
 			found_flash = 1.5
+		var item := Satchel.roll_drop()  # field items go straight into the satchel
+		if item != "":
+			Satchel.add(item)
+			hud.say("Found: %s (quick menu)." % Satchel.item(item).get("name", item), 2.0)
 	if kills == 10:
 		banter.event("tenth_kill", present())
 
@@ -285,9 +303,22 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if event.is_action_pressed("swap") and not game_over:
 		_swap()
+	if event.is_action_pressed("quick_menu"):
+		open_quick_menu()
+
+
+## One button opens the quick menu mid-fight; time slows to 10% instead of stopping.
+func open_quick_menu() -> void:
+	if game_over or ending or get_tree().paused or quick_open:
+		return
+	touch.release_all()
+	quick_open = true
+	quick_menu.open()
 
 
 func set_paused(on: bool) -> void:
+	if on:
+		quick_menu.close()
 	get_tree().paused = on
 	pause_menu.visible = on
 	slot_menu.visible = false
@@ -456,6 +487,8 @@ func _process(delta: float) -> void:
 		_swap()
 	if touch_active() and Input.is_action_just_pressed("pause") and not game_over and not get_tree().paused:
 		set_paused(true)
+	if touch_active() and Input.is_action_just_pressed("quick_menu"):
+		open_quick_menu()
 
 	if camera and leader:
 		camera.global_position = leader.global_position + Vector2(0, -10)
@@ -505,6 +538,7 @@ func _end_mission(outcome: String) -> void:
 func _show_results(outcome: String) -> void:
 	if not is_inside_tree():
 		return
+	quick_menu.close()
 	get_tree().paused = true
 	touch.release_all()
 	var r := Missions.settle(mission, outcome, found, {"kills": kills, "time": mission_time, "objective": objective.text(), "fail": objective.fail_text()})

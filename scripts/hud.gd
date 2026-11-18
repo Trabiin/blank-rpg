@@ -141,6 +141,7 @@ func _draw() -> void:
 		_text(Vector2(vs.x - 236, 36), "Swap hero: Tab / Q (gamepad Y)", 8, Color(1, 1, 1, a2))
 		_text(Vector2(vs.x - 236, 47), "Pause: Esc / P (gamepad Start)", 8, Color(1, 1, 1, a2))
 		_text(Vector2(vs.x - 236, 58), "Abilities: 1-4 (gamepad LB RB LT RT)", 8, Color(1, 1, 1, a2))
+		_text(Vector2(vs.x - 236, 69), "Quick menu: C (gamepad Back)", 8, Color(1, 1, 1, a2))
 	if center_text != "":
 		draw_rect(Rect2(Vector2.ZERO, vs), Color(0.95, 0.94, 0.9, 0.55))
 		var lines2 := center_text.split("\n")

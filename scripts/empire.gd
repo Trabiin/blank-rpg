@@ -111,6 +111,12 @@ var rng := RandomNumberGenerator.new()
 var _territory: Territory
 
 
+## Quick menu (issue #6): field items carried into missions (scripts/satchel.gd) and the AI
+## behaviour picked per hero in its Party tab (recruit id -> Hero.AI_STYLES key).
+var satchel := {}
+var ai_presets := {}
+
+
 func territory() -> Territory:
 	if _territory == null:
 		_territory = Territory.new()
@@ -120,6 +126,8 @@ func territory() -> Territory:
 
 ## Fresh campaign: day 1, provinces as written in data/provinces.json.
 func reset() -> void:
+	satchel = Satchel.start_stock()
+	ai_presets = {}
 	day = 1
 	day_t = 0.3  # start mid-morning
 	speed = 1
@@ -1922,6 +1930,7 @@ func to_dict() -> Dictionary:
 		"bonds": bonds,
 		"visitors": visitors,
 		"missions_cleared": missions_cleared,
+		"satchel": satchel, "ai_presets": ai_presets,
 		"rng_state": str(rng.state)}
 
 
@@ -1946,6 +1955,13 @@ func from_dict(d: Dictionary) -> void:
 				recruits[id] = {"role": r.get("role", "idle"), "target": r.get("target", ""), "injured": int(r.get("injured", 0))}
 	surge = d.get("surge", {})
 	next_surge_day = int(d.get("next_surge_day", 4))
+	var saved_satchel = d.get("satchel", null)
+	if typeof(saved_satchel) == TYPE_DICTIONARY:
+		for k in saved_satchel:
+			satchel[k] = int(saved_satchel[k])
+	var saved_ai = d.get("ai_presets", {})
+	if typeof(saved_ai) == TYPE_DICTIONARY:
+		ai_presets = saved_ai.duplicate()
 	var saved_seen = d.get("dialogue", {})
 	Dialogue.seen = saved_seen.duplicate() if typeof(saved_seen) == TYPE_DICTIONARY else {}
 	var saved_b: Dictionary = d.get("buildings", {})

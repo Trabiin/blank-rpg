@@ -119,11 +119,13 @@ func _physics_process(delta: float) -> void:
 		power = min(power + power_rate * delta, 1.0)
 
 	var dir := Vector2.ZERO
-	if controlled:
+	if controlled and party and party.get("quick_open") == true:
+		dir = Vector2.ZERO  # the quick menu has the controls (time is slowed, not stopped)
+	elif controlled:
 		dir = Input.get_vector("move_left", "move_right", "move_up", "move_down")
 		if Input.is_action_just_pressed("attack") and not peaceful:
 			try_attack()
-		if not peaceful and not (party != null and party.get("quick_open") == true):  # quick menu (#6) open
+		if not peaceful:  # (the quick menu branch above already keeps these quiet while it is open)
 			for i in abilities.size():
 				if Input.is_action_just_pressed("ability_%d" % (i + 1)):
 					Abilities.use(self, i)
