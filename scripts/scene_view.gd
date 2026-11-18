@@ -2,8 +2,10 @@ extends Control
 ## Bond scenes, visual-novel style: a big character card on the left, a text box along the bottom,
 ## and (usually) one choice for Ash, who never speaks: the choices are what Ash does.
 ##
-## Placeholder art: the card is a bust drawn in code from the character's paper-doll colours, until
-## the AI portraits (#12) replace it. Enter / J / click / tap moves on (finishing the line first if it
+## Art: the character's portrait (assets/portraits/<id>.png, see docs/PORTRAITS.md) stands on the
+## left, flipped to face Ash, who stands on the right. Whoever has the floor is lit, the other dims.
+## A line may carry a third entry, an expression ("happy", "smug"...): <id>_<expr>.png is used when
+## it exists. Characters with no portrait yet fall back to a bust drawn in code from their colours. Enter / J / click / tap moves on (finishing the line first if it
 ## is still typing); Up/Down pick a choice; Esc skips ahead to the choice (or closes a replay).
 ## The first time through, finishing the scene raises the bond rank (Empire.finish_bond_scene).
 
@@ -28,6 +30,8 @@ var _picked := -1
 var _choice_rects: Array = []
 var _outro := ""  # the closing card: new rank and perk
 var font: Font
+var _opened_ms := 0
+static var _portraits := {}  # path -> Texture2D or null, shared by every scene
 
 
 func _ready() -> void:
@@ -48,6 +52,7 @@ func play(who: String, r: int, is_replay := false) -> void:
 	size = get_viewport_rect().size
 	visible = true
 	opened_frame = Engine.get_process_frames()
+	_opened_ms = Time.get_ticks_msec()
 	_lines = sc["lines"].duplicate()
 	_at = 0
 	_shown = 0.0
@@ -182,6 +187,42 @@ func _col(look: Dictionary, keys: Array, fallback: String) -> Color:
 	return Color(fallback)
 
 
+## The portrait for this character (and expression, if drawn), or null when there is none yet.
+static func portrait(who: String, expression := "") -> Texture2D:
+	for key in ([who + "_" + expression] if expression != "" else []) + [who]:
+		var path := "res://assets/portraits/%s.png" % key
+		if not _portraits.has(path):
+			_portraits[path] = load(path) if ResourceLoader.exists(path) else null
+		if _portraits[path] != null:
+			return _portraits[path]
+	return null
+
+
+## Draw a portrait standing with its feet at `bottom`, `h` tall. flip = face right.
+## lit = has the floor; otherwise it is dimmed and pushed back a little.
+func _draw_portrait(tex: Texture2D, center_x: float, bottom: float, h: float, flip: bool, lit: bool, slide: float) -> void:
+	var sz := Vector2(h * tex.get_width() / float(tex.get_height()), h)
+	if not lit:
+		sz *= 0.94
+	var pos := Vector2(center_x - sz.x / 2, bottom - sz.y)
+	var a := clampf(slide, 0.0, 1.0)
+	pos.x += (1.0 - a) * (-24.0 if flip else 24.0)
+	var tint := Color(1, 1, 1, a) if lit else Color(0.42, 0.4, 0.48, a)
+	if flip:
+		draw_set_transform(Vector2(pos.x + sz.x, pos.y), 0.0, Vector2(-1, 1))
+		draw_texture_rect(tex, Rect2(Vector2.ZERO, sz), false, tint)
+		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+	else:
+		draw_texture_rect(tex, Rect2(pos, sz), false, tint)
+
+
+## A soft glow in the character's accent colour behind where they stand.
+func _draw_glow(center: Vector2, radius: float, col: Color) -> void:
+	for i in 32:
+		var t := 1.0 - float(i) / 32.0
+		draw_circle(center, radius * t, Color(col, 0.012))
+
+
 ## A big head-and-shoulders card in the character's colours. Placeholder for the AI portraits.
 func _draw_card(r: Rect2, who: String) -> void:
 	var info := Empire.bond_info(who)
@@ -227,11 +268,31 @@ func _draw() -> void:
 	var sc := _scene()
 	if sc.is_empty():
 		return
+	var accent := Color(Empire.bond_info(id).get("color", "c9c3b6"))
+	# Who has the floor: the speaker of the current line, or Ash while choosing.
+	var speaker_now := ""
+	if _stage in ["lines", "reply"]:
+		speaker_now = _current()[0]
+	var expr: String = _current()[2] if _stage in ["lines", "reply"] and _current().size() > 2 else ""
+	var ash_lit := _stage == "choice" or speaker_now == "ash"
+	var them_lit := not ash_lit
+	var slide := (Time.get_ticks_msec() - _opened_ms) / 250.0
+	var floor_y := vs.y - 30
+	var them := portrait(id, expr if speaker_now == id else "")
+	var ash := portrait("ash")
+	if ash != null:
+		_draw_glow(Vector2(vs.x - 130, floor_y - 150), 150, Color("3a5a9a"))
+		_draw_portrait(ash, vs.x - 130, floor_y, 300, false, ash_lit, slide)
+	if them != null:
+		_draw_glow(Vector2(150, floor_y - 160), 170, accent)
+		_draw_portrait(them, 150, floor_y, 330, true, them_lit, slide)
+	else:
+		_draw_card(Rect2(24, 30, 150, vs.y - 30 - 102), id)
 	# Header: whose scene, which rank
 	var head := "%s  ·  Bond rank %d: %s%s" % [Empire.short_name(id), rank, sc.get("title", ""), "   (memory)" if replay else ""]
-	draw_string(font, Vector2(12, 18), head, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color(Empire.bond_info(id).get("color", "c9c3b6")).lightened(0.2))
-	var card := Rect2(24, 30, 150, vs.y - 30 - 102)
-	_draw_card(card, id)
+	var hw := font.get_string_size(head, HORIZONTAL_ALIGNMENT_LEFT, -1, 10).x
+	draw_rect(Rect2(vs.x - hw - 18, 5, hw + 12, 18), Color(0, 0, 0, 0.6))
+	draw_string(font, Vector2(vs.x - hw - 12, 18), head, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, accent.lightened(0.2))
 
 	var box := Rect2(12, vs.y - 96, vs.x - 24, 86)
 	draw_rect(box, Color(0.07, 0.06, 0.09, 0.97))

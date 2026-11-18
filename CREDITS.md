@@ -9,6 +9,7 @@ originals live in `assets/source/`; `tools/import_art.py` builds the runtime fil
 | Zelda-like tilesets and sprites (`Overworld.png`) | ArMM1998 | https://opengameart.org/content/zelda-like-tilesets-and-sprites | CC0 | Meadow ground, path, bushes, rocks, stump, sign, bones |
 | Puny Characters (`Character-Base`, `Archer`, `Warrior`, `Soldier`, `Mage`, `Slime`) | Shade | https://opengameart.org/content/puny-characters | CC0 | Paper-doll hero body and outfit layers with all animations; Nibbler enemy (recolored slime) |
 | Ash test sprite (`assets/pixellab/ash/`, TEMPORARY art test) | Generated with PixelLab AI for this project | https://www.pixellab.ai | Owned by the project (PixelLab output) | V-key comparison in Hollowmark only |
+| Character portraits (`assets/portraits/`) | Generated with ChatGPT image generation (OpenAI) for this project; prompts by the project | https://openai.com/policies/terms-of-use | Owned by the project (OpenAI's terms assign output to the user, commercial use allowed) | Dialogue and bond scenes; see `docs/PORTRAITS.md` |
 
 CC0 does not require credit, but we give it anyway. Thank you!
 
