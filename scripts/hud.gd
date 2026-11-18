@@ -93,7 +93,8 @@ func _draw() -> void:
 		_text(Vector2(x + 5, y + 10), hero.hero_name + ("  (down)" if hero.dead else ""), 9, name_col, false)
 		var pct := int(round(hero.power * 100.0))
 		var pcol := Color("ffd166") if pct >= 100 else Color(0.8, 0.8, 0.85)
-		_text(Vector2(x + 82, y + 10), "%d%%" % pct, 9, pcol, false)
+		if not hero.charge_ready:  # a ready charged tech shows TECH here instead
+			_text(Vector2(x + 82, y + 10), "%d%%" % pct, 9, pcol, false)
 		_text(Vector2(x + 58, y + 10), "Lv%d" % Progress.level(hero.hero_id), 7, Color(0.75, 0.72, 0.6), false)
 		# XP sliver along the top edge of the panel
 		draw_rect(Rect2(x, y, 112.0 * Progress.xp_fraction(hero.hero_id), 1), Color("b9a0e8"))
@@ -105,6 +106,11 @@ func _draw() -> void:
 		# power gauge
 		draw_rect(Rect2(x + 5, y + 21, 102, 2), Color(0, 0, 0, 0.6))
 		draw_rect(Rect2(x + 5, y + 21, 102.0 * hero.power, 2), pcol)
+		if hero.charging and hero.charge_t >= Techs.TAP:  # charged tech filling (issue #8)
+			var tcol := Techs.color_of(hero)
+			draw_rect(Rect2(x + 5, y + 20, 102.0 * Techs.charge_ratio(hero), 4), tcol.lightened(0.6) if hero.charge_ready else Color(tcol, 0.8))
+			if hero.charge_ready:
+				_text(Vector2(x + 80, y + 10), "TECH", 9, tcol.lightened(0.3), false)
 		# Ink (abilities, issue #7)
 		if hero.max_ink > 0.0:
 			draw_rect(Rect2(x + 5, y + 25, 102, 3), Color(0, 0, 0, 0.6))
@@ -143,7 +149,7 @@ func _draw() -> void:
 	if help_t > 0.0 and not party.touch_active():
 		var a2 := clampf(help_t / 1.0, 0.0, 1.0)
 		_text(Vector2(vs.x - 236, 14), "Move: WASD / arrows / stick", 8, Color(1, 1, 1, a2))
-		_text(Vector2(vs.x - 236, 25), "Attack: J / Space   (gamepad A)", 8, Color(1, 1, 1, a2))
+		_text(Vector2(vs.x - 236, 25), "Attack: J / Space (pad A), hold when full: tech", 8, Color(1, 1, 1, a2))
 		_text(Vector2(vs.x - 236, 36), "Swap hero: Tab / Q (gamepad Y)", 8, Color(1, 1, 1, a2))
 		_text(Vector2(vs.x - 236, 47), "Pause: Esc / P (gamepad Start)", 8, Color(1, 1, 1, a2))
 		_text(Vector2(vs.x - 236, 58), "Abilities: 1-4 (gamepad LB RB LT RT)", 8, Color(1, 1, 1, a2))
