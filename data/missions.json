@@ -1,11 +1,12 @@
 {
-	"_comment": "Missions launched from the territory map (issue #5). province: where the map offers it. map: text map in maps/. story: true = plays once. after: only offered once that mission is cleared. objective: {kind, ...} read by scripts/objective.gd (kills: count). rewards: paid on success (gilt, supplies, ink, renown, insight). fray: change to the province's Fray on success (negative pushes the Blank back). loot: per-kill chance [0-1] and amount range of what the party picks up on the way; retreating keeps it, being wiped out loses it.",
+	"_comment": "Missions launched from the territory map (issue #5). province: where the map offers it. map: text map in maps/. story: true = plays once. after: only offered once that mission is cleared. objective: {kind, ...} read by scripts/objective.gd (kills: count). rewards: paid on success (gilt, supplies, ink, renown, insight). fray: change to the province's Fray on success (negative pushes the Blank back). enemies: optional spawn weights that replace the province roster in data/enemies.json (#16). loot: per-kill chance [0-1] and amount range of what the party picks up on the way; retreating keeps it, being wiped out loses it.",
 	"missions": [
 		{
 			"id": "meadow_prologue", "name": "Prologue: Spat Out", "province": "meadow", "story": true,
 			"map": "res://maps/frayed_meadow.txt",
 			"brief": "Something spat you out of the Blank in the Frayed Meadow, and the Nibblers want you back. Drive them off and find your way to Hollowmark.",
 			"objective": {"kind": "kills", "count": 12, "label": "Disperse Nibblers"},
+			"enemies": {"nibbler": 1},
 			"rewards": {"gilt": 40, "supplies": 15, "ink": 2, "renown": 2},
 			"fray": -8,
 			"loot": {"gilt": [0.35, 1, 3], "ink": [0.05, 1, 1]}
@@ -14,7 +15,7 @@
 			"id": "meadow_patrol", "name": "Patrol: Frayed Meadow", "province": "meadow", "after": "meadow_prologue",
 			"map": "res://maps/frayed_meadow.txt",
 			"brief": "The Nibblers keep crawling out of the white. Thin them out before they reach the road, and the Meadow frays a little slower.",
-			"objective": {"kind": "kills", "count": 15, "label": "Disperse Nibblers"},
+			"objective": {"kind": "kills", "count": 15, "label": "Drive back the Blank"},
 			"rewards": {"gilt": 20, "supplies": 8, "ink": 1},
 			"fray": -6,
 			"loot": {"gilt": [0.3, 1, 2], "supplies": [0.15, 1, 2], "ink": [0.04, 1, 1]}

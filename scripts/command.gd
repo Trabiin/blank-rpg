@@ -551,6 +551,7 @@ func _open_brief(m: Dictionary) -> void:
 		lines.append(line)
 	lines.append("")
 	lines.append("Objective: " + Objective.describe(m.get("objective", {})))
+	lines.append("Expect: " + EnemyKinds.names(m))
 	var rew := Missions.res_text(m.get("rewards", {}))
 	if rew != "":
 		lines.append("Reward: " + rew)
