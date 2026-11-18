@@ -1,0 +1,28 @@
+{
+	"_comment": "Field heroes in combat (issue #10). Looks come from data/recruits.json; this file is how they fight. short: name on the HUD. hp, speed (px/s), damage (full-power swing), power_rate (gauge refill per second), reach (px), arc (degrees either side of facing). ai: how they behave when you are not controlling them (styles in scripts/hero.gd AI_STYLES; issue #9 adds player-picked presets later). heal: a passive poultice that patches the most hurt ally in range every few seconds, controlled or not.",
+	"styles": {
+		"steady": {"name": "Steady", "desc": "Waits for a full gauge, then strikes. Backs off while it refills."},
+		"guard": {"name": "Bodyguard", "desc": "Sticks to the leader and only fights what gets close to them."},
+		"reckless": {"name": "Reckless", "desc": "Charges anything in sight and swings early. Hits often, gets hit often."},
+		"healer": {"name": "Hangs back", "desc": "Keeps her distance, fights only what reaches the leader, patches people up."}
+	},
+	"heroes": {
+		"ash": {
+			"short": "Ash", "weapon": "Quill-knife", "hp": 40, "speed": 68, "damage": 10, "power_rate": 0.95, "reach": 20, "arc": 70,
+			"ai": "steady", "special": "Unwritten: the Blank hesitates. Ash always leads the party."
+		},
+		"bran": {
+			"short": "Bran", "weapon": "Contract cleaver", "hp": 60, "speed": 62, "damage": 14, "power_rate": 0.75, "reach": 21, "arc": 70,
+			"ai": "guard", "special": "Big, slow, hard to kill. Clause four: guard the client."
+		},
+		"gristle": {
+			"short": "Gristle", "weapon": "Bone ladle", "hp": 36, "speed": 64, "damage": 8, "power_rate": 1.0, "reach": 24, "arc": 80,
+			"ai": "healer", "heal": {"every": 6.0, "amount": 7, "range": 80},
+			"special": "Poultice: every 6 s she patches the most hurt ally nearby for 7 HP. Billing follows."
+		},
+		"ninefingers": {
+			"short": "Daro", "weapon": "Concord pike", "hp": 50, "speed": 70, "damage": 12, "power_rate": 0.85, "reach": 28, "arc": 40,
+			"ai": "reckless", "special": "Longest reach in the party, on a narrow line. Aim the point."
+		}
+	}
+}
