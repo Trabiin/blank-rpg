@@ -158,6 +158,7 @@ static func apply(result: Dictionary) -> void:
 	var m: Dictionary = result.get("mission_dict", {})
 	if m.get("effects", false):
 		MissionTypes.apply(m, result["outcome"])
+	Satchel.restock()  # Hollowmark's stores top the satchel back up (issue #6)
 	Empire.active_mission = {}
 	Empire.last_mission = result
 

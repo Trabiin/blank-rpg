@@ -28,6 +28,9 @@ var dying_t := -1.0
 var goal: Node2D = null
 var nibble_t := 0.0
 var xp := 3  # shared by the party when it falls (issue #15)
+## Hold the Line (abilities.gd): for taunt_t seconds this enemy goes for taunter and nobody else.
+var taunter: Hero = null
+var taunt_t := 0.0
 
 ## Puny's green slime, recolored into a scrap of the Blank: paper-white with an ink-black core.
 const SLIME_COLORS := {"body": Color("e4e1d8"), "core": Color("15101a"), "shine": Color("ffffff")}
@@ -60,6 +63,7 @@ func _physics_process(delta: float) -> void:
 	anim_t += delta
 	flash_t = max(flash_t - delta, 0.0)
 	state_t -= delta
+	taunt_t = maxf(taunt_t - delta, 0.0)
 	var dir := Vector2.ZERO
 
 	match state:
@@ -122,7 +126,18 @@ func _set_state(s: int, t: float) -> void:
 	state_t = t
 
 
+## Drop everything and go for this hero for a while.
+func taunt(h: Hero, time: float) -> void:
+	taunter = h
+	taunt_t = time
+	target = h
+	if state == State.WANDER:
+		_set_state(State.CHASE, 0.0)
+
+
 func _find_target(dist: float) -> Hero:
+	if taunt_t > 0.0 and taunter != null and is_instance_valid(taunter) and not taunter.dead:
+		return taunter
 	var best: Hero = null
 	var best_d := dist
 	for h in get_tree().get_nodes_in_group("heroes"):
@@ -200,6 +215,8 @@ func _draw_overlay() -> void:
 	for i in 3:
 		var p := Vector2(rng.randf_range(-8, 8), rng.randf_range(-12, 2))
 		overlay.draw_rect(Rect2(p, Vector2(1, 1)), Color(1, 1, 1, 0.9) if i % 2 else Color(0, 0, 0, 0.7))
+	if taunt_t > 0.0:  # Hold the Line: a little orange tag shows who it is locked onto
+		overlay.draw_rect(Rect2(-1.5, -19, 3, 3), Color("f2a65a"))
 	if state == State.WINDUP:
 		overlay.draw_string(ThemeDB.fallback_font, Vector2(-2, -12), "!", HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color("ff5d5d"))
 	if hp < max_hp:

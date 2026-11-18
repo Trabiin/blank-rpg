@@ -254,7 +254,7 @@ static func stats(id: String, override := {}) -> Dictionary:
 		"speed": float(hd.get("speed", 68)) + float(b.get("speed", 0)),
 		"reach": float(hd.get("reach", 20)) + float(b.get("reach", 0)),
 		"guard": clampf(float(b.get("guard", 0.0)), 0.0, 0.6),
-		"ink": int(b.get("ink", 0)),  # bonus on top of the hero's base Ink (issue #7)
+		"ink": int(hd.get("ink", 12)) + int(b.get("ink", 0)),  # Ink pool for abilities (issue #7)
 		"heal": (int(heal.get("amount", 0)) + int(b.get("heal", 0))) if not heal.is_empty() else 0,
 	}
 
@@ -271,6 +271,8 @@ static func apply_to(h: Hero) -> void:
 	h.guard = clampf(float(b.get("guard", 0.0)), 0.0, 0.6)
 	if h.heal_every > 0.0:
 		h.heal_amount += int(b.get("heal", 0))
+	h.max_ink += float(b.get("ink", 0))
+	h.ink = h.max_ink
 
 
 ## Moves a hero in the field from one set of stats to another (a level-up or a gear change
@@ -287,6 +289,9 @@ static func apply_delta(h: Hero, before: Dictionary, after: Dictionary) -> void:
 	h.guard = clampf(h.guard + float(after.get("guard", 0.0)) - float(before.get("guard", 0.0)), 0.0, 0.6)
 	if h.heal_every > 0.0:
 		h.heal_amount += int(after.get("heal", 0)) - int(before.get("heal", 0))
+	var dink := float(after.get("ink", 0)) - float(before.get("ink", 0))
+	h.max_ink = maxf(0.0, h.max_ink + dink)
+	h.ink = clampf(h.ink + maxf(dink, 0.0), 0.0, h.max_ink)
 
 
 ## Can this hero wear this item? "" if yes, else why not.

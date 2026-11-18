@@ -483,8 +483,6 @@ func _stat_shown(k: String, v) -> String:
 			return "%d%%" % int(round(float(v) * 100.0))
 		"guard":
 			return "%d%%" % int(round(float(v) * 100.0))
-		"ink":
-			return "+%d" % int(v)
 		_:
 			return str(int(round(float(v))))
 

@@ -298,6 +298,11 @@ and Blank positions so the content stretches without feeling copy-pasted.
   becomes a **charged tech** (later milestone).
 - **Abilities on hotkeys.** Each hero has up to 4 abilities mapped to keys 1-4 / gamepad shoulder + face buttons.
   Using one does not pause; it costs **Ink** (MP).
+  **As built (#7):** data/abilities.json + scripts/abilities.gd. Each field hero has an Ink pool (10-14) that refills
+  0.4/s and +1 per full-power hit that lands (Spring Tapping research: 25% faster). Two abilities each: Ash Rewrite
+  (party heal + shield) and Strikethrough (dash), Bran Cleave (wide Red Ink arc) and Hold the Line (taunt + half
+  damage), Gristle Poultice Toss and Scald, Daro Long Thrust and Pike Sweep. Keys 1-4, gamepad LB/RB/LT/RT, touch
+  buttons around Attack. Allies fire them on simple rules (hurt ally, crowd, target in range, leader threatened).
 - **Quick menu.** One button opens a list menu that slows time to 10% (not a full pause). Tabs: Items, Abilities,
   Party (swap leader, set AI behavior), Equip. Fully navigable by d-pad, mouse/touch, or hotkeys.
 - **Party of 3.** You control one hero; two AI allies follow. Swap control instantly with one button.

@@ -59,6 +59,25 @@ var heal_t := 3.0
 # Armor (issue #15): this fraction of every hit is blocked. Set by Progress.apply_to from gear.
 var guard := 0.0
 
+# Abilities and Ink (issue #7; what each one does lives in scripts/abilities.gd).
+var abilities: Array = []  # ability dicts from data/abilities.json, slot i = key i+1
+var cooldowns: Array = []  # seconds left per slot
+var max_ink := 0.0
+var ink := 0.0
+var ink_regen := Abilities.REGEN
+var cast_t := 0.0  # brief casting pose
+var cast_color := Color.WHITE
+var shield_hp := 0  # Rewrite: soaks this much damage
+var shield_t := 0.0
+var guard_t := 0.0  # Hold the Line: takes guard_cut less damage while > 0
+var guard_cut := 0.0
+var dash_t := 0.0  # Strikethrough / Long Thrust
+var dash_dir := Vector2.ZERO
+var dash_speed := 0.0
+var dash_ability := {}
+var dash_hit: Array = []
+var ai_ability_t := 0.0
+
 
 func _ready() -> void:
 	radius = 5.0
@@ -82,6 +101,16 @@ func _physics_process(delta: float) -> void:
 
 	if heal_every > 0.0:
 		_update_heal(delta)
+	_update_abilities(delta)
+
+	if dash_t > 0.0:
+		dash_t -= delta
+		velocity = dash_dir * dash_speed
+		move_and_slide()
+		Abilities.dash_hits(self)
+		moving = true
+		queue_redraw()
+		return
 
 	if swing_t > 0.0:
 		swing_t -= delta
@@ -92,16 +121,22 @@ func _physics_process(delta: float) -> void:
 		power = min(power + power_rate * delta, 1.0)
 
 	var dir := Vector2.ZERO
-	if controlled:
+	if controlled and party and party.get("quick_open") == true:
+		dir = Vector2.ZERO  # the quick menu has the controls (time is slowed, not stopped)
+	elif controlled:
 		dir = Input.get_vector("move_left", "move_right", "move_up", "move_down")
 		if Input.is_action_just_pressed("attack") and not peaceful:
 			try_attack()
+		if not peaceful:  # (the quick menu branch above already keeps these quiet while it is open)
+			for i in abilities.size():
+				if Input.is_action_just_pressed("ability_%d" % (i + 1)):
+					Abilities.use(self, i)
 	else:
 		dir = _ai(delta)
 
 	if dir.length() > 0.1 and swing_t <= 0.0:
 		facing = dir.normalized()
-	var spd := move_speed * (0.3 if swing_t > 0.0 else 1.0)
+	var spd := move_speed * (0.3 if swing_t > 0.0 or cast_t > 0.0 else 1.0)
 	velocity = dir * spd + knockback
 	knockback = knockback.move_toward(Vector2.ZERO, 900.0 * delta)
 	move_and_slide()
@@ -134,14 +169,59 @@ func _apply_hit() -> void:
 		if to.length() <= reach + enemy.radius and absf(facing.angle_to(to)) <= arc:
 			if enemy.take_hit(dmg, global_position, 120.0 + 160.0 * swing_power):
 				hit_any = true
+	if hit_any and swing_power >= 1.0:
+		ink = minf(ink + Abilities.HIT_GAIN, max_ink)  # a full-power hit that lands writes a little Ink
 	if hit_any and party:
 		party.shake(1.5 + 2.0 * swing_power)
 
 
-func take_hit(amount: int, from: Vector2, force := 160.0) -> bool:
-	if guard > 0.0:
-		amount = maxi(1, int(round(amount * (1.0 - guard))))
-	return super.take_hit(amount, from, force)
+## Rewrite's shield soaks first, then Hold the Line's guard cuts what's left.
+func _adjust_damage(amount: int) -> int:
+	if shield_hp > 0:
+		var soaked := mini(shield_hp, amount)
+		shield_hp -= soaked
+		amount -= soaked
+		if amount <= 0:
+			Fx.damage_number(get_parent(), global_position + Vector2(0, -16), "blocked", Color("9fd8ff"))
+			invuln_t = 0.3
+			return 0
+	if guard_t > 0.0:
+		amount = maxi(1, roundi(amount * (1.0 - guard_cut)))
+	if guard > 0.0:  # armor (issue #15)
+		amount = maxi(1, roundi(amount * (1.0 - guard)))
+	return amount
+
+
+func set_abilities(ids: Array, ink_pool: float) -> void:
+	abilities = Abilities.for_ids(ids)
+	cooldowns = []
+	cooldowns.resize(abilities.size())
+	cooldowns.fill(0.0)
+	max_ink = ink_pool
+	ink = ink_pool
+
+
+func start_dash(a: Dictionary) -> void:
+	dash_ability = a
+	dash_dir = facing.normalized()
+	dash_t = 0.18
+	dash_speed = float(a.get("distance", 70)) / dash_t
+	dash_hit.clear()
+	invuln_t = maxf(invuln_t, dash_t + 0.1)  # dashing through a lunge is the point
+	swing_t = 0.0
+
+
+func _update_abilities(delta: float) -> void:
+	for i in cooldowns.size():
+		cooldowns[i] = maxf(cooldowns[i] - delta, 0.0)
+	if max_ink > 0.0:
+		ink = minf(ink + ink_regen * delta, max_ink)
+	cast_t = maxf(cast_t - delta, 0.0)
+	guard_t = maxf(guard_t - delta, 0.0)
+	if shield_t > 0.0:
+		shield_t -= delta
+		if shield_t <= 0.0:
+			shield_hp = 0
 
 
 func _on_hit() -> void:
@@ -153,6 +233,9 @@ func _on_hit() -> void:
 func _on_death() -> void:
 	revive_progress = 0.0
 	swing_t = 0.0
+	dash_t = 0.0
+	shield_hp = 0
+	guard_t = 0.0
 
 
 func revive() -> void:
@@ -211,6 +294,13 @@ func _ai(delta: float) -> Vector2:
 		return detour_dir
 
 	var style: Dictionary = AI_STYLES.get(ai_style, AI_STYLES["steady"])
+	if not abilities.is_empty():
+		ai_ability_t -= delta
+		if ai_ability_t <= 0.0:
+			ai_ability_t = Abilities.AI_THINK
+			var pick := Abilities.ai_pick(self)
+			if pick >= 0 and Abilities.use(self, pick):
+				return Vector2.ZERO
 	if ai_target == null or not is_instance_valid(ai_target) or ai_target.dead \
 			or ai_target.global_position.distance_to(leader.global_position) > float(style["leash"]):
 		ai_target = _nearest_enemy(leader.global_position, float(style["seek"]))
@@ -289,6 +379,10 @@ func _update_frame() -> void:
 		col = 19
 	elif swing_t > 0.0:
 		col = 4 + clampi(int((1.0 - swing_t / SWING_TIME) * 4.0), 0, 3)
+	elif cast_t > 0.0:
+		col = 4 + clampi(int((1.0 - cast_t / SWING_TIME) * 4.0), 0, 3)
+	elif dash_t > 0.0:
+		col = 5
 	elif moving:
 		col = int(anim_t * 9.0) % 4
 	var frame := dir_row(facing) * 24 + col
@@ -315,6 +409,16 @@ func _draw_overlay() -> void:
 		if revive_progress > 0.0:
 			overlay.draw_arc(Vector2(0, -6), 10.0, -PI / 2.0, -PI / 2.0 + TAU * revive_progress / REVIVE_TIME, 24, Color("ffe08a"), 1.5)
 		return
+	if shield_hp > 0:
+		overlay.draw_arc(Vector2(0, -7), 11.0, 0, TAU, 24, Color("9fd8ff", 0.45 + 0.2 * sin(anim_t * 6.0)), 1.0)
+	if guard_t > 0.0:
+		overlay.draw_arc(Vector2(0, -7), 12.5, PI * 0.15, PI * 0.85, 12, Color("f2a65a", 0.7), 1.5)
+	if cast_t > 0.0:
+		overlay.draw_circle(Vector2(0, -22), 2.0 * cast_t / SWING_TIME + 0.5, Color(cast_color, 0.9))
+	if dash_t > 0.0:
+		for k in 3:
+			var back := -dash_dir * (6.0 + 6.0 * k)
+			overlay.draw_line(back + Vector2(0, -10), back + Vector2(0, -2), Color(1, 1, 1, 0.5 - 0.15 * k), 2.0)
 	if controlled:
 		var y := -21.0 + sin(anim_t * 4.0) * 1.0
 		overlay.draw_colored_polygon(PackedVector2Array([Vector2(-2.5, y - 3), Vector2(2.5, y - 3), Vector2(0, y)]), Color("ffd166"))

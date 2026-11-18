@@ -41,6 +41,41 @@ func size_px() -> Vector2:
 	return get_viewport_rect().size
 
 
+const INK_COL := Color("6aa8ff")
+const PAD_LABELS := ["LB", "RB", "LT", "RT"]
+
+
+## The leader's abilities, bottom-right: key, name, Ink cost, cooldown sweep.
+func _draw_ability_bar(hero: Hero, vs: Vector2) -> void:
+	var n := hero.abilities.size()
+	if n == 0:
+		return
+	var w := 84.0
+	var x := vs.x - 8.0 - n * (w + 4.0) + 4.0
+	var y := vs.y - 38.0
+	_text(Vector2(x, y - 4), "Ink %d / %d" % [floori(hero.ink), int(hero.max_ink)], 8, INK_COL)
+	for i in n:
+		var a: Dictionary = hero.abilities[i]
+		var why := Abilities.blocker(hero, i)
+		var r := Rect2(x, y, w, 32)
+		draw_rect(r, Color(0.05, 0.04, 0.08, 0.72))
+		var col := Abilities.color_of(a)
+		var cd: float = hero.cooldowns[i]
+		if cd > 0.0:
+			draw_rect(Rect2(x, y, w * cd / float(a.get("cooldown", 1.0)), 32), Color(1, 1, 1, 0.08))
+		draw_rect(r, col if why == "" else Color(col, 0.35), false, 1.0)
+		var txt_col := Color.WHITE if why == "" else Color(0.6, 0.6, 0.6)
+		_text(Vector2(x + 4, y + 10), "%d" % (i + 1), 9, col, false)
+		_text(Vector2(x + 14, y + 10), str(a.get("name", "")), 8, txt_col, false)
+		var cost_col := INK_COL if why != "ink" else Color("ff6b6b")
+		_text(Vector2(x + 4, y + 22), "%d Ink" % int(a.get("cost", 0)), 8, cost_col, false)
+		if cd > 0.0:
+			_text(Vector2(x + 44, y + 22), "%.1fs" % cd, 8, Color(0.8, 0.8, 0.85), false)
+		else:
+			_text(Vector2(x + 60, y + 22), PAD_LABELS[i], 7, Color(0.55, 0.55, 0.6), false)
+		x += w + 4.0
+
+
 func _draw() -> void:
 	if party == null:
 		return
@@ -49,8 +84,8 @@ func _draw() -> void:
 	var x := 8.0
 	for h in party.heroes:
 		var hero: Hero = h
-		var y := vs.y - 34.0
-		var panel := Rect2(x, y, 112, 28)
+		var y := vs.y - 38.0
+		var panel := Rect2(x, y, 112, 32)
 		draw_rect(panel, Color(0.05, 0.04, 0.08, 0.72))
 		if hero.controlled:
 			draw_rect(panel, Color("ffd166"), false, 1.0)
@@ -70,7 +105,13 @@ func _draw() -> void:
 		# power gauge
 		draw_rect(Rect2(x + 5, y + 21, 102, 2), Color(0, 0, 0, 0.6))
 		draw_rect(Rect2(x + 5, y + 21, 102.0 * hero.power, 2), pcol)
+		# Ink (abilities, issue #7)
+		if hero.max_ink > 0.0:
+			draw_rect(Rect2(x + 5, y + 25, 102, 3), Color(0, 0, 0, 0.6))
+			draw_rect(Rect2(x + 5, y + 25, 102.0 * hero.ink / hero.max_ink, 3), INK_COL)
 		x += 118.0
+	if party.leader and not party.touch_active():
+		_draw_ability_bar(party.leader, vs)
 
 	# Mission name and objective, top-left
 	_text(Vector2(8, 14), party.mission.get("name", party.area.area_name), 10, Color(0.9, 0.88, 0.8))
@@ -105,6 +146,8 @@ func _draw() -> void:
 		_text(Vector2(vs.x - 236, 25), "Attack: J / Space   (gamepad A)", 8, Color(1, 1, 1, a2))
 		_text(Vector2(vs.x - 236, 36), "Swap hero: Tab / Q (gamepad Y)", 8, Color(1, 1, 1, a2))
 		_text(Vector2(vs.x - 236, 47), "Pause: Esc / P (gamepad Start)", 8, Color(1, 1, 1, a2))
+		_text(Vector2(vs.x - 236, 58), "Abilities: 1-4 (gamepad LB RB LT RT)", 8, Color(1, 1, 1, a2))
+		_text(Vector2(vs.x - 236, 69), "Quick menu: C (gamepad Back)", 8, Color(1, 1, 1, a2))
 	if center_text != "":
 		draw_rect(Rect2(Vector2.ZERO, vs), Color(0.95, 0.94, 0.9, 0.55))
 		var lines2 := center_text.split("\n")

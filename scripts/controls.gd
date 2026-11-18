@@ -17,6 +17,12 @@ func _ready() -> void:
 	_add_action("clock_faster", [], [JOY_BUTTON_RIGHT_SHOULDER])
 	for i in 4:
 		_add_action("clock_speed_%d" % i, [KEY_1 + i, KEY_KP_1 + i], [])
+	# Abilities in missions (issue #7): 1-4 (same keys as the clock, which is frozen out there),
+	# gamepad LB / RB / LT / RT. Touch buttons press these too.
+	_add_action("ability_1", [KEY_1, KEY_KP_1], [JOY_BUTTON_LEFT_SHOULDER])
+	_add_action("ability_2", [KEY_2, KEY_KP_2], [JOY_BUTTON_RIGHT_SHOULDER])
+	_add_action("ability_3", [KEY_3, KEY_KP_3], [], JOY_AXIS_TRIGGER_LEFT, 1.0)
+	_add_action("ability_4", [KEY_4, KEY_KP_4], [], JOY_AXIS_TRIGGER_RIGHT, 1.0)
 	_add_action("ledger", [KEY_L], [JOY_BUTTON_BACK])
 	_add_action("roster", [KEY_R], [JOY_BUTTON_Y])
 	_add_action("buildings", [KEY_B], [JOY_BUTTON_LEFT_STICK])
@@ -27,6 +33,7 @@ func _ready() -> void:
 	_add_action("bonds", [KEY_H], [])  # gamepad: through the menus
 	_add_action("newcomers", [KEY_N], [])  # gamepad: through the menus
 	_add_action("gear", [KEY_K], [])  # party gear and the shop (issue #15); gamepad: through the menus
+	_add_action("quick_menu", [KEY_C], [JOY_BUTTON_BACK])  # missions only; Back is the ledger on the Command Table
 	# Menus use Godot's ui_* actions; also let WASD, J and the stick drive them.
 	_extend("ui_up", [KEY_W], JOY_AXIS_LEFT_Y, -1.0)
 	_extend("ui_down", [KEY_S], JOY_AXIS_LEFT_Y, 1.0)

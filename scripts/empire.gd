@@ -112,6 +112,12 @@ var rng := RandomNumberGenerator.new()
 var _territory: Territory
 
 
+## Quick menu (issue #6): field items carried into missions (scripts/satchel.gd) and the AI
+## behaviour picked per hero in its Party tab (recruit id -> Hero.AI_STYLES key).
+var satchel := {}
+var ai_presets := {}
+
+
 func territory() -> Territory:
 	if _territory == null:
 		_territory = Territory.new()
@@ -121,6 +127,8 @@ func territory() -> Territory:
 
 ## Fresh campaign: day 1, provinces as written in data/provinces.json.
 func reset() -> void:
+	satchel = Satchel.start_stock()
+	ai_presets = {}
 	day = 1
 	day_t = 0.3  # start mid-morning
 	speed = 1
@@ -1235,7 +1243,7 @@ func _advance_research(days: float) -> void:
 ## What finished research does on missions: the numbers main.gd applies, plus a short line
 ## per node for the mission HUD.
 func mission_boosts() -> Dictionary:
-	var b := {"damage": 0, "hp": 0, "revive": 1.0, "guard": 0.0, "power_rate": 1.0, "lines": []}
+	var b := {"damage": 0, "hp": 0, "revive": 1.0, "guard": 0.0, "power_rate": 1.0, "ink_regen": 1.0, "lines": []}
 	if has_research("arms_whetstone"):
 		b["damage"] += 2
 	if has_research("arms_steel"):
@@ -1248,6 +1256,9 @@ func mission_boosts() -> Dictionary:
 	if has_research("arms_leather"):
 		b["hp"] += 10
 		b["lines"].append("+10 max HP")
+	if has_research("ink_tap"):
+		b["ink_regen"] = 1.25
+		b["lines"].append("faster Ink")
 	if has_research("ink_blot"):
 		b["revive"] = 1.4
 		b["lines"].append("faster revives")
@@ -1924,6 +1935,7 @@ func to_dict() -> Dictionary:
 		"missions_cleared": missions_cleared,
 		"progress": progress,
 		"dialogue": Dialogue.seen,
+		"satchel": satchel, "ai_presets": ai_presets,
 		"rng_state": str(rng.state)}
 
 
@@ -1948,6 +1960,13 @@ func from_dict(d: Dictionary) -> void:
 				recruits[id] = {"role": r.get("role", "idle"), "target": r.get("target", ""), "injured": int(r.get("injured", 0))}
 	surge = d.get("surge", {})
 	next_surge_day = int(d.get("next_surge_day", 4))
+	var saved_satchel = d.get("satchel", null)
+	if typeof(saved_satchel) == TYPE_DICTIONARY:
+		for k in saved_satchel:
+			satchel[k] = int(saved_satchel[k])
+	var saved_ai = d.get("ai_presets", {})
+	if typeof(saved_ai) == TYPE_DICTIONARY:
+		ai_presets = saved_ai.duplicate()
 	var saved_seen = d.get("dialogue", {})
 	Dialogue.seen = saved_seen.duplicate() if typeof(saved_seen) == TYPE_DICTIONARY else {}
 	var saved_b: Dictionary = d.get("buildings", {})

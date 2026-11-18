@@ -33,7 +33,7 @@ var respawn_t := 0.0
 var blank_tick := 0.0
 var game_over := false
 var pause_menu: InkMenu
-var boosts := {"damage": 0, "hp": 0, "revive": 1.0, "guard": 0.0, "power_rate": 1.0, "lines": []}  # from research
+var boosts := {"damage": 0, "hp": 0, "revive": 1.0, "guard": 0.0, "power_rate": 1.0, "ink_regen": 1.0, "lines": []}  # from research
 var over_menu: InkMenu
 var banter  # banter.gd: walking banter at the top of the screen
 var dialogue_box  # dialogue_box.gd: conversations (the game pauses while one plays)
@@ -51,6 +51,8 @@ var results_view  # results_view.gd
 var gear_view  # gear_view.gd: Party gear from the pause menu (issue #15)
 var found_items: Array = []  # gear picked up on the way (item ids); kept unless the party is wiped
 var levels_gained := {}  # hero id -> level reached during this mission, for the results screen
+var quick_menu: QuickMenu  # quick_menu.gd: items, abilities, party, equip with time slowed (issue #6)
+var quick_open := false  # heroes read this: the menu has the controls while it is up
 
 
 func _ready() -> void:
@@ -91,6 +93,7 @@ func _ready() -> void:
 		var h := _make_hero(PartyPicker.short_of(ids[i]), start + offsets[i % offsets.size()],
 			look.get("outfit", "archer"), PartyPicker.look_colors(look))
 		PartyPicker.apply(h, ids[i])
+		h.ai_style = str(Empire.ai_presets.get(ids[i], h.ai_style))  # picked in the quick menu's Party tab
 	# The Barracks sends the party out tougher; research sharpens and armours them.
 	boosts = Empire.mission_boosts()
 	Empire.mission_kills_bonded = 0
@@ -99,6 +102,7 @@ func _ready() -> void:
 		h.hp = h.max_hp
 		h.base_damage += int(boosts["damage"])
 		h.power_rate *= float(boosts["power_rate"])
+		h.ink_regen *= float(boosts.get("ink_regen", 1.0))
 	_set_leader(heroes[0])
 
 	camera = Camera2D.new()
@@ -119,6 +123,7 @@ func _ready() -> void:
 	hud.party = self
 	layer.add_child(hud)
 	touch = TouchScript.new()
+	touch.party = self
 	layer.add_child(touch)
 	banter = BanterScript.new()
 	banter.gap = 1.0
@@ -157,6 +162,10 @@ func _ready() -> void:
 	gear_view.party = self
 	menu_layer.add_child(gear_view)
 	gear_view.closed.connect(_on_gear_closed)
+	quick_menu = QuickMenu.new()
+	quick_menu.party = self
+	menu_layer.add_child(quick_menu)
+	quick_menu.closed.connect(func(): quick_open = false)
 
 	var loaded := not Saves.pending.is_empty()
 	if loaded:
@@ -183,6 +192,7 @@ func present() -> Array:
 ## Play a conversation in the dialogue box. The fight waits until it is over.
 func play_talk(talk_id: String) -> void:
 	if dialogue_box.play(talk_id):
+		quick_menu.close()
 		get_tree().paused = true
 		touch.release_all()
 
@@ -232,6 +242,12 @@ func _spawn_enemy(pos: Vector2) -> void:
 	e.died.connect(_on_enemy_died)
 
 
+## The quick menu's Party tab: take control of a standing hero.
+func take_control(h: Hero) -> void:
+	if h != null and not h.dead and h in heroes:
+		_set_leader(h)
+
+
 func _set_leader(h: Hero) -> void:
 	leader = h
 	for other in heroes:
@@ -257,6 +273,10 @@ func _on_enemy_died(_e: Actor) -> void:
 			found[k] = int(found.get(k, 0)) + int(got[k])
 		if not got.is_empty():
 			found_flash = 1.5
+		var item := Satchel.roll_drop()  # field items go straight into the satchel
+		if item != "":
+			Satchel.add(item)
+			hud.say("Found: %s (quick menu)." % Satchel.item(item).get("name", item), 2.0)
 	if kills == 10:
 		banter.event("tenth_kill", present())
 	_award_xp(int(_e.get("xp")) if _e.get("xp") != null else 0)
@@ -321,9 +341,22 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if event.is_action_pressed("swap") and not game_over:
 		_swap()
+	if event.is_action_pressed("quick_menu"):
+		open_quick_menu()
+
+
+## One button opens the quick menu mid-fight; time slows to 10% instead of stopping.
+func open_quick_menu() -> void:
+	if game_over or ending or get_tree().paused or quick_open:
+		return
+	touch.release_all()
+	quick_open = true
+	quick_menu.open()
 
 
 func set_paused(on: bool) -> void:
+	if on:
+		quick_menu.close()
 	get_tree().paused = on
 	pause_menu.visible = on
 	slot_menu.visible = false
@@ -414,7 +447,7 @@ func snapshot() -> Dictionary:
 	for h in heroes:
 		var hero: Hero = h
 		hs.append({"name": hero.hero_name, "hp": hero.hp, "x": hero.global_position.x, "y": hero.global_position.y,
-			"dead": hero.dead, "power": hero.power})
+			"dead": hero.dead, "power": hero.power, "ink": hero.ink})
 	return {
 		"map": map_path,
 		"area_name": area.area_name,
@@ -447,6 +480,7 @@ func _apply_snapshot(d: Dictionary) -> void:
 		hero.global_position = Vector2(float(hd["x"]), float(hd["y"]))
 		hero.hp = clampi(int(hd["hp"]), 0, hero.max_hp)
 		hero.power = float(hd.get("power", 1.0))
+		hero.ink = clampf(float(hd.get("ink", hero.max_ink)), 0.0, hero.max_ink)
 		if bool(hd.get("dead", false)) or hero.hp <= 0:
 			hero.hp = 0
 			hero.dead = true
@@ -497,6 +531,8 @@ func _process(delta: float) -> void:
 		_swap()
 	if touch_active() and Input.is_action_just_pressed("pause") and not game_over and not get_tree().paused:
 		set_paused(true)
+	if touch_active() and Input.is_action_just_pressed("quick_menu"):
+		open_quick_menu()
 
 	if camera and leader:
 		camera.global_position = leader.global_position + Vector2(0, -10)
@@ -546,6 +582,7 @@ func _end_mission(outcome: String) -> void:
 func _show_results(outcome: String) -> void:
 	if not is_inside_tree():
 		return
+	quick_menu.close()
 	get_tree().paused = true
 	touch.release_all()
 	var r := Missions.settle(mission, outcome, found, {"kills": kills, "time": mission_time, "objective": objective.text(), "fail": objective.fail_text()})
