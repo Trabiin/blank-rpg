@@ -102,6 +102,11 @@ var trade_breaks := 0
 var bonds := {}
 var bond_data := {}
 var mission_kills_bonded := 0  # how many kill steps this mission already paid out (not saved)
+# Missions (scripts/missions.gd): the one being played (saved with the mission, not here),
+# the ones cleared, and the last result (Hollowmark greets the party with it; not saved).
+var active_mission := {}
+var missions_cleared := []
+var last_mission := {}
 var rng := RandomNumberGenerator.new()
 var _territory: Territory
 
@@ -160,6 +165,9 @@ func reset() -> void:
 	_load_bond_data()
 	bonds = {}
 	mission_kills_bonded = 0
+	active_mission = {}
+	missions_cleared = []
+	last_mission = {}
 	visitors = {}
 	rng.seed = 1234
 	if _territory != null:
@@ -1910,6 +1918,7 @@ func to_dict() -> Dictionary:
 		"next_trouble_day": next_trouble_day, "diplo_log": diplo_log,
 		"bonds": bonds,
 		"visitors": visitors,
+		"missions_cleared": missions_cleared,
 		"rng_state": str(rng.state)}
 
 
@@ -1988,6 +1997,9 @@ func from_dict(d: Dictionary) -> void:
 		deal_ready[k] = int(saved_dr[k])
 	intel_until = int(d.get("intel_until", 0))
 	next_trouble_day = int(d.get("next_trouble_day", day + 5))
+	for mid in d.get("missions_cleared", []):
+		if not mid in missions_cleared:
+			missions_cleared.append(str(mid))
 	for e in d.get("diplo_log", []):
 		if typeof(e) == TYPE_DICTIONARY:
 			diplo_log.append(e)

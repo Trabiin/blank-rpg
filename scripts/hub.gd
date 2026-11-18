@@ -184,6 +184,14 @@ func _ready() -> void:
 			leader.global_position = Vector2(float(d["x"]), float(d["y"]))
 			leader.facing = Vector2.DOWN
 		hud.say("Loaded. Hollowmark is still here. Mostly.", 2.5)
+	if not Empire.last_mission.is_empty():  # home from a mission: say what came back with you
+		var r: Dictionary = Empire.last_mission
+		Empire.last_mission = {}
+		var pay := Missions.res_text(r.get("pay", {}))
+		hud.toast("Back from %s." % r.get("name", "the field"))
+		hud.toast_t = 5.0
+		if pay != "":
+			hud.notice("Brought home: " + pay, false)
 	camera.global_position = leader.global_position
 	camera.reset_smoothing()
 	if Empire.territory().find("hollowmark").get("owner", "") == "erased":

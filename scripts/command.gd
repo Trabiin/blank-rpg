@@ -48,6 +48,8 @@ var deltas := {}  # resource -> net change shown floating by the bar after dawn
 var deltas_t := 0.0
 var notices: Array = []  # [text, warning, time left]
 var over_menu: InkMenu
+var brief_menu: InkMenu  # mission briefing: Go / Back
+var brief_mission := {}
 var roster_view
 const RosterView := preload("res://scripts/roster_view.gd")
 const BuildingsView := preload("res://scripts/buildings_view.gd")
@@ -130,6 +132,12 @@ func _ready() -> void:
 	over_menu.dim = 0.6
 	layer.add_child(over_menu)
 	over_menu.chosen.connect(_on_over)
+	brief_menu = InkMenu.new()
+	brief_menu.visible = false
+	brief_menu.top = 0.24
+	brief_menu.title_size = 18
+	layer.add_child(brief_menu)
+	brief_menu.chosen.connect(_on_brief)
 	if Empire.territory().find("hollowmark").get("owner", "") == "erased":
 		call_deferred("_show_lost")  # lost while walking around town
 
@@ -506,14 +514,63 @@ func _province_at(pos: Vector2) -> int:
 
 
 func _mission(i: int) -> Dictionary:
-	var ms: Array = territory.provinces[i].get("missions", [])
-	return ms[0] if not ms.is_empty() else {}
+	return Missions.for_province(territory.provinces[i]["id"])
 
 
 func _activate(i: int) -> void:
 	var m := _mission(i)
 	if not m.is_empty():
-		_leave(m["scene"])  # the clock stops here: missions take no Command time
+		_open_brief(m)
+
+
+## The briefing: what the mission is, what it asks, what it pays. Go launches it.
+func _open_brief(m: Dictionary) -> void:
+	brief_mission = m
+	var lines := []
+	for line in _wrap_words(m.get("brief", ""), 64):
+		lines.append(line)
+	lines.append("")
+	lines.append("Objective: " + Objective.describe(m.get("objective", {})))
+	var rew := Missions.res_text(m.get("rewards", {}))
+	if rew != "":
+		lines.append("Reward: " + rew)
+	if int(m.get("fray", 0)) < 0:
+		lines.append("Pushes the Blank back: %d Fray in %s" % [int(m["fray"]), territory.find(m.get("province", "")).get("name", "")])
+	lines.append("The clock stops while you are away.")
+	brief_menu.setup(m.get("name", "Mission"), [
+		{"id": "go", "label": "Set out"},
+		{"id": "back", "label": "Back"},
+	], "\n".join(lines))
+	brief_menu.visible = true
+	get_tree().paused = true
+
+
+func _on_brief(id: String) -> void:
+	brief_menu.visible = false
+	get_tree().paused = false
+	menu_closed_frame = Engine.get_process_frames()
+	if id == "go":
+		_launch_mission(brief_mission)
+
+
+## Leaves for a mission: autosave the empire, then load the mission's map.
+func _launch_mission(m: Dictionary) -> void:
+	autosave()  # the clock stops here: missions take no Command time
+	Missions.launch(m)
+
+
+func _wrap_words(s: String, width: int) -> Array:
+	var out := []
+	var cur := ""
+	for w in s.split(" "):
+		if cur != "" and (cur + " " + w).length() > width:
+			out.append(cur)
+			cur = w
+		else:
+			cur = w if cur == "" else cur + " " + w
+	if cur != "":
+		out.append(cur)
+	return out
 
 
 func _open_governor() -> void:
@@ -955,5 +1012,5 @@ func _draw_panel() -> void:
 		_text_c(Vector2(r.get_center().x, r.position.y + 12), "Play: " + m["name"], 9, GOLD)
 		_text_c(Vector2(r.get_center().x, r.position.y + 22), "Enter / A / tap", 8, Color(0.75, 0.7, 0.55))
 	else:
-		var note := "Reclaim missions are coming soon" if owner == "erased" else "No missions here yet"
+		var note := "Reclaim missions are coming soon" if owner == "erased" else "No missions here right now"
 		_text_c(Vector2(r.get_center().x, r.position.y + 16), note, 8, Color(0.45, 0.44, 0.47))
