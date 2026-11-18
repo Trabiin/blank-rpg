@@ -66,7 +66,7 @@ func menu_rect() -> Rect2:
 ## Taps and clicks on the two buttons. Touch does not emulate the mouse in this project.
 func _input(event: InputEvent) -> void:
 	if hub == null or get_tree().paused or hub.roster_view.visible or hub.buildings_view.visible \
-			or hub.expedition_view.visible or hub.research_view.visible:
+			or hub.expedition_view.visible or hub.research_view.visible or hub.diplomacy_view.visible:
 		return
 	var pos := Vector2.INF
 	if event is InputEventScreenTouch and event.pressed:
@@ -172,7 +172,7 @@ func _draw() -> void:
 		_text(Vector2(vs.x - 236, 36), "Walk: WASD / arrows / stick", 8, Color(1, 1, 1, a4))
 		_text(Vector2(vs.x - 236, 47), "Talk / use: J, Space or Enter (gamepad A)", 8, Color(1, 1, 1, a4))
 		_text(Vector2(vs.x - 236, 58), "Clock: 1-4 (shoulders)   Menu: Esc", 8, Color(1, 1, 1, a4))
-		_text(Vector2(vs.x - 236, 69), "Roster: R   Buildings: B   Research: T", 8, Color(1, 1, 1, a4))
+		_text(Vector2(vs.x - 236, 69), "Roster R  Buildings B  Research T  Factions F", 8, Color(1, 1, 1, a4))
 
 
 func _wrap_lines(s: String, width: float, size: int) -> PackedStringArray:

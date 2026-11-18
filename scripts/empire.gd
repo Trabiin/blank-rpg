@@ -85,6 +85,18 @@ var research_active := ""
 var research_paid := []
 var research_data := {}  # id -> Dictionary from data/research.json, in file order
 var branch_data := []
+## Diplomacy: faction id -> standing (-100..100), factions you have a trade pact with,
+## "faction:deal" -> first day it can be asked again, the day fresh intel runs out, the next
+## dawn the Concord makes trouble, and what happened lately (newest first).
+var standing := {}
+var pacts := []
+var deal_ready := {}
+var intel_until := 0
+var next_trouble_day := 5
+var diplo_log := []
+var faction_data := {}  # id -> Dictionary from data/factions.json, in file order
+var tier_data := []
+var trade_breaks := 0
 var rng := RandomNumberGenerator.new()
 var _territory: Territory
 
@@ -130,6 +142,15 @@ func reset() -> void:
 	research_progress = {}
 	research_active = ""
 	research_paid = []
+	_load_faction_data()
+	standing = {}
+	for fid in faction_data:
+		standing[fid] = int(faction_data[fid].get("start", 0))
+	pacts = []
+	deal_ready = {}
+	intel_until = 0
+	next_trouble_day = 5
+	diplo_log = []
 	rng.seed = 1234
 	if _territory != null:
 		_territory.reload_data()
@@ -147,6 +168,7 @@ func tick(delta: float) -> void:
 		_heal()
 		_settle()
 		_advance_blank()
+		_advance_diplomacy()
 		day_passed.emit(day)
 	_advance_construction()
 	_advance_expeditions()
@@ -191,6 +213,7 @@ func ledger() -> Array:
 	var ins := int(current_effect("scriptorium").get("insight", 0))
 	if ins > 0:
 		lines.append({"label": "Scriptorium", "gilt": 0, "supplies": 0, "ink": 0, "note": "+%d Insight" % ins})
+	_diplomacy_ledger(lines)
 	return lines
 
 
@@ -253,6 +276,10 @@ func fray_sources(p: Dictionary, gov := "-") -> Array:
 			var lv := int(lamps[p["id"]])
 			var bright := has_research("ward_lampwright")
 			out.append(["Wardlamp (level %d%s)" % [lv, ", written" if bright else ""], lamp_fray(lv) - (1 if bright else 0)])
+		if has_perk("coven"):
+			var woods := t.find(faction("coven")["province"])
+			if not woods.is_empty() and woods["owner"] != "erased" and woods["index"] in t.neighbors[p["index"]]:
+				out.append(["Coven hedge-wards (Friendly)", -1])
 	elif owner == "free":
 		out.append(["Nobody holds it", FRAY_UNHELD])
 	return out
@@ -298,6 +325,7 @@ func _erase(p: Dictionary) -> void:
 		surge = {}
 		next_surge_day = day + rng.randi_range(SURGE_GAP[0], SURGE_GAP[1])
 	notice.emit("%s has been erased." % p["name"], was_yours)
+	_react_near(p["id"], "erased_near")
 	if p["id"] == "hollowmark":
 		hollowmark_lost.emit()
 
@@ -306,11 +334,13 @@ func _update_surge() -> void:
 	var t := territory()
 	if not surge.is_empty() and day >= int(surge["day"]):
 		var p := t.find(surge["id"])
+		var aid: String = surge.get("aid", "")
 		surge = {}
 		if not p.is_empty() and p["owner"] != "erased":
-			p["fray"] = mini(int(p["fray"]) + surge_fray(), 100)
+			var hit := surge_fray() / (2 if aid != "" else 1)
+			p["fray"] = mini(int(p["fray"]) + hit, 100)
 			p["scar"] = SURGE_SCAR_DAYS
-			notice.emit("The Blank surged into %s. +%d Fray." % [p["name"], surge_fray()], p["owner"] == "you")
+			notice.emit("The Blank surged into %s. +%d Fray%s." % [p["name"], hit, " (halved: the %s held the line)" % faction(aid)["short"] if aid != "" else ""], p["owner"] == "you")
 		next_surge_day = day + rng.randi_range(SURGE_GAP[0], SURGE_GAP[1])
 	var warn := surge_warning_days()
 	if surge.is_empty() and day >= next_surge_day - warn:
@@ -501,7 +531,10 @@ func claim_blocker(pid: String) -> String:
 		"erased":
 			return "Erased. Reclaim missions arrive with #51"
 		"concord", "coven", "guild":
-			return "Faction land. Diplomacy arrives with #49"
+			var fa := faction(p["owner"])
+			if deal(p["owner"], "cede").is_empty():
+				return "%s land. They will never hand it over" % fa["short"]
+			return "%s land. Reach Allied standing and ask for it (F)" % fa["short"]
 	if not borders_yours(pid):
 		return "Too far. Claim the land in between first"
 	var miss := _missing(claim_cost(pid))
@@ -520,6 +553,7 @@ func claim(pid: String, gov: String) -> bool:
 	p["owner"] = "you"
 	assign(gov, "governor", pid)
 	notice.emit("%s is yours. %s governs it." % [p["name"], recruit(gov)["name"]], false)
+	_react_near(pid, "claim_near")
 	return true
 
 
@@ -593,14 +627,30 @@ func role_options(id: String) -> Array:
 		out.append({"role": "staff", "target": bid, "label": "Work the %s (%d/%d)" % [b["name"], staff.size(), slots_of(bid)],
 			"enabled": note == "", "note": note, "preview": preview})
 	var expedition_note := "send squads from the Expeditions screen (E)" if level_of("guildhall") > 0 else "needs a Guildhall"
-	for locked_role in [["expedition", expedition_note], ["envoy", "needs a faction contact"]]:
-		out.append({"role": locked_role[0], "target": "", "label": ROLE_NAMES[locked_role[0]], "enabled": false, "note": locked_role[1], "preview": ""})
+	for fid in faction_ids():
+		var fa := faction(fid)
+		var cur := envoy_of(fid)
+		var replaces := "" if cur == "" or cur == id else "  Replaces %s." % short_name(cur)
+		var reasons := []
+		for w in envoy_effect(id, fid)["why"]:
+			reasons.append(w[0])
+		var preview := "%s: standing %+d/day (now %+d). %s %d, %s.%s\n%s" % [fa["name"], standing_rate(fid, id), standing_rate(fid),
+			tier_name(tier_of(fid)), standing_of(fid), "they respect " + STAT_NAMES[fa["respects"]], replaces, "\n".join(reasons)]
+		var note := "Ash leads the party" if locked else ("injured" if hurt else "")
+		out.append({"role": "envoy", "target": fid, "label": "Envoy to the %s  (%+d/day)" % [fa["short"], int(envoy_effect(id, fid)["drift"])],
+			"enabled": note == "", "note": note, "preview": preview})
+	out.append({"role": "expedition", "target": "", "label": ROLE_NAMES["expedition"], "enabled": false, "note": expedition_note, "preview": ""})
 	return out
 
 
 func assign(id: String, role: String, target := "") -> bool:
 	for o in role_options(id):
 		if o["role"] == role and o["target"] == target and o["enabled"]:
+			if role == "envoy":
+				var cur := envoy_of(target)
+				if cur != "" and cur != id:
+					recruits[cur]["role"] = "idle"
+					recruits[cur]["target"] = ""
 			if role == "governor":
 				var current := governor_of(target)
 				if current != "" and current != id:
@@ -629,6 +679,8 @@ func role_label(id: String) -> String:
 	elif st["role"] == "staff":
 		var b := building(st["target"])
 		label = "%s at the %s" % [b.get("staff_title", "Staff"), b.get("name", "?")]
+	elif st["role"] == "envoy":
+		label = "Envoy to the %s" % faction(st["target"]).get("short", "?")
 	elif st["role"] == "expedition":
 		var e := expedition_running(st["target"])
 		label = "Away: %s%s" % [job(st["target"]).get("name", "?"), (" (back in %s)" % job_left_text(e)) if not e.is_empty() else ""]
@@ -806,6 +858,9 @@ func expedition_odds(jid: String, squad: Array) -> Dictionary:
 	if has_research("log_fieldmaps"):
 		chance += 10
 		why.append(["Field Maps (research), +10%", true])
+	if has_perk("guild"):
+		chance += 10
+		why.append(["Guild scouts share the road (Friendly), +10%", true])
 	for pair in pair_data:
 		if pair["ids"][0] in squad and pair["ids"][1] in squad:
 			chance += int(pair["mod"])
@@ -905,11 +960,18 @@ func _resolve_expedition(e: Dictionary) -> void:
 			gain(k, amount)
 			loot.append("+%d %s" % [amount, RES_NAMES[k]])
 	lines.append("Brought back: %s." % (", ".join(loot) if not loot.is_empty() else "nothing but stories"))
+	if outcome == "fail":
+		for fid in j.get("standing_fail", {}):
+			change_standing(fid, int(j["standing_fail"][fid]), j["name"] + " (failed)", true)
+			lines.append("%s standing %+d." % [faction(fid).get("short", fid), int(j["standing_fail"][fid])])
 	if outcome != "fail":
 		var p := territory().find(j["province"])
 		if int(j.get("fray", 0)) != 0 and not p.is_empty() and p["owner"] != "erased":
 			p["fray"] = clampi(int(p["fray"]) + int(j["fray"]), 0, 100)
 			lines.append("%s's Fray %+d." % [p["name"], int(j["fray"])])
+		for fid in j.get("standing", {}):
+			change_standing(fid, int(j["standing"][fid]), j["name"], true)
+			lines.append("%s standing %+d." % [faction(fid).get("short", fid), int(j["standing"][fid])])
 		var rid: String = j.get("recruit", "")
 		if rid != "" and not recruits.has(rid) and recruit_data.has(rid):
 			recruits[rid] = {"role": "idle", "target": "", "injured": 0}
@@ -1156,6 +1218,367 @@ func damage_to_party(amount: int) -> int:
 	return amount
 
 
+# ---------------------------------------------------------------- diplomacy
+
+const DIPLO_LOG_KEPT := 12
+const DEAL_ORDER := ["gift", "intel", "trade", "aid", "cede"]
+const DEAL_TIER := {"gift": "hostile", "intel": "neutral", "trade": "friendly", "aid": "friendly", "cede": "allied"}
+const FACTION_FIT_GOOD := 7
+const FACTION_FIT_POOR := 3
+
+
+func _load_faction_data() -> void:
+	if not faction_data.is_empty():
+		return
+	var f := FileAccess.open("res://data/factions.json", FileAccess.READ)
+	var parsed = JSON.parse_string(f.get_as_text())
+	tier_data = parsed["tiers"]
+	trade_breaks = int(parsed.get("trade_breaks", 0))
+	for fa in parsed["factions"]:
+		faction_data[fa["id"]] = fa
+
+
+func faction(fid: String) -> Dictionary:
+	_load_faction_data()
+	return faction_data.get(fid, {})
+
+
+func faction_ids() -> Array:
+	_load_faction_data()
+	return faction_data.keys()
+
+
+func standing_of(fid: String) -> int:
+	return int(standing.get(fid, 0))
+
+
+## "hostile", "wary", "neutral", "friendly" or "allied" for a standing value.
+func tier_for(v: int) -> String:
+	_load_faction_data()
+	var out := "hostile"
+	for t in tier_data:
+		if v >= int(t["min"]):
+			out = t["id"]
+	return out
+
+
+func tier_of(fid: String) -> String:
+	return tier_for(standing_of(fid))
+
+
+func tier_name(tier: String) -> String:
+	_load_faction_data()
+	for t in tier_data:
+		if t["id"] == tier:
+			return t["name"]
+	return tier.capitalize()
+
+
+func tier_min(tier: String) -> int:
+	_load_faction_data()
+	for t in tier_data:
+		if t["id"] == tier:
+			return int(t["min"])
+	return -100
+
+
+func tier_rank(tier: String) -> int:
+	_load_faction_data()
+	for i in tier_data.size():
+		if tier_data[i]["id"] == tier:
+			return i
+	return 0
+
+
+func at_least(fid: String, tier: String) -> bool:
+	return tier_rank(tier_of(fid)) >= tier_rank(tier)
+
+
+## Friendly standing switches on a faction's perk.
+func has_perk(fid: String) -> bool:
+	return at_least(fid, "friendly")
+
+
+func envoy_of(fid: String) -> String:
+	for id in roster_ids():
+		if recruits[id]["role"] == "envoy" and recruits[id]["target"] == fid:
+			return id
+	return ""
+
+
+## What a recruit does posted as envoy to a faction: standing per day, plus every reason.
+func envoy_effect(id: String, fid: String) -> Dictionary:
+	var fa := faction(fid)
+	var st: Dictionary = recruit(id)["stats"]
+	var why := []
+	var charm := int(st["charm"])
+	var flirt := has_trait(id, "flirt")
+	var drift := 1 + (charm * (2 if flirt else 1)) / 3
+	why.append(["Charm %d%s: %+d a day" % [charm, " x2 (Flirt)" if flirt else "", drift], true])
+	var stat: String = fa.get("respects", "charm")
+	var v := int(st.get(stat, 5))
+	if v >= FACTION_FIT_GOOD:
+		drift += 1
+		why.append(["%s %d: the %s respect that, +1" % [STAT_NAMES[stat], v, fa["short"]], true])
+	elif v <= FACTION_FIT_POOR:
+		drift -= 1
+		why.append(["%s %d: the %s want %s, -1" % [STAT_NAMES[stat], v, fa["short"], STAT_NAMES[stat]], false])
+	if has_trait(id, "greedy"):
+		drift -= 1
+		why.append(["Greedy: haggles over everything, -1", false])
+	if has_trait(id, "ex_concord") and fid == "concord":
+		drift -= 2
+		why.append(["Ex-Concord: the Concord hates them for it, -2", false])
+	if has_trait(id, "ink_sick") and fid == "coven":
+		drift += 1
+		why.append(["Ink-sick: the witches take pity, +1", true])
+	if has_trait(id, "contract") and fid == "guild":
+		drift += 1
+		why.append(["Contracted: speaks fluent Guild, +1", true])
+	if int(recruits.get(id, {}).get("injured", 0)) > 0:
+		why.append(["Injured: not talking to anyone, no effect", false])
+		drift = 0
+	return {"drift": drift, "why": why}
+
+
+## Every reason a faction's standing moves each day: [[label, change], ...].
+## env: "-" = as things stand; otherwise "what if this recruit were envoy" ("" = none).
+func standing_sources(fid: String, env := "-") -> Array:
+	var fa := faction(fid)
+	var out := []
+	if env == "-":
+		env = envoy_of(fid)
+	if env != "":
+		out.append(["Envoy %s" % short_name(env), int(envoy_effect(env, fid)["drift"])])
+	var base := int(fa.get("drift", 0))
+	if base != 0 and standing_of(fid) > int(fa.get("floor", -100)):
+		out.append([fa.get("drift_why", "Drifts"), base])
+	return out
+
+
+func standing_rate(fid: String, env := "-") -> int:
+	var total := 0
+	for s in standing_sources(fid, env):
+		total += int(s[1])
+	return total
+
+
+## Moves a faction's standing, writes it in the diplomacy log and says so when a tier changes.
+func change_standing(fid: String, amount: int, why: String, quiet := false) -> void:
+	if amount == 0 or not faction_data.has(fid):
+		return
+	var before := tier_of(fid)
+	standing[fid] = clampi(standing_of(fid) + amount, -100, 100)
+	var after := tier_of(fid)
+	if why != "":
+		diplo_log.push_front({"day": day, "faction": fid, "text": why, "change": amount})
+		if diplo_log.size() > DIPLO_LOG_KEPT:
+			diplo_log.resize(DIPLO_LOG_KEPT)
+	var fa := faction(fid)
+	if before != after:
+		var up := tier_rank(after) > tier_rank(before)
+		notice.emit("%s: now %s with you.%s" % [fa["name"], tier_name(after), " " + fa["perk"]["text"] + "." if up and after == "friendly" else ""], not up)
+	elif not quiet and why != "":
+		notice.emit("%s %+d standing: %s." % [fa["short"], amount, why], amount < 0)
+	if fid in pacts and standing_of(fid) < trade_breaks:
+		pacts.erase(fid)
+		notice.emit("%s tore up your trade pact." % fa["name"], true)
+
+
+func deal(fid: String, kind: String) -> Dictionary:
+	return faction(fid).get("deals", {}).get(kind, {})
+
+
+func deal_ids(fid: String) -> Array:
+	return DEAL_ORDER.filter(func(k): return not deal(fid, k).is_empty())
+
+
+func deal_cooldown_left(fid: String, kind: String) -> int:
+	return maxi(int(deal_ready.get(fid + ":" + kind, 0)) - day, 0)
+
+
+## Why a deal can't be made right now ("" = it can).
+func deal_blocker(fid: String, kind: String) -> String:
+	var fa := faction(fid)
+	var d := deal(fid, kind)
+	if d.is_empty():
+		return "the %s don't do that" % fa.get("short", "?")
+	if kind == "trade" and fid in pacts:
+		return "already trading"
+	if kind == "cede" and territory().find(fa["province"]).get("owner", "") != fid:
+		return "it isn't theirs to give any more"
+	if envoy_of(fid) == "":
+		return "post an envoy first"
+	if int(recruits[envoy_of(fid)]["injured"]) > 0:
+		return "your envoy is injured"
+	var need: String = DEAL_TIER[kind]
+	if not at_least(fid, need):
+		return "needs %s standing (%d+)" % [tier_name(need), tier_min(need)]
+	var cd := deal_cooldown_left(fid, kind)
+	if cd > 0:
+		return "ask again in %d day%s" % [cd, "" if cd == 1 else "s"]
+	if kind == "aid":
+		if surge.is_empty() or territory().find(surge["id"]).get("owner", "") != "you":
+			return "only while a surge gathers against your land"
+		if surge.get("aid", "") != "":
+			return "%s already help with this surge" % faction(surge["aid"]).get("short", "?")
+	if kind == "intel" and intel_until > day:
+		return "you still have fresh intel"
+	if not can_afford(d.get("cost", {})):
+		return "not enough " + _missing(d.get("cost", {}))
+	return ""
+
+
+## "30 Gilt", "-15 standing", etc: what a deal costs and gives, in one line.
+func deal_summary(fid: String, kind: String) -> String:
+	var d := deal(fid, kind)
+	var parts := []
+	if not d.get("cost", {}).is_empty():
+		parts.append("costs " + cost_text(d["cost"]))
+	match kind:
+		"gift":
+			parts.append("%+d standing" % int(d["standing"]))
+		"intel":
+			parts.append("+%d Insight, +1 surge warning for %d days" % [int(d.get("insight", 0)), int(d.get("warning_days", 5))])
+		"trade":
+			parts.append("then %s a day" % output_text(d["daily"]))
+		"aid":
+			parts.append("surge lands at half, %d standing" % int(d["standing"]))
+		"cede":
+			parts.append("%s becomes yours, %d standing" % [territory().find(faction(fid)["province"]).get("name", "?"), int(d["standing"])])
+	return ", ".join(parts)
+
+
+## Makes a deal. Returns what happened, for the screen to say (or "" if it couldn't).
+func make_deal(fid: String, kind: String) -> String:
+	if deal_blocker(fid, kind) != "":
+		return ""
+	var fa := faction(fid)
+	var d := deal(fid, kind)
+	spend(d.get("cost", {}))
+	if d.has("cooldown"):
+		deal_ready[fid + ":" + kind] = day + int(d["cooldown"])
+	match kind:
+		"gift":
+			change_standing(fid, int(d["standing"]), d["name"], true)
+		"intel":
+			gain("insight", int(d.get("insight", 0)))
+			intel_until = day + int(d.get("warning_days", 5))
+			diplo_log.push_front({"day": day, "faction": fid, "text": d["name"] + ": +%d Insight" % int(d.get("insight", 0)), "change": 0})
+		"trade":
+			pacts.append(fid)
+			diplo_log.push_front({"day": day, "faction": fid, "text": "Trade pact signed: " + d["name"], "change": 0})
+		"aid":
+			surge["aid"] = fid
+			change_standing(fid, int(d["standing"]), d["name"], true)
+		"cede":
+			var p := territory().find(fa["province"])
+			p["owner"] = "you"
+			change_standing(fid, int(d["standing"]), d["name"], true)
+			notice.emit("%s is yours. Post a governor there (G) before it frays." % p["name"], false)
+	if diplo_log.size() > DIPLO_LOG_KEPT:
+		diplo_log.resize(DIPLO_LOG_KEPT)
+	return d["text"]
+
+
+## A faction reacts to something you did (or something that happened next to their land).
+func faction_react(fid: String, amount: int, why: String) -> void:
+	change_standing(fid, amount, why)
+
+
+## Factions whose own province borders a province: claims, erasures and lamps there get noticed.
+func _react_near(pid: String, key: String) -> void:
+	var t := territory()
+	var p := t.find(pid)
+	if p.is_empty():
+		return
+	for fid in faction_ids():
+		var fa := faction(fid)
+		var amount := int(fa.get("react", {}).get(key, 0))
+		if amount == 0:
+			continue
+		var home := t.find(fa["province"])
+		if home.is_empty() or home["owner"] != fid or home["id"] == pid:
+			continue
+		if home["index"] in t.neighbors[p["index"]]:
+			change_standing(fid, amount, "%s (%s)" % [fa["react"].get("why_" + key.get_slice("_", 0), "Noticed"), p["name"]])
+
+
+## Trade pacts (and a Friendly Concord) pay at dawn like everything else: ledger lines.
+func _diplomacy_ledger(lines: Array) -> void:
+	for fid in faction_ids():
+		if fid in pacts:
+			var d := deal(fid, "trade")
+			var line := {"label": "%s: %s" % [faction(fid)["short"], d["name"]], "note": "trade pact"}
+			for k in RESOURCES:
+				line[k] = int(d["daily"].get(k, 0))
+			lines.append(line)
+	if has_perk("concord"):
+		lines.append({"label": "Concord: Tithe Road tolls go easy", "gilt": 2, "supplies": 0, "ink": 0, "note": "Friendly"})
+
+
+## Dawn: standing drifts, the Concord makes trouble.
+func _advance_diplomacy() -> void:
+	for fid in faction_ids():
+		var fa := faction(fid)
+		var rate := standing_rate(fid)
+		if rate == 0:
+			continue
+		var target := standing_of(fid) + rate
+		if rate < 0 and envoy_of(fid) == "":
+			target = maxi(target, mini(standing_of(fid), int(fa.get("floor", -100))))
+		change_standing(fid, target - standing_of(fid), "", true)
+	_concord_trouble()
+
+
+func _concord_trouble() -> void:
+	var fa := faction("concord")
+	var tr: Dictionary = fa.get("trouble", {})
+	if tr.is_empty():
+		return
+	var tier := tier_of("concord")
+	if not tier in ["hostile", "wary"]:
+		next_trouble_day = maxi(next_trouble_day, day + int(tr["hostile_gap"][0]))
+		return
+	if day < next_trouble_day:
+		return
+	var gap: Array = tr["hostile_gap"] if tier == "hostile" else tr["wary_gap"]
+	next_trouble_day = day + rng.randi_range(int(gap[0]), int(gap[1]))
+	var pool: Array = tr["events"].filter(func(e): return tier in e["tiers"])
+	if pool.is_empty():
+		return
+	var e: Dictionary = pool[rng.randi_range(0, pool.size() - 1)]
+	var yours := territory().provinces.filter(func(p): return p["owner"] == "you")
+	if yours.is_empty():
+		return
+	var text := ""
+	match e["kind"]:
+		"fine":
+			var g := mini(_roll_amount(e["gilt"]), int(res["gilt"]))
+			res["gilt"] -= g
+			text = e["text"] % g
+		"seize":
+			var s := mini(_roll_amount(e["supplies"]), int(res["supplies"]))
+			res["supplies"] -= s
+			text = e["text"] % [s, yours[rng.randi_range(0, yours.size() - 1)]["name"]]
+		"writ":
+			var p: Dictionary = yours[rng.randi_range(0, yours.size() - 1)]
+			p["fray"] = mini(int(p["fray"]) + int(e["fray"]), 100)
+			text = e["text"] % [p["name"], int(e["fray"])]
+	diplo_log.push_front({"day": day, "faction": "concord", "text": text, "change": 0, "trouble": true})
+	if diplo_log.size() > DIPLO_LOG_KEPT:
+		diplo_log.resize(DIPLO_LOG_KEPT)
+	notice.emit(text, true)
+
+
+## "The Concord will make trouble in about 3 days" for the screen, or "".
+func trouble_text() -> String:
+	if not tier_of("concord") in ["hostile", "wary"]:
+		return ""
+	var d := next_trouble_day - day
+	return "Expect Concord trouble %s." % ("at dawn" if d <= 1 else "in about %d days" % d)
+
+
 # ---------------------------------------------------------------- buildings and construction
 
 func _load_building_data() -> void:
@@ -1265,7 +1688,8 @@ func current_effect(id: String) -> Dictionary:
 
 
 func surge_warning_days() -> int:
-	return int(current_effect("command_table").get("warning", SURGE_WARNING_DAYS)) + (1 if has_research("ward_longwatch") else 0)
+	return int(current_effect("command_table").get("warning", SURGE_WARNING_DAYS)) + (1 if has_research("ward_longwatch") else 0) \
+		+ (1 if intel_until > day else 0)
 
 
 func party_hp_bonus() -> int:
@@ -1392,6 +1816,8 @@ func _advance_construction() -> void:
 			lamps[pid] = int(lamps.get(pid, 0)) + 1
 			var p := territory().find(pid)
 			notice.emit("The Wardlamp in %s is lit%s." % [p.get("name", "?"), "" if int(lamps[pid]) == 1 else " brighter (level %d)" % int(lamps[pid])], false)
+			if int(lamps[pid]) == 1:
+				_react_near(pid, "lamp_near")
 
 
 func can_afford(cost: Dictionary) -> bool:
@@ -1436,6 +1862,8 @@ func to_dict() -> Dictionary:
 		"expeditions": expeditions, "reports": reports, "job_ready": job_ready,
 		"research_done": research_done, "research_progress": research_progress, "research_active": research_active,
 		"research_paid": research_paid,
+		"standing": standing, "pacts": pacts, "deal_ready": deal_ready, "intel_until": intel_until,
+		"next_trouble_day": next_trouble_day, "diplo_log": diplo_log,
 		"rng_state": str(rng.state)}
 
 
@@ -1500,6 +1928,25 @@ func from_dict(d: Dictionary) -> void:
 	var ra: String = d.get("research_active", "")
 	if research_data.has(ra) and not ra in research_done:
 		research_active = ra
+	var saved_st: Dictionary = d.get("standing", {})
+	for fid in saved_st:
+		if faction_data.has(fid):
+			standing[fid] = clampi(int(saved_st[fid]), -100, 100)
+	for fid in d.get("pacts", []):
+		if faction_data.has(fid) and not fid in pacts:
+			pacts.append(fid)
+	var saved_dr: Dictionary = d.get("deal_ready", {})
+	for k in saved_dr:
+		deal_ready[k] = int(saved_dr[k])
+	intel_until = int(d.get("intel_until", 0))
+	next_trouble_day = int(d.get("next_trouble_day", day + 5))
+	for e in d.get("diplo_log", []):
+		if typeof(e) == TYPE_DICTIONARY:
+			diplo_log.append(e)
+	for id in recruits:  # an envoy to a faction that no longer exists goes home
+		if recruits[id]["role"] == "envoy" and not faction_data.has(recruits[id]["target"]):
+			recruits[id]["role"] = "idle"
+			recruits[id]["target"] = ""
 	if d.has("rng_state"):
 		rng.state = int(d["rng_state"])
 	for saved in d.get("provinces", []):

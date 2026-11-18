@@ -1,0 +1,84 @@
+{
+	"_comment": "Diplomacy (key F). standing runs -100 (hostile) to +100 (allied); start = day 1. tiers: the lowest standing for each tier. respects: the stat an envoy needs to impress them (7+ = +1 a day, 3 or less = -1). drift: standing change a day with no envoy, and floor = how low that drift alone can push it. Deals: gift (any standing, +standing for coin), intel (Neutral+), trade (Friendly+, a pact paying every day while standing stays above trade_breaks), aid (Friendly+, while a surge gathers against your land: it lands at half), cede (Allied: they hand over their province, which needs a governor). Every deal except trade needs an envoy posted. cooldown in days. perk: what Friendly standing does on its own. react: standing change when you claim land next to theirs, when land next to theirs is erased, or when you light a Wardlamp next to theirs. Expeditions can move standing too (data/expeditions.json \"standing\"). trouble: what a hostile faction does to you (Concord only in the MVP).",
+	"tiers": [
+		{"id": "hostile", "name": "Hostile", "min": -100},
+		{"id": "wary", "name": "Wary", "min": -39},
+		{"id": "neutral", "name": "Neutral", "min": -9},
+		{"id": "friendly", "name": "Friendly", "min": 20},
+		{"id": "allied", "name": "Allied", "min": 60}
+	],
+	"trade_breaks": 0,
+	"factions": [
+		{
+			"id": "guild", "name": "The Mercenary Guild", "short": "Guild", "province": "gallows",
+			"start": 5, "respects": "might", "drift": 0, "floor": -100,
+			"wants": "Paid. On time. In full.",
+			"blurb": "Sellswords who run the Gallows Ferry and charge both ways. They don't care who you are, only whether your coin is real and your people pull their weight.",
+			"envoy_title": "Guild contact",
+			"react": {"claim_near": 0, "erased_near": 0, "why_claim": ""},
+			"perk": {"text": "Guild scouts share the road: expeditions +10%"},
+			"deals": {
+				"gift": {"name": "Settle a tab", "cost": {"gilt": 30}, "standing": 8, "cooldown": 2,
+					"text": "You pay off a Guild tab nobody remembers running up. They remember now."},
+				"intel": {"name": "Buy river gossip", "cost": {"gilt": 15}, "cooldown": 4, "insight": 3, "warning_days": 5,
+					"text": "Bargemen hear everything. For a few days you hear it too: +1 day of surge warning."},
+				"trade": {"name": "Share the ferry tolls", "cost": {"gilt": 40}, "daily": {"gilt": 4},
+					"text": "A cut of every crossing at Gallows Ferry, paid at dawn."},
+				"aid": {"name": "Hire sellswords for the line", "standing": -15,
+					"text": "Guild blades hold the line. The coming surge lands at half strength."},
+				"cede": {"name": "Ask for Gallows Ferry", "standing": -30,
+					"text": "The Guild signs the ferry over, on the understanding that their barges cross free forever."}
+			}
+		},
+		{
+			"id": "coven", "name": "The Gutterwood Coven", "short": "Coven", "province": "gutterwoods",
+			"start": -15, "respects": "lore", "drift": 0, "floor": -100,
+			"wants": "Left alone, and the Blank kept out of the woods.",
+			"blurb": "Witches who grow trees from discarded letters and decide who leaves the Gutterwoods. They dislike visitors, flags and anything that lets the Blank closer.",
+			"envoy_title": "Guest of the Coven",
+			"react": {"claim_near": -6, "erased_near": -10, "lamp_near": 4, "why_claim": "Another flag near the woods", "why_erased": "The Blank ate land next to the woods", "why_lamp": "A Wardlamp lit near the woods"},
+			"perk": {"text": "Hedge-wards: your land next to the Gutterwoods frays 1 less a day"},
+			"deals": {
+				"gift": {"name": "Leave an offering", "cost": {"gilt": 20, "ink": 2}, "standing": 8, "cooldown": 2,
+					"text": "A jar of ink and a coin at the treeline. Both are gone by morning."},
+				"intel": {"name": "Read the leaves", "cost": {"supplies": 6}, "cooldown": 4, "insight": 4, "warning_days": 5,
+					"text": "The witches read the paper-leaves for you. +1 day of surge warning for a few days."},
+				"trade": {"name": "Stall at the witch-market", "cost": {"gilt": 30}, "daily": {"supplies": 3, "ink": 1},
+					"text": "Herbs, roots and strange ink from the witch-market, delivered at dawn."},
+				"aid": {"name": "Ask for hedge-wards", "standing": -15,
+					"text": "The Coven weaves wards along your border. The coming surge lands at half strength."},
+				"cede": {"name": "Ask for the Gutterwoods", "standing": -30,
+					"text": "The Coven lets your flag into the woods. They stay. They are watching the flag."}
+			}
+		},
+		{
+			"id": "concord", "name": "The Gilded Concord", "short": "Concord", "province": "tithe",
+			"start": -55, "respects": "charm", "drift": -1, "floor": -80,
+			"wants": "You registered, taxed, or dissected.",
+			"blurb": "The bureaucratic empire that rules the capital and audits the Tithe Road. An unregistered town run by a man who crawled out of the Blank is, to them, a paperwork emergency.",
+			"envoy_title": "Petitioner",
+			"react": {"claim_near": -4, "erased_near": 0, "why_claim": "More unregistered land on their border"},
+			"drift_why": "Unregistered and unrepentant: the Concord files against you daily",
+			"perk": {"text": "Registered at last: no more audits, and the Tithe Road tolls go easy"},
+			"deals": {
+				"gift": {"name": "Pay an outstanding fine", "cost": {"gilt": 40}, "standing": 10, "cooldown": 2,
+					"text": "You pay a fine for something. The receipt says 'existing'."},
+				"intel": {"name": "Bribe a clerk", "cost": {"gilt": 25}, "cooldown": 4, "insight": 5, "warning_days": 5,
+					"text": "A clerk lets you read the survey reports. +1 day of surge warning for a few days."},
+				"trade": {"name": "Toll exemption", "cost": {"gilt": 50}, "daily": {"gilt": 3},
+					"text": "Your carts go up the Tithe Road untaxed. That alone pays."}
+			},
+			"trouble": {
+				"hostile_gap": [4, 6], "wary_gap": [7, 9],
+				"events": [
+					{"kind": "fine", "gilt": [15, 25], "tiers": ["hostile", "wary"],
+						"text": "A Concord auditor arrives with a ledger and leaves with %d Gilt. The fine was for 'unlicensed survival'."},
+					{"kind": "seize", "supplies": [6, 10], "tiers": ["hostile"],
+						"text": "Concord tax-riders seize %d Supplies on the road from %s."},
+					{"kind": "writ", "fray": 6, "tiers": ["hostile"],
+						"text": "A Concord Erasure writ is read aloud in %s. Nobody believes it, but everyone remembers it. Fray +%d."}
+				]
+			}
+		}
+	]
+}
