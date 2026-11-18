@@ -7,6 +7,7 @@ const SWING_TIME := 0.24
 const REVIVE_TIME := 2.5
 
 var hero_name := "Ash"
+var hero_id := "ash"  # recruit id (data/recruits.json, data/heroes.json); banter speakers use it
 ## Paper doll: the shared body layer plus one outfit layer, both recolored in code.
 var outfit := "archer"
 var colors := {
@@ -40,6 +41,22 @@ var detour_dir := Vector2.ZERO
 
 var revive_progress := 0.0
 
+## How the ally AI behaves (data/heroes.json picks one per hero).
+## commit: gauge needed before charging in; seek: how far from the leader it looks for enemies;
+## leash: drops a target that strays this far from the leader; back_off: retreats to this distance while recharging.
+const AI_STYLES := {
+	"steady": {"commit": 0.95, "seek": 170.0, "leash": 210.0, "back_off": 44.0},
+	"guard": {"commit": 0.9, "seek": 95.0, "leash": 130.0, "back_off": 30.0},
+	"reckless": {"commit": 0.55, "seek": 240.0, "leash": 300.0, "back_off": 0.0},
+	"healer": {"commit": 0.95, "seek": 60.0, "leash": 90.0, "back_off": 64.0},
+}
+var ai_style := "steady"
+# Passive poultice (Mother Gristle): every heal_every seconds, patch the most hurt ally in range.
+var heal_every := 0.0
+var heal_amount := 0
+var heal_range := 80.0
+var heal_t := 3.0
+
 
 func _ready() -> void:
 	radius = 5.0
@@ -60,6 +77,9 @@ func _physics_process(delta: float) -> void:
 		move_and_slide()
 		queue_redraw()
 		return
+
+	if heal_every > 0.0:
+		_update_heal(delta)
 
 	if swing_t > 0.0:
 		swing_t -= delta
@@ -135,6 +155,32 @@ func revive() -> void:
 	Fx.burst(get_parent(), global_position + Vector2(0, -12), [Color("ffe08a"), Color.WHITE], 16, 70.0)
 
 
+func _update_heal(delta: float) -> void:
+	heal_t -= delta
+	if heal_t > 0.0:
+		return
+	var best: Hero = null
+	var best_ratio := 1.0
+	for h in get_tree().get_nodes_in_group("heroes"):
+		var other := h as Hero
+		if other == null or other.dead or other.hp >= other.max_hp:
+			continue
+		if other.global_position.distance_to(global_position) > heal_range:
+			continue
+		var ratio := float(other.hp) / float(other.max_hp)
+		if ratio < best_ratio and other.max_hp - other.hp >= mini(heal_amount, 3):
+			best_ratio = ratio
+			best = other
+	if best == null:
+		heal_t = 0.5  # nobody needs it: look again soon
+		return
+	var amount := mini(heal_amount, best.max_hp - best.hp)
+	best.hp += amount
+	Fx.damage_number(get_parent(), best.global_position + Vector2(0, -18), "+%d" % amount, Color("9fe07a"))
+	Fx.burst(get_parent(), best.global_position + Vector2(0, -10), [Color("9fbf6a"), Color("dff5b0")], 10, 40.0)
+	heal_t = heal_every
+
+
 # ---------------------------------------------------------------- ally AI
 
 func _ai(delta: float) -> Vector2:
@@ -156,22 +202,23 @@ func _ai(delta: float) -> Vector2:
 		ai_side = -ai_side
 		return detour_dir
 
+	var style: Dictionary = AI_STYLES.get(ai_style, AI_STYLES["steady"])
 	if ai_target == null or not is_instance_valid(ai_target) or ai_target.dead \
-			or ai_target.global_position.distance_to(leader.global_position) > 210.0:
-		ai_target = _nearest_enemy(leader.global_position, 170.0)
+			or ai_target.global_position.distance_to(leader.global_position) > float(style["leash"]):
+		ai_target = _nearest_enemy(leader.global_position, float(style["seek"]))
 
 	if ai_target:
 		var to_t := ai_target.global_position - global_position
 		var d := to_t.length()
-		# Smart ally: only commits when the power gauge is (nearly) full.
-		if power >= 0.95:
+		# Commits once the power gauge is full enough for this hero's style.
+		if power >= float(style["commit"]):
 			if d <= reach + ai_target.radius - 6.0:
 				facing = to_t.normalized()
 				try_attack()
 				return Vector2.ZERO
 			return to_t.normalized()
 		facing = to_t.normalized()
-		if d < 44.0:
+		if d < float(style["back_off"]):
 			return -to_t.normalized() * 0.8
 		return Vector2.ZERO
 
