@@ -14,6 +14,7 @@ const ExpeditionView := preload("res://scripts/expedition_view.gd")
 const ResearchView := preload("res://scripts/research_view.gd")
 const DiplomacyView := preload("res://scripts/diplomacy_view.gd")
 const BondsView := preload("res://scripts/bonds_view.gd")
+const GearViewScript := preload("res://scripts/gear_view.gd")
 const NewcomersView := preload("res://scripts/newcomers_view.gd")
 const SceneView := preload("res://scripts/scene_view.gd")
 const SiteScript := preload("res://scripts/building_site.gd")
@@ -50,6 +51,7 @@ var expedition_view
 var research_view
 var diplomacy_view
 var bonds_view
+var gear_view  # gear_view.gd: party gear and the shop (issue #15)
 var newcomers_view
 var scene_view  # bond scenes started by talking to someone in town
 var dialogue_box  # dialogue_box.gd: talking to people in town
@@ -150,6 +152,9 @@ func _ready() -> void:
 	newcomers_view.visible = false
 	roster_layer.add_child(newcomers_view)
 	newcomers_view.closed.connect(_place_people)  # someone taken on leaves the gate
+	gear_view = GearViewScript.new()
+	gear_view.visible = false
+	roster_layer.add_child(gear_view)
 	Empire.lead_arrived.connect(func(_id): _place_people())
 	scene_view = SceneView.new()
 	scene_view.visible = false
@@ -520,6 +525,7 @@ func open_menu(note := "") -> void:
 		{"id": "diplomacy", "label": "Diplomacy", "detail": "F"},
 		{"id": "bonds", "label": "Bonds", "detail": "H"},
 		{"id": "newcomers", "label": "Newcomers", "detail": "N"},
+		{"id": "gear", "label": "Party gear & shop", "detail": "K"},
 		{"id": "save", "label": "Save game"},
 		{"id": "load", "label": "Load game", "enabled": Saves.latest_slot() != "", "note": "(no saves yet)"},
 		{"id": "title", "label": "Quit to title"},
@@ -563,6 +569,9 @@ func _on_menu(id: String) -> void:
 		"newcomers":
 			_close_menu()
 			newcomers_view.open()
+		"gear":
+			_close_menu()
+			gear_view.open("town")
 		"save", "load":
 			slot_mode = id
 			menu.visible = false
@@ -608,11 +617,12 @@ func _process(delta: float) -> void:
 
 	var frame := Engine.get_process_frames()
 	var screen_open: bool = roster_view.visible or buildings_view.visible or expedition_view.visible or research_view.visible \
-			or diplomacy_view.visible or bonds_view.visible or scene_view.visible or newcomers_view.visible
+			or diplomacy_view.visible or bonds_view.visible or scene_view.visible or newcomers_view.visible or gear_view.visible
 	if screen_open or frame == roster_view.closed_frame or frame == buildings_view.closed_frame \
 			or frame == expedition_view.closed_frame or frame == research_view.closed_frame \
 			or frame == diplomacy_view.closed_frame or frame == bonds_view.closed_frame \
-			or frame == scene_view.closed_frame or frame == newcomers_view.closed_frame or frame == menu_closed_frame:
+			or frame == scene_view.closed_frame or frame == newcomers_view.closed_frame or frame == menu_closed_frame \
+			or frame == gear_view.closed_frame:
 		leader.controlled = not screen_open
 		return
 	leader.controlled = true
@@ -640,6 +650,9 @@ func _process(delta: float) -> void:
 		return
 	if Input.is_action_just_pressed("newcomers"):
 		newcomers_view.open()
+		return
+	if Input.is_action_just_pressed("gear"):
+		gear_view.open("town")
 		return
 	for i in Empire.SPEEDS.size():
 		if Input.is_action_just_pressed("clock_speed_%d" % i):

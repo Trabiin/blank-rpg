@@ -56,6 +56,8 @@ var heal_every := 0.0
 var heal_amount := 0
 var heal_range := 80.0
 var heal_t := 3.0
+# Armor (issue #15): this fraction of every hit is blocked. Set by Progress.apply_to from gear.
+var guard := 0.0
 
 
 func _ready() -> void:
@@ -134,6 +136,12 @@ func _apply_hit() -> void:
 				hit_any = true
 	if hit_any and party:
 		party.shake(1.5 + 2.0 * swing_power)
+
+
+func take_hit(amount: int, from: Vector2, force := 160.0) -> bool:
+	if guard > 0.0:
+		amount = maxi(1, int(round(amount * (1.0 - guard))))
+	return super.take_hit(amount, from, force)
 
 
 func _on_hit() -> void:

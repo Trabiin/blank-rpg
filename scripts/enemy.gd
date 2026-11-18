@@ -27,6 +27,7 @@ var dying_t := -1.0
 ## Something to go and eat when no hero is close (a Defense mission's wardstone). Needs nibble(amount).
 var goal: Node2D = null
 var nibble_t := 0.0
+var xp := 3  # shared by the party when it falls (issue #15)
 
 ## Puny's green slime, recolored into a scrap of the Blank: paper-white with an ink-black core.
 const SLIME_COLORS := {"body": Color("e4e1d8"), "core": Color("15101a"), "shine": Color("ffffff")}

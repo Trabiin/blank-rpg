@@ -11,6 +11,7 @@ func _ready() -> void:
 	super._ready()
 	max_hp = total_hp
 	hp = max_hp
+	xp = 20
 	radius = 14.0
 	for c in get_children():
 		if c is CollisionShape2D:

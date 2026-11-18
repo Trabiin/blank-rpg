@@ -11,6 +11,7 @@ const TouchScript := preload("res://scripts/touch.gd")
 const DialogueBox := preload("res://scripts/dialogue_box.gd")
 const BanterScript := preload("res://scripts/banter.gd")
 const ResultsView := preload("res://scripts/results_view.gd")
+const GearViewScript := preload("res://scripts/gear_view.gd")
 
 const TITLE_SCENE := "res://scenes/title.tscn"
 const MAX_ENEMIES := 7
@@ -47,6 +48,9 @@ var found_flash := 0.0  # seconds the HUD's "Found" line stays lit after a picku
 var mission_time := 0.0
 var ending := false  # the results screen is up (or about to be)
 var results_view  # results_view.gd
+var gear_view  # gear_view.gd: Party gear from the pause menu (issue #15)
+var found_items: Array = []  # gear picked up on the way (item ids); kept unless the party is wiped
+var levels_gained := {}  # hero id -> level reached during this mission, for the results screen
 
 
 func _ready() -> void:
@@ -148,6 +152,11 @@ func _ready() -> void:
 	results_view.visible = false
 	menu_layer.add_child(results_view)
 	results_view.confirmed.connect(_on_results_confirmed)
+	gear_view = GearViewScript.new()
+	gear_view.visible = false
+	gear_view.party = self
+	menu_layer.add_child(gear_view)
+	gear_view.closed.connect(_on_gear_closed)
 
 	var loaded := not Saves.pending.is_empty()
 	if loaded:
@@ -250,6 +259,35 @@ func _on_enemy_died(_e: Actor) -> void:
 			found_flash = 1.5
 	if kills == 10:
 		banter.event("tenth_kill", present())
+	_award_xp(int(_e.get("xp")) if _e.get("xp") != null else 0)
+	if not ending:
+		var drop := Progress.roll_drop(mission)
+		if drop != "":
+			found_items.append(drop)
+			found_flash = 1.5
+			Fx.damage_number(entities, _e.global_position + Vector2(0, -24), Progress.item(drop)["name"], Color("ffe7a3"))
+			hud.say("Found %s! It goes in the bag when you get home." % Progress.item(drop)["name"], 3.0)
+
+
+## Shared XP for the whole party (issue #15). Level-ups take effect on the spot.
+func _award_xp(amount: int) -> Array:
+	var ups := Progress.award(heroes.map(func(h): return (h as Hero).hero_id), amount)
+	for up in ups:
+		for h in heroes:
+			var hero: Hero = h
+			if hero.hero_id != up["id"]:
+				continue
+			Progress.apply_delta(hero, {}, up["gains"])
+			levels_gained[hero.hero_id] = up["level"]
+			Fx.damage_number(entities, hero.global_position + Vector2(0, -26), "LEVEL %d" % up["level"], Color("ffd166"))
+			Fx.burst(entities, hero.global_position + Vector2(0, -10), [Color("ffd166"), Color.WHITE], 18, 60.0)
+			hud.say("%s reached level %d: %s" % [hero.hero_name, up["level"], Progress.gains_text(up["gains"])], 3.5)
+	return ups
+
+
+func _on_gear_closed() -> void:
+	if get_tree().paused and not ending:
+		pause_menu.set_deferred("visible", true)  # next frame, so the same Esc doesn't also close it
 
 
 func _on_hero_died(a: Actor) -> void:
@@ -297,6 +335,7 @@ func set_paused(on: bool) -> void:
 func _pause_items() -> Array:
 	return [
 		{"id": "resume", "label": "Resume"},
+		{"id": "gear", "label": "Party gear", "detail": "levels and equipment"},
 		{"id": "save", "label": "Save game"},
 		{"id": "load", "label": "Load game", "enabled": Saves.latest_slot() != "", "note": "(no saves yet)"},
 		{"id": "retreat", "label": "Retreat to Hollowmark", "detail": "end the mission, keep what you found"},
@@ -311,6 +350,9 @@ func _on_pause_choice(id: String) -> void:
 			set_paused(false)
 		"save", "load":
 			_open_slots(id, pause_menu)
+		"gear":
+			pause_menu.visible = false
+			gear_view.open("mission")
 		"retreat":
 			pause_menu.visible = false
 			_end_mission("retreat")
@@ -380,6 +422,7 @@ func snapshot() -> Dictionary:
 		"mission": mission,
 		"objective": objective.to_save(),
 		"found": found,
+		"found_items": found_items,
 		"mission_time": mission_time,
 		"kills": kills,
 		"leader": heroes.find(leader),
@@ -396,6 +439,7 @@ func _apply_snapshot(d: Dictionary) -> void:
 	for k in f:
 		found[k] = int(f[k])
 	banter.from_save(d.get("banter", []))
+	found_items = (d.get("found_items", []) as Array).filter(func(i): return not Progress.item(str(i)).is_empty())
 	var hs: Array = d.get("heroes", [])
 	for i in mini(hs.size(), heroes.size()):
 		var hero: Hero = heroes[i]
@@ -505,7 +549,32 @@ func _show_results(outcome: String) -> void:
 	get_tree().paused = true
 	touch.release_all()
 	var r := Missions.settle(mission, outcome, found, {"kills": kills, "time": mission_time, "objective": objective.text(), "fail": objective.fail_text()})
+	_progress_lines(r, outcome)
 	results_view.open(r)
+
+
+## XP, level-ups and gear found, for the results screen (issue #15).
+func _progress_lines(r: Dictionary, outcome: String) -> void:
+	var lines: Array = r.get("lines", [])
+	if outcome == "success":
+		var xp := Progress.mission_xp(mission)
+		_award_xp(xp)
+		lines.append("+%d XP each for finishing the job." % xp)
+	if not levels_gained.is_empty():
+		var parts := []
+		for id in levels_gained:
+			parts.append("%s Lv %d" % [PartyPicker.short_of(id), levels_gained[id]])
+		lines.append("Level up: " + ", ".join(parts) + ".")
+	if not found_items.is_empty():
+		var names := found_items.map(func(i): return Progress.item(i)["name"])
+		if outcome == "wiped":
+			lines.append("Lost on the way: " + ", ".join(names) + ".")
+		else:
+			for i in found_items:
+				Progress.add_item(i)
+			lines.append("Gear for the bag: " + ", ".join(names) + " (equip with K).")
+		found_items = []
+	r["lines"] = lines
 
 
 func _on_results_confirmed() -> void:

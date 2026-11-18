@@ -59,6 +59,9 @@ func _draw() -> void:
 		var pct := int(round(hero.power * 100.0))
 		var pcol := Color("ffd166") if pct >= 100 else Color(0.8, 0.8, 0.85)
 		_text(Vector2(x + 82, y + 10), "%d%%" % pct, 9, pcol, false)
+		_text(Vector2(x + 58, y + 10), "Lv%d" % Progress.level(hero.hero_id), 7, Color(0.75, 0.72, 0.6), false)
+		# XP sliver along the top edge of the panel
+		draw_rect(Rect2(x, y, 112.0 * Progress.xp_fraction(hero.hero_id), 1), Color("b9a0e8"))
 		# HP bar
 		draw_rect(Rect2(x + 5, y + 14, 102, 5), Color(0, 0, 0, 0.6))
 		var ratio := float(hero.hp) / hero.max_hp
@@ -75,6 +78,9 @@ func _draw() -> void:
 	_text(Vector2(8, 26), party.objective.text() + ("  done" if done else ""), 9, Color("9fd3a8") if done else Color("ffd166"))
 	var yy0 := 38.0
 	var found := Missions.res_text(party.found)
+	var gear_found: Array = party.found_items.map(func(i): return Progress.item(i).get("name", i))
+	if not gear_found.is_empty():
+		found = (found + ", " if found != "" else "") + ", ".join(gear_found)
 	if found != "":
 		var lit: bool = party.found_flash > 0.0
 		_text(Vector2(8, yy0), "Found: " + found, 8, Color("ffe7a3") if lit else Color(0.75, 0.75, 0.75))
