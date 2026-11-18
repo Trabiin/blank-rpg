@@ -12,6 +12,7 @@ const RosterView := preload("res://scripts/roster_view.gd")
 const BuildingsView := preload("res://scripts/buildings_view.gd")
 const ExpeditionView := preload("res://scripts/expedition_view.gd")
 const ResearchView := preload("res://scripts/research_view.gd")
+const DiplomacyView := preload("res://scripts/diplomacy_view.gd")
 const SiteScript := preload("res://scripts/building_site.gd")
 
 const MAP := "res://maps/hollowmark.txt"
@@ -42,6 +43,7 @@ var roster_view
 var buildings_view
 var expedition_view
 var research_view
+var diplomacy_view
 var sites := {}  # building id -> building_site.gd on its plot
 var lamp: Node2D  # Hollowmark's own Wardlamp, drawn once it is lit
 var menu: InkMenu
@@ -123,6 +125,10 @@ func _ready() -> void:
 	research_view = ResearchView.new()
 	research_view.visible = false
 	roster_layer.add_child(research_view)
+	diplomacy_view = DiplomacyView.new()
+	diplomacy_view.visible = false
+	roster_layer.add_child(diplomacy_view)
+	diplomacy_view.closed.connect(_place_people)  # envoys leave town
 	Empire.expedition_returned.connect(func(_r): _place_people())
 
 	var menu_layer := CanvasLayer.new()
@@ -236,8 +242,8 @@ func post_of(id: String) -> String:
 		return "hall" if st.get("target", "") == "hollowmark" else ""  # elsewhere: not in town
 	if st.get("role", "") == "party":
 		return "gate"
-	if st.get("role", "") == "expedition":
-		return ""  # out of town until the squad comes back
+	if st.get("role", "") in ["expedition", "envoy"]:
+		return ""  # out of town: with a squad, or living with a faction
 	if st.get("role", "") == "staff":
 		if st.get("target", "") == "command_table":
 			return "table_side"
@@ -416,6 +422,7 @@ func open_menu(note := "") -> void:
 		{"id": "buildings", "label": "Buildings", "detail": "B"},
 		{"id": "expeditions", "label": "Expeditions", "detail": "E"},
 		{"id": "research", "label": "Research", "detail": "T"},
+		{"id": "diplomacy", "label": "Diplomacy", "detail": "F"},
 		{"id": "save", "label": "Save game"},
 		{"id": "load", "label": "Load game", "enabled": Saves.latest_slot() != "", "note": "(no saves yet)"},
 		{"id": "title", "label": "Quit to title"},
@@ -450,6 +457,9 @@ func _on_menu(id: String) -> void:
 		"research":
 			_close_menu()
 			research_view.open()
+		"diplomacy":
+			_close_menu()
+			diplomacy_view.open()
 		"save", "load":
 			slot_mode = id
 			menu.visible = false
@@ -494,9 +504,11 @@ func _process(delta: float) -> void:
 		lamp.queue_redraw()
 
 	var frame := Engine.get_process_frames()
-	var screen_open: bool = roster_view.visible or buildings_view.visible or expedition_view.visible or research_view.visible
+	var screen_open: bool = roster_view.visible or buildings_view.visible or expedition_view.visible or research_view.visible \
+			or diplomacy_view.visible
 	if screen_open or frame == roster_view.closed_frame or frame == buildings_view.closed_frame \
-			or frame == expedition_view.closed_frame or frame == research_view.closed_frame or frame == menu_closed_frame:
+			or frame == expedition_view.closed_frame or frame == research_view.closed_frame \
+			or frame == diplomacy_view.closed_frame or frame == menu_closed_frame:
 		leader.controlled = not screen_open
 		return
 	leader.controlled = true
@@ -514,6 +526,9 @@ func _process(delta: float) -> void:
 		return
 	if Input.is_action_just_pressed("research"):
 		research_view.open()
+		return
+	if Input.is_action_just_pressed("diplomacy"):
+		diplomacy_view.open()
 		return
 	for i in Empire.SPEEDS.size():
 		if Input.is_action_just_pressed("clock_speed_%d" % i):

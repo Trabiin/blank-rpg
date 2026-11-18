@@ -1,5 +1,5 @@
 {
-	"_comment": "Expeditions: off-screen squad jobs sent from the Guildhall (key E). stats: the stats that count and how much (squad strength = sum of stat x weight over the squad). target: the strength that gives a 50% chance; every point above or below moves it by Empire.EXPEDITION_PER_POINT. danger 1-3 drives injuries (and, at 3, a rare loss). rations: Supplies per person sent. reward: [min, max] per resource, or a flat number; fray: change to the job's province on success; recruit: who joins on success (the job disappears once they have joined). needs: guildhall level, erased (the province must be erased) and tags used by traits (blank, concord). text: {a} {b} = two squad members, {lead} = the first one picked, {squad} = everyone.",
+	"_comment": "Expeditions: off-screen squad jobs sent from the Guildhall (key E). stats: the stats that count and how much (squad strength = sum of stat x weight over the squad). target: the strength that gives a 50% chance; every point above or below moves it by Empire.EXPEDITION_PER_POINT. danger 1-3 drives injuries (and, at 3, a rare loss). rations: Supplies per person sent. reward: [min, max] per resource, or a flat number; fray: change to the job's province on success; recruit: who joins on success (the job disappears once they have joined). needs: guildhall level, erased (the province must be erased) and tags used by traits (blank, concord). standing: faction standing change on success (standing_fail: on failure). text: {a} {b} = two squad members, {lead} = the first one picked, {squad} = everyone.",
 	"jobs": [
 		{
 			"id": "forage_meadow", "name": "Forage the Frayed Meadow", "kind": "Supply run", "province": "meadow",
@@ -26,6 +26,7 @@
 			"blurb": "A Guild barge needs bodies on deck. The pay is good because the river is not. Mercenaries respect people who show up.",
 			"days": 2, "rations": 2, "stats": {"might": 1.0, "grit": 0.5}, "target": 19, "danger": 2, "cooldown": 2,
 			"reward": {"gilt": [45, 65], "renown": 1},
+			"standing": {"guild": 6}, "standing_fail": {"guild": -3},
 			"text": {
 				"success": ["River bandits tried the barge once. {a} threw one of them back. {b} threw the rest. The Guild paid in full and nearly smiled.", "{lead} stood at the prow looking menacing for two days straight. It worked. Nobody even tried."],
 				"fail": ["The barge was fine. The cargo was fine. {a} fell in, {b} went in after them, and the Guild docked the pay for 'swimming on contract time'.", "Bandits in the reeds. {lead} held them off but the cargo didn't make it. Half pay, and a lecture."]
@@ -47,6 +48,7 @@
 			"blurb": "Woodcutters say a hedge-witch is selling cures out of a hollow tree, and the Coven wants her gone. Find her before they do. Bring coin; she will ask.",
 			"days": 2, "rations": 2, "stats": {"charm": 1.0, "lore": 0.5}, "target": 17, "danger": 2, "cooldown": 2,
 			"reward": {"renown": 1}, "recruit": "gristle",
+			"standing": {"coven": -8},
 			"text": {
 				"success": ["{a} found the hollow tree. {b} drank the tea before anyone could stop them and is mostly fine. Mother Gristle agreed to come, for a fee to be named later.", "{lead} talked Mother Gristle out of her tree with promises of steady work and sick people. She seemed delighted by the sick people."],
 				"fail": ["The witch sold {a} a 'map' and {b} a 'cure'. The map led in a circle. The cure was for a disease {b} now has.", "Coven sentries turned {lead} around at the treeline. Politely. With knives."]
@@ -67,6 +69,7 @@
 			"blurb": "A Concord corporal walked out on an Erasure order and is hiding somewhere along the Tithe Road toll posts. The Concord has posted a reward. Pay it to yourself.",
 			"days": 3, "rations": 2, "stats": {"might": 0.5, "charm": 1.0, "grit": 0.5}, "target": 22, "danger": 2, "cooldown": 3,
 			"reward": {"renown": 1}, "recruit": "ninefingers",
+			"standing": {"concord": -8},
 			"needs": {"concord": true},
 			"text": {
 				"success": ["{a} waved forged papers at the toll post while {b} walked out the back with Corporal Daro, who complained about the paperwork the entire way home.", "{lead} found Daro in a ditch, sharpening a sword and insulting a crow. Daro says yes, mainly to annoy the Concord."],

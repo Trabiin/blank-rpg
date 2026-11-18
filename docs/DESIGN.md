@@ -231,6 +231,23 @@ buy peace, or gather intel. Factions also react to what you do on missions.
 | **The Velvet Nobility** | Entertainment and leverage | Later |
 | **The Erasers** (Verity's followers) | A clean page | Later |
 
+**As built (MVP, PR for #49):** data/factions.json; screen on F. Standing runs -100 to +100 in five tiers: Hostile,
+Wary (-39), Neutral (-9), Friendly (20), Allied (60). Start: Guild +5, Coven -15, Concord -55. One **envoy** per
+faction (a recruit role; they live with the faction, away from Hollowmark) wins standing every day: 1 + Charm/3
+(Flirt doubles Charm), +1 if the stat the faction respects is 7+ (Guild Might, Coven Lore, Concord Charm), -1 if 3 or
+less; Greedy -1, Ex-Concord -2 with the Concord, Contracted +1 with the Guild, Ink-sick +1 with the Coven. The
+Concord files against you (-1 a day, down to -80) unless someone is posted there. **Deals** (all need an envoy):
+gift (any tier, coin for +8/+10 standing), intel (Neutral: Insight and +1 day of surge warning for 5 days), trade
+pact (Friendly: daily Gilt/Supplies/Ink in the ledger, torn up if standing drops below 0), aid (Friendly, while a
+surge gathers against your land: it lands at half, -15 standing), cede (Allied, Guild and Coven only: their
+province becomes yours, -30 standing, then it needs a governor). **Friendly perks:** Guild +10% expedition odds,
+Coven -1 Fray a day on your land next to the Gutterwoods, Concord stops auditing and +2 Gilt a day. **Trouble:** a
+Hostile Concord fines you, seizes Supplies or reads Erasure writs (+6 Fray) every 4-6 days; Wary, it only fines,
+every 7-9 days. **Reactions:** claiming land next to the Coven (-6) or Concord (-4), land next to the woods being
+erased (Coven -10), a Wardlamp lit next to the woods (Coven +4), and expeditions: the Guild barge escort (+6, -3
+on failure), finding the hedge-witch before the Coven does (-8), springing Daro from the Concord (-8). Story
+missions will call the same hook (Empire.faction_react) once they exist.
+
 ### 5.10 Relationships
 
 About **20 core characters** (all the combat heroes plus the most important staff) have relationships:

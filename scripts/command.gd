@@ -58,6 +58,8 @@ const ExpeditionView := preload("res://scripts/expedition_view.gd")
 var expedition_view
 const ResearchView := preload("res://scripts/research_view.gd")
 var research_view
+const DiplomacyView := preload("res://scripts/diplomacy_view.gd")
+var diplomacy_view
 var autosave_t := AUTOSAVE_EVERY
 
 
@@ -95,6 +97,10 @@ func _ready() -> void:
 	research_view = ResearchView.new()
 	research_view.visible = false
 	roster_layer.add_child(research_view)
+	diplomacy_view = DiplomacyView.new()
+	diplomacy_view.visible = false
+	roster_layer.add_child(diplomacy_view)
+	diplomacy_view.closed.connect(_bake)  # a ceded province changes colour
 
 	var layer := CanvasLayer.new()
 	layer.layer = 5
@@ -172,6 +178,7 @@ func _menu_items(note := "") -> void:
 		{"id": "buildings", "label": "Buildings", "detail": "B"},
 		{"id": "expeditions", "label": "Expeditions", "detail": "E"},
 		{"id": "research", "label": "Research", "detail": "T"},
+		{"id": "diplomacy", "label": "Diplomacy", "detail": "F"},
 		{"id": "save", "label": "Save game"},
 		{"id": "load", "label": "Load game", "enabled": Saves.latest_slot() != "", "note": "(no saves yet)"},
 		{"id": "title", "label": "Quit to title"},
@@ -214,6 +221,9 @@ func _on_menu(id: String) -> void:
 		"research":
 			_close_menu()
 			research_view.open()
+		"diplomacy":
+			_close_menu()
+			diplomacy_view.open()
 		"title":
 			_leave(TITLE_SCENE)
 
@@ -359,7 +369,8 @@ func _process(delta: float) -> void:
 			or buildings_view.visible or frame == buildings_view.closed_frame \
 			or governor_view.visible or frame == governor_view.closed_frame \
 			or expedition_view.visible or frame == expedition_view.closed_frame \
-			or research_view.visible or frame == research_view.closed_frame:
+			or research_view.visible or frame == research_view.closed_frame \
+			or diplomacy_view.visible or frame == diplomacy_view.closed_frame:
 		return
 	if Input.is_action_just_pressed("roster"):
 		roster_view.open()
@@ -375,6 +386,9 @@ func _process(delta: float) -> void:
 		return
 	if Input.is_action_just_pressed("research"):
 		research_view.open()
+		return
+	if Input.is_action_just_pressed("diplomacy"):
+		diplomacy_view.open()
 		return
 	for i in Empire.SPEEDS.size():
 		if Input.is_action_just_pressed("clock_speed_%d" % i):
@@ -444,6 +458,8 @@ func _gui_input(event: InputEvent) -> void:
 			expedition_view.open()
 		elif _research_button_rect().has_point(event.position):
 			research_view.open()
+		elif _diplomacy_button_rect().has_point(event.position):
+			diplomacy_view.open()
 		elif _town_button_rect().has_point(event.position):
 			_leave(Saves.HUB_SCENE)
 		elif _res_rect().has_point(event.position):
@@ -514,6 +530,12 @@ func _expeditions_button_rect() -> Rect2:
 func _research_button_rect() -> Rect2:
 	var rb := _roster_button_rect()
 	return Rect2(Vector2(rb.end.x - 96, rb.end.y + 3), Vector2(96, 16))
+
+
+## Second row, left of Research.
+func _diplomacy_button_rect() -> Rect2:
+	var rs := _research_button_rect()
+	return Rect2(rs.position - Vector2(90, 0), Vector2(86, 16))
 
 
 func _speed_rect(i: int) -> Rect2:
@@ -591,6 +613,16 @@ func _draw() -> void:
 		rtext = "Research %d%%%s  T" % [int(Empire.research_fraction(Empire.research_active) * 100), " (stalled)" if stalled else ""]
 		rcol = Color(1, 0.55, 0.5) if stalled else Color("d7b8f0")
 	_text_c(Vector2(rsb.get_center().x, rsb.position.y + 12), rtext, 9, rcol)
+	var db := _diplomacy_button_rect()
+	draw_rect(db, Color(0.1, 0.09, 0.12, 0.92))
+	draw_rect(db, Color(0.45, 0.4, 0.48), false, 1.0)
+	var dtext := "Diplomacy  F"
+	var dcol := Color(0.85, 0.82, 0.76)
+	if Empire.surge.get("id", "") != "" and Empire.surge.get("aid", "") == "" and Empire.territory().find(Empire.surge["id"]).get("owner", "") == "you" \
+			and Empire.faction_ids().any(func(f): return Empire.deal_blocker(f, "aid") == ""):
+		dtext = "Ask for aid!  F"
+		dcol = GOLD
+	_text_c(Vector2(db.get_center().x, db.position.y + 12), dtext, 9, dcol)
 	_draw_legend()
 	_draw_panel()
 	if toast_t > 0.0:
@@ -798,6 +830,11 @@ func _draw_panel() -> void:
 	var owner: String = p["owner"]
 	draw_rect(Rect2(x, y - 7, 7, 7), OWNER_COLORS[owner])
 	_text(Vector2(x + 11, y), OWNER_NAMES[owner], 9, Color(0.8, 0.78, 0.74))
+	if owner in Empire.faction_ids():
+		var tier := Empire.tier_of(owner)
+		_text(Vector2(x + 11, y + 11), "Standing: %s %+d   Diplomacy: F" % [Empire.tier_name(tier), Empire.standing_of(owner)], 8,
+			Color("9fd18b") if Empire.has_perk(owner) else (Color("ff9b8a") if tier == "hostile" else Color(0.7, 0.68, 0.7)))
+		y += 10
 	y += 18
 
 	# Fray
