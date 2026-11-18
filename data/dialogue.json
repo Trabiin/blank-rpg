@@ -72,7 +72,8 @@
 		"first_kill": {"once": true, "lines": [["bran", "It popped. Like a thought you weren't supposed to have."]]},
 		"tenth_kill": {"once": false, "lines": [["bran", "Ten. I'm charging by the head, by the way. You owe me... a number.", "smug"]]},
 		"low_power": {"once": true, "urgent": true, "lines": [["bran", "Swinging at half power? Bold. Wait for the gauge, smudge."]]},
-		"mission_start": {"once": false, "lines": [["bran", "Back in the grass. Try to come home with the same number of limbs."]]}
+		"mission_start": {"once": false, "lines": [["bran", "Back in the grass. Try to come home with the same number of limbs."]]},
+		"mission_won": {"once": false, "lines": [["bran", "That's the lot. Hollowmark's this way. Probably. Roads keep forgetting themselves.", "smug"]]}
 	},
 	"banter": {
 		"frayed_meadow": [

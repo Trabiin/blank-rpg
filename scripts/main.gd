@@ -10,8 +10,8 @@ const HudScript := preload("res://scripts/hud.gd")
 const TouchScript := preload("res://scripts/touch.gd")
 const DialogueBox := preload("res://scripts/dialogue_box.gd")
 const BanterScript := preload("res://scripts/banter.gd")
+const ResultsView := preload("res://scripts/results_view.gd")
 
-const MAP := "res://maps/frayed_meadow.txt"
 const TITLE_SCENE := "res://scenes/title.tscn"
 const MAX_ENEMIES := 7
 const RESPAWN_TIME := 6.0
@@ -39,16 +39,32 @@ var dialogue_box  # dialogue_box.gd: conversations (the game pauses while one pl
 var autosave_t := 3.0  # first autosave a few seconds into a new game
 var slot_menu: InkMenu
 var slot_mode := ""  # "save" or "load"
+var map_path := "res://maps/frayed_meadow.txt"
+var mission := {}  # the mission being played (scripts/missions.gd)
+var objective: Objective
+var found := {}  # what the party picked up on the way: resource -> amount
+var found_flash := 0.0  # seconds the HUD's "Found" line stays lit after a pickup
+var mission_time := 0.0
+var ending := false  # the results screen is up (or about to be)
+var results_view  # results_view.gd
 
 
 func _ready() -> void:
 	randomize()
+	# Which mission: a loaded save brings its own; otherwise the one launched from the map.
+	mission = Saves.pending.get("mission", {}) if not Saves.pending.is_empty() else {}
+	if mission.is_empty():
+		mission = Missions.current()
+	Empire.active_mission = mission
+	map_path = mission.get("map", map_path)
+	objective = Objective.new()
+	objective.setup(mission.get("objective", {}), self)
 
 	entities = Node2D.new()
 	entities.y_sort_enabled = true
 	area = Area.new()
 	add_child(area)
-	area.build(MAP, entities)
+	area.build(map_path, entities)
 	world = area.world_size()
 
 	blank = Blank.new()
@@ -135,6 +151,10 @@ func _ready() -> void:
 	dialogue_box.visible = false
 	menu_layer.add_child(dialogue_box)
 	dialogue_box.finished.connect(_on_dialogue_finished)
+	results_view = ResultsView.new()
+	results_view.visible = false
+	menu_layer.add_child(results_view)
+	results_view.confirmed.connect(_on_results_confirmed)
 
 	var loaded := not Saves.pending.is_empty()
 	if loaded:
@@ -228,6 +248,13 @@ func _on_enemy_died(_e: Actor) -> void:
 	kills += 1
 	Empire.bond_fought(kills, ["bran"])  # fighting beside Ash builds bonds (this test map always brings Bran)
 	banter.event("first_kill", present())
+	if not ending:
+		objective.on_kill()
+		var got := Missions.roll_loot(mission)
+		for k in got:
+			found[k] = int(found.get(k, 0)) + int(got[k])
+		if not got.is_empty():
+			found_flash = 1.5
 	if kills == 10:
 		banter.event("tenth_kill", present())
 
@@ -244,9 +271,12 @@ func _on_hero_died(a: Actor) -> void:
 
 
 func _show_game_over() -> void:
+	if ending:
+		return
 	var has_auto := Saves.exists("auto")
 	over_menu.setup("The party was erased.", [
 		{"id": "retry", "label": "Try again", "detail": "from the last autosave" if has_auto else "from the start of the area"},
+		{"id": "retreat", "label": "Limp back to Hollowmark", "detail": "end the mission and drop what you found"},
 		{"id": "load", "label": "Load game", "enabled": Saves.latest_slot() != ""},
 		{"id": "title", "label": "Quit to title"},
 	], "The Blank does not keep receipts.")
@@ -254,7 +284,7 @@ func _show_game_over() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed("pause") and not game_over:
+	if event.is_action_pressed("pause") and not game_over and not ending:
 		set_paused(true)
 		get_viewport().set_input_as_handled()
 		return
@@ -276,7 +306,8 @@ func _pause_items() -> Array:
 		{"id": "resume", "label": "Resume"},
 		{"id": "save", "label": "Save game"},
 		{"id": "load", "label": "Load game", "enabled": Saves.latest_slot() != "", "note": "(no saves yet)"},
-		{"id": "restart", "label": "Restart area"},
+		{"id": "retreat", "label": "Retreat to Hollowmark", "detail": "end the mission, keep what you found"},
+		{"id": "restart", "label": "Restart mission"},
 		{"id": "title", "label": "Quit to title"},
 	]
 
@@ -287,6 +318,9 @@ func _on_pause_choice(id: String) -> void:
 			set_paused(false)
 		"save", "load":
 			_open_slots(id, pause_menu)
+		"retreat":
+			pause_menu.visible = false
+			_end_mission("retreat")
 		"restart":
 			get_tree().paused = false
 			get_tree().reload_current_scene()
@@ -301,6 +335,9 @@ func _on_over_choice(id: String) -> void:
 		"retry":
 			if not Saves.load_and_play("auto"):
 				get_tree().reload_current_scene()
+		"retreat":
+			over_menu.visible = false
+			_end_mission("wiped")
 		"load":
 			_open_slots("load", over_menu)
 		"title":
@@ -344,9 +381,13 @@ func snapshot() -> Dictionary:
 		hs.append({"name": hero.hero_name, "hp": hero.hp, "x": hero.global_position.x, "y": hero.global_position.y,
 			"dead": hero.dead, "power": hero.power})
 	return {
-		"map": MAP,
+		"map": map_path,
 		"area_name": area.area_name,
 		"scene": "res://scenes/main.tscn",
+		"mission": mission,
+		"objective": objective.to_save(),
+		"found": found,
+		"mission_time": mission_time,
 		"kills": kills,
 		"leader": heroes.find(leader),
 		"heroes": hs,
@@ -356,6 +397,11 @@ func snapshot() -> Dictionary:
 
 func _apply_snapshot(d: Dictionary) -> void:
 	kills = int(d.get("kills", 0))
+	objective.from_save(d.get("objective", {"progress": kills}))
+	mission_time = float(d.get("mission_time", 0.0))
+	var f: Dictionary = d.get("found", {})
+	for k in f:
+		found[k] = int(f[k])
 	banter.from_save(d.get("banter", []))
 	var hs: Array = d.get("heroes", [])
 	for i in mini(hs.size(), heroes.size()):
@@ -377,7 +423,7 @@ func _apply_snapshot(d: Dictionary) -> void:
 
 ## Autosaves only when it is safe to drop back in: nobody down and no Nibbler close.
 func can_autosave() -> bool:
-	if game_over or leader == null:
+	if game_over or ending or leader == null:
 		return false
 	for h in heroes:
 		if (h as Hero).dead:
@@ -428,11 +474,49 @@ func _process(delta: float) -> void:
 			autosave_t = AUTOSAVE_EVERY
 		else:
 			autosave_t = 5.0  # try again soon, once things calm down
+	_update_mission(delta)
 	_update_blank_contact(delta)
 	_update_revive(delta)
 	_update_respawn(delta)
 	_update_banter(delta)
 	_update_signs()
+
+
+# ---------------------------------------------------------------- mission flow
+
+func _update_mission(delta: float) -> void:
+	found_flash = maxf(found_flash - delta, 0.0)
+	if ending or game_over:
+		return
+	mission_time += delta
+	objective.update(delta)
+	if objective.done():
+		ending = true
+		hud.say("Objective complete!", 2.0)
+		banter.event("mission_won", present())
+		get_tree().create_timer(1.6).timeout.connect(_show_results.bind("success"))
+	elif objective.failed():
+		ending = true
+		get_tree().create_timer(1.2).timeout.connect(_show_results.bind("wiped"))
+
+
+## Ends the mission now: retreat from the pause menu, or the wiped party limping home.
+func _end_mission(outcome: String) -> void:
+	ending = true
+	_show_results(outcome)
+
+
+func _show_results(outcome: String) -> void:
+	if not is_inside_tree():
+		return
+	get_tree().paused = true
+	touch.release_all()
+	var r := Missions.settle(mission, outcome, found, {"kills": kills, "time": mission_time, "objective": objective.text()})
+	results_view.open(r)
+
+
+func _on_results_confirmed() -> void:
+	Missions.go_home(results_view.result)
 
 
 func _update_blank_contact(delta: float) -> void:
@@ -491,7 +575,7 @@ func _update_banter(_delta: float) -> void:
 	if leader and leader.power < 0.5 and leader.swing_t > 0.0 and leader.swing_power < 0.5:
 		banter.event("low_power", present())
 	if leader:
-		banter.check_zones(MAP.get_file().get_basename(), leader.global_position, present())
+		banter.check_zones(map_path.get_file().get_basename(), leader.global_position, present())
 
 
 func _update_signs() -> void:

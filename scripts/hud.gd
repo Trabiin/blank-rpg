@@ -69,12 +69,19 @@ func _draw() -> void:
 		draw_rect(Rect2(x + 5, y + 21, 102.0 * hero.power, 2), pcol)
 		x += 118.0
 
-	# Area name, top-left
-	_text(Vector2(8, 14), party.area.area_name, 10, Color(0.9, 0.88, 0.8))
-	_text(Vector2(8, 26), "Nibblers dispersed: %d" % party.kills, 8, Color(0.75, 0.75, 0.75))
+	# Mission name and objective, top-left
+	_text(Vector2(8, 14), party.mission.get("name", party.area.area_name), 10, Color(0.9, 0.88, 0.8))
+	var done: bool = party.objective.done()
+	_text(Vector2(8, 26), party.objective.text() + ("  done" if done else ""), 9, Color("9fd3a8") if done else Color("ffd166"))
+	var yy0 := 38.0
+	var found := Missions.res_text(party.found)
+	if found != "":
+		var lit: bool = party.found_flash > 0.0
+		_text(Vector2(8, yy0), "Found: " + found, 8, Color("ffe7a3") if lit else Color(0.75, 0.75, 0.75))
+		yy0 += 12.0
 	var perks: Array = party.boosts.get("lines", [])
 	if not perks.is_empty():
-		_text(Vector2(8, 38), "Research: " + ", ".join(perks), 8, Color("d7b8f0"))
+		_text(Vector2(8, yy0), "Research: " + ", ".join(perks), 8, Color("d7b8f0"))
 
 	if banter_t > 0.0:
 		var a := clampf(banter_t / 0.4, 0.0, 1.0)
