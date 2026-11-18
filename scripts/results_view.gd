@@ -91,7 +91,7 @@ func _draw() -> void:
 	var outcome: String = result["outcome"]
 	var w := minf(340.0, vs.x - 24.0)
 	var rows := 4 + (result.get("lines", []) as Array).size()  # objective, time, found, total
-	if outcome == "success" and not Missions.find(result["mission"]).get("rewards", {}).is_empty():
+	if outcome == "success" and not result.get("rewards", {}).is_empty():
 		rows += 1
 	if int(result.get("fray", 0)) != 0:
 		rows += 1
@@ -125,7 +125,7 @@ func _draw() -> void:
 	else:
 		y = _row(x, y, iw, "Found", found if found != "" else "Nothing")
 	if outcome == "success":
-		var rew := Missions.res_text(Missions.find(result["mission"]).get("rewards", {})) if not Missions.find(result["mission"]).is_empty() else ""
+		var rew := Missions.res_text(result.get("rewards", {}))
 		if rew != "":
 			y = _row(x, y, iw, "Reward", rew)
 	var fray := int(result.get("fray", 0))

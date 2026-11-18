@@ -504,7 +504,7 @@ func _show_results(outcome: String) -> void:
 		return
 	get_tree().paused = true
 	touch.release_all()
-	var r := Missions.settle(mission, outcome, found, {"kills": kills, "time": mission_time, "objective": objective.text()})
+	var r := Missions.settle(mission, outcome, found, {"kills": kills, "time": mission_time, "objective": objective.text(), "fail": objective.fail_text()})
 	results_view.open(r)
 
 

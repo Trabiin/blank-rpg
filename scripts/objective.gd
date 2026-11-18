@@ -5,7 +5,8 @@ extends RefCounted
 ##
 ## Kinds so far:
 ##   kills: disperse `count` Nibblers.
-## New kinds (Reclaim, Defense, Rescue: issue #51) add a case to each match below.
+##   defense, reclaim, rescue (issue #51): handed to MissionObjectives (mission_objectives.gd),
+##   which needs the world, so it is set up on the first update() once the map exists.
 ## `main` is the mission scene (main.gd), for kinds that need the world: main.entities,
 ## main.blank, main.area, main.hud, main._spawn_enemy().
 
@@ -15,6 +16,8 @@ var main  # main.gd
 var progress := 0
 var target := 1
 var elapsed := 0.0
+var inner: MissionObjectives  # the #51 kinds
+var _inner_ready := false
 
 
 func setup(objective: Dictionary, mission_main) -> void:
@@ -26,6 +29,8 @@ func setup(objective: Dictionary, mission_main) -> void:
 			target = maxi(int(objective.get("count", 10)), 1)
 		_:
 			target = maxi(int(objective.get("count", 1)), 1)
+	if MissionObjectives.handles(kind):
+		inner = MissionObjectives.new()
 
 
 func on_kill() -> void:
@@ -33,17 +38,22 @@ func on_kill() -> void:
 		"kills":
 			progress = mini(progress + 1, target)
 		_:
-			pass
+			if _inner_ready:
+				inner.on_kill()
 
 
 func update(delta: float) -> void:
 	elapsed += delta
-	match kind:
-		_:
-			pass
+	if inner != null:
+		if not _inner_ready:
+			_inner_ready = true
+			inner.setup(data, main)
+		inner.update(delta)
 
 
 func done() -> bool:
+	if inner != null:
+		return _inner_ready and inner.done()
 	match kind:
 		_:
 			return progress >= target
@@ -52,6 +62,8 @@ func done() -> bool:
 ## True when the objective can no longer be met (a Defense line broken, say). The party is
 ## sent home with the "wiped" outcome.
 func failed() -> bool:
+	if inner != null:
+		return _inner_ready and inner.failed()
 	match kind:
 		_:
 			return false
@@ -59,6 +71,8 @@ func failed() -> bool:
 
 ## The HUD line, e.g. "Disperse Nibblers  7/12".
 func text() -> String:
+	if inner != null:
+		return inner.text() if _inner_ready else ""
 	match kind:
 		_:
 			return "%s  %d/%d" % [data.get("label", "Objective"), progress, target]
@@ -69,8 +83,19 @@ static func describe(objective: Dictionary) -> String:
 	match objective.get("kind", "kills"):
 		"kills":
 			return "%s (%d)" % [objective.get("label", "Disperse Nibblers"), int(objective.get("count", 10))]
+		"defense":
+			return "Hold the wardstone for %d seconds" % int(objective.get("seconds", 75))
+		"reclaim":
+			return "Break the Blot"
+		"rescue":
+			return "Find %s and bring them back" % Empire.short_name(objective.get("who", ""))
 		_:
 			return objective.get("label", "Objective")
+
+
+## Why it failed, for the results screen ("" when it did not).
+func fail_text() -> String:
+	return inner.fail_text() if inner != null and _inner_ready else ""
 
 
 func to_save() -> Dictionary:

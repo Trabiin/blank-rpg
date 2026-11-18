@@ -24,6 +24,9 @@ var static_seed := 0
 var sprite: Sprite2D
 var overlay: Node2D
 var dying_t := -1.0
+## Something to go and eat when no hero is close (a Defense mission's wardstone). Needs nibble(amount).
+var goal: Node2D = null
+var nibble_t := 0.0
 
 ## Puny's green slime, recolored into a scrap of the Blank: paper-white with an ink-black core.
 const SLIME_COLORS := {"body": Color("e4e1d8"), "core": Color("15101a"), "shine": Color("ffffff")}
@@ -66,6 +69,14 @@ func _physics_process(delta: float) -> void:
 				if global_position.distance_to(home) > 90.0:
 					wander_dir = (home - global_position).normalized()
 			dir = wander_dir * 0.5
+			if goal != null and is_instance_valid(goal):
+				var to_goal := goal.global_position - global_position
+				dir = to_goal.normalized() if to_goal.length() > 16.0 else Vector2.ZERO
+				facing = to_goal.normalized()
+				nibble_t -= delta
+				if to_goal.length() <= 18.0 and nibble_t <= 0.0:
+					nibble_t = 1.0
+					goal.nibble(DAMAGE)
 			target = _find_target(AGGRO)
 			if target:
 				_set_state(State.CHASE, 0.0)
