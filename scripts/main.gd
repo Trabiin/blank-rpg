@@ -8,6 +8,8 @@ const PropScript := preload("res://scripts/prop.gd")
 const BlankScript := preload("res://scripts/blank.gd")
 const HudScript := preload("res://scripts/hud.gd")
 const TouchScript := preload("res://scripts/touch.gd")
+const DialogueBox := preload("res://scripts/dialogue_box.gd")
+const BanterScript := preload("res://scripts/banter.gd")
 
 const MAP := "res://maps/frayed_meadow.txt"
 const TITLE_SCENE := "res://scenes/title.tscn"
@@ -32,10 +34,8 @@ var game_over := false
 var pause_menu: InkMenu
 var boosts := {"damage": 0, "hp": 0, "revive": 1.0, "guard": 0.0, "power_rate": 1.0, "lines": []}  # from research
 var over_menu: InkMenu
-var banter_queue: Array = []
-var banter_t := 1.0
-var said_low_power := false
-var said_first_kill := false
+var banter  # banter.gd: walking banter at the top of the screen
+var dialogue_box  # dialogue_box.gd: conversations (the game pauses while one plays)
 var autosave_t := 3.0  # first autosave a few seconds into a new game
 var slot_menu: InkMenu
 var slot_mode := ""  # "save" or "load"
@@ -88,12 +88,6 @@ func _ready() -> void:
 		h.power_rate *= float(boosts["power_rate"])
 	_set_leader(ash)
 
-	banter_queue = [
-		["Bran", "Huh. A person. Or a very convincing smudge."],
-		["Bran", "You crawled out of the Blank? Nobody does that. Nobody's paid me to see that, either."],
-		["Bran", "Those white things eat. Hit them when your gauge is full. Or don't, and I'll bill your corpse."],
-	]
-
 	camera = Camera2D.new()
 	camera.zoom = Vector2(2, 2)
 	camera.position_smoothing_enabled = true
@@ -113,6 +107,9 @@ func _ready() -> void:
 	layer.add_child(hud)
 	touch = TouchScript.new()
 	layer.add_child(touch)
+	banter = BanterScript.new()
+	banter.gap = 1.0
+	layer.add_child(banter)
 
 	# Menus live on their own layer above the HUD and keep running while the tree is paused.
 	var menu_layer := CanvasLayer.new()
@@ -134,6 +131,10 @@ func _ready() -> void:
 	over_menu.dim = 0.55
 	menu_layer.add_child(over_menu)
 	over_menu.chosen.connect(_on_over_choice)
+	dialogue_box = DialogueBox.new()
+	dialogue_box.visible = false
+	menu_layer.add_child(dialogue_box)
+	dialogue_box.finished.connect(_on_dialogue_finished)
 
 	var loaded := not Saves.pending.is_empty()
 	if loaded:
@@ -145,6 +146,27 @@ func _ready() -> void:
 		# A loaded game can put the party anywhere: don't drop Nibblers on top of them.
 		if not loaded or p.distance_to(leader.global_position) > 120.0:
 			_spawn_enemy(p)
+	if not loaded:  # the first time out, Bran finds Ash; after that he just grumbles
+		if not Dialogue.is_seen("talk:meadow_intro"):
+			play_talk("meadow_intro")
+		else:
+			banter.event("mission_start", present())
+
+
+## Who can speak right now: the party members still standing.
+func present() -> Array:
+	return heroes.filter(func(h): return not h.dead).map(func(h): return (h as Hero).hero_name.to_lower())
+
+
+## Play a conversation in the dialogue box. The fight waits until it is over.
+func play_talk(talk_id: String) -> void:
+	if dialogue_box.play(talk_id):
+		get_tree().paused = true
+		touch.release_all()
+
+
+func _on_dialogue_finished(_id: String) -> void:
+	get_tree().paused = false
 
 
 func _build_walls() -> void:
@@ -205,11 +227,9 @@ func touch_active() -> bool:
 func _on_enemy_died(_e: Actor) -> void:
 	kills += 1
 	Empire.bond_fought(kills, ["bran"])  # fighting beside Ash builds bonds (this test map always brings Bran)
-	if not said_first_kill:
-		said_first_kill = true
-		banter_queue.append(["Bran", "It popped. Like a thought you weren't supposed to have."])
+	banter.event("first_kill", present())
 	if kills == 10:
-		banter_queue.append(["Bran", "Ten. I'm charging by the head, by the way. You owe me... a number."])
+		banter.event("tenth_kill", present())
 
 
 func _on_hero_died(a: Actor) -> void:
@@ -330,17 +350,13 @@ func snapshot() -> Dictionary:
 		"kills": kills,
 		"leader": heroes.find(leader),
 		"heroes": hs,
-		"banter": banter_queue,
-		"said_first_kill": said_first_kill,
-		"said_low_power": said_low_power,
+		"banter": banter.to_save(),
 	}
 
 
 func _apply_snapshot(d: Dictionary) -> void:
 	kills = int(d.get("kills", 0))
-	banter_queue = d.get("banter", [])
-	said_first_kill = bool(d.get("said_first_kill", false))
-	said_low_power = bool(d.get("said_low_power", false))
+	banter.from_save(d.get("banter", []))
 	var hs: Array = d.get("heroes", [])
 	for i in mini(hs.size(), heroes.size()):
 		var hero: Hero = heroes[i]
@@ -356,7 +372,6 @@ func _apply_snapshot(d: Dictionary) -> void:
 	if li >= 0 and li < heroes.size() and not heroes[li].dead:
 		_set_leader(heroes[li])
 	autosave_t = AUTOSAVE_EVERY
-	banter_t = 1.5
 	hud.say("Loaded. The Blank kept your place.", 2.5)
 
 
@@ -470,17 +485,13 @@ func _update_respawn(delta: float) -> void:
 		_spawn_enemy(Vector2(blank.edge_x(y) - 16.0, y))
 
 
-func _update_banter(delta: float) -> void:
+func _update_banter(_delta: float) -> void:
 	if game_over:
 		return
-	if not said_low_power and leader and leader.power < 0.5 and leader.swing_t > 0.0 and leader.swing_power < 0.5:
-		said_low_power = true
-		banter_queue.push_front(["Bran", "Swinging at half power? Bold. Wait for the gauge, smudge."])
-	banter_t -= delta
-	if banter_t <= 0.0 and not banter_queue.is_empty():
-		var line: Array = banter_queue.pop_front()
-		hud.say("%s: %s" % [line[0], line[1]], 4.0)
-		banter_t = 4.6
+	if leader and leader.power < 0.5 and leader.swing_t > 0.0 and leader.swing_power < 0.5:
+		banter.event("low_power", present())
+	if leader:
+		banter.check_zones(MAP.get_file().get_basename(), leader.global_position, present())
 
 
 func _update_signs() -> void:
