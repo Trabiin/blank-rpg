@@ -27,6 +27,11 @@ func _pause_center() -> Vector2:
 	return Vector2(vs.x - 22, 22)
 
 
+func _menu_center() -> Vector2:
+	var vs := get_viewport_rect().size
+	return Vector2(vs.x - 54, 22)
+
+
 func _swap_center() -> Vector2:
 	var vs := get_viewport_rect().size
 	return Vector2(vs.x - 110, vs.y - 40)
@@ -48,6 +53,9 @@ func _input(event: InputEvent) -> void:
 			elif pos.distance_to(_pause_center()) < 18.0:
 				button_touches[event.index] = "pause"
 				Input.action_press("pause")
+			elif pos.distance_to(_menu_center()) < 16.0 and InputMap.has_action("quick_menu"):
+				button_touches[event.index] = "quick_menu"
+				Input.action_press("quick_menu")
 			elif pos.distance_to(_swap_center()) < BTN_SWAP_R + 10.0:
 				button_touches[event.index] = "swap"
 				Input.action_press("swap")
@@ -110,6 +118,10 @@ func _draw() -> void:
 	draw_circle(pc, 13.0, Color(1, 1, 1, 0.18))
 	draw_rect(Rect2(pc + Vector2(-4, -5), Vector2(3, 10)), Color(1, 1, 1, 0.8))
 	draw_rect(Rect2(pc + Vector2(1, -5), Vector2(3, 10)), Color(1, 1, 1, 0.8))
+	var mc := _menu_center()  # quick menu: three lines
+	draw_circle(mc, 13.0, Color(1, 1, 1, 0.18))
+	for i in 3:
+		draw_rect(Rect2(mc + Vector2(-5, -5 + i * 4), Vector2(10, 2)), Color(1, 1, 1, 0.8))
 	if stick_index != -1:
 		draw_circle(stick_origin, STICK_R, Color(1, 1, 1, 0.12))
 		draw_arc(stick_origin, STICK_R, 0, TAU, 32, Color(1, 1, 1, 0.4), 1.5)
