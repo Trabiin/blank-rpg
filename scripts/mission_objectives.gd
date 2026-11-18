@@ -149,18 +149,18 @@ func _spawn_timer(delta: float, every: float, where: Callable, to_ward: bool) ->
 	spawn_t = every
 	if main.get_tree().get_nodes_in_group("enemies").size() >= MAX_SPAWNED:
 		return
-	var e := _spawn(where.call())
-	if to_ward:
-		e.goal = ward
+	for e in _spawn(where.call(), true):  # out of the Blank: only Blank-born kinds
+		if to_ward:
+			e.goal = ward
 
 
-func _spawn(pos: Vector2) -> Enemy:
-	var e: Enemy = EnemyScript.new()
-	e.position = pos
-	main.entities.add_child(e)
-	e.died.connect(main._on_enemy_died)
+## One roll of the mission's enemy roster (#16): usually one enemy, a pack for letter-moths.
+func _spawn(pos: Vector2, blank_only := false) -> Array:
+	var out := EnemyKinds.spawn(main.entities, pos, main.mission, "", blank_only)
+	for e in out:
+		e.died.connect(main._on_enemy_died)
 	Fx.burst(main.entities, pos + Vector2(0, -6), [Color.WHITE, Color.BLACK], 8, 50.0)
-	return e
+	return out
 
 
 func done() -> bool:

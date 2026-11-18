@@ -236,10 +236,8 @@ func _make_hero(hero_name: String, pos: Vector2, outfit: String, colors: Diction
 
 
 func _spawn_enemy(pos: Vector2) -> void:
-	var e: Enemy = EnemyScript.new()
-	e.position = pos
-	entities.add_child(e)
-	e.died.connect(_on_enemy_died)
+	for e in EnemyKinds.spawn(entities, pos, mission):  # the area's roster (#16): data/enemies.json
+		e.died.connect(_on_enemy_died)
 
 
 ## The quick menu's Party tab: take control of a standing hero.
