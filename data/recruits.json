@@ -4,7 +4,7 @@
 		"greedy": {"name": "Greedy", "desc": "Skims, but squeezes harder. +2 Gilt as governor."},
 		"stubborn": {"name": "Stubborn", "desc": "Will not give an inch. Governs with 1 more Fray resistance."},
 		"coward": {"name": "Coward", "desc": "Flees the edge. Governs with 1 less Fray resistance."},
-		"bookish": {"name": "Bookish", "desc": "Happier with paper than people. Research later counts double."},
+		"bookish": {"name": "Bookish", "desc": "Happier with paper than people. Counts double at the Scriptorium."},
 		"ex_concord": {"name": "Ex-Concord", "desc": "Knows the forms. The Concord hates them for it."},
 		"flirt": {"name": "Flirt", "desc": "Charm counts double with envoys and in the tavern."},
 		"night_owl": {"name": "Night Owl", "desc": "Does their best work after dark."},

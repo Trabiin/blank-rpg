@@ -43,7 +43,7 @@
 		},
 		{
 			"id": "scriptorium", "name": "Scriptorium", "start_level": 0, "stat": "lore", "site": "site_scriptorium", "look": "scriptorium",
-			"blurb": "Quiet desks for people who read the margins. Researchers gather Insight, which the research tree will spend.",
+			"blurb": "Quiet desks for people who read the margins. Researchers gather Insight to spend on research (T), and their Lore speeds up study.",
 			"staff_title": "Researcher",
 			"levels": [
 				{"cost": {"gilt": 60, "supplies": 5, "ink": 2}, "days": 2, "slots": 1},

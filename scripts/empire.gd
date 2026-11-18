@@ -12,6 +12,7 @@ signal notice(text: String, warning: bool)  # something the player should hear a
 signal hollowmark_lost
 signal building_finished(id: String)  # a Hollowmark building was built or upgraded
 signal expedition_returned(report: Dictionary)
+signal research_finished(id: String)
 
 ## The Blank. Fray per day from each source; see fray_sources().
 const FRAY_FIRST_ERASED_NEIGHBOR := 3
@@ -76,6 +77,14 @@ var reports := []
 var job_ready := {}  # job id -> first day it can be taken again
 var job_data := {}  # id -> Dictionary from data/expeditions.json
 var pair_data := []
+## Research: finished node ids, days of study done per node, the node being studied now ("" = none),
+## and nodes whose cost has been paid (shelving a node keeps both its progress and its payment).
+var research_done := []
+var research_progress := {}
+var research_active := ""
+var research_paid := []
+var research_data := {}  # id -> Dictionary from data/research.json, in file order
+var branch_data := []
 var rng := RandomNumberGenerator.new()
 var _territory: Territory
 
@@ -116,6 +125,11 @@ func reset() -> void:
 	expeditions = []
 	reports = []
 	job_ready = {}
+	_load_research_data()
+	research_done = []
+	research_progress = {}
+	research_active = ""
+	research_paid = []
 	rng.seed = 1234
 	if _territory != null:
 		_territory.reload_data()
@@ -124,7 +138,9 @@ func reset() -> void:
 func tick(delta: float) -> void:
 	if SPEEDS[speed] == 0:
 		return
-	day_t += delta * SPEEDS[speed] / DAY_SECONDS
+	var days: float = delta * SPEEDS[speed] / DAY_SECONDS
+	day_t += days
+	_advance_research(days)
 	while day_t >= 1.0:
 		day_t -= 1.0
 		day += 1
@@ -164,6 +180,8 @@ func ledger() -> Array:
 	var qm := current_effect("command_table")
 	if int(qm.get("upkeep_cut", 0)) > 0:
 		lines.append({"label": "  Quartermaster's savings", "gilt": 0, "supplies": mini(int(qm["upkeep_cut"]), upkeep), "ink": 0, "note": ""})
+	if has_research("log_rations") and recruits.size() >= 4:
+		lines.append({"label": "  Ration tables", "gilt": 0, "supplies": recruits.size() / 4, "ink": 0, "note": "research"})
 	var ink := current_effect("inkworks")
 	if int(ink.get("ink", 0)) > 0:
 		lines.append({"label": "Inkworks", "gilt": 0, "supplies": 0, "ink": int(ink["ink"]), "note": ""})
@@ -229,8 +247,12 @@ func fray_sources(p: Dictionary, gov := "-") -> Array:
 		else:
 			out.append(["Governed by %s" % recruit(gov)["name"], governor_effect(gov, p["id"])["fray"]])
 		out.append(["Tended by your people", FRAY_TENDED])
+		if has_research("ward_margins"):
+			out.append(["Margin wards (research)", -1])
 		if int(lamps.get(p["id"], 0)) > 0:
-			out.append(["Wardlamp (level %d)" % int(lamps[p["id"]]), lamp_fray(int(lamps[p["id"]]))])
+			var lv := int(lamps[p["id"]])
+			var bright := has_research("ward_lampwright")
+			out.append(["Wardlamp (level %d%s)" % [lv, ", written" if bright else ""], lamp_fray(lv) - (1 if bright else 0)])
 	elif owner == "free":
 		out.append(["Nobody holds it", FRAY_UNHELD])
 	return out
@@ -286,9 +308,9 @@ func _update_surge() -> void:
 		var p := t.find(surge["id"])
 		surge = {}
 		if not p.is_empty() and p["owner"] != "erased":
-			p["fray"] = mini(int(p["fray"]) + SURGE_FRAY, 100)
+			p["fray"] = mini(int(p["fray"]) + surge_fray(), 100)
 			p["scar"] = SURGE_SCAR_DAYS
-			notice.emit("The Blank surged into %s. +%d Fray." % [p["name"], SURGE_FRAY], p["owner"] == "you")
+			notice.emit("The Blank surged into %s. +%d Fray." % [p["name"], surge_fray()], p["owner"] == "you")
 		next_surge_day = day + rng.randi_range(SURGE_GAP[0], SURGE_GAP[1])
 	var warn := surge_warning_days()
 	if surge.is_empty() and day >= next_surge_day - warn:
@@ -309,6 +331,11 @@ func _update_surge() -> void:
 			var target: Dictionary = pool[rng.rand_weighted(PackedFloat32Array(weights))]
 			surge = {"id": target["id"], "day": next_surge_day}
 			notice.emit("The Blank is gathering against %s. Surge in %d days." % [target["name"], next_surge_day - day], target["owner"] == "you")
+
+
+## How hard a surge hits. The Long Watch takes the edge off.
+func surge_fray() -> int:
+	return SURGE_FRAY - (4 if has_research("ward_longwatch") else 0)
 
 
 func surge_days_left() -> int:
@@ -697,6 +724,18 @@ func squad_blocker(id: String) -> String:
 	return ""
 
 
+## How long a job takes, in days. Waystations cut a quarter off.
+func job_days(jid: String) -> float:
+	return float(job(jid).get("days", 1)) * (0.75 if has_research("log_waystations") else 1.0)
+
+
+## "2 days", "1.5 days", "1 day".
+func job_days_text(jid: String) -> String:
+	var d := job_days(jid)
+	var s := str(int(d)) if is_equal_approx(d, roundf(d)) else ("%.2f" % d).rstrip("0")
+	return "%s day%s" % [s, "" if is_equal_approx(d, 1.0) else "s"]
+
+
 func expedition_cost(jid: String, n: int) -> Dictionary:
 	return {"supplies": int(job(jid).get("rations", 1)) * n}
 
@@ -764,6 +803,9 @@ func expedition_odds(jid: String, squad: Array) -> Dictionary:
 			why.append(["%s is Ex-Concord: knows the toll posts, +10%%" % n, true])
 		if has_trait(id, "greedy") and j.get("reward", {}).has("gilt"):
 			why.append(["%s is Greedy: brings back 20%% more Gilt (and pockets some)" % n, true])
+	if has_research("log_fieldmaps"):
+		chance += 10
+		why.append(["Field Maps (research), +10%", true])
 	for pair in pair_data:
 		if pair["ids"][0] in squad and pair["ids"][1] in squad:
 			chance += int(pair["mod"])
@@ -804,7 +846,7 @@ func send_expedition(jid: String, squad: Array) -> bool:
 	for id in squad:
 		recruits[id]["role"] = "expedition"
 		recruits[id]["target"] = jid
-	expeditions.append({"job": jid, "squad": squad.duplicate(), "start": now, "finish": now + float(job(jid)["days"])})
+	expeditions.append({"job": jid, "squad": squad.duplicate(), "start": now, "finish": now + job_days(jid)})
 	return true
 
 
@@ -925,6 +967,195 @@ func short_name(id: String) -> String:
 	return n.get_slice(" ", 0)
 
 
+# ---------------------------------------------------------------- research
+
+const RESEARCH_PER_LORE := 0.05  # +5% study pace per point of researcher Lore (Bookish counts double)
+const RESEARCH_PER_LEVEL := 0.25  # +25% per Scriptorium level past the first
+
+
+func _load_research_data() -> void:
+	if not research_data.is_empty():
+		return
+	var f := FileAccess.open("res://data/research.json", FileAccess.READ)
+	var parsed = JSON.parse_string(f.get_as_text())
+	branch_data = parsed["branches"]
+	for n in parsed["nodes"]:
+		research_data[n["id"]] = n
+
+
+func research_node(id: String) -> Dictionary:
+	_load_research_data()
+	return research_data.get(id, {})
+
+
+func research_ids() -> Array:
+	_load_research_data()
+	return research_data.keys()
+
+
+func research_branches() -> Array:
+	_load_research_data()
+	return branch_data
+
+
+func has_research(id: String) -> bool:
+	return id in research_done
+
+
+## How fast the Scriptorium studies: {"pace": 1.0 = 100%, "why": [text, ...]}. 0 = stalled.
+func research_pace() -> Dictionary:
+	var lv := level_of("scriptorium")
+	if lv <= 0:
+		return {"pace": 0.0, "why": ["No Scriptorium yet: build it on the Buildings screen (B)"]}
+	var staff := staff_of("scriptorium")
+	if _working(staff) == 0:
+		return {"pace": 0.0, "why": ["Nobody at the desks: give the Scriptorium a researcher (B or R)"]}
+	var why := ["Base pace 100%"]
+	var pace := 1.0
+	for r in staff:
+		if int(recruits[r]["injured"]) > 0:
+			why.append("%s is injured and not reading" % short_name(r))
+			continue
+		var lore := int(recruit(r)["stats"]["lore"])
+		var pts := lore * (2 if has_trait(r, "bookish") else 1)
+		pace += pts * RESEARCH_PER_LORE
+		why.append("%s, Lore %d%s: +%d%%" % [short_name(r), lore, " x2 (Bookish)" if has_trait(r, "bookish") else "", int(round(pts * RESEARCH_PER_LORE * 100))])
+	if lv > 1:
+		pace += (lv - 1) * RESEARCH_PER_LEVEL
+		why.append("Scriptorium level %d: +%d%%" % [lv, int(round((lv - 1) * RESEARCH_PER_LEVEL * 100))])
+	return {"pace": pace, "why": why}
+
+
+## Days of study still owed on a node (at 100% pace).
+func research_remaining(id: String) -> float:
+	return maxf(float(research_node(id).get("days", 1)) - float(research_progress.get(id, 0.0)), 0.0)
+
+
+func research_fraction(id: String) -> float:
+	return clampf(float(research_progress.get(id, 0.0)) / maxf(float(research_node(id).get("days", 1)), 0.001), 0.0, 1.0)
+
+
+## "1 day 4 h" at the current pace, or "stalled".
+func research_left_text(id: String) -> String:
+	var pace := float(research_pace()["pace"])
+	if pace <= 0.0:
+		return "stalled"
+	return days_left_text(research_remaining(id) / pace)
+
+
+## "available", "active", "shelved" (started, then set aside), "done" or "locked".
+func research_state(id: String) -> String:
+	if has_research(id):
+		return "done"
+	if id == research_active:
+		return "active"
+	if id in research_paid:
+		return "shelved"
+	return "available" if _research_lock(id) == "" else "locked"
+
+
+## What stops a node from being studied at all, regardless of resources ("" = nothing).
+func _research_lock(id: String) -> String:
+	var n := research_node(id)
+	for need in n.get("needs", []):
+		if not has_research(need):
+			return "needs %s first" % research_node(need)["name"]
+	var lv := int(n.get("scriptorium", 1))
+	if level_of("scriptorium") < lv:
+		return "needs the Scriptorium" + (" at level %d" % lv if lv > 1 else "")
+	return ""
+
+
+## Why a node can't be started right now ("" = it can).
+func research_blocker(id: String) -> String:
+	if has_research(id):
+		return "already known"
+	if id == research_active:
+		return "already being studied"
+	var lock := _research_lock(id)
+	if lock != "":
+		return lock
+	if not id in research_paid and not can_afford(research_node(id)["cost"]):
+		return "not enough " + _missing(research_node(id)["cost"])
+	return ""
+
+
+## "8 Insight, 3 Ink".
+func cost_text(cost: Dictionary) -> String:
+	var parts := []
+	for k in ["insight", "ink", "gilt", "supplies"]:
+		if int(cost.get(k, 0)) > 0:
+			parts.append("%d %s" % [int(cost[k]), RES_NAMES[k]])
+	return ", ".join(parts) if not parts.is_empty() else "free"
+
+
+## Starts (or resumes) studying a node. Pays its cost the first time; whatever was being
+## studied before is shelved with its progress kept.
+func start_research(id: String) -> bool:
+	if research_blocker(id) != "":
+		return false
+	if not id in research_paid:
+		spend(research_node(id)["cost"])
+		research_paid.append(id)
+	research_active = id
+	return true
+
+
+## Stops studying. Progress and payment stay with the node.
+func shelve_research() -> void:
+	research_active = ""
+
+
+func _advance_research(days: float) -> void:
+	if research_active == "":
+		return
+	var pace := float(research_pace()["pace"])
+	if pace <= 0.0:
+		return
+	var id := research_active
+	research_progress[id] = float(research_progress.get(id, 0.0)) + days * pace
+	if research_remaining(id) <= 0.0:
+		research_done.append(id)
+		research_progress.erase(id)
+		research_paid.erase(id)
+		research_active = ""
+		var n := research_node(id)
+		notice.emit("Research done: %s. %s." % [n["name"], n["effect"]], false)
+		research_finished.emit(id)
+
+
+## What finished research does on missions: the numbers main.gd applies, plus a short line
+## per node for the mission HUD.
+func mission_boosts() -> Dictionary:
+	var b := {"damage": 0, "hp": 0, "revive": 1.0, "guard": 0.0, "power_rate": 1.0, "lines": []}
+	if has_research("arms_whetstone"):
+		b["damage"] += 2
+	if has_research("arms_steel"):
+		b["damage"] += 3
+		b["power_rate"] = 1.2
+	if b["damage"] > 0:
+		b["lines"].append("+%d damage" % b["damage"])
+	if has_research("arms_steel"):
+		b["lines"].append("faster gauge")
+	if has_research("arms_leather"):
+		b["hp"] += 10
+		b["lines"].append("+10 max HP")
+	if has_research("ink_blot"):
+		b["revive"] = 1.4
+		b["lines"].append("faster revives")
+	if has_research("ink_skin"):
+		b["guard"] = 0.25
+		b["lines"].append("-25% damage taken")
+	return b
+
+
+## Damage a party member actually takes from a hit, after Inkskin.
+func damage_to_party(amount: int) -> int:
+	if has_research("ink_skin"):
+		return maxi(1, int(round(amount * 0.75)))
+	return amount
+
+
 # ---------------------------------------------------------------- buildings and construction
 
 func _load_building_data() -> void:
@@ -1008,8 +1239,14 @@ func building_effect(id: String, level: int, staff: Array) -> Dictionary:
 			for p in territory().provinces:
 				if p["owner"] == "you" and int(p.get("output", {}).get("ink", 0)) > 0:
 					held += 1
-			var ink := level + _stat_sum(staff, "craft", 3) + held
-			return {"ink": ink, "text": "+%d Ink a day" % ink + (" (%d from Ink provinces)" % held if held > 0 else "")}
+			var tap := 1 if has_research("ink_tap") else 0
+			var ink := level + _stat_sum(staff, "craft", 3) + held + tap
+			var extras := []
+			if held > 0:
+				extras.append("%d from Ink provinces" % held)
+			if tap > 0:
+				extras.append("1 from Spring Tapping")
+			return {"ink": ink, "text": "+%d Ink a day" % ink + (" (%s)" % ", ".join(extras) if not extras.is_empty() else "")}
 		"scriptorium":
 			if working == 0:
 				return {"insight": 0, "text": "Idle: needs a researcher"}
@@ -1028,7 +1265,7 @@ func current_effect(id: String) -> Dictionary:
 
 
 func surge_warning_days() -> int:
-	return int(current_effect("command_table").get("warning", SURGE_WARNING_DAYS))
+	return int(current_effect("command_table").get("warning", SURGE_WARNING_DAYS)) + (1 if has_research("ward_longwatch") else 0)
 
 
 func party_hp_bonus() -> int:
@@ -1084,7 +1321,11 @@ func job_progress(job: Dictionary) -> float:
 
 ## "1 day 6 hours"-style time left on a job.
 func job_left_text(job: Dictionary) -> String:
-	var hours := ceili(maxf(float(job["finish"]) - (day + day_t), 0.0) * 24.0)
+	return days_left_text(float(job["finish"]) - (day + day_t))
+
+
+func days_left_text(days: float) -> String:
+	var hours := ceili(maxf(days, 0.0) * 24.0)
 	var d := hours / 24
 	var h := hours % 24
 	if d > 0 and h > 0:
@@ -1193,6 +1434,8 @@ func to_dict() -> Dictionary:
 		"res": res, "hungry": hungry, "recruits": recruits, "surge": surge, "next_surge_day": next_surge_day,
 		"buildings": buildings, "construction": construction, "lamps": lamps, "lamp_jobs": lamp_jobs,
 		"expeditions": expeditions, "reports": reports, "job_ready": job_ready,
+		"research_done": research_done, "research_progress": research_progress, "research_active": research_active,
+		"research_paid": research_paid,
 		"rng_state": str(rng.state)}
 
 
@@ -1244,6 +1487,19 @@ func from_dict(d: Dictionary) -> void:
 	var saved_jr: Dictionary = d.get("job_ready", {})
 	for jid in saved_jr:
 		job_ready[jid] = int(saved_jr[jid])
+	for rid in d.get("research_done", []):
+		if research_data.has(rid) and not rid in research_done:
+			research_done.append(rid)
+	for rid in d.get("research_paid", []):
+		if research_data.has(rid) and not rid in research_paid:
+			research_paid.append(rid)
+	var saved_rp: Dictionary = d.get("research_progress", {})
+	for rid in saved_rp:
+		if research_data.has(rid):
+			research_progress[rid] = float(saved_rp[rid])
+	var ra: String = d.get("research_active", "")
+	if research_data.has(ra) and not ra in research_done:
+		research_active = ra
 	if d.has("rng_state"):
 		rng.state = int(d["rng_state"])
 	for saved in d.get("provinces", []):

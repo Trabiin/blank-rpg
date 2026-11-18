@@ -72,6 +72,9 @@ func _draw() -> void:
 	# Area name, top-left
 	_text(Vector2(8, 14), party.area.area_name, 10, Color(0.9, 0.88, 0.8))
 	_text(Vector2(8, 26), "Nibblers dispersed: %d" % party.kills, 8, Color(0.75, 0.75, 0.75))
+	var perks: Array = party.boosts.get("lines", [])
+	if not perks.is_empty():
+		_text(Vector2(8, 38), "Research: " + ", ".join(perks), 8, Color("d7b8f0"))
 
 	if banter_t > 0.0:
 		var a := clampf(banter_t / 0.4, 0.0, 1.0)
