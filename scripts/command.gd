@@ -536,16 +536,27 @@ func _open_brief(m: Dictionary) -> void:
 		lines.append("Reward: " + rew)
 	if int(m.get("fray", 0)) < 0:
 		lines.append("Pushes the Blank back: %d Fray in %s" % [int(m["fray"]), territory.find(m.get("province", "")).get("name", "")])
+	if m.has("cost_text"):
+		lines.append("Cost: " + m["cost_text"])
 	lines.append("The clock stops while you are away.")
-	brief_menu.setup(m.get("name", "Mission"), [
-		{"id": "go", "label": "Set out"},
-		{"id": "back", "label": "Back"},
-	], "\n".join(lines))
+	var blocker: String = str(m.get("blocker", ""))
+	var items := [{"id": "go", "label": "Set out", "enabled": blocker == "", "note": "(%s)" % blocker}]
+	# Other missions in the same province: switch the briefing to them.
+	var others := Missions.list_for_province(m.get("province", "")).filter(func(o): return o.get("id", "") != m.get("id", ""))
+	for o in others:
+		items.append({"id": "other:" + str(o["id"]), "label": "Instead: " + str(o["name"])})
+	items.append({"id": "back", "label": "Back"})
+	brief_menu.setup(m.get("name", "Mission"), items, "\n".join(lines))
 	brief_menu.visible = true
 	get_tree().paused = true
 
 
 func _on_brief(id: String) -> void:
+	if id.begins_with("other:"):
+		for o in Missions.list_for_province(brief_mission.get("province", "")):
+			if "other:" + str(o["id"]) == id:
+				_open_brief(o)
+				return
 	brief_menu.visible = false
 	get_tree().paused = false
 	menu_closed_frame = Engine.get_process_frames()
@@ -888,6 +899,19 @@ func _draw_labels() -> void:
 			draw_arc(pos + Vector2(0, -6), 14.0 + pulse * 3.0, 0, TAU, 32, Color(1, 0.35, 0.3, 0.5 + 0.4 * pulse), 2.0)
 			var dl := Empire.surge_days_left()
 			_text_c(pos + Vector2(0, 13), "Surge %s" % ("today" if dl <= 0 else "in %d day%s" % [dl, "" if dl == 1 else "s"]), 8, Color(1, 0.55, 0.5), 3)
+		# Reclaim and Rescue missions on offer (Defense already shows as the surge ring).
+		var tags := []
+		for tm in MissionTypes.for_province(p["id"]):
+			if tm["type"] != "defense":
+				tags.append(tm)
+		var ty := 13.0 + (10.0 if Empire.surge.get("id", "") == p["id"] else 0.0)
+		for tm in tags:
+			var tcol: Color = MissionTypes.TYPE_COLORS[tm["type"]]
+			if tm["blocker"] != "":
+				tcol = tcol.darkened(0.45)
+			draw_circle(pos + Vector2(-font.get_string_size(MissionTypes.TYPE_NAMES[tm["type"]], HORIZONTAL_ALIGNMENT_LEFT, -1, 8).x / 2.0 - 5, ty - 3), 2.0 + (0.6 * sin(t * 4.0) if tm["blocker"] == "" else 0.0), tcol)
+			_text_c(pos + Vector2(0, ty), MissionTypes.TYPE_NAMES[tm["type"]], 8, tcol, 3)
+			ty += 10.0
 
 
 func _draw_legend() -> void:
@@ -1007,10 +1031,14 @@ func _draw_panel() -> void:
 	var m := _mission(selected)
 	var r := _play_rect()
 	if not m.is_empty():
-		draw_rect(r, Color(0.22, 0.17, 0.08))
-		draw_rect(r, GOLD, false, 1.0)
-		_text_c(Vector2(r.get_center().x, r.position.y + 12), "Play: " + m["name"], 9, GOLD)
-		_text_c(Vector2(r.get_center().x, r.position.y + 22), "Enter / A / tap", 8, Color(0.75, 0.7, 0.55))
+		var more := Missions.list_for_province(p["id"]).size() - 1
+		var blocked: bool = str(m.get("blocker", "")) != ""
+		draw_rect(r, Color(0.22, 0.17, 0.08) if not blocked else Color(0.12, 0.11, 0.13))
+		draw_rect(r, GOLD if not blocked else Color(0.45, 0.42, 0.4), false, 1.0)
+		var label: String = m["name"] if m.has("type") else "Play: " + m["name"]
+		_text_c(Vector2(r.get_center().x, r.position.y + 12), label + ("  (+%d more)" % more if more > 0 else ""), 9, GOLD if not blocked else Color(0.7, 0.67, 0.62))
+		var sub := "Enter / A / tap" if not blocked else "Locked: " + str(m["blocker"])
+		_text_c(Vector2(r.get_center().x, r.position.y + 22), sub, 8, Color(0.75, 0.7, 0.55) if not blocked else Color(1, 0.6, 0.5))
 	else:
-		var note := "Reclaim missions are coming soon" if owner == "erased" else "No missions here right now"
+		var note := "No missions here right now"
 		_text_c(Vector2(r.get_center().x, r.position.y + 16), note, 8, Color(0.45, 0.44, 0.47))

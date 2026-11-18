@@ -48,10 +48,20 @@ static func offered(m: Dictionary) -> bool:
 
 ## The mission a province offers, or {} when there is none. Story missions come first.
 static func for_province(pid: String) -> Dictionary:
+	var ms := list_for_province(pid)
+	return ms[0] if not ms.is_empty() else {}
+
+
+## Everything a province offers, best first: story missions, then the runtime Defense,
+## Reclaim and Rescue missions (MissionTypes, issue #51), then repeatable ones like patrols.
+## A mission with a non-empty "blocker" is shown but cannot be launched yet.
+static func list_for_province(pid: String) -> Array:
+	var story := []
+	var repeat := []
 	for m in all():
 		if m.get("province", "") == pid and offered(m):
-			return m
-	return {}
+			(story if m.get("story", false) else repeat).append(m)
+	return story + MissionTypes.for_province(pid) + repeat
 
 
 ## The mission being played, falling back to the right Meadow mission for New Game and for
@@ -119,8 +129,19 @@ static func settle(m: Dictionary, outcome: String, found: Dictionary, stats: Dic
 		"first_clear": outcome == "success" and not cleared(m.get("id", "")),
 		"kills": int(stats.get("kills", 0)), "time": float(stats.get("time", 0.0)),
 		"objective": stats.get("objective", ""),
-		"lines": [],  # extra lines for the results screen (mission-type effects, issue #51)
+		"rewards": m.get("rewards", {}) if outcome == "success" else {},
+		"lines": _effect_lines(m, outcome, stats),  # mission-type effects, issue #51
+		"mission_dict": m,
 	}
+
+
+static func _effect_lines(m: Dictionary, outcome: String, stats: Dictionary) -> Array:
+	var lines := []
+	if str(stats.get("fail", "")) != "":
+		lines.append(str(stats["fail"]))
+	if m.get("effects", false):
+		lines.append_array(MissionTypes.apply(m, outcome, true))
+	return lines
 
 
 ## Pays out a settled result and marks the mission cleared.
@@ -133,8 +154,10 @@ static func apply(result: Dictionary) -> void:
 	var p := Empire.territory().find(result.get("province_id", ""))
 	if not p.is_empty() and p["owner"] != "erased" and int(result["fray"]) != 0:
 		p["fray"] = clampi(int(p["fray"]) + int(result["fray"]), 0, 99)
-	# Mission types with effects beyond rewards (issue #51) hook in here, e.g.:
-	# if m.has("effects"): MissionTypes.apply(m, result["outcome"])
+	# Mission types with effects beyond rewards (issue #51): surges broken, land rewritten, people found.
+	var m: Dictionary = result.get("mission_dict", {})
+	if m.get("effects", false):
+		MissionTypes.apply(m, result["outcome"])
 	Empire.active_mission = {}
 	Empire.last_mission = result
 
