@@ -32,6 +32,7 @@ func _ready() -> void:
 	_add_action("diplomacy", [KEY_F], [])  # gamepad: through the menus
 	_add_action("bonds", [KEY_H], [])  # gamepad: through the menus
 	_add_action("newcomers", [KEY_N], [])  # gamepad: through the menus
+	_add_action("gear", [KEY_K], [])  # party gear and the shop (issue #15); gamepad: through the menus
 	_add_action("quick_menu", [KEY_C], [JOY_BUTTON_BACK])  # missions only; Back is the ledger on the Command Table
 	# Menus use Godot's ui_* actions; also let WASD, J and the stick drive them.
 	_extend("ui_up", [KEY_W], JOY_AXIS_LEFT_Y, -1.0)

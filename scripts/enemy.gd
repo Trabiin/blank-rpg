@@ -27,6 +27,7 @@ var dying_t := -1.0
 ## Something to go and eat when no hero is close (a Defense mission's wardstone). Needs nibble(amount).
 var goal: Node2D = null
 var nibble_t := 0.0
+var xp := 3  # shared by the party when it falls (issue #15)
 ## Hold the Line (abilities.gd): for taunt_t seconds this enemy goes for taunter and nobody else.
 var taunter: Hero = null
 var taunt_t := 0.0

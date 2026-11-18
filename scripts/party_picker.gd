@@ -406,3 +406,4 @@ static func apply(h: Hero, id: String) -> void:
 		h.heal_amount = int(heal.get("amount", 6))
 		h.heal_range = float(heal.get("range", 80))
 	h.set_abilities(hd.get("abilities", []), float(hd.get("ink", 12)))  # issue #7
+	Progress.apply_to(h)  # levels and gear (issue #15)

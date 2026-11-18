@@ -107,6 +107,7 @@ var mission_kills_bonded := 0  # how many kill steps this mission already paid o
 var active_mission := {}
 var missions_cleared := []
 var last_mission := {}
+var progress := {}  # party XP, levels and gear (scripts/progress.gd, issue #15)
 var rng := RandomNumberGenerator.new()
 var _territory: Territory
 
@@ -176,6 +177,7 @@ func reset() -> void:
 	active_mission = {}
 	missions_cleared = []
 	last_mission = {}
+	progress = Progress.fresh()
 	visitors = {}
 	rng.seed = 1234
 	if _territory != null:
@@ -264,6 +266,7 @@ func _settle() -> void:
 	hungry = res["supplies"] < 0
 	if hungry:
 		res["supplies"] = 0
+	Progress.dawn()  # the Barracks trains whoever is on the bench
 	ledger_settled.emit(net)
 
 
@@ -1930,6 +1933,8 @@ func to_dict() -> Dictionary:
 		"bonds": bonds,
 		"visitors": visitors,
 		"missions_cleared": missions_cleared,
+		"progress": progress,
+		"dialogue": Dialogue.seen,
 		"satchel": satchel, "ai_presets": ai_presets,
 		"rng_state": str(rng.state)}
 
@@ -2033,6 +2038,7 @@ func from_dict(d: Dictionary) -> void:
 			bonds[id] = {"points": maxi(int(b.get("points", 0)), 0), "rank": clampi(int(b.get("rank", 0)), 0, 5),
 				"talk_day": int(b.get("talk_day", 0)), "personal_done": bool(b.get("personal_done", false))}
 	_load_visitors(d)
+	progress = Progress.from_save(d.get("progress", {}))
 	if d.has("rng_state"):
 		rng.state = int(d["rng_state"])
 	for saved in d.get("provinces", []):

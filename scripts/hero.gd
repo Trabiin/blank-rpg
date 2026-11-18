@@ -56,6 +56,8 @@ var heal_every := 0.0
 var heal_amount := 0
 var heal_range := 80.0
 var heal_t := 3.0
+# Armor (issue #15): this fraction of every hit is blocked. Set by Progress.apply_to from gear.
+var guard := 0.0
 
 # Abilities and Ink (issue #7; what each one does lives in scripts/abilities.gd).
 var abilities: Array = []  # ability dicts from data/abilities.json, slot i = key i+1
@@ -185,6 +187,8 @@ func _adjust_damage(amount: int) -> int:
 			return 0
 	if guard_t > 0.0:
 		amount = maxi(1, roundi(amount * (1.0 - guard_cut)))
+	if guard > 0.0:  # armor (issue #15)
+		amount = maxi(1, roundi(amount * (1.0 - guard)))
 	return amount
 
 

@@ -317,6 +317,12 @@ and Blank positions so the content stretches without feeling copy-pasted.
 Party progression (per fighter), on top of the empire's own progression (buildings, research, provinces):
 
 1. **Levels and gear.** XP raises HP, Ink and base stats. Gear: weapon, armor, one trinket per hero.
+   MVP (issue #15, numbers in `data/gear.json`): every enemy gives XP to the whole party (a Blot gives more), a
+   finished mission adds a bonus, and the Barracks drills benched fighters for XP each day. Each hero has their
+   own weapon line (start weapon plus two upgrades, the best needing research); armor and trinkets fit anyone.
+   Gear is bought at Tobble's Stall (K in town or on the Command Table, half price back when selling) or found
+   on missions (rare drops, kept unless the party is wiped). Equip from the Gear screen (K, or Party gear in the
+   pause menu mid-mission, where it applies at once). Consumables are the quick menu's satchel (#6).
 2. **Weapon and Ink skill levels (Mana-style).** Using a weapon type or Ink color raises its skill level (cap 5),
    unlocking a charged tech per level for weapons, and stronger spell tiers for Inks.
 3. **Per-hero skill trees.** Each hero has a small tree (about 10 nodes, two branches) bought with Skill Points from levels.

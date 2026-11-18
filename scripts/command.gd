@@ -64,6 +64,8 @@ const DiplomacyView := preload("res://scripts/diplomacy_view.gd")
 var diplomacy_view
 const BondsView := preload("res://scripts/bonds_view.gd")
 var bonds_view
+const GearViewScript := preload("res://scripts/gear_view.gd")
+var gear_view  # gear_view.gd: party gear and the shop (issue #15)
 const NewcomersView := preload("res://scripts/newcomers_view.gd")
 var newcomers_view
 var party_picker  # party_picker.gd: who goes on the mission
@@ -117,6 +119,9 @@ func _ready() -> void:
 	party_picker = PartyPicker.new()
 	party_picker.visible = false
 	roster_layer.add_child(party_picker)
+	gear_view = GearViewScript.new()
+	gear_view.visible = false
+	roster_layer.add_child(gear_view)
 	party_picker.confirmed.connect(_launch_mission)
 	party_picker.roster_requested.connect(_roster_from_picker)
 
@@ -205,6 +210,7 @@ func _menu_items(note := "") -> void:
 		{"id": "diplomacy", "label": "Diplomacy", "detail": "F"},
 		{"id": "bonds", "label": "Bonds", "detail": "H"},
 		{"id": "newcomers", "label": "Newcomers", "detail": "N"},
+		{"id": "gear", "label": "Party gear & shop", "detail": "K"},
 		{"id": "save", "label": "Save game"},
 		{"id": "load", "label": "Load game", "enabled": Saves.latest_slot() != "", "note": "(no saves yet)"},
 		{"id": "title", "label": "Quit to title"},
@@ -256,6 +262,9 @@ func _on_menu(id: String) -> void:
 		"newcomers":
 			_close_menu()
 			newcomers_view.open()
+		"gear":
+			_close_menu()
+			gear_view.open("town")
 		"title":
 			_leave(TITLE_SCENE)
 
@@ -405,7 +414,8 @@ func _process(delta: float) -> void:
 			or diplomacy_view.visible or frame == diplomacy_view.closed_frame \
 			or bonds_view.visible or frame == bonds_view.closed_frame \
 			or newcomers_view.visible or frame == newcomers_view.closed_frame \
-			or party_picker.visible or frame == party_picker.closed_frame:
+			or party_picker.visible or frame == party_picker.closed_frame \
+			or gear_view.visible or frame == gear_view.closed_frame:
 		return
 	if Input.is_action_just_pressed("roster"):
 		roster_view.open()
@@ -430,6 +440,9 @@ func _process(delta: float) -> void:
 		return
 	if Input.is_action_just_pressed("newcomers"):
 		newcomers_view.open()
+		return
+	if Input.is_action_just_pressed("gear"):
+		gear_view.open("town")
 		return
 	for i in Empire.SPEEDS.size():
 		if Input.is_action_just_pressed("clock_speed_%d" % i):

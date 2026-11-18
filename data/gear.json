@@ -1,0 +1,67 @@
+{
+	"_comment": "Party progression (issue #15). levels: XP to go from level L to L+1 is round(xp_base * xp_growth^(L-1)), up to max. growth: what each level adds per field hero (hp, damage, ink; fractions add up and round down, so 0.5 damage = +1 every other level). Base stats live in data/heroes.json. items: gear. slot: weapon, armor or trinket (consumables are the quick menu's satchel, issue #6). hero: weapon belongs to that hero only. stats: added to the hero (hp, damage, power_rate = gauge refill bonus as a fraction, speed px/s, reach px, guard = fraction of damage blocked, ink, heal = poultice HP). price: Gilt in the Hollowmark shop (sells back for half). shop: false = only found on missions. needs: research node that must be known before the shop stocks it. drops: per-kill chance on missions and the weighted table picked from; items found are kept on success or retreat and lost if the party is wiped out. barracks_xp: XP a day for each field hero on the bench (not in the party), per Barracks level. mission_xp: bonus XP to the party for finishing a mission (missions.json can set its own \"xp\").",
+	"levels": {"max": 20, "xp_base": 20, "xp_growth": 1.3},
+	"growth": {
+		"ash": {"hp": 4, "damage": 1.0, "ink": 3},
+		"bran": {"hp": 7, "damage": 1.0, "ink": 1},
+		"gristle": {"hp": 4, "damage": 0.5, "ink": 3, "heal": 0.5},
+		"ninefingers": {"hp": 5, "damage": 1.0, "ink": 2},
+		"_default": {"hp": 5, "damage": 1.0, "ink": 2}
+	},
+	"start": {
+		"gear": {"ash": "quill_knife", "bran": "contract_cleaver", "gristle": "bone_ladle", "ninefingers": "concord_pike"}
+	},
+	"barracks_xp": 6,
+	"mission_xp": 12,
+	"drops": {
+		"chance": 0.025,
+		"table": {"padded_coat": 4, "bent_nib": 3, "lucky_button": 3, "running_boots": 3, "blotter_charm": 2, "ledger_mail": 1}
+	},
+	"items": {
+		"quill_knife": {"name": "Quill-knife", "slot": "weapon", "hero": "ash", "stats": {}, "price": 0, "shop": false,
+			"blurb": "A pen sharpened past the point of writing. Ash woke up holding it."},
+		"steel_nib": {"name": "Steel Nib", "slot": "weapon", "hero": "ash", "stats": {"damage": 3}, "price": 60,
+			"blurb": "A longer, meaner nib. Signs things permanently."},
+		"ravens_quill": {"name": "Raven's Quill", "slot": "weapon", "hero": "ash", "stats": {"damage": 5, "power_rate": 0.1}, "price": 150, "needs": "arms_whetstone",
+			"blurb": "Black, glossy and impatient. It wants the next stroke before you finish this one."},
+
+		"contract_cleaver": {"name": "Contract Cleaver", "slot": "weapon", "hero": "bran", "stats": {}, "price": 0, "shop": false,
+			"blurb": "Bran's old cleaver. The handle has his rates carved into it."},
+		"notary_axe": {"name": "Notary's Axe", "slot": "weapon", "hero": "bran", "stats": {"damage": 4}, "price": 70,
+			"blurb": "Used to stamp seals into wax. Now stamps them into Nibblers."},
+		"foreclosure": {"name": "Foreclosure", "slot": "weapon", "hero": "bran", "stats": {"damage": 8, "speed": -4}, "price": 160, "needs": "arms_whetstone",
+			"blurb": "A two-handed cleaver the size of a door. Bran calls it a negotiating position."},
+
+		"bone_ladle": {"name": "Bone Ladle", "slot": "weapon", "hero": "gristle", "stats": {}, "price": 0, "shop": false,
+			"blurb": "Gristle won't say whose bone. She will say it stirs well."},
+		"copper_ladle": {"name": "Copper Ladle", "slot": "weapon", "hero": "gristle", "stats": {"damage": 2, "heal": 2}, "price": 60,
+			"blurb": "Conducts heat, gossip and, apparently, healing."},
+		"cauldron_spoon": {"name": "Cauldron Spoon", "slot": "weapon", "hero": "gristle", "stats": {"damage": 4, "heal": 4}, "price": 150, "needs": "ink_blot",
+			"blurb": "Long enough to stir a soup from across the room. Or to reach a patient who is running away."},
+
+		"concord_pike": {"name": "Concord Pike", "slot": "weapon", "hero": "ninefingers", "stats": {}, "price": 0, "shop": false,
+			"blurb": "Standard Concord issue. Daro filed off the serial number and one of the prongs."},
+		"tollkeeper_pike": {"name": "Tollkeeper's Pike", "slot": "weapon", "hero": "ninefingers", "stats": {"damage": 3, "reach": 3}, "price": 65,
+			"blurb": "Made for blocking bridges. Long, heavy, and very persuasive."},
+		"breach_lance": {"name": "Breach Lance", "slot": "weapon", "hero": "ninefingers", "stats": {"damage": 6, "reach": 4}, "price": 155, "needs": "arms_whetstone",
+			"blurb": "A siege lance cut down to something one reckless person can carry."},
+
+		"padded_coat": {"name": "Padded Coat", "slot": "armor", "stats": {"hp": 8}, "price": 40,
+			"blurb": "Quilted, patched and warm. Smells faintly of someone else's dog."},
+		"ledger_mail": {"name": "Ledger Mail", "slot": "armor", "stats": {"hp": 14, "guard": 0.1}, "price": 95,
+			"blurb": "Rings of iron threaded with old ledger pages. Teeth catch on the sums."},
+		"inkskin_vest": {"name": "Inkskin Vest", "slot": "armor", "stats": {"hp": 10, "guard": 0.2, "ink": 4}, "price": 170, "needs": "ink_skin",
+			"blurb": "A vest of written leather. The words knit shut where something bites."},
+
+		"bent_nib": {"name": "Bent Nib", "slot": "trinket", "stats": {"damage": 2}, "price": 45,
+			"blurb": "A pen nib bent into a ring. Pointy on the inside too, so you stay alert."},
+		"lucky_button": {"name": "Lucky Button", "slot": "trinket", "stats": {"power_rate": 0.12}, "price": 50,
+			"blurb": "Off a coat that survived the Blank. The coat's owner did not, which raises questions."},
+		"running_boots": {"name": "Courier's Laces", "slot": "trinket", "stats": {"speed": 6}, "price": 45,
+			"blurb": "Laces from a courier's boots. Your feet get the idea."},
+		"blotter_charm": {"name": "Blotter Charm", "slot": "trinket", "stats": {"ink": 6, "hp": 4}, "price": 55,
+			"blurb": "A square of blotting paper in a locket. Soaks up spilt Ink for later."}
+	},
+	"shop_name": "Tobble's Stall",
+	"shop_blurb": "Odds, ends and sharp things, sold off a cart that is never in the same place twice."
+}
