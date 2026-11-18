@@ -93,7 +93,7 @@ func _ready() -> void:
 		var h := _make_hero(PartyPicker.short_of(ids[i]), start + offsets[i % offsets.size()],
 			look.get("outfit", "archer"), PartyPicker.look_colors(look))
 		PartyPicker.apply(h, ids[i])
-		h.ai_style = str(Empire.ai_presets.get(ids[i], h.ai_style))  # picked in the quick menu's Party tab
+		h.ai_style = AllyAI.preset_id(str(Empire.ai_presets.get(ids[i], h.ai_style)))  # picked in the quick menu's Party tab
 	# The Barracks sends the party out tougher; research sharpens and armours them.
 	boosts = Empire.mission_boosts()
 	Empire.mission_kills_bonded = 0

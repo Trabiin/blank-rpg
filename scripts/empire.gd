@@ -113,7 +113,7 @@ var _territory: Territory
 
 
 ## Quick menu (issue #6): field items carried into missions (scripts/satchel.gd) and the AI
-## behaviour picked per hero in its Party tab (recruit id -> Hero.AI_STYLES key).
+## behaviour picked per hero in its Party tab (recruit id -> AllyAI.PRESETS key).
 var satchel := {}
 var ai_presets := {}
 

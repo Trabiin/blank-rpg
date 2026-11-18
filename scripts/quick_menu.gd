@@ -276,6 +276,7 @@ func _pick_sub(i: int) -> void:
 		hero.ai_style = style
 		hero.ai_target = null
 		Empire.ai_presets[hero.hero_id] = style  # sticks for the next mission too
+		Fx.damage_number(hero.get_parent(), hero.global_position + Vector2(0, -26), _style_name(style), Color("8fa7e8"))
 		_say("%s: %s." % [hero.hero_name, _style_name(style)])
 	sub = []
 	_rebuild()
@@ -458,6 +459,8 @@ func _draw() -> void:
 	else:
 		var hint := "Tap a tab or row.  Tap outside to close." if party and party.touch_active() \
 			else "Left/Right or Q/E: tabs    J/A: pick    X/B: back    C/Back: close"
+		if sub_sel >= 0 and sub_sel < sub.size() and str(sub[sub_sel]["id"]).begins_with("ai:"):
+			hint = _style_desc(str(sub[sub_sel]["id"]).substr(3))  # what the highlighted AI preset does (issue #9)
 		_str(font, Vector2(x0, fy), hint, 8, DIM)
 	_str_right(font, x1, fy, "time slowed", 8, Color(0.7, 0.8, 1.0, 0.6 + 0.3 * sin(_t * 3.0)))
 
