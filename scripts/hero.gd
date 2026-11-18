@@ -41,16 +41,9 @@ var detour_dir := Vector2.ZERO
 
 var revive_progress := 0.0
 
-## How the ally AI behaves (data/heroes.json picks one per hero).
-## commit: gauge needed before charging in; seek: how far from the leader it looks for enemies;
-## leash: drops a target that strays this far from the leader; back_off: retreats to this distance while recharging.
-const AI_STYLES := {
-	"steady": {"commit": 0.95, "seek": 170.0, "leash": 210.0, "back_off": 44.0},
-	"guard": {"commit": 0.9, "seek": 95.0, "leash": 130.0, "back_off": 30.0},
-	"reckless": {"commit": 0.55, "seek": 240.0, "leash": 300.0, "back_off": 0.0},
-	"healer": {"commit": 0.95, "seek": 60.0, "leash": 90.0, "back_off": 64.0},
-}
-var ai_style := "steady"
+## Ally AI presets (issue #9): Aggressive, Balanced, Keep Distance, Support. The logic lives in scripts/ally_ai.gd.
+const AI_STYLES := AllyAI.PRESETS
+var ai_style := "balanced"
 # Passive poultice (Mother Gristle): every heal_every seconds, patch the most hurt ally in range.
 var heal_every := 0.0
 var heal_amount := 0
@@ -77,6 +70,12 @@ var dash_speed := 0.0
 var dash_ability := {}
 var dash_hit: Array = []
 var ai_ability_t := 0.0
+
+# Charged tech (issue #8; rules, blast and glow live in scripts/techs.gd).
+var charging := false
+var charge_t := 0.0
+var charge_ready := false
+var tech_flash_t := 0.0
 
 
 func _ready() -> void:
@@ -125,8 +124,8 @@ func _physics_process(delta: float) -> void:
 		dir = Vector2.ZERO  # the quick menu has the controls (time is slowed, not stopped)
 	elif controlled:
 		dir = Input.get_vector("move_left", "move_right", "move_up", "move_down")
-		if Input.is_action_just_pressed("attack") and not peaceful:
-			try_attack()
+		if not peaceful:
+			Techs.control(self, delta)  # tap = swing; full gauge + hold = charged tech
 		if not peaceful:  # (the quick menu branch above already keeps these quiet while it is open)
 			for i in abilities.size():
 				if Input.is_action_just_pressed("ability_%d" % (i + 1)):
@@ -136,7 +135,7 @@ func _physics_process(delta: float) -> void:
 
 	if dir.length() > 0.1 and swing_t <= 0.0:
 		facing = dir.normalized()
-	var spd := move_speed * (0.3 if swing_t > 0.0 or cast_t > 0.0 else 1.0)
+	var spd := move_speed * (0.3 if swing_t > 0.0 or cast_t > 0.0 else (Techs.CHARGE_SPEED if charging else 1.0))
 	velocity = dir * spd + knockback
 	knockback = knockback.move_toward(Vector2.ZERO, 900.0 * delta)
 	move_and_slide()
@@ -217,6 +216,8 @@ func _update_abilities(delta: float) -> void:
 	if max_ink > 0.0:
 		ink = minf(ink + ink_regen * delta, max_ink)
 	cast_t = maxf(cast_t - delta, 0.0)
+	tech_flash_t = maxf(tech_flash_t - delta, 0.0)
+	Techs.tick(self)
 	guard_t = maxf(guard_t - delta, 0.0)
 	if shield_t > 0.0:
 		shield_t -= delta
@@ -234,6 +235,7 @@ func _on_death() -> void:
 	revive_progress = 0.0
 	swing_t = 0.0
 	dash_t = 0.0
+	Techs.cancel(self)
 	shield_hp = 0
 	guard_t = 0.0
 
@@ -293,39 +295,7 @@ func _ai(delta: float) -> Vector2:
 		ai_side = -ai_side
 		return detour_dir
 
-	var style: Dictionary = AI_STYLES.get(ai_style, AI_STYLES["steady"])
-	if not abilities.is_empty():
-		ai_ability_t -= delta
-		if ai_ability_t <= 0.0:
-			ai_ability_t = Abilities.AI_THINK
-			var pick := Abilities.ai_pick(self)
-			if pick >= 0 and Abilities.use(self, pick):
-				return Vector2.ZERO
-	if ai_target == null or not is_instance_valid(ai_target) or ai_target.dead \
-			or ai_target.global_position.distance_to(leader.global_position) > float(style["leash"]):
-		ai_target = _nearest_enemy(leader.global_position, float(style["seek"]))
-
-	if ai_target:
-		var to_t := ai_target.global_position - global_position
-		var d := to_t.length()
-		# Commits once the power gauge is full enough for this hero's style.
-		if power >= float(style["commit"]):
-			if d <= reach + ai_target.radius - 6.0:
-				facing = to_t.normalized()
-				try_attack()
-				return Vector2.ZERO
-			return to_t.normalized()
-		facing = to_t.normalized()
-		if d < float(style["back_off"]):
-			return -to_t.normalized() * 0.8
-		return Vector2.ZERO
-
-	var side := leader.facing.orthogonal() * 14.0 * ai_side
-	var dest := leader.global_position - leader.facing * 22.0 + side
-	var to_d := dest - global_position
-	if to_d.length() < 12.0:
-		return Vector2.ZERO
-	return to_d.normalized() * clampf(to_d.length() / 36.0, 0.35, 1.0)
+	return AllyAI.steer(self, leader, delta)
 
 
 func _nearest_enemy(from: Vector2, max_dist: float) -> Enemy:
@@ -419,6 +389,7 @@ func _draw_overlay() -> void:
 		for k in 3:
 			var back := -dash_dir * (6.0 + 6.0 * k)
 			overlay.draw_line(back + Vector2(0, -10), back + Vector2(0, -2), Color(1, 1, 1, 0.5 - 0.15 * k), 2.0)
+	Techs.draw(self, overlay)
 	if controlled:
 		var y := -21.0 + sin(anim_t * 4.0) * 1.0
 		overlay.draw_colored_polygon(PackedVector2Array([Vector2(-2.5, y - 3), Vector2(2.5, y - 3), Vector2(0, y)]), Color("ffd166"))
