@@ -154,6 +154,9 @@ func _pick(i: int) -> void:
 				return
 			job_id = row["id"]
 			squad = []
+			var who: String = Empire.job(job_id).get("personal", "")
+			if who != "" and Empire.squad_blocker(who) == "":
+				squad.append(who)  # a personal job always takes its person
 			_go("squad")
 		"out":
 			var e := Empire.expedition_running(row["id"])
@@ -190,6 +193,9 @@ func _send_blocker() -> String:
 	if squad.size() < Empire.SQUAD_MIN:
 		return "pick at least %d people" % Empire.SQUAD_MIN
 	var why := Empire.job_blocker(job_id)
+	if why != "":
+		return why
+	why = Empire.squad_rule(job_id, squad)
 	if why != "":
 		return why
 	var cost := Empire.expedition_cost(job_id, squad.size())

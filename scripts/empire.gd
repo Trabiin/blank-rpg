@@ -13,6 +13,7 @@ signal hollowmark_lost
 signal building_finished(id: String)  # a Hollowmark building was built or upgraded
 signal expedition_returned(report: Dictionary)
 signal research_finished(id: String)
+signal bond_ready(id: String)  # someone has a rank scene waiting
 
 ## The Blank. Fray per day from each source; see fray_sources().
 const FRAY_FIRST_ERASED_NEIGHBOR := 3
@@ -97,6 +98,10 @@ var diplo_log := []
 var faction_data := {}  # id -> Dictionary from data/factions.json, in file order
 var tier_data := []
 var trade_breaks := 0
+# Bonds (data/bonds.json): id -> {"points", "rank", "talk_day", "personal_done"} for the core cast who have joined.
+var bonds := {}
+var bond_data := {}
+var mission_kills_bonded := 0  # how many kill steps this mission already paid out (not saved)
 var rng := RandomNumberGenerator.new()
 var _territory: Territory
 
@@ -151,6 +156,9 @@ func reset() -> void:
 	intel_until = 0
 	next_trouble_day = 5
 	diplo_log = []
+	_load_bond_data()
+	bonds = {}
+	mission_kills_bonded = 0
 	rng.seed = 1234
 	if _territory != null:
 		_territory.reload_data()
@@ -169,6 +177,7 @@ func tick(delta: float) -> void:
 		_settle()
 		_advance_blank()
 		_advance_diplomacy()
+		_advance_bonds()
 		day_passed.emit(day)
 	_advance_construction()
 	_advance_expeditions()
@@ -214,6 +223,8 @@ func ledger() -> Array:
 	if ins > 0:
 		lines.append({"label": "Scriptorium", "gilt": 0, "supplies": 0, "ink": 0, "note": "+%d Insight" % ins})
 	_diplomacy_ledger(lines)
+	for b in bond_perk_lines():
+		lines.append(b)
 	return lines
 
 
@@ -230,7 +241,7 @@ func _settle() -> void:
 	var net := daily_net()
 	for k in RESOURCES:
 		res[k] += net[k]
-	res["insight"] = int(res.get("insight", 0)) + int(current_effect("scriptorium").get("insight", 0))
+	res["insight"] = int(res.get("insight", 0)) + int(current_effect("scriptorium").get("insight", 0)) + bond_perk_total("insight")
 	hungry = res["supplies"] < 0
 	if hungry:
 		res["supplies"] = 0
@@ -690,7 +701,7 @@ func role_label(id: String) -> String:
 
 
 func _heal() -> void:
-	var per_day := 1 + int(current_effect("infirmary").get("extra_heal", 0))
+	var per_day := 1 + int(current_effect("infirmary").get("extra_heal", 0)) + bond_perk_total("heal")
 	for id in recruits:
 		if int(recruits[id]["injured"]) > 0:
 			recruits[id]["injured"] = maxi(int(recruits[id]["injured"]) - per_day, 0)
@@ -725,7 +736,7 @@ func job(id: String) -> Dictionary:
 ## Jobs worth listing: rescues vanish once the person has joined.
 func job_ids() -> Array:
 	_load_expedition_data()
-	return job_data.keys().filter(func(j): return not recruits.has(job_data[j].get("recruit", "")))
+	return job_data.keys().filter(func(j): return not recruits.has(job_data[j].get("recruit", "")) and personal_open(j))
 
 
 ## How many squads the Guildhall can have out at once (one per level).
@@ -861,6 +872,16 @@ func expedition_odds(jid: String, squad: Array) -> Dictionary:
 	if has_perk("guild"):
 		chance += 10
 		why.append(["Guild scouts share the road (Friendly), +10%", true])
+	for pk in bond_perks_with("squad_odds"):
+		if pk["id"] in squad:
+			chance += int(pk["effect"]["squad_odds"])
+			why.append(["%s (%s's bond), +%d%%" % [pk["name"], short_name(pk["id"]), int(pk["effect"]["squad_odds"])], true])
+	for pk in bond_perks_with("all_odds"):
+		chance += int(pk["effect"]["all_odds"])
+		why.append(["%s (%s's bond), +%d%%" % [pk["name"], short_name(pk["id"]), int(pk["effect"]["all_odds"])], true])
+	var who: String = j.get("personal", "")
+	if who != "" and not who in squad:
+		why.append(["Personal: %s has to go" % short_name(who), false])
 	for pair in pair_data:
 		if pair["ids"][0] in squad and pair["ids"][1] in squad:
 			chance += int(pair["mod"])
@@ -890,7 +911,7 @@ func reward_text(jid: String) -> String:
 
 
 func send_expedition(jid: String, squad: Array) -> bool:
-	if job_blocker(jid) != "" or squad.size() < SQUAD_MIN or squad.size() > SQUAD_MAX:
+	if job_blocker(jid) != "" or squad_rule(jid, squad) != "" or squad.size() < SQUAD_MIN or squad.size() > SQUAD_MAX:
 		return false
 	for id in squad:
 		if squad_blocker(id) != "":
@@ -972,6 +993,14 @@ func _resolve_expedition(e: Dictionary) -> void:
 		for fid in j.get("standing", {}):
 			change_standing(fid, int(j["standing"][fid]), j["name"], true)
 			lines.append("%s standing %+d." % [faction(fid).get("short", fid), int(j["standing"][fid])])
+		for id in squad:
+			if has_bond(id):
+				bond_gain(id, int(bond_data["points"]["expedition"]), "", true)
+		var pid: String = j.get("personal", "")
+		if pid != "" and has_bond(pid):
+			bonds[pid]["personal_done"] = true
+			bond_gain(pid, 999, "", true)
+			lines.append("%s has something to tell Ash. (Bonds: H, or find them in Hollowmark.)" % short_name(pid))
 		var rid: String = j.get("recruit", "")
 		if rid != "" and not recruits.has(rid) and recruit_data.has(rid):
 			recruits[rid] = {"role": "idle", "target": "", "injured": 0}
@@ -1085,6 +1114,9 @@ func research_pace() -> Dictionary:
 	if lv > 1:
 		pace += (lv - 1) * RESEARCH_PER_LEVEL
 		why.append("Scriptorium level %d: +%d%%" % [lv, int(round((lv - 1) * RESEARCH_PER_LEVEL * 100))])
+	for pk in bond_perks_with("research_pace"):
+		pace += float(pk["effect"]["research_pace"])
+		why.append("%s (%s's bond): +%d%%" % [pk["name"], short_name(pk["id"]), int(round(float(pk["effect"]["research_pace"]) * 100))])
 	return {"pace": pace, "why": why}
 
 
@@ -1208,6 +1240,15 @@ func mission_boosts() -> Dictionary:
 	if has_research("ink_skin"):
 		b["guard"] = 0.25
 		b["lines"].append("-25% damage taken")
+	for pk in bond_perks_with("mission_hp"):
+		b["hp"] += int(pk["effect"]["mission_hp"])
+		b["lines"].append("+%d max HP (%s)" % [int(pk["effect"]["mission_hp"]), pk["name"]])
+	for pk in bond_perks_with("mission_damage"):
+		b["damage"] += int(pk["effect"]["mission_damage"])
+		b["lines"].append("+%d damage (%s)" % [int(pk["effect"]["mission_damage"]), pk["name"]])
+	for pk in bond_perks_with("mission_revive"):
+		b["revive"] *= 1.0 + float(pk["effect"]["mission_revive"])
+		b["lines"].append("faster revives (%s)" % pk["name"])
 	return b
 
 
@@ -1689,7 +1730,7 @@ func current_effect(id: String) -> Dictionary:
 
 func surge_warning_days() -> int:
 	return int(current_effect("command_table").get("warning", SURGE_WARNING_DAYS)) + (1 if has_research("ward_longwatch") else 0) \
-		+ (1 if intel_until > day else 0)
+		+ (1 if intel_until > day else 0) + bond_perk_total("surge_warning")
 
 
 func party_hp_bonus() -> int:
@@ -1864,6 +1905,7 @@ func to_dict() -> Dictionary:
 		"research_paid": research_paid,
 		"standing": standing, "pacts": pacts, "deal_ready": deal_ready, "intel_until": intel_until,
 		"next_trouble_day": next_trouble_day, "diplo_log": diplo_log,
+		"bonds": bonds,
 		"rng_state": str(rng.state)}
 
 
@@ -1947,6 +1989,12 @@ func from_dict(d: Dictionary) -> void:
 		if recruits[id]["role"] == "envoy" and not faction_data.has(recruits[id]["target"]):
 			recruits[id]["role"] = "idle"
 			recruits[id]["target"] = ""
+	var saved_bonds: Dictionary = d.get("bonds", {})
+	for id in saved_bonds:
+		if bond_cast().has(id):
+			var b: Dictionary = saved_bonds[id]
+			bonds[id] = {"points": maxi(int(b.get("points", 0)), 0), "rank": clampi(int(b.get("rank", 0)), 0, 5),
+				"talk_day": int(b.get("talk_day", 0)), "personal_done": bool(b.get("personal_done", false))}
 	if d.has("rng_state"):
 		rng.state = int(d["rng_state"])
 	for saved in d.get("provinces", []):
@@ -1955,3 +2003,279 @@ func from_dict(d: Dictionary) -> void:
 			p["owner"] = saved["owner"]
 			p["fray"] = saved["fray"]
 			p["scar"] = int(saved.get("scar", 0))
+
+
+# ---------------------------------------------------------------- bonds
+
+const BOND_MAX := 5
+
+
+func _load_bond_data() -> void:
+	if not bond_data.is_empty():
+		return
+	var f := FileAccess.open("res://data/bonds.json", FileAccess.READ)
+	bond_data = JSON.parse_string(f.get_as_text())
+
+
+func bond_cast() -> Dictionary:
+	_load_bond_data()
+	return bond_data["cast"]
+
+
+func bond_info(id: String) -> Dictionary:
+	return bond_cast().get(id, {})
+
+
+## Is this someone Ash can bond with (core cast, on the roster)?
+func has_bond(id: String) -> bool:
+	return bond_cast().has(id) and recruits.has(id)
+
+
+## The core cast who have joined, in roster order.
+func bond_ids() -> Array:
+	return roster_ids().filter(func(id): return bond_cast().has(id))
+
+
+func _bond(id: String) -> Dictionary:
+	if not bonds.has(id):
+		bonds[id] = {"points": 0, "rank": 0, "talk_day": 0, "personal_done": false}
+	return bonds[id]
+
+
+func bond_rank(id: String) -> int:
+	return int(bonds.get(id, {}).get("rank", 0))
+
+
+func bond_points(id: String) -> int:
+	return int(bonds.get(id, {}).get("points", 0))
+
+
+func bond_threshold(rank: int) -> int:
+	_load_bond_data()
+	var r: Array = bond_data["ranks"]
+	return int(r[clampi(rank, 0, r.size() - 1)])
+
+
+func bond_rank_name(rank: int) -> String:
+	_load_bond_data()
+	return bond_data["rank_names"][clampi(rank, 0, BOND_MAX)]
+
+
+func personal_job(id: String) -> String:
+	_load_expedition_data()
+	for jid in job_data:
+		if job_data[jid].get("personal", "") == id:
+			return jid
+	return ""
+
+
+func personal_done(id: String) -> bool:
+	return bool(bonds.get(id, {}).get("personal_done", false))
+
+
+## A personal job only shows on the board once its person is at rank 4 and has not done it yet.
+func personal_open(jid: String) -> bool:
+	var who: String = job(jid).get("personal", "")
+	if who == "":
+		return true
+	return has_bond(who) and bond_rank(who) >= 4 and not personal_done(who)
+
+
+## Why this squad can't take this job ("" = it can).
+func squad_rule(jid: String, squad: Array) -> String:
+	var who: String = job(jid).get("personal", "")
+	if who != "" and not who in squad:
+		return "it's personal: %s has to go" % short_name(who)
+	return ""
+
+
+## The rank scene waiting to be seen (1-5), or 0.
+func bond_next_scene(id: String) -> int:
+	if not has_bond(id):
+		return 0
+	var rank := bond_rank(id)
+	if rank >= BOND_MAX:
+		return 0
+	if bond_points(id) < bond_threshold(rank + 1):
+		return 0
+	if rank + 1 == BOND_MAX and not personal_done(id):
+		return 0
+	return rank + 1
+
+
+func bond_ready_ids() -> Array:
+	return bond_ids().filter(func(id): return bond_next_scene(id) > 0)
+
+
+## What stands between this person and their next rank, in words.
+func bond_next_text(id: String) -> String:
+	var rank := bond_rank(id)
+	if rank >= BOND_MAX:
+		return "Bound. Nothing left to prove."
+	if bond_next_scene(id) > 0:
+		return "Wants a word. Talk to them in Hollowmark (or press Enter here)."
+	var need := bond_threshold(rank + 1) - bond_points(id)
+	if rank == BOND_MAX - 1 and not personal_done(id):
+		var pj := personal_job(id)
+		if not expedition_running(pj).is_empty():
+			return "Away on their personal job. Back in %s." % job_left_text(expedition_running(pj))
+		return "Rank 5 needs their personal job: \"%s\" on the Guildhall board (E). They have to go on it." % job(pj).get("name", "?")
+	if need > 0:
+		return "%d more bond point%s to rank %d." % [need, "" if need == 1 else "s", rank + 1]
+	return ""
+
+
+## Can the scene be played right now (they are in Hollowmark)?
+func bond_scene_blocker(id: String) -> String:
+	if role_of(id) == "expedition":
+		return "%s is away on an expedition" % short_name(id)
+	return ""
+
+
+## Add bond points. They never drop below the current rank and stop at the next rank until its scene is seen.
+func bond_gain(id: String, amount: int, why := "", quiet := false) -> int:
+	if not has_bond(id) or amount == 0:
+		return 0
+	var b := _bond(id)
+	var rank := int(b["rank"])
+	var was_ready := bond_next_scene(id) > 0
+	var cap := bond_threshold(mini(rank + 1, BOND_MAX))
+	var before := int(b["points"])
+	b["points"] = clampi(before + amount, bond_threshold(rank), maxi(cap, before))
+	var gained := int(b["points"]) - before
+	if not was_ready and bond_next_scene(id) > 0:
+		notice.emit("%s wants a word with Ash. Find them in Hollowmark (Bonds: H)." % short_name(id), false)
+		bond_ready.emit(id)
+	elif gained != 0 and why != "" and not quiet:
+		notice.emit("%s: bond %+d (%s)." % [short_name(id), gained, why], false)
+	return gained
+
+
+## The first chat of the day in Hollowmark counts. Returns the points gained.
+func bond_talk(id: String) -> int:
+	if not has_bond(id):
+		return 0
+	var b := _bond(id)
+	if int(b["talk_day"]) == day:
+		return 0
+	b["talk_day"] = day
+	return bond_gain(id, int(bond_data["points"]["talk"]), "", true)
+
+
+func talked_today(id: String) -> bool:
+	return int(bonds.get(id, {}).get("talk_day", 0)) == day
+
+
+## "likes", "dislikes" or "" for what they are doing right now.
+func role_mood(id: String) -> String:
+	var st: Dictionary = recruits.get(id, {})
+	if st.is_empty():
+		return ""
+	return role_mood_for(id, st["role"], st["target"])
+
+
+## Would they like or dislike this role? (for the roster's role list)
+func role_mood_for(id: String, role: String, target: String) -> String:
+	var info := bond_info(id)
+	if info.is_empty():
+		return ""
+	var keys := [role, "%s:%s" % [role, target]]
+	for k in keys:
+		if k in info.get("likes", []):
+			return "likes"
+	for k in keys:
+		if k in info.get("dislikes", []):
+			return "dislikes"
+	return ""
+
+
+func _advance_bonds() -> void:
+	for id in bond_ids():
+		match role_mood(id):
+			"likes":
+				bond_gain(id, int(bond_data["points"]["liked_role"]), "", true)
+			"dislikes":
+				bond_gain(id, int(bond_data["points"]["disliked_role"]), "", true)
+
+
+## Called by the mission scene on every kill: party members with bonds earn a little per few kills.
+func bond_fought(kills: int, ids: Array) -> void:
+	_load_bond_data()
+	var p: Dictionary = bond_data["points"]
+	if kills <= 0 or kills % int(p["kill_step"]) != 0 or mission_kills_bonded >= int(p["mission_cap"]):
+		return
+	mission_kills_bonded += 1
+	for id in ids:
+		if has_bond(id):
+			bond_gain(id, int(p["mission"]), "", true)
+
+
+func bond_scene(id: String, rank: int) -> Dictionary:
+	for sc in bond_info(id).get("scenes", []):
+		if int(sc["rank"]) == rank:
+			return sc
+	return {}
+
+
+## Seen scenes can be replayed from the Bonds screen.
+func bond_seen_scenes(id: String) -> Array:
+	return bond_info(id).get("scenes", []).filter(func(sc): return int(sc["rank"]) <= bond_rank(id))
+
+
+## The scene for the next rank was watched: rank up, then add what the choice was worth.
+## Returns any perk this rank unlocked ({} if none).
+func finish_bond_scene(id: String, rank: int, choice := -1) -> Dictionary:
+	if bond_next_scene(id) != rank:
+		return {}
+	var b := _bond(id)
+	b["rank"] = rank
+	var sc := bond_scene(id, rank)
+	var opts: Array = sc.get("choice", [])
+	if choice >= 0 and choice < opts.size():
+		bond_gain(id, int(opts[choice].get("bond", 0)), "", true)
+	var perk: Dictionary = bond_info(id).get("perks", {}).get(str(rank), {})
+	var msg := "%s is now %s (bond rank %d)." % [short_name(id), bond_rank_name(rank), rank]
+	if not perk.is_empty():
+		msg += " Perk: %s, %s" % [perk["name"], perk["desc"]]
+	if rank == 4 and personal_job(id) != "":
+		msg += " Their personal job is on the Guildhall board."
+	notice.emit(msg, false)
+	return perk
+
+
+## Every perk unlocked so far: [{"id", "rank", "name", "desc", "effect"}].
+func bond_perks() -> Array:
+	var out := []
+	for id in bond_ids():
+		var perks: Dictionary = bond_info(id).get("perks", {})
+		for r in perks:
+			if bond_rank(id) >= int(r):
+				var pk: Dictionary = perks[r].duplicate()
+				pk["id"] = id
+				pk["rank"] = int(r)
+				out.append(pk)
+	return out
+
+
+func bond_perks_with(key: String) -> Array:
+	return bond_perks().filter(func(pk): return pk["effect"].has(key))
+
+
+func bond_perk_total(key: String) -> int:
+	var t := 0
+	for pk in bond_perks_with(key):
+		t += int(pk["effect"][key])
+	return t
+
+
+## Ledger lines for perks that pay out daily.
+func bond_perk_lines() -> Array:
+	var out := []
+	for pk in bond_perks():
+		var e: Dictionary = pk["effect"]
+		if not (e.has("gilt") or e.has("supplies") or e.has("ink") or e.has("insight")):
+			continue
+		out.append({"label": "%s (%s)" % [pk["name"], short_name(pk["id"])], "gilt": int(e.get("gilt", 0)),
+			"supplies": int(e.get("supplies", 0)), "ink": int(e.get("ink", 0)),
+			"note": ("+%d Insight" % int(e["insight"])) if e.has("insight") else "bond"})
+	return out

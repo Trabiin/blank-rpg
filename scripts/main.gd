@@ -80,6 +80,7 @@ func _ready() -> void:
 	bran.reach = 21.0
 	# The Barracks sends the party out tougher; research sharpens and armours them.
 	boosts = Empire.mission_boosts()
+	Empire.mission_kills_bonded = 0
 	for h in [ash, bran]:
 		h.max_hp += Empire.party_hp_bonus() + int(boosts["hp"])
 		h.hp = h.max_hp
@@ -203,6 +204,7 @@ func touch_active() -> bool:
 
 func _on_enemy_died(_e: Actor) -> void:
 	kills += 1
+	Empire.bond_fought(kills, ["bran"])  # fighting beside Ash builds bonds (this test map always brings Bran)
 	if not said_first_kill:
 		said_first_kill = true
 		banter_queue.append(["Bran", "It popped. Like a thought you weren't supposed to have."])

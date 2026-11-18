@@ -13,6 +13,8 @@ const BuildingsView := preload("res://scripts/buildings_view.gd")
 const ExpeditionView := preload("res://scripts/expedition_view.gd")
 const ResearchView := preload("res://scripts/research_view.gd")
 const DiplomacyView := preload("res://scripts/diplomacy_view.gd")
+const BondsView := preload("res://scripts/bonds_view.gd")
+const SceneView := preload("res://scripts/scene_view.gd")
 const SiteScript := preload("res://scripts/building_site.gd")
 
 const MAP := "res://maps/hollowmark.txt"
@@ -44,6 +46,8 @@ var buildings_view
 var expedition_view
 var research_view
 var diplomacy_view
+var bonds_view
+var scene_view  # bond scenes started by talking to someone in town
 var sites := {}  # building id -> building_site.gd on its plot
 var lamp: Node2D  # Hollowmark's own Wardlamp, drawn once it is lit
 var menu: InkMenu
@@ -129,6 +133,12 @@ func _ready() -> void:
 	diplomacy_view.visible = false
 	roster_layer.add_child(diplomacy_view)
 	diplomacy_view.closed.connect(_place_people)  # envoys leave town
+	bonds_view = BondsView.new()
+	bonds_view.visible = false
+	roster_layer.add_child(bonds_view)
+	scene_view = SceneView.new()
+	scene_view.visible = false
+	roster_layer.add_child(scene_view)
 	Empire.expedition_returned.connect(func(_r): _place_people())
 
 	var menu_layer := CanvasLayer.new()
@@ -304,7 +314,8 @@ func _find_target() -> Dictionary:
 		var d: float = (npcs[id] as Node2D).global_position.distance_to(p)
 		if d < best_d:
 			best_d = d
-			best = {"kind": "npc", "id": id, "pos": (npcs[id] as Node2D).global_position, "label": "Talk to " + Empire.recruit(id)["name"]}
+			best = {"kind": "npc", "id": id, "pos": (npcs[id] as Node2D).global_position, "label": "Talk to " + Empire.recruit(id)["name"]
+				+ ("  (wants a word)" if Empire.bond_next_scene(id) > 0 else "")}
 	# The table is wide: measure to its nearest edge, not its middle.
 	var tr := Rect2(table_pos - Vector2(TABLE_SIZE.x / 2.0, TABLE_SIZE.y), TABLE_SIZE)
 	var nearest := Vector2(clampf(p.x, tr.position.x, tr.end.x), clampf(p.y, tr.position.y, tr.end.y))
@@ -344,6 +355,13 @@ func _use(t: Dictionary) -> void:
 		touch.release_all()
 		return
 	var id: String = t["id"]
+	var ready_rank := Empire.bond_next_scene(id)
+	if ready_rank > 0:  # they have something to say: play their bond scene
+		(npcs[id] as Hero).facing = (leader.global_position - (npcs[id] as Node2D).global_position).normalized()
+		Empire.bond_talk(id)
+		scene_view.play(id, ready_rank)
+		touch.release_all()
+		return
 	var r := Empire.recruit(id)
 	var lines: Array = r.get("lines", [])
 	var npc: Hero = npcs[id]
@@ -361,6 +379,9 @@ func _use(t: Dictionary) -> void:
 		var i: int = talk_index.get(id, 0)
 		line = lines[i % lines.size()]
 		talk_index[id] = i + 1
+	var gained := Empire.bond_talk(id)
+	if gained > 0:
+		line += "   (bond +%d)" % gained
 	hud.say("%s: %s" % [short_name, line], 4.5)
 
 
@@ -423,6 +444,7 @@ func open_menu(note := "") -> void:
 		{"id": "expeditions", "label": "Expeditions", "detail": "E"},
 		{"id": "research", "label": "Research", "detail": "T"},
 		{"id": "diplomacy", "label": "Diplomacy", "detail": "F"},
+		{"id": "bonds", "label": "Bonds", "detail": "H"},
 		{"id": "save", "label": "Save game"},
 		{"id": "load", "label": "Load game", "enabled": Saves.latest_slot() != "", "note": "(no saves yet)"},
 		{"id": "title", "label": "Quit to title"},
@@ -460,6 +482,9 @@ func _on_menu(id: String) -> void:
 		"diplomacy":
 			_close_menu()
 			diplomacy_view.open()
+		"bonds":
+			_close_menu()
+			bonds_view.open()
 		"save", "load":
 			slot_mode = id
 			menu.visible = false
@@ -505,10 +530,11 @@ func _process(delta: float) -> void:
 
 	var frame := Engine.get_process_frames()
 	var screen_open: bool = roster_view.visible or buildings_view.visible or expedition_view.visible or research_view.visible \
-			or diplomacy_view.visible
+			or diplomacy_view.visible or bonds_view.visible or scene_view.visible
 	if screen_open or frame == roster_view.closed_frame or frame == buildings_view.closed_frame \
 			or frame == expedition_view.closed_frame or frame == research_view.closed_frame \
-			or frame == diplomacy_view.closed_frame or frame == menu_closed_frame:
+			or frame == diplomacy_view.closed_frame or frame == bonds_view.closed_frame \
+			or frame == scene_view.closed_frame or frame == menu_closed_frame:
 		leader.controlled = not screen_open
 		return
 	leader.controlled = true
@@ -529,6 +555,9 @@ func _process(delta: float) -> void:
 		return
 	if Input.is_action_just_pressed("diplomacy"):
 		diplomacy_view.open()
+		return
+	if Input.is_action_just_pressed("bonds"):
+		bonds_view.open()
 		return
 	for i in Empire.SPEEDS.size():
 		if Input.is_action_just_pressed("clock_speed_%d" % i):
@@ -616,6 +645,10 @@ func _draw_tags(canvas: Node2D) -> void:
 		var col := Color("ffd166", a) if target.get("id", "") == id else Color(0.95, 0.93, 0.88, a)
 		canvas.draw_string_outline(font, p, name_s, HORIZONTAL_ALIGNMENT_LEFT, -1, 6, 2, Color(0, 0, 0, 0.8 * a))
 		canvas.draw_string(font, p, name_s, HORIZONTAL_ALIGNMENT_LEFT, -1, 6, col)
+		if Empire.bond_next_scene(id) > 0:  # a heart: they want a word
+			var hc := npc.global_position + Vector2(0, -38 + sin(Time.get_ticks_msec() * 0.005) * 1.5)
+			Art.draw_heart(canvas, hc, 4.0, Color("ff8fa3"))
+			continue
 		if target.get("id", "") == id:
 			var y := -33.0 + sin(Time.get_ticks_msec() * 0.006)
 			var tip := npc.global_position + Vector2(0, y)

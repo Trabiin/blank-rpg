@@ -60,6 +60,8 @@ const ResearchView := preload("res://scripts/research_view.gd")
 var research_view
 const DiplomacyView := preload("res://scripts/diplomacy_view.gd")
 var diplomacy_view
+const BondsView := preload("res://scripts/bonds_view.gd")
+var bonds_view
 var autosave_t := AUTOSAVE_EVERY
 
 
@@ -101,6 +103,9 @@ func _ready() -> void:
 	diplomacy_view.visible = false
 	roster_layer.add_child(diplomacy_view)
 	diplomacy_view.closed.connect(_bake)  # a ceded province changes colour
+	bonds_view = BondsView.new()
+	bonds_view.visible = false
+	roster_layer.add_child(bonds_view)
 
 	var layer := CanvasLayer.new()
 	layer.layer = 5
@@ -179,6 +184,7 @@ func _menu_items(note := "") -> void:
 		{"id": "expeditions", "label": "Expeditions", "detail": "E"},
 		{"id": "research", "label": "Research", "detail": "T"},
 		{"id": "diplomacy", "label": "Diplomacy", "detail": "F"},
+		{"id": "bonds", "label": "Bonds", "detail": "H"},
 		{"id": "save", "label": "Save game"},
 		{"id": "load", "label": "Load game", "enabled": Saves.latest_slot() != "", "note": "(no saves yet)"},
 		{"id": "title", "label": "Quit to title"},
@@ -224,6 +230,9 @@ func _on_menu(id: String) -> void:
 		"diplomacy":
 			_close_menu()
 			diplomacy_view.open()
+		"bonds":
+			_close_menu()
+			bonds_view.open()
 		"title":
 			_leave(TITLE_SCENE)
 
@@ -370,7 +379,8 @@ func _process(delta: float) -> void:
 			or governor_view.visible or frame == governor_view.closed_frame \
 			or expedition_view.visible or frame == expedition_view.closed_frame \
 			or research_view.visible or frame == research_view.closed_frame \
-			or diplomacy_view.visible or frame == diplomacy_view.closed_frame:
+			or diplomacy_view.visible or frame == diplomacy_view.closed_frame \
+			or bonds_view.visible or frame == bonds_view.closed_frame:
 		return
 	if Input.is_action_just_pressed("roster"):
 		roster_view.open()
@@ -389,6 +399,9 @@ func _process(delta: float) -> void:
 		return
 	if Input.is_action_just_pressed("diplomacy"):
 		diplomacy_view.open()
+		return
+	if Input.is_action_just_pressed("bonds"):
+		bonds_view.open()
 		return
 	for i in Empire.SPEEDS.size():
 		if Input.is_action_just_pressed("clock_speed_%d" % i):
