@@ -1,0 +1,17 @@
+{
+	"_comment": "Field items carried in the party satchel and used from the quick menu (issue #6). target: 'hurt' = a standing hero below full HP, 'downed' = a downed hero, 'party' = everyone standing (no target to pick). heal: HP restored ('revive' items bring a downed hero back at revive_pct of max HP). power: fills the attack gauge. start: how many Hollowmark's stores put back in the satchel after every mission (you keep any extra you found). drop: chance a defeated enemy leaves one behind.",
+	"items": {
+		"tonic": {
+			"name": "Bitter Tonic", "target": "hurt", "heal": 25, "start": 3, "drop": 0.06,
+			"desc": "Restores 25 HP to one hero. Tastes like a bad decision."
+		},
+		"salts": {
+			"name": "Smelling Salts", "target": "downed", "revive_pct": 0.5, "start": 1, "drop": 0.02,
+			"desc": "Gets a downed hero back up at half HP, enemies or not."
+		},
+		"draught": {
+			"name": "Black Draught", "target": "party", "power": 1.0, "heal": 8, "start": 1, "drop": 0.02,
+			"desc": "Whole party: attack gauges full and 8 HP each. Mostly coffee."
+		}
+	}
+}

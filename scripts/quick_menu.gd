@@ -1,0 +1,486 @@
+class_name QuickMenu
+extends Control
+## The quick menu (issue #6): one button opens it mid-fight and time slows to 10% instead of pausing.
+## Tabs: Items, Abilities, Party (take control, AI behaviour), Equip. A plain list, never a ring.
+## Every action is two presses: pick a row, then pick from its short list (or it acts at once).
+##
+## Keyboard: C opens/closes, arrows/WASD move, left/right or Q/E change tab, J/Enter picks, X/Esc backs out.
+## Gamepad: Back opens/closes, d-pad/stick move (left/right change tab), A picks, B backs out.
+## 1-4 and the shoulders/triggers are left alone: they are ability hotkeys (issue #7).
+## Mouse and touch: tap a tab, tap a row, tap outside the panel to close.
+
+signal closed
+
+const TABS := ["Items", "Abilities", "Party", "Equip"]
+const SLOW := 0.1
+const W := 420.0
+const ROW_H := 30.0
+const GOLD := Color("ffd166")
+const TEXT := Color(0.92, 0.9, 0.86)
+const DIM := Color(0.55, 0.55, 0.58)
+const PANEL := Color(0.06, 0.05, 0.09, 0.92)
+
+var party  # main.gd
+var tab := 0
+var rows: Array = []  # {"id", "label", "right", "detail", "enabled", "hero"}
+var sel := 0
+var sub: Array = []  # the short list a row opens: {"id", "label", "right", "enabled"}
+var sub_sel := 0
+var sub_title := ""
+var note := ""
+var note_t := 0.0
+var _t := 0.0
+var _panel := Rect2()
+var _tab_rects: Array = []
+var _row_rects: Array = []
+var _sub_rects: Array = []
+var _sub_panel := Rect2()
+var _hero_data := {}
+
+
+func _ready() -> void:
+	set_anchors_preset(Control.PRESET_FULL_RECT)
+	mouse_filter = Control.MOUSE_FILTER_STOP
+	process_mode = Node.PROCESS_MODE_ALWAYS
+	visible = false
+	var parsed = JSON.parse_string(FileAccess.get_file_as_string("res://data/heroes.json"))
+	_hero_data = parsed if typeof(parsed) == TYPE_DICTIONARY else {}
+
+
+func is_open() -> bool:
+	return visible
+
+
+func open() -> void:
+	if visible:
+		return
+	visible = true
+	sub = []
+	note = ""
+	Engine.time_scale = SLOW
+	_rebuild()
+
+
+func close() -> void:
+	if not visible:
+		return
+	visible = false
+	sub = []
+	Engine.time_scale = 1.0
+	closed.emit()
+
+
+func _exit_tree() -> void:
+	# Never leave the whole game in slow motion if the scene changes under the menu.
+	if visible:
+		Engine.time_scale = 1.0
+
+
+# ---------------------------------------------------------------- rows
+
+func _heroes() -> Array:
+	return party.heroes if party else []
+
+
+func _style_name(style: String) -> String:
+	return str(_hero_data.get("styles", {}).get(style, {}).get("name", style.capitalize()))
+
+
+func _style_desc(style: String) -> String:
+	return str(_hero_data.get("styles", {}).get(style, {}).get("desc", ""))
+
+
+func _hd(h: Hero) -> Dictionary:
+	return _hero_data.get("heroes", {}).get(h.hero_id, {})
+
+
+## Hotkeyed Ink abilities (issue #7) are read by duck typing, so this menu works before and after they exist.
+func _abilities_of(h: Hero) -> Array:
+	if not ("abilities" in h) or typeof(h.get("abilities")) != TYPE_ARRAY:
+		return []
+	return h.get("abilities")
+
+
+func _abilities_script():
+	const PATH := "res://scripts/abilities.gd"
+	return load(PATH) if ResourceLoader.exists(PATH) else null
+
+
+func _ability_blocker(h: Hero, i: int) -> String:
+	var ab = _abilities_script()
+	return str(ab.blocker(h, i)) if ab else "not ready"
+
+
+## The full gear screen (issue #15), when it exists: the Equip tab hands over to it.
+func _open_gear() -> bool:
+	const PATH := "res://scripts/gear_view.gd"
+	if not ResourceLoader.exists(PATH) or party == null:
+		return false
+	var gv = load(PATH).new()
+	get_parent().add_child(gv)
+	gv.party = party
+	close()
+	# The gear screen doesn't stop the fight itself: pause underneath it (this layer runs while paused).
+	get_tree().paused = true
+	party.touch.release_all()
+	gv.open("mission")
+	gv.closed.connect(func():
+		if is_inside_tree():
+			get_tree().paused = false
+		gv.queue_free())
+	return true
+
+
+func _rebuild() -> void:
+	rows = []
+	match TABS[tab]:
+		"Items":
+			for id in Satchel.ids():
+				var it := Satchel.item(id)
+				var why := Satchel.blocker(id, _heroes())
+				rows.append({"id": id, "label": str(it.get("name", id)), "right": "x%d" % Satchel.count(id),
+					"detail": str(it.get("desc", "")) if why == "" else "%s  (%s)" % [it.get("desc", ""), why],
+					"enabled": why == ""})
+		"Abilities":
+			for h in _heroes():
+				var hero: Hero = h
+				var list := _abilities_of(hero)
+				if list.is_empty():
+					rows.append({"id": hero.hero_id, "label": hero.hero_name, "right": "Ink abilities: soon",
+						"detail": str(_hd(hero).get("special", "")), "enabled": true, "info": true})
+				else:
+					var ink := "Ink %d/%d" % [int(hero.get("ink")), int(hero.get("max_ink"))]
+					rows.append({"id": hero.hero_id, "label": hero.hero_name + ("  (down)" if hero.dead else ""), "right": ink,
+						"detail": ", ".join(list.map(func(a): return str(a.get("name", "?")))), "enabled": not hero.dead, "hero": hero})
+		"Party":
+			for h in _heroes():
+				var hero: Hero = h
+				var state := "  (down)" if hero.dead else ("  (you)" if hero.controlled else "")
+				rows.append({"id": hero.hero_id, "label": hero.hero_name + state, "right": "AI: " + _style_name(hero.ai_style),
+					"detail": _style_desc(hero.ai_style), "enabled": true, "hero": hero})
+		"Equip":
+			for h in _heroes():
+				var hero: Hero = h
+				var hd := _hd(hero)
+				rows.append({"id": hero.hero_id, "label": "%s: %s" % [hero.hero_name, hd.get("weapon", "fists")],
+					"right": "DMG %d  Reach %d" % [hero.base_damage, int(hero.reach)],
+					"detail": "HP %d/%d   gauge %.2f/s   Armour and trinkets: not yet" % [hero.hp, hero.max_hp, hero.power_rate],
+					"enabled": true, "info": true})
+	sel = clampi(sel, 0, maxi(rows.size() - 1, 0))
+	if not rows.is_empty() and not rows[sel].get("enabled", true):
+		_move(1)
+
+
+func _set_tab(i: int) -> void:
+	tab = posmod(i, TABS.size())
+	sub = []
+	sel = 0
+	_rebuild()
+
+
+func _move(step: int) -> void:
+	if sub.size() > 0:
+		for n in sub.size():
+			sub_sel = posmod(sub_sel + step, sub.size())
+			if sub[sub_sel].get("enabled", true):
+				return
+		return
+	for n in rows.size():
+		sel = posmod(sel + step, rows.size())
+		if rows[sel].get("enabled", true):
+			return
+
+
+func _say(s: String) -> void:
+	note = s
+	note_t = 2.5
+
+
+## First press: act on the row (or open its short list).
+func _pick_row(i: int) -> void:
+	if i < 0 or i >= rows.size():
+		return
+	var r: Dictionary = rows[i]
+	sel = i
+	if not r.get("enabled", true):
+		return
+	if TABS[tab] == "Equip" and _open_gear():
+		return
+	if r.get("info", false) or (TABS[tab] == "Abilities" and not r.has("hero")):
+		_say("Hotkeyed Ink abilities arrive in a later update." if TABS[tab] == "Abilities" else "Gear arrives with levels and loot in a later update.")
+		return
+	match TABS[tab]:
+		"Items":
+			var id: String = r["id"]
+			if str(Satchel.item(id).get("target", "")) == "party":
+				_use_item(id, null)
+				return
+			sub_title = "Use %s on" % Satchel.item(id).get("name", id)
+			sub = []
+			var best := -1
+			var best_ratio := 2.0
+			for h in _heroes():
+				var hero: Hero = h
+				var ok := Satchel.can_target(id, hero)
+				sub.append({"id": "item:%s:%d" % [id, sub.size()], "label": hero.hero_name,
+					"right": "down" if hero.dead else "HP %d/%d" % [hero.hp, hero.max_hp], "enabled": ok})
+				var ratio := float(hero.hp) / float(hero.max_hp)
+				if ok and ratio < best_ratio:  # start on whoever needs it most
+					best_ratio = ratio
+					best = sub.size() - 1
+			sub_sel = maxi(best, 0)
+		"Abilities":
+			var hero: Hero = r["hero"]
+			sub_title = hero.hero_name
+			sub = []
+			var list := _abilities_of(hero)
+			for i2 in list.size():
+				var why := _ability_blocker(hero, i2)
+				sub.append({"id": "ability:%d" % i2, "label": str(list[i2].get("name", "?")),
+					"right": ("%d Ink" % int(list[i2].get("cost", 0))) if why == "" else why, "enabled": why == ""})
+			sub_sel = sub.size() - 1
+			_move(1)  # first usable one
+		"Party":
+			var hero: Hero = r["hero"]
+			sub_title = hero.hero_name
+			sub = [{"id": "lead", "label": "Take control", "right": "",
+				"enabled": not hero.dead and not hero.controlled}]
+			for style in Hero.AI_STYLES:
+				sub.append({"id": "ai:" + style, "label": "AI: " + _style_name(style),
+					"right": "current" if style == hero.ai_style else "", "enabled": true})
+			sub_sel = 0 if sub[0]["enabled"] else 1 + Hero.AI_STYLES.keys().find(hero.ai_style)
+
+
+## Second press: the choice from the short list.
+func _pick_sub(i: int) -> void:
+	if i < 0 or i >= sub.size() or not sub[i].get("enabled", true):
+		return
+	var id: String = sub[i]["id"]
+	var r: Dictionary = rows[sel]
+	if id.begins_with("item:"):
+		var parts := id.split(":")
+		_use_item(parts[1], _heroes()[int(parts[2])])
+	elif id.begins_with("ability:"):
+		var hero: Hero = r["hero"]
+		var i3 := int(id.substr(8))
+		var ab = _abilities_script()
+		if ab and ab.use(hero, i3):
+			_say("%s: %s." % [hero.hero_name, _abilities_of(hero)[i3].get("name", "?")])
+	elif id == "lead":
+		var hero: Hero = r["hero"]
+		party.take_control(hero)
+		_say("You now control %s." % hero.hero_name)
+	elif id.begins_with("ai:"):
+		var hero: Hero = r["hero"]
+		var style := id.substr(3)
+		hero.ai_style = style
+		hero.ai_target = null
+		Empire.ai_presets[hero.hero_id] = style  # sticks for the next mission too
+		_say("%s: %s." % [hero.hero_name, _style_name(style)])
+	sub = []
+	_rebuild()
+
+
+func _use_item(id: String, h: Hero) -> void:
+	var line := Satchel.use(id, h, _heroes())
+	if line != "":
+		_say(line)
+	sub = []
+	_rebuild()
+
+
+func _back() -> void:
+	if sub.size() > 0:
+		sub = []
+	else:
+		close()
+
+
+# ---------------------------------------------------------------- input
+
+func _input(event: InputEvent) -> void:
+	if not visible:
+		return
+	if event is InputEventMouseMotion:
+		_hover(event.position)
+		return
+	if event is InputEventScreenDrag:
+		get_viewport().set_input_as_handled()
+		return
+	var tap: bool = (event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT) \
+		or (event is InputEventScreenTouch and event.pressed)
+	if tap:
+		_tap(event.position)
+	elif event is InputEventScreenTouch or event is InputEventMouseButton:
+		pass  # releases
+	elif event.is_action_pressed("quick_menu"):
+		close()
+	elif event.is_action_pressed("pause"):
+		close()
+		party.set_paused(true)
+	elif event.is_action_pressed("ui_cancel"):
+		_back()
+	elif event.is_action_pressed("ui_down", true):
+		_move(1)
+	elif event.is_action_pressed("ui_up", true):
+		_move(-1)
+	elif event.is_action_pressed("ui_accept"):
+		if sub.size() > 0:
+			_pick_sub(sub_sel)
+		else:
+			_pick_row(sel)
+	elif event.is_action_pressed("move_left") or _key(event, KEY_Q):
+		_set_tab(tab - 1)
+	elif event.is_action_pressed("move_right") or _key(event, KEY_E) or event.is_action_pressed("swap"):
+		_set_tab(tab + 1)
+	# The menu owns all input while it is open: nothing reaches the fight underneath.
+	if is_inside_tree():
+		get_viewport().set_input_as_handled()
+
+
+func _key(event: InputEvent, k: Key) -> bool:
+	return event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == k
+
+
+func _hover(p: Vector2) -> void:
+	if sub.size() > 0:
+		for i in _sub_rects.size():
+			if (_sub_rects[i] as Rect2).has_point(p) and sub[i].get("enabled", true):
+				sub_sel = i
+		return
+	for i in _row_rects.size():
+		if (_row_rects[i] as Rect2).has_point(p) and rows[i].get("enabled", true):
+			sel = i
+
+
+func _tap(p: Vector2) -> void:
+	if sub.size() > 0:
+		for i in _sub_rects.size():
+			if (_sub_rects[i] as Rect2).has_point(p):
+				sub_sel = i
+				_pick_sub(i)
+				return
+		if not _sub_panel.has_point(p):
+			sub = []  # tapping elsewhere just closes the short list
+		return
+	for i in _tab_rects.size():
+		if (_tab_rects[i] as Rect2).has_point(p):
+			_set_tab(i)
+			return
+	for i in _row_rects.size():
+		if (_row_rects[i] as Rect2).has_point(p):
+			_pick_row(i)
+			return
+	if not _panel.grow(6).has_point(p):
+		close()
+
+
+# ---------------------------------------------------------------- drawing
+
+func _process(delta: float) -> void:
+	if not visible:
+		return
+	var real := delta / maxf(Engine.time_scale, 0.01)
+	_t += real
+	note_t = maxf(note_t - real, 0.0)
+	if party and (party.game_over or party.ending):
+		close()
+		return
+	# HP and gauges keep moving underneath (slowly), so refresh what the rows say.
+	if sub.is_empty():
+		_rebuild()
+	queue_redraw()
+
+
+func _str(font: Font, pos: Vector2, s: String, size: int, col: Color) -> void:
+	draw_string(font, pos, s, HORIZONTAL_ALIGNMENT_LEFT, -1, size, col)
+
+
+func _str_right(font: Font, right_x: float, y: float, s: String, size: int, col: Color) -> void:
+	var w := font.get_string_size(s, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x
+	draw_string(font, Vector2(right_x - w, y), s, HORIZONTAL_ALIGNMENT_LEFT, -1, size, col)
+
+
+func _marker(x: float, y: float) -> void:
+	var mx := x + sin(_t * 5.0) * 1.5
+	draw_circle(Vector2(mx, y - 4.0), 3.0, GOLD)
+	draw_colored_polygon(PackedVector2Array([Vector2(mx - 2.6, y - 5.5), Vector2(mx + 2.6, y - 5.5), Vector2(mx, y - 10.5)]), GOLD)
+
+
+func _draw() -> void:
+	var vs := get_viewport_rect().size
+	var font := ThemeDB.fallback_font
+	draw_rect(Rect2(Vector2.ZERO, vs), Color(0.04, 0.03, 0.07, 0.35))
+	var w := minf(W, vs.x - 24.0)
+	var h := 44.0 + maxf(rows.size(), 3) * ROW_H + 30.0
+	_panel = Rect2((vs.x - w) / 2.0, maxf(12.0, (vs.y - h) / 2.0 - 20.0), w, h)
+	draw_rect(_panel, PANEL)
+	draw_rect(_panel, Color(1, 1, 1, 0.18), false, 1.0)
+
+	# Tabs across the top.
+	_tab_rects.clear()
+	var tw := w / TABS.size()
+	for i in TABS.size():
+		var r := Rect2(_panel.position.x + tw * i, _panel.position.y, tw, 24.0)
+		_tab_rects.append(r)
+		if i == tab:
+			draw_rect(r, Color(1, 0.82, 0.4, 0.14))
+			draw_rect(Rect2(r.position.x + 6, r.end.y - 2, r.size.x - 12, 2), GOLD)
+		var label: String = TABS[i]
+		var lw := font.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1, 11).x
+		_str(font, Vector2(r.position.x + (tw - lw) / 2.0, r.position.y + 16), label, 11, GOLD if i == tab else TEXT)
+	draw_line(Vector2(_panel.position.x, _panel.position.y + 24), Vector2(_panel.end.x, _panel.position.y + 24), Color(1, 1, 1, 0.12))
+
+	# Rows.
+	_row_rects.clear()
+	var y := _panel.position.y + 34.0
+	var x0 := _panel.position.x + 22.0
+	var x1 := _panel.end.x - 12.0
+	for i in rows.size():
+		var row: Dictionary = rows[i]
+		var on: bool = row.get("enabled", true)
+		var rr := Rect2(_panel.position.x + 4, y, w - 8, ROW_H - 2)
+		_row_rects.append(rr)
+		if i == sel and sub.is_empty():
+			draw_rect(rr, Color(1, 1, 1, 0.06))
+		var col := (GOLD if i == sel else TEXT) if on else DIM
+		_str(font, Vector2(x0, y + 12), str(row["label"]), 11, col)
+		_str_right(font, x1, y + 12, str(row.get("right", "")), 10, col if on else DIM)
+		_str(font, Vector2(x0, y + 24), str(row.get("detail", "")), 8, Color(0.68, 0.66, 0.64) if on else Color(0.45, 0.45, 0.48))
+		if i == sel:
+			_marker(x0 - 12.0, y + 12)
+		y += ROW_H
+
+	# Footer: last result, or how to drive it.
+	var fy := _panel.end.y - 9.0
+	if note_t > 0.0:
+		_str(font, Vector2(x0, fy), note, 9, Color("9fe07a"))
+	else:
+		var hint := "Tap a tab or row.  Tap outside to close." if party and party.touch_active() \
+			else "Left/Right or Q/E: tabs    J/A: pick    X/B: back    C/Back: close"
+		_str(font, Vector2(x0, fy), hint, 8, DIM)
+	_str_right(font, x1, fy, "time slowed", 8, Color(0.7, 0.8, 1.0, 0.6 + 0.3 * sin(_t * 3.0)))
+
+	# The short list a row opened, beside it.
+	_sub_rects.clear()
+	if sub.size() > 0:
+		var sw := 170.0
+		var sh := 26.0 + sub.size() * 18.0
+		var anchor: Rect2 = _row_rects[sel] if sel < _row_rects.size() else _panel
+		var sx := minf(_panel.end.x - sw - 8.0, vs.x - sw - 6.0)
+		var sy := clampf(anchor.position.y, 6.0, vs.y - sh - 6.0)
+		_sub_panel = Rect2(sx, sy, sw, sh)
+		draw_rect(_sub_panel, Color(0.1, 0.08, 0.14, 0.97))
+		draw_rect(_sub_panel, GOLD, false, 1.0)
+		_str(font, Vector2(sx + 10, sy + 14), sub_title, 9, Color(0.75, 0.73, 0.7))
+		var yy := sy + 30.0
+		for i in sub.size():
+			var s: Dictionary = sub[i]
+			var on: bool = s.get("enabled", true)
+			var col := (GOLD if i == sub_sel else TEXT) if on else DIM
+			_sub_rects.append(Rect2(sx + 2, yy - 13, sw - 4, 17))
+			_str(font, Vector2(sx + 20, yy), str(s["label"]), 10, col)
+			_str_right(font, sx + sw - 8, yy, str(s.get("right", "")), 8, col if on else DIM)
+			if i == sub_sel:
+				_marker(sx + 10, yy)
+			yy += 18.0
