@@ -32,15 +32,23 @@ static func kind(id: String) -> Dictionary:
 
 
 ## Spawn weights for a mission: its own "enemies", else its province's roster, else the default.
-static func roster(mission: Dictionary) -> Dictionary:
-	if mission.has("enemies"):
-		return mission["enemies"]
+## blank_only keeps the kinds marked "blank" (what pours out of a surge or a Blot).
+static func roster(mission: Dictionary, blank_only := false) -> Dictionary:
 	var r: Dictionary = data().get("rosters", {})
-	return r.get(str(mission.get("province", "")), r.get("default", {"nibbler": 1}))
+	var out: Dictionary = mission["enemies"] if mission.has("enemies") else \
+		r.get(str(mission.get("province", "")), r.get("default", {"nibbler": 1}))
+	if blank_only:
+		out = out.duplicate()
+		for k in out.keys():
+			if not kind(k).get("blank", false):
+				out.erase(k)
+		if out.is_empty():
+			out = {"nibbler": 1}
+	return out
 
 
-static func pick(mission: Dictionary) -> String:
-	var r := roster(mission)
+static func pick(mission: Dictionary, blank_only := false) -> String:
+	var r := roster(mission, blank_only)
 	var total := 0.0
 	for k in r:
 		total += float(r[k])
@@ -61,9 +69,9 @@ static func names(mission: Dictionary) -> String:
 
 
 ## Spawns one roll of the mission's roster at pos (a pack for moths) and returns what came out.
-static func spawn(parent: Node, pos: Vector2, mission: Dictionary, id := "") -> Array:
+static func spawn(parent: Node, pos: Vector2, mission: Dictionary, id := "", blank_only := false) -> Array:
 	if id == "":
-		id = pick(mission)
+		id = pick(mission, blank_only)
 	var info := kind(id)
 	var out := []
 	var n := randi_range(maxi(1, int(info.get("pack", 1)) - 1), maxi(1, int(info.get("pack", 1))))  # packs vary by one

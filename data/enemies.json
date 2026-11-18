@@ -1,9 +1,9 @@
 {
-	"_comment": "Act 1 enemy roster (issue #16). kinds: stats per enemy type, read by scripts/enemy_kinds.gd (hp, damage, speed, xp; the Nibbler's bite stays in scripts/enemy.gd; pack = how many spawn together (one fewer, sometimes); tip = one-line hint shown the first time one notices the party). rosters: spawn weights per province (the Act 1 areas); a mission can override with its own \"enemies\" dict; anything not listed uses default.",
+	"_comment": "Act 1 enemy roster (issue #16). kinds: stats per enemy type, read by scripts/enemy_kinds.gd (hp, damage, speed, xp; the Nibbler's bite stays in scripts/enemy.gd; pack = how many spawn together (one fewer, sometimes); blank = born of the Blank, so it also crawls out of surges and Blots in Defense and Reclaim missions (the others only roam the land); tip = one-line hint shown the first time one notices the party). rosters: spawn weights per province (the Act 1 areas); a mission can override with its own \"enemies\" dict; anything not listed uses default.",
 	"kinds": {
-		"nibbler": {"name": "Nibbler", "plural": "Nibblers", "hp": 28, "speed": 40, "xp": 3, "pack": 1,
+		"nibbler": {"name": "Nibbler", "plural": "Nibblers", "blank": true, "hp": 28, "speed": 40, "xp": 3, "pack": 1,
 			"tip": ""},
-		"spitter": {"name": "Spitter", "plural": "Spitters", "hp": 20, "damage": 7, "speed": 34, "xp": 4, "pack": 1,
+		"spitter": {"name": "Spitter", "plural": "Spitters", "blank": true, "hp": 20, "damage": 7, "speed": 34, "xp": 4, "pack": 1,
 			"tip": "Spitter: it swells before it spits. Step aside, then close in."},
 		"moth": {"name": "Letter-moth", "plural": "Letter-moths", "hp": 9, "damage": 4, "speed": 86, "xp": 2, "pack": 3,
 			"tip": "Letter-moths: they flash red, then dive. Swing as they come in."},
