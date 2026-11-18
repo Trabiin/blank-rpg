@@ -461,7 +461,8 @@ func _draw_picker(py: float, w: float) -> void:
 	_text(Vector2(DETAIL_X, py + 10), title, 9, Color("f3efe4"))
 	py += 14
 	_pick_rects.clear()
-	var rh := 15.0
+	var rh := clampf((size.y - py - 40.0) / float(maxi(picks.size(), 1)), 11.0, 15.0)  # a big roster squeezes up
+	var ty := minf(10.0, rh - 2.0)
 	for i in picks.size():
 		var p: Dictionary = picks[i]
 		var r := Rect2(DETAIL_X + 8, py, w - 8, rh - 1)
@@ -471,10 +472,10 @@ func _draw_picker(py: float, w: float) -> void:
 		if hl:
 			draw_rect(r, GOLD, false, 1.0)
 		var col := Color("ece6da") if p["enabled"] else Color(0.42, 0.41, 0.44)
-		_text(r.position + Vector2(6, 10), p["label"], 8, GOLD if hl and p["enabled"] else col)
+		_text(r.position + Vector2(6, ty), p["label"], 8, GOLD if hl and p["enabled"] else col)
 		var side: String = p.get("role", "") if p["enabled"] else "(" + p["note"] + ")"
 		if side != "":
-			_text(r.position + Vector2(150, 10), side, 7, Color(0.55, 0.53, 0.56))
+			_text(r.position + Vector2(150, ty), side, 7, Color(0.55, 0.53, 0.56))
 		py += rh
 	if pick < picks.size():
 		_wrap(Vector2(DETAIL_X, py + 10), picks[pick]["preview"], w, 8, Color("cfe0b0"))
