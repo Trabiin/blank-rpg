@@ -1,6 +1,6 @@
 extends Node2D
 ## Prototype: the Frayed Meadow. Builds the area in code, spawns the party
-## (Ash + Bran), Nibblers that crawl out of the Blank, and the HUD.
+## (picked on the Command Table, Ash leads), Nibblers that crawl out of the Blank, and the HUD.
 
 const HeroScript := preload("res://scripts/hero.gd")
 const EnemyScript := preload("res://scripts/enemy.gd")
@@ -78,31 +78,24 @@ func _ready() -> void:
 	_build_walls()
 
 	var start := area.party_start
+	# Whoever was picked on the Command Table (party_picker.gd); Ash always leads.
 	# Same body and animation rig for everyone; outfit layer + colors make the hero.
-	var ash := _make_hero("Ash", start, "archer", {
-		"skin": Color("efd2bd"), "cloth": Color("4b4f86"), "leather": Color("3b3346"),
-		"boots": Color("2a2433"), "trim": Color("dcd8ee"),
-	})
-	ash.base_damage = 10
-	var bran := _make_hero("Bran", start + Vector2(-20, 14), "warrior", {
-		"skin": Color("c98e6a"), "metal": Color("8c7f72"), "accent": Color("b0442f"),
-		"boots": Color("3a2c22"),
-	})
-	bran.max_hp = 60
-	bran.hp = 60
-	bran.move_speed = 62.0
-	bran.base_damage = 14
-	bran.power_rate = 0.75
-	bran.reach = 21.0
+	var offsets := [Vector2.ZERO, Vector2(-20, 14), Vector2(20, 14)]
+	var ids := PartyPicker.mission_party()
+	for i in ids.size():
+		var look: Dictionary = Empire.recruit(ids[i]).get("look", {})
+		var h := _make_hero(PartyPicker.short_of(ids[i]), start + offsets[i % offsets.size()],
+			look.get("outfit", "archer"), PartyPicker.look_colors(look))
+		PartyPicker.apply(h, ids[i])
 	# The Barracks sends the party out tougher; research sharpens and armours them.
 	boosts = Empire.mission_boosts()
 	Empire.mission_kills_bonded = 0
-	for h in [ash, bran]:
+	for h in heroes:
 		h.max_hp += Empire.party_hp_bonus() + int(boosts["hp"])
 		h.hp = h.max_hp
 		h.base_damage += int(boosts["damage"])
 		h.power_rate *= float(boosts["power_rate"])
-	_set_leader(ash)
+	_set_leader(heroes[0])
 
 	camera = Camera2D.new()
 	camera.zoom = Vector2(2, 2)
@@ -167,7 +160,7 @@ func _ready() -> void:
 		if not loaded or p.distance_to(leader.global_position) > 120.0:
 			_spawn_enemy(p)
 	if not loaded:  # the first time out, Bran finds Ash; after that he just grumbles
-		if not Dialogue.is_seen("talk:meadow_intro"):
+		if not Dialogue.is_seen("talk:meadow_intro") and "bran" in present():
 			play_talk("meadow_intro")
 		else:
 			banter.event("mission_start", present())
@@ -175,7 +168,7 @@ func _ready() -> void:
 
 ## Who can speak right now: the party members still standing.
 func present() -> Array:
-	return heroes.filter(func(h): return not h.dead).map(func(h): return (h as Hero).hero_name.to_lower())
+	return heroes.filter(func(h): return not h.dead).map(func(h): return (h as Hero).hero_id)
 
 
 ## Play a conversation in the dialogue box. The fight waits until it is over.
@@ -246,7 +239,7 @@ func touch_active() -> bool:
 
 func _on_enemy_died(_e: Actor) -> void:
 	kills += 1
-	Empire.bond_fought(kills, ["bran"])  # fighting beside Ash builds bonds (this test map always brings Bran)
+	Empire.bond_fought(kills, heroes.map(func(h): return (h as Hero).hero_id))  # fighting beside Ash builds bonds
 	banter.event("first_kill", present())
 	if not ending:
 		objective.on_kill()

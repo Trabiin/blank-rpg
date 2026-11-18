@@ -66,6 +66,7 @@ const BondsView := preload("res://scripts/bonds_view.gd")
 var bonds_view
 const NewcomersView := preload("res://scripts/newcomers_view.gd")
 var newcomers_view
+var party_picker  # party_picker.gd: who goes on the mission
 var autosave_t := AUTOSAVE_EVERY
 
 
@@ -113,6 +114,11 @@ func _ready() -> void:
 	newcomers_view = NewcomersView.new()
 	newcomers_view.visible = false
 	roster_layer.add_child(newcomers_view)
+	party_picker = PartyPicker.new()
+	party_picker.visible = false
+	roster_layer.add_child(party_picker)
+	party_picker.confirmed.connect(_launch_mission)
+	party_picker.roster_requested.connect(_roster_from_picker)
 
 	var layer := CanvasLayer.new()
 	layer.layer = 5
@@ -398,7 +404,8 @@ func _process(delta: float) -> void:
 			or research_view.visible or frame == research_view.closed_frame \
 			or diplomacy_view.visible or frame == diplomacy_view.closed_frame \
 			or bonds_view.visible or frame == bonds_view.closed_frame \
-			or newcomers_view.visible or frame == newcomers_view.closed_frame:
+			or newcomers_view.visible or frame == newcomers_view.closed_frame \
+			or party_picker.visible or frame == party_picker.closed_frame:
 		return
 	if Input.is_action_just_pressed("roster"):
 		roster_view.open()
@@ -538,7 +545,7 @@ func _open_brief(m: Dictionary) -> void:
 		lines.append("Pushes the Blank back: %d Fray in %s" % [int(m["fray"]), territory.find(m.get("province", "")).get("name", "")])
 	lines.append("The clock stops while you are away.")
 	brief_menu.setup(m.get("name", "Mission"), [
-		{"id": "go", "label": "Set out"},
+		{"id": "go", "label": "Choose party"},
 		{"id": "back", "label": "Back"},
 	], "\n".join(lines))
 	brief_menu.visible = true
@@ -550,7 +557,7 @@ func _on_brief(id: String) -> void:
 	get_tree().paused = false
 	menu_closed_frame = Engine.get_process_frames()
 	if id == "go":
-		_launch_mission(brief_mission)
+		party_picker.open(brief_mission)  # pick who goes; Set out there calls _launch_mission
 
 
 ## Leaves for a mission: autosave the empire, then load the mission's map.
@@ -571,6 +578,12 @@ func _wrap_words(s: String, width: int) -> Array:
 	if cur != "":
 		out.append(cur)
 	return out
+
+
+## R in the party picker: sort people out in the Roster, then come back to the picker.
+func _roster_from_picker() -> void:
+	roster_view.open()
+	roster_view.closed.connect(party_picker.reopen, CONNECT_ONE_SHOT)
 
 
 func _open_governor() -> void:
