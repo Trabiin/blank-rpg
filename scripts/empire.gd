@@ -1240,7 +1240,7 @@ func _advance_research(days: float) -> void:
 ## What finished research does on missions: the numbers main.gd applies, plus a short line
 ## per node for the mission HUD.
 func mission_boosts() -> Dictionary:
-	var b := {"damage": 0, "hp": 0, "revive": 1.0, "guard": 0.0, "power_rate": 1.0, "lines": []}
+	var b := {"damage": 0, "hp": 0, "revive": 1.0, "guard": 0.0, "power_rate": 1.0, "ink_regen": 1.0, "lines": []}
 	if has_research("arms_whetstone"):
 		b["damage"] += 2
 	if has_research("arms_steel"):
@@ -1253,6 +1253,9 @@ func mission_boosts() -> Dictionary:
 	if has_research("arms_leather"):
 		b["hp"] += 10
 		b["lines"].append("+10 max HP")
+	if has_research("ink_tap"):
+		b["ink_regen"] = 1.25
+		b["lines"].append("faster Ink")
 	if has_research("ink_blot"):
 		b["revive"] = 1.4
 		b["lines"].append("faster revives")
