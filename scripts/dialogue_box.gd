@@ -1,0 +1,200 @@
+extends Control
+## The dialogue box (issue #11): visual-novel style. The world dims, the speakers stand on the left
+## and right (whoever is talking is lit, the other waits in shadow), and the text types out in a
+## box along the bottom with the speaker's name on a tag.
+##
+## Enter / J / click / tap: next line (finishes the current line first if it is still typing).
+## Tab / Q / gamepad Y: text speed (Slow, Normal, Fast, Instant; remembered on this device).
+## Esc: skip the rest of the conversation.
+##
+## play("talk_id") plays a conversation from data/dialogue.json; play_lines([...]) plays any lines.
+## Portraits come from Dialogue.portrait (assets/portraits/), with a drawn bust as placeholder.
+
+signal finished(id: String)
+
+const GOLD := Color("ffd166")
+const TEXT := Color("ece6da")
+const SOFT := Color(0.66, 0.64, 0.66)
+
+var id := ""
+var title := ""
+var closed_frame := -1
+var opened_frame := -1
+var _lines: Array = []  # [speaker, text, expression]
+var _at := 0
+var _shown := 0.0
+var _slots := ["", ""]  # who stands on the left and on the right
+var _exprs := ["", ""]
+var _speed_rect := Rect2()
+var _skip_rect := Rect2()
+var font: Font
+
+
+func _ready() -> void:
+	set_anchors_preset(Control.PRESET_FULL_RECT)
+	mouse_filter = Control.MOUSE_FILTER_STOP
+	font = ThemeDB.fallback_font
+
+
+## Play a conversation from data/dialogue.json. Marks it seen. Returns false if it does not exist.
+func play(talk_id: String) -> bool:
+	var ls := Dialogue.talk(talk_id)
+	if ls.is_empty():
+		return false
+	Dialogue.mark_seen("talk:" + talk_id)
+	play_lines(ls, Dialogue.talk_title(talk_id), talk_id)
+	return true
+
+
+## Play any lines ([speaker, text(, expression)] each).
+func play_lines(ls: Array, heading := "", talk_id := "") -> void:
+	_lines = Dialogue.lines(ls)
+	if _lines.is_empty():
+		return
+	id = talk_id
+	title = heading
+	_at = 0
+	_shown = 0.0
+	_slots = ["", ""]
+	_exprs = ["", ""]
+	_place_speaker()
+	position = Vector2.ZERO
+	size = get_viewport_rect().size
+	visible = true
+	opened_frame = Engine.get_process_frames()
+
+
+func _current() -> Array:
+	return _lines[_at] if _at < _lines.size() else ["", "", ""]
+
+
+## Put the current speaker on stage: keep their side if they are already there, else take the
+## first empty side, else replace whoever is not the previous speaker.
+func _place_speaker() -> void:
+	var who: String = _current()[0]
+	if who == "":
+		return
+	var side := _slots.find(who)
+	if side < 0:
+		side = _slots.find("")
+		if side < 0:
+			var prev: String = _lines[_at - 1][0] if _at > 0 else ""
+			side = 1 if _slots[0] == prev else 0
+		_slots[side] = who
+	_exprs[side] = _current()[2]
+
+
+func _typing() -> bool:
+	return _shown < float(String(_current()[1]).length())
+
+
+func _advance() -> void:
+	if _typing():
+		_shown = 99999.0
+		return
+	_at += 1
+	_shown = 0.0
+	if _at >= _lines.size():
+		_close()
+	else:
+		_place_speaker()
+
+
+func _close() -> void:
+	visible = false
+	closed_frame = Engine.get_process_frames()
+	finished.emit(id)
+
+
+func _process(delta: float) -> void:
+	if not visible:
+		return
+	size = get_viewport_rect().size
+	var cps := Dialogue.chars_per_sec()
+	_shown = 99999.0 if cps <= 0.0 else _shown + delta * cps
+	queue_redraw()
+	if Engine.get_process_frames() == opened_frame:
+		return
+	if Input.is_action_just_pressed("ui_accept") or Input.is_action_just_pressed("attack"):
+		_advance()
+	elif Input.is_action_just_pressed("swap"):
+		Dialogue.cycle_speed()
+	elif Input.is_action_just_pressed("ui_cancel") or Input.is_action_just_pressed("pause"):
+		_close()
+
+
+func _gui_input(event: InputEvent) -> void:
+	var pos := Vector2.INF
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		pos = event.position
+	elif event is InputEventScreenTouch and event.pressed:
+		pos = event.position
+	if pos == Vector2.INF or Engine.get_process_frames() == opened_frame:
+		return
+	accept_event()
+	if _speed_rect.has_point(pos):
+		Dialogue.cycle_speed()
+	elif _skip_rect.has_point(pos):
+		_close()
+	else:
+		_advance()
+
+
+# ---------------------------------------------------------------- drawing
+
+func _draw() -> void:
+	var vs := size
+	draw_rect(Rect2(Vector2.ZERO, vs), Color(0.03, 0.025, 0.05, 0.6))
+	var cur := _current()
+	var speaker: String = cur[0]
+	var box := Rect2(12, vs.y - 92, vs.x - 24, 82)
+	# The cast, standing behind the text box.
+	var ph := vs.y - 24.0
+	var pw := ph * 2.0 / 3.0
+	var rects := [Rect2(20, vs.y - ph, pw, ph), Rect2(vs.x - 20 - pw, vs.y - ph, pw, ph)]
+	for side in 2:
+		var who: String = _slots[side]
+		if who == "":
+			continue
+		var talking := who == speaker
+		var r: Rect2 = rects[side]
+		if not talking:
+			r = r.grow_individual(-8, -12, -8, 0)
+		if Dialogue.portrait(who, _exprs[side]) == null:  # placeholder busts get a soft card behind them
+			var card := Rect2(r.position + Vector2(0, r.size.y * 0.12), Vector2(r.size.x, r.size.y * 0.88))
+			draw_rect(card, Color(Dialogue.accent(who).darkened(0.75), 0.85 if talking else 0.5))
+		Dialogue.draw_portrait(self, r, who, _exprs[side], 0.0 if talking else 0.55, side == 0)
+
+	if title != "":
+		draw_string(font, Vector2(14, 16), title, HORIZONTAL_ALIGNMENT_LEFT, -1, 9, SOFT)
+	draw_rect(box, Color(0.07, 0.06, 0.09, 0.96))
+	draw_rect(box, Color(0.45, 0.4, 0.3), false, 1.0)
+	var text: String = cur[1]
+	var shown := text.substr(0, int(_shown))
+	var ty := box.position.y + 20
+	if speaker != "":
+		var nm := Dialogue.display_name(speaker)
+		var nw := font.get_string_size(nm, HORIZONTAL_ALIGNMENT_LEFT, -1, 10).x
+		var tag := Rect2(box.position.x + 8, box.position.y - 9, nw + 14, 16)
+		if _slots[1] == speaker and _slots[0] != speaker:  # name tag on the speaker's side
+			tag.position.x = box.end.x - 8 - tag.size.x
+		var acc := Dialogue.accent(speaker)
+		draw_rect(tag, acc.darkened(0.7))
+		draw_rect(tag, acc.lightened(0.35), false, 1.0)
+		draw_string(font, tag.position + Vector2(7, 12), nm, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, acc.lightened(0.55))
+		ty += 4
+	draw_multiline_string(font, Vector2(box.position.x + 12, ty), shown, HORIZONTAL_ALIGNMENT_LEFT, box.size.x - 24, 11, -1,
+		TEXT if speaker != "" else SOFT)
+	if not _typing() and int(Time.get_ticks_msec() / 400) % 2 == 0:
+		var tip := box.end - Vector2(14, 10)
+		draw_colored_polygon(PackedVector2Array([tip + Vector2(-4, -4), tip + Vector2(4, -4), tip]), GOLD)
+	# Speed and skip, small, under the box (they are also on Tab and Esc).
+	var sp := "Text: %s" % Dialogue.speed_name()
+	var sw := font.get_string_size(sp, HORIZONTAL_ALIGNMENT_LEFT, -1, 7).x
+	_speed_rect = Rect2(box.position.x, box.end.y + 1, sw + 10, 9)
+	draw_string(font, _speed_rect.position + Vector2(4, 7), sp, HORIZONTAL_ALIGNMENT_LEFT, -1, 7, Color(0.62, 0.6, 0.64))
+	_skip_rect = Rect2(_speed_rect.end.x + 4, box.end.y + 1, 30, 9)
+	draw_string(font, _skip_rect.position + Vector2(4, 7), "Skip", HORIZONTAL_ALIGNMENT_LEFT, -1, 7, Color(0.62, 0.6, 0.64))
+	var hint := "Enter / tap: next    Tab: text speed    Esc: skip"
+	draw_string(font, Vector2(vs.x - font.get_string_size(hint, HORIZONTAL_ALIGNMENT_LEFT, -1, 7).x - 14, vs.y - 2), hint,
+		HORIZONTAL_ALIGNMENT_LEFT, -1, 7, Color(0.5, 0.48, 0.52))

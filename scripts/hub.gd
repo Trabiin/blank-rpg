@@ -16,6 +16,8 @@ const DiplomacyView := preload("res://scripts/diplomacy_view.gd")
 const BondsView := preload("res://scripts/bonds_view.gd")
 const SceneView := preload("res://scripts/scene_view.gd")
 const SiteScript := preload("res://scripts/building_site.gd")
+const DialogueBox := preload("res://scripts/dialogue_box.gd")
+const BanterScript := preload("res://scripts/banter.gd")
 
 const MAP := "res://maps/hollowmark.txt"
 const TITLE_SCENE := "res://scenes/title.tscn"
@@ -48,6 +50,8 @@ var research_view
 var diplomacy_view
 var bonds_view
 var scene_view  # bond scenes started by talking to someone in town
+var dialogue_box  # dialogue_box.gd: talking to people in town
+var banter  # banter.gd: people calling out as Ash walks past
 var sites := {}  # building id -> building_site.gd on its plot
 var lamp: Node2D  # Hollowmark's own Wardlamp, drawn once it is lit
 var menu: InkMenu
@@ -110,6 +114,9 @@ func _ready() -> void:
 	layer.add_child(hud)
 	touch = TouchScript.new()
 	layer.add_child(touch)
+	banter = BanterScript.new()
+	banter.top = 26.0
+	layer.add_child(banter)
 
 	var roster_layer := CanvasLayer.new()
 	roster_layer.layer = 4
@@ -139,6 +146,9 @@ func _ready() -> void:
 	scene_view = SceneView.new()
 	scene_view.visible = false
 	roster_layer.add_child(scene_view)
+	dialogue_box = DialogueBox.new()
+	dialogue_box.visible = false
+	roster_layer.add_child(dialogue_box)
 	Empire.expedition_returned.connect(func(_r): _place_people())
 
 	var menu_layer := CanvasLayer.new()
@@ -380,9 +390,16 @@ func _use(t: Dictionary) -> void:
 		line = lines[i % lines.size()]
 		talk_index[id] = i + 1
 	var gained := Empire.bond_talk(id)
-	if gained > 0:
-		line += "   (bond +%d)" % gained
-	hud.say("%s: %s" % [short_name, line], 4.5)
+	var bond_note := "   (bond +%d)" % gained if gained > 0 else ""
+	touch.release_all()
+	var first := Dialogue.first_talk(id)
+	if first != "" and int(Empire.recruits[id]["injured"]) <= 0:
+		dialogue_box.play(first)  # the first proper chat: their introduction
+		talk_index[id] = 0
+		if gained > 0:
+			dialogue_box.title += "   ·   Bond with %s +%d" % [short_name, gained]
+		return
+	dialogue_box.play_lines([[id, line + bond_note]])
 
 
 # ---------------------------------------------------------------- clock, notices, leaving
@@ -530,14 +547,15 @@ func _process(delta: float) -> void:
 
 	var frame := Engine.get_process_frames()
 	var screen_open: bool = roster_view.visible or buildings_view.visible or expedition_view.visible or research_view.visible \
-			or diplomacy_view.visible or bonds_view.visible or scene_view.visible
+			or diplomacy_view.visible or bonds_view.visible or scene_view.visible or dialogue_box.visible
 	if screen_open or frame == roster_view.closed_frame or frame == buildings_view.closed_frame \
 			or frame == expedition_view.closed_frame or frame == research_view.closed_frame \
 			or frame == diplomacy_view.closed_frame or frame == bonds_view.closed_frame \
-			or frame == scene_view.closed_frame or frame == menu_closed_frame:
+			or frame == scene_view.closed_frame or frame == dialogue_box.closed_frame or frame == menu_closed_frame:
 		leader.controlled = not screen_open
 		return
 	leader.controlled = true
+	banter.check_zones("hollowmark", leader.global_position, npcs.keys())
 	if Input.is_action_just_pressed("pause"):
 		open_menu()
 		return

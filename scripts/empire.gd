@@ -131,6 +131,7 @@ func reset() -> void:
 			recruits[id]["role"] = "party"
 	surge = {}
 	next_surge_day = 4
+	Dialogue.seen = {}  # conversations and banter seen this campaign (dialogue.gd)
 	_load_building_data()
 	buildings = {}
 	for id in building_data:
@@ -1906,6 +1907,7 @@ func to_dict() -> Dictionary:
 		"standing": standing, "pacts": pacts, "deal_ready": deal_ready, "intel_until": intel_until,
 		"next_trouble_day": next_trouble_day, "diplo_log": diplo_log,
 		"bonds": bonds,
+		"dialogue": Dialogue.seen,
 		"rng_state": str(rng.state)}
 
 
@@ -1930,6 +1932,8 @@ func from_dict(d: Dictionary) -> void:
 				recruits[id] = {"role": r.get("role", "idle"), "target": r.get("target", ""), "injured": int(r.get("injured", 0))}
 	surge = d.get("surge", {})
 	next_surge_day = int(d.get("next_surge_day", 4))
+	var saved_seen = d.get("dialogue", {})
+	Dialogue.seen = saved_seen.duplicate() if typeof(saved_seen) == TYPE_DICTIONARY else {}
 	var saved_b: Dictionary = d.get("buildings", {})
 	for id in saved_b:
 		if building_data.has(id):
