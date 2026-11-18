@@ -120,8 +120,14 @@ func _open_gear() -> bool:
 	get_parent().add_child(gv)
 	gv.party = party
 	close()
+	# The gear screen doesn't stop the fight itself: pause underneath it (this layer runs while paused).
+	get_tree().paused = true
+	party.touch.release_all()
 	gv.open("mission")
-	gv.closed.connect(gv.queue_free)
+	gv.closed.connect(func():
+		if is_inside_tree():
+			get_tree().paused = false
+		gv.queue_free())
 	return true
 
 
