@@ -1,5 +1,5 @@
 {
-	"_comment": "Recruits. tier: field (can fight on missions), core (deep bonds), recruit (light). Stats 1-10: might, craft, lore, charm, grit. start: in the roster on a new game. locked_party: always in the party (Ash). Traits are defined below. post: where they stand in Hollowmark when not governing, in the party or injured. look: paper-doll outfit and colors (placeholders until the PixelLab pass). lines: what they say when you talk to them in town. quips: one-liners for expedition reports.",
+	"_comment": "Recruits. tier: field (can fight on missions), core (deep bonds), recruit (light). Stats 1-10: might, craft, lore, charm, grit. start: in the roster on a new game. locked_party: always in the party (Ash). Traits are defined below. post: where they stand in Hollowmark when not governing, in the party or injured. look: paper-doll outfit and colors (placeholders until the PixelLab pass). lines: what they say when you talk to them in town. quips: one-liners for expedition reports. join: how someone not on the starting roster is found (claim, building, standing, research, renown, bond, rescue); when it is met they wait at the south gate until hired for their hire price (rescues join straight from the expedition). rumour: what the Newcomers screen (N) says before they turn up. pitch: what they say at the gate. welcome: what they say when they join.",
 	"traits": {
 		"greedy": {"name": "Greedy", "desc": "Skims, but squeezes harder. +2 Gilt as governor."},
 		"stubborn": {"name": "Stubborn", "desc": "Will not give an inch. Governs with 1 more Fray resistance."},
@@ -57,6 +57,8 @@
 			"stats": {"might": 3, "craft": 5, "lore": 8, "charm": 4, "grit": 6}, "traits": ["greedy"],
 			"blurb": "Heals the party and bills them for it. Her poisons and her medicines are the same bottles.",
 			"post": "market", "look": {"outfit": "mage", "colors": {"skin": "d6b08c", "cloth": "5a3a5e", "leather": "4a3020", "boots": "2e2228", "trim": "9fbf6a"}},
+			"join": {"type": "rescue", "job": "rescue_gristle"},
+			"rumour": "A hedge-witch in the Gutterwoods is in trouble with her own coven. She would owe you. She would also bill you.",
 			"quips": ["Mother Gristle has billed the squad for \"moral support\".", "Mother Gristle collected some mushrooms. She says they are for cooking. She did not say whose."],
 			"lines": ["This one cures fever. Or causes it. Depends who's paying.", "I bill by the wound. You look expensive."]
 		},
@@ -65,6 +67,8 @@
 			"stats": {"might": 7, "craft": 4, "lore": 3, "charm": 3, "grit": 6}, "traits": ["ex_concord"],
 			"blurb": "Deserted the Concord army rather than strike out a village. Sharpest tongue in the Inklands.",
 			"post": "gate", "look": {"outfit": "soldier", "colors": {"skin": "b88866", "metal": "a29e96", "cloth": "6a2a2a", "boots": "2a2220"}},
+			"join": {"type": "rescue", "job": "rescue_daro"},
+			"rumour": "A Concord deserter is being marched back for trial. He has opinions about the march.",
 			"quips": ["Daro saluted a scarecrow out of habit, then threatened it.", "Daro wants it on record that the plan was bad and they followed it anyway."],
 			"lines": ["Lost the finger to a form. Long story. Paperwork was involved.", "The Concord strikes out villages with a pen. I prefer the sword. More honest."]
 		},
@@ -73,8 +77,94 @@
 			"stats": {"might": 2, "craft": 3, "lore": 9, "charm": 5, "grit": 5}, "traits": ["bookish", "ink_sick"],
 			"blurb": "Ran from the Abbey with one stolen page that rewrites itself every night.",
 			"post": "stores", "look": {"outfit": "mage", "colors": {"skin": "f0dcc8", "cloth": "e8e2d0", "leather": "6a5a48", "boots": "3a3230", "trim": "2a2a2a"}},
+			"join": {"type": "rescue", "job": "rescue_abeyance"},
+			"rumour": "A runaway scribe is hiding up in Lampwick with a page the Abbey wants back.",
 			"quips": ["Sister Abeyance's page rewrote itself as a shopping list. Everything on it was found.", "Sister Abeyance says the trip was \"very loud, in the quiet way\"."],
 			"lines": ["The page rewrote itself again. Last night it said your name. You don't have one.", "Ink-sickness isn't so bad. The voices are mostly polite."]
+		},
+		{
+			"id": "hesper", "name": "Hesper Quoin", "title": "cartographer", "tier": "recruit", "start": false,
+			"stats": {"might": 2, "craft": 5, "lore": 7, "charm": 3, "grit": 3}, "traits": ["bookish", "coward"],
+			"blurb": "Maps places a week before they exist. Her maps of the Blank are blank, which she finds professionally insulting.",
+			"post": "hall", "look": {"outfit": "mage", "colors": {"skin": "e6c3a3", "cloth": "6a5a3a", "leather": "4a3a2a", "boots": "2e2620", "trim": "c9b890"}},
+			"join": {"type": "claim", "province": "lampwick"}, "hire": {},
+			"rumour": "Someone up in Lampwick Hills is drawing roads that aren't there yet. Claim the Hills and you can ask her why.",
+			"pitch": "I mapped this town a week before your gate went up. You have a road in the wrong place. Take me on and I'll tell you which.",
+			"welcome": "Wonderful. I've already drawn my desk. It's in your hall, so you'd better build one.",
+			"quips": ["Hesper mapped the route home before they left. It was right, which bothered everyone.", "Hesper refused to walk anywhere she hadn't drawn yet. She drew very quickly."],
+			"lines": ["This map's a week ahead. In a week there's a bridge here. Don't ask me who builds it.", "I tried to map the Blank. Seven sheets of nothing. Best work I've ever done.", "If I run, follow me. I always know the way out. I drew it first."]
+		},
+		{
+			"id": "dunmore", "name": "Dunmore Vell", "title": "debt-tattooed blacksmith", "tier": "recruit", "start": false,
+			"stats": {"might": 6, "craft": 8, "lore": 1, "charm": 2, "grit": 6}, "traits": ["greedy"],
+			"blurb": "Every debt he owes is tattooed on his skin, by law. He has run out of arms and started on his back.",
+			"post": "market", "look": {"outfit": "warrior", "colors": {"skin": "b07a58", "metal": "5a5650", "accent": "3a6a8a", "boots": "2a2220"}},
+			"join": {"type": "building", "building": "barracks", "level": 1}, "hire": {"gilt": 25},
+			"rumour": "A smith who owes money to half the Inklands wants steady work. Barracks need blades. Build one and he'll come knocking.",
+			"pitch": "You built barracks. Barracks need steel, and I need to pay off my left shoulder. Twenty-five Gilt and I'm yours.",
+			"welcome": "Good. Write it here, under the one for the horse. No, the other horse.",
+			"quips": ["Dunmore fixed everyone's boots on the road and charged them for it. Then paid it all to a debt collector who was waiting at the gate.", "Dunmore says the trip was worth \"about a forearm\"."],
+			"lines": ["See this one? Owe a man a pig. He's dead now. Still owe it.", "I can mend a blade, a hinge or a grudge. The grudge costs extra.", "When I'm out of skin, the debts go to my next of kin. Lucky them."]
+		},
+		{
+			"id": "jessamy", "name": "Jessamy Nightjar", "title": "smuggler", "tier": "recruit", "start": false,
+			"stats": {"might": 4, "craft": 5, "lore": 3, "charm": 7, "grit": 4}, "traits": ["night_owl", "flirt"],
+			"blurb": "Only moves cargo after dark, and never asks what's in the crates. Asks a lot about you, though.",
+			"post": "tavern", "look": {"outfit": "archer", "colors": {"skin": "d8a888", "cloth": "2a2a4a", "leather": "5a2a3a", "boots": "1e1a24", "trim": "c94a6a"}},
+			"join": {"type": "standing", "faction": "guild", "tier": "friendly"}, "hire": {"gilt": 40},
+			"rumour": "The Mercenary Guild has a night runner they only lend to friends. Get the Guild to Friendly and she'll come and look you over.",
+			"pitch": "The Guild says you're good for it. I like people who are good for it. Forty Gilt, and I'll bring in anything you want. After dark.",
+			"welcome": "Lovely. I'll take the room with the window that doesn't lock. Don't wait up.",
+			"quips": ["Jessamy came back with a crate nobody remembers loading. She says not to open it until spring.", "Jessamy flirted past three checkpoints and a goat."],
+			"lines": ["Day's for honest folk. I sleep through it, mostly out of respect.", "You've got a lovely face for a crime. That's a compliment where I'm from.", "Don't ask what's in the crates. I don't. It keeps us both cheerful."]
+		},
+		{
+			"id": "biscuits", "name": "Mr. Biscuits", "title": "a dog, possibly", "tier": "recruit", "start": false,
+			"stats": {"might": 3, "craft": 1, "lore": 6, "charm": 8, "grit": 7}, "traits": ["stubborn"],
+			"blurb": "The Coven's familiar. Might be a dog that walks like a man, might be a man under a very old curse. Answers to both, and to \"walkies\".",
+			"post": "graveyard", "look": {"outfit": "soldier", "colors": {"skin": "b08a60", "metal": "7a6a50", "cloth": "8a5a30", "boots": "4a3020"}},
+			"join": {"type": "standing", "faction": "coven", "tier": "friendly"}, "hire": {},
+			"rumour": "The Gutterwood Coven keeps a familiar that sniffs out the Blank. Become Friendly with them and they might lend him out.",
+			"pitch": "Woof. (The Coven says you're friends now. Friends get Mr. Biscuits. No charge. Treats are, however, expected.)",
+			"welcome": "(He spins round three times and lies down at your feet. That seems to be a yes.)",
+			"quips": ["Mr. Biscuits barked at the edge of the Blank all night. In the morning it had moved back a little.", "Mr. Biscuits buried something at every campsite. Pell has gone to find out what."],
+			"lines": ["Woof. (He looks at the white on the horizon and growls, very quietly.)", "(He offers you a paw. It is definitely a hand. Wearing a glove. Probably.)", "Wrrf. (Translation, according to Pell: \"the graves are too shallow\".)"]
+		},
+		{
+			"id": "merrow", "name": "The Merrow Three", "title": "orphan choir", "tier": "recruit", "start": false,
+			"stats": {"might": 1, "craft": 3, "lore": 7, "charm": 6, "grit": 5}, "traits": ["ink_sick"],
+			"blurb": "Pim, Pet and Posy share one voice between them, passed round like a hot coal. When they sing in the margins, the Blank holds its breath.",
+			"post": "hall", "look": {"outfit": "mage", "colors": {"skin": "f0d8c0", "cloth": "8a9ab0", "leather": "4a4a5a", "boots": "2a2a36", "trim": "e8e8f0"}},
+			"join": {"type": "research", "node": "ward_margins"}, "hire": {},
+			"rumour": "Three orphans have been heard singing at the edge of the Blank. Write wards into the margins (Research: Margin Wards) and they'll follow the tune.",
+			"pitch": "(Pim:) We heard your margins singing. (Pet:) Badly. (Posy:) We could teach them. We just need a roof and some soup.",
+			"welcome": "(All three, in one voice:) Thank you. (Then three voices, arguing about beds.)",
+			"quips": ["The Merrow Three sang the squad to sleep. Nobody remembers falling asleep. Nobody remembers the song.", "Pim had the voice for most of the trip. Posy is not speaking to her. Literally."],
+			"lines": ["(Pim:) It's my turn with the voice. (Pet, silently, disagrees.)", "(Posy:) The Blank doesn't like harmony. Too many parts. It can't swallow them all at once.", "(Pet:) We used to be four. We don't talk about it. We don't have the voice to spare."]
+		},
+		{
+			"id": "odile", "name": "Odile Penhallow", "title": "tax collector with a conscience", "tier": "recruit", "start": false,
+			"stats": {"might": 3, "craft": 4, "lore": 5, "charm": 6, "grit": 5}, "traits": ["ex_concord"],
+			"blurb": "Collected tithes for the Concord until she was told to collect a village. Quit on the spot, with the ledger.",
+			"post": "table_side", "look": {"outfit": "mage", "colors": {"skin": "e8c8b0", "cloth": "5a2a4a", "leather": "3a2a2a", "boots": "2a2028", "trim": "e0c060"}},
+			"join": {"type": "renown", "amount": 3}, "hire": {"gilt": 30},
+			"rumour": "A Concord tax collector quit with a ledger the Concord very much wants back. She's waiting to see if Hollowmark is worth defecting to. Earn 3 Renown.",
+			"pitch": "I've heard of you, which means the Concord has too. I brought their ledger. Thirty Gilt for my severance and it's yours. So am I.",
+			"welcome": "I've already found four mistakes in your books. Two of them are in your favour. I'll fix the other two.",
+			"quips": ["Odile taxed a bandit. He paid. He seemed confused about why.", "Odile kept a running tally of everything the squad owed each other. It has been framed in the tavern."],
+			"lines": ["They told me to collect a village. Not from. Collect. I took the ledger and ran.", "Your books are a disgrace. I love them. So much to do.", "Quill and I disagree about rounding. Quill rounds up. For Quill."]
+		},
+		{
+			"id": "ottoline", "name": "Big Ottoline", "title": "cabaret bouncer", "tier": "recruit", "start": false,
+			"stats": {"might": 8, "craft": 2, "lore": 1, "charm": 4, "grit": 8}, "traits": ["stubborn"],
+			"blurb": "Tobble's niece, or cousin, or creditor. Threw a Concord magistrate through a door and then charged him for the door.",
+			"post": "tavern", "look": {"outfit": "warrior", "colors": {"skin": "c08060", "metal": "6a6460", "accent": "8a3a6a", "boots": "2a2024"}},
+			"join": {"type": "bond", "who": "tobble", "rank": 2}, "hire": {},
+			"rumour": "Old Tobble knows a bouncer who might work for free, if he likes you enough to ask her. Get close to Tobble (bond rank 2).",
+			"pitch": "Uncle Tobble says you're all right. He's never said that about anyone. I'll keep your door. Nobody gets through it I don't like.",
+			"welcome": "Rule one: no fighting in my tavern. Rule two: if there is fighting, I win it.",
+			"quips": ["Ottoline carried the injured home two at a time and complained it was a light day.", "Ottoline stood in a doorway at the inn and nobody tried to rob the squad. Nobody tried to leave either."],
+			"lines": ["Uncle Tobble says I'm the muscle. I say he's the mouth. Between us we're one bouncer.", "Name's on the list or it isn't. If it isn't, I can help with that. Painfully.", "Throw a magistrate through a door once and they never let you forget it."]
 		}
 	]
 }

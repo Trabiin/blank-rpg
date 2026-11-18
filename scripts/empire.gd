@@ -160,12 +160,14 @@ func reset() -> void:
 	_load_bond_data()
 	bonds = {}
 	mission_kills_bonded = 0
+	visitors = {}
 	rng.seed = 1234
 	if _territory != null:
 		_territory.reload_data()
 
 
 func tick(delta: float) -> void:
+	_check_leads()
 	if SPEEDS[speed] == 0:
 		return
 	var days: float = delta * SPEEDS[speed] / DAY_SECONDS
@@ -1053,9 +1055,9 @@ func _advance_expeditions() -> void:
 ## "Brannoc", "Old Tobble", "Mother Gristle": how people are named in reports.
 func short_name(id: String) -> String:
 	var n: String = recruit(id).get("name", "?")
-	for title in ["Old ", "Mother ", "Sister ", "Corporal "]:
+	for title in ["Old ", "Mother ", "Sister ", "Corporal ", "Mr. ", "The ", "Big "]:
 		if n.begins_with(title):
-			return n.get_slice(" ", 1) if title == "Corporal " else n
+			return n.get_slice(" ", 1) if title in ["Corporal ", "Big "] else n
 	return n.get_slice(" ", 0)
 
 
@@ -1907,7 +1909,7 @@ func to_dict() -> Dictionary:
 		"standing": standing, "pacts": pacts, "deal_ready": deal_ready, "intel_until": intel_until,
 		"next_trouble_day": next_trouble_day, "diplo_log": diplo_log,
 		"bonds": bonds,
-		"dialogue": Dialogue.seen,
+		"visitors": visitors,
 		"rng_state": str(rng.state)}
 
 
@@ -1999,6 +2001,7 @@ func from_dict(d: Dictionary) -> void:
 			var b: Dictionary = saved_bonds[id]
 			bonds[id] = {"points": maxi(int(b.get("points", 0)), 0), "rank": clampi(int(b.get("rank", 0)), 0, 5),
 				"talk_day": int(b.get("talk_day", 0)), "personal_done": bool(b.get("personal_done", false))}
+	_load_visitors(d)
 	if d.has("rng_state"):
 		rng.state = int(d["rng_state"])
 	for saved in d.get("provinces", []):
@@ -2283,3 +2286,162 @@ func bond_perk_lines() -> Array:
 			"supplies": int(e.get("supplies", 0)), "ink": int(e.get("ink", 0)),
 			"note": ("+%d Insight" % int(e["insight"])) if e.has("insight") else "bond"})
 	return out
+
+
+# ---------------------------------------------------------------- newcomers (recruit leads)
+## Everyone who is not on the starting roster has a "join" hook in data/recruits.json: claim a province,
+## build something, reach a faction tier, finish research, earn Renown, or get close to someone.
+## When the hook is met they turn up at Hollowmark's south gate and wait there until you take them on
+## (talk to them in town, or Enter on the Newcomers screen, N) for their "hire" price.
+## Rescue hooks are only listed: the rescue expedition brings that person in by itself.
+
+signal lead_arrived(id: String)
+
+## Visitors waiting at the gate: id -> the day they turned up.
+var visitors := {}
+
+
+func join_hook(id: String) -> Dictionary:
+	return recruit(id).get("join", {})
+
+
+## Everyone who could still join, waiting visitors first, then in roster order.
+func lead_ids() -> Array:
+	_load_recruit_data()
+	var out := recruit_data.keys().filter(func(id): return not recruits.has(id) and not join_hook(id).is_empty())
+	var waiting := out.filter(func(id): return visitors.has(id))
+	return waiting + out.filter(func(id): return not visitors.has(id))
+
+
+func is_visitor(id: String) -> bool:
+	return visitors.has(id) and not recruits.has(id)
+
+
+func hire_cost(id: String) -> Dictionary:
+	return recruit(id).get("hire", {})
+
+
+## Has this person's hook been met? (Rescues never are: the expedition handles those.)
+func hook_met(id: String) -> bool:
+	var h := join_hook(id)
+	match h.get("type", ""):
+		"claim":
+			return territory().find(h.get("province", "")).get("owner", "") == "you"
+		"building":
+			return level_of(h.get("building", "")) >= int(h.get("level", 1))
+		"standing":
+			return faction_data.has(h.get("faction", "")) and at_least(h["faction"], h.get("tier", "friendly"))
+		"research":
+			return has_research(h.get("node", ""))
+		"renown":
+			return int(res.get("renown", 0)) >= int(h.get("amount", 1))
+		"bond":
+			return recruits.has(h.get("who", "")) and bond_rank(h["who"]) >= int(h.get("rank", 1))
+	return false
+
+
+## What you need to do, as one short sentence with the key to press.
+func hook_text(id: String) -> String:
+	var h := join_hook(id)
+	match h.get("type", ""):
+		"claim":
+			return "Claim %s (G on the Command Table)." % territory().find(h.get("province", "")).get("name", "?")
+		"building":
+			var lv := int(h.get("level", 1))
+			var bn: String = building(h.get("building", "")).get("name", "?")
+			return ("Build the %s (B)." % bn) if lv <= 1 else ("Raise the %s to level %d (B)." % [bn, lv])
+		"standing":
+			return "Reach %s with the %s (F)." % [tier_name(h.get("tier", "friendly")), faction(h.get("faction", "")).get("short", "?")]
+		"research":
+			return "Finish %s at the Scriptorium (T)." % research_node(h.get("node", "")).get("name", "?")
+		"renown":
+			return "Reach %d Renown (expeditions, missions)." % int(h.get("amount", 1))
+		"bond":
+			return "Reach bond rank %d with %s (H)." % [int(h.get("rank", 1)), short_name(h.get("who", ""))]
+		"rescue":
+			return "Send a squad on \"%s\" from the Guildhall (E)." % job(h.get("job", "")).get("name", "?")
+	return ""
+
+
+## Where you stand on it right now: [text, good?].
+func hook_progress(id: String) -> Array:
+	var h := join_hook(id)
+	if visitors.has(id):
+		return ["Waiting at the south gate since day %d." % int(visitors[id]), true]
+	match h.get("type", ""):
+		"claim":
+			var p := territory().find(h.get("province", ""))
+			var owner: String = p.get("owner", "")
+			if owner == "erased":
+				return ["%s has been erased. Reclaim it first." % p.get("name", "?"), false]
+			if owner == "free":
+				return ["%s is unclaimed%s." % [p.get("name", "?"), "" if borders_yours(p.get("id", "")) else ", and not next to your land yet"], false]
+			return ["%s is held by %s." % [p.get("name", "?"), faction(owner).get("short", owner)], false]
+		"building":
+			var bid: String = h.get("building", "")
+			var lv := level_of(bid)
+			var s := ("%s: level %d." % [building(bid).get("name", "?"), lv]) if lv > 0 else ("%s: not built yet." % building(bid).get("name", "?"))
+			if construction.get("id", "") == bid:
+				s += " Under construction."
+			return [s, false]
+		"standing":
+			var fid: String = h.get("faction", "")
+			return ["%s standing %d (%s). %s at %d." % [faction(fid).get("short", fid), standing_of(fid), tier_name(tier_of(fid)),
+				tier_name(h.get("tier", "friendly")), tier_min(h.get("tier", "friendly"))], false]
+		"research":
+			var nid: String = h.get("node", "")
+			var st := research_state(nid)
+			if st == "active" or st == "shelved":
+				return ["%d%% studied%s." % [int(research_fraction(nid) * 100.0), "" if st == "active" else ", shelved"], false]
+			return ["Not started%s." % ("" if level_of("scriptorium") > 0 else "; needs a Scriptorium (B)"), false]
+		"renown":
+			return ["Renown %d of %d." % [int(res.get("renown", 0)), int(h.get("amount", 1))], false]
+		"bond":
+			var who: String = h.get("who", "")
+			if not recruits.has(who):
+				return ["%s hasn't joined yet." % recruit(who).get("name", "?"), false]
+			return ["%s: bond rank %d of %d." % [short_name(who), bond_rank(who), int(h.get("rank", 1))], false]
+		"rescue":
+			var jid: String = h.get("job", "")
+			if not expedition_running(jid).is_empty():
+				return ["A squad is on its way.", true]
+			var why := job_blocker(jid)
+			return [("Can't send yet: %s." % why) if why != "" else "On the Guildhall board now.", why == ""]
+	return ["", false]
+
+
+## Why a visitor can't be taken on right now ("" = they can).
+func hire_blocker(id: String) -> String:
+	if recruits.has(id):
+		return "already on the roster"
+	if not visitors.has(id):
+		return "not here yet"
+	var short := _missing(hire_cost(id))
+	return ("not enough " + short) if short != "" else ""
+
+
+func hire(id: String) -> bool:
+	if hire_blocker(id) != "" or not spend(hire_cost(id)):
+		return false
+	visitors.erase(id)
+	recruits[id] = {"role": "idle", "target": "", "injured": 0}
+	notice.emit("%s joins your roster. Give them a job (R)." % recruit(id)["name"], false)
+	return true
+
+
+## Checked every frame (cheap): anyone whose hook was just met turns up at the gate.
+func _check_leads() -> void:
+	for id in recruit_data:
+		if recruits.has(id) or visitors.has(id) or not hook_met(id):
+			continue
+		visitors[id] = day
+		var r := recruit(id)
+		notice.emit("%s, %s, is waiting at Hollowmark's south gate. Talk to them in town, or press N." % [r["name"], r.get("title", "")], false)
+		lead_arrived.emit(id)
+
+
+func _load_visitors(d: Dictionary) -> void:
+	var saved: Dictionary = d.get("visitors", {})
+	for id in saved:
+		if recruit_data.has(id) and not recruits.has(id):
+			visitors[id] = int(saved[id])
