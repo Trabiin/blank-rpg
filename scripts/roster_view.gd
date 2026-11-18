@@ -205,7 +205,13 @@ func _draw() -> void:
 		y += 3
 		y += _wrap(Vector2(x, y + 9), td["desc"], 190, 8, Color(0.68, 0.66, 0.68)) + 10
 	y += 4
-	_wrap(Vector2(x, y + 9), r["blurb"], 190, 8, Color(0.55, 0.53, 0.56))
+	y += _wrap(Vector2(x, y + 9), r["blurb"], 190, 8, Color(0.55, 0.53, 0.56))
+	if Empire.has_bond(id):
+		var br := Empire.bond_rank(id)
+		y += 6
+		_text(Vector2(x, y + 9), "Bond rank %d, %s%s" % [br, Empire.bond_rank_name(br), "  (wants a word: H)" if Empire.bond_next_scene(id) > 0 else ""], 8, Color("ff8fa3"))
+		y += 12
+		_wrap(Vector2(x, y + 9), "Likes " + Empire.bond_info(id).get("likes_text", "?") + ". Pink heart: a role they like. Grey: one they dislike.", 190, 7, Color(0.6, 0.58, 0.6))
 
 	# Detail: what they could do
 	_text(Vector2(OPT_X, 46), "Assign", 11, Color("f3efe4"))
@@ -225,6 +231,10 @@ func _draw() -> void:
 		var col := Color("ece6da") if o["enabled"] else Color(0.42, 0.41, 0.44)
 		if i == current:
 			draw_circle(rr.position + Vector2(7, 8.5), 2.5, GOLD)
+		var mood := Empire.role_mood_for(id, o["role"], o["target"])
+		if mood != "":
+			var hc := rr.position + Vector2(rr.size.x - 9, 9)
+			Art.draw_heart(self, hc, 3.5, Color("ff8fa3") if mood == "likes" else Color(0.4, 0.37, 0.42))
 		_text(rr.position + Vector2(14, 12), o["label"], 9, GOLD if hl and o["enabled"] else col)
 		if not o["enabled"] and o["note"] != "":
 			var lw := font.get_string_size(o["label"], HORIZONTAL_ALIGNMENT_LEFT, -1, 9).x

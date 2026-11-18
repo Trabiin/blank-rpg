@@ -1,0 +1,350 @@
+{
+	"_comment": "Bonds with Ash for the core cast (issue #50, DESIGN.md 5.10). ranks: bond points needed for rank 1..5 (index 0 = rank 0). Points come from the first chat each day in Hollowmark (talk), each day spent in a role they like (liked_role) or dislike (disliked_role), expeditions that come home with a success (expedition), fighting beside Ash (mission, per kill_step kills) and the choices in rank scenes. Points never drop below the current rank, and stop at the next rank until its scene is seen. Rank 5 also needs their personal job (data/expeditions.json, personal: id) done; it unlocks at rank 4. likes / dislikes: role or role:target as Empire.recruits stores them. perks: rank -> {name, desc, effect}; effects are read in empire.gd (bond_perk_total). Scene lines: [speaker id, text]; speaker \"\" is narration. Ash never speaks: choices are what Ash does.",
+	"ranks": [0, 6, 16, 30, 46, 64],
+	"points": {"talk": 2, "liked_role": 2, "disliked_role": -1, "expedition": 2, "mission": 1, "kill_step": 8, "mission_cap": 4},
+	"rank_names": ["Stranger", "Acquaintance", "Familiar", "Trusted", "Close", "Bound"],
+	"cast": {
+		"bran": {
+			"color": "b0442f",
+			"likes": ["party", "expedition"], "likes_text": "being sent somewhere to hit things (party, expeditions)",
+			"dislikes": ["researcher", "staff:scriptorium", "staff:command_table"], "dislikes_text": "desk work",
+			"perks": {
+				"3": {"name": "Rider Clause", "desc": "+10 max HP for the party on missions.", "effect": {"mission_hp": 10}},
+				"5": {"name": "Paid in Full", "desc": "+3 damage for the party on missions.", "effect": {"mission_damage": 3}}
+			},
+			"scenes": [
+				{"rank": 1, "title": "Terms and Conditions", "lines": [
+					["bran", "Since we're stuck together, let's go over the terms. I hit things. You point. Nobody gets sentimental."],
+					["", "He rolls up his sleeve. The contract is tattooed from wrist to elbow, in a cramped clerk's hand."],
+					["bran", "Clause four: I guard the client. Clause nine: if someone pays more, I tell the client first. Then I leave."],
+					["bran", "It tightens if I break it. Like a fist. Ask me how I know."]
+				], "choice": [
+					{"label": "[Read the small print]", "bond": 3, "reply": [["bran", "Ha. Nobody reads the small print. Clause twelve says I get the good chair. Now you know."]]},
+					{"label": "[Shake his hand]", "bond": 2, "reply": [["bran", "Firm. Silent. You'd make a terrible merchant and a great witness."]]},
+					{"label": "[Shrug]", "bond": 0, "reply": [["bran", "Fair. I wouldn't trust me either. That's why it's written down."]]}
+				]},
+				{"rank": 2, "title": "Who Holds the Pen", "lines": [
+					["bran", "You keep looking at the arm. Go on, then."],
+					["bran", "Gallows Ferry. Eighteen. I signed with the Ferrymen's Guild because they fed you before the work, not after."],
+					["bran", "Their notary inked it on me so I couldn't lose it. Or sell it. Or forget whose I was."],
+					["", "He flexes. The letters ripple and settle, like they're listening."],
+					["bran", "The Guild sold my contract on four times. I've never met the man who holds it now."]
+				], "choice": [
+					{"label": "[Touch the ink]", "bond": 3, "reply": [["bran", "Warm, isn't it? It's always warm. Like it's alive and annoyed about it."]]},
+					{"label": "[Point at yourself: no contract]", "bond": 2, "reply": [["bran", "No Ledger, no contract, no name. Must be nice. Or terrifying. I can't tell from here."]]}
+				]},
+				{"rank": 3, "title": "A Better Offer", "lines": [
+					["bran", "Clause nine. I said you'd hear it first, so here it is."],
+					["bran", "A Concord man found me at the gate. Two hundred Gilt for a letter saying where you sleep."],
+					["bran", "That's more than you pay me in a season. I did the sums twice."],
+					["", "He doesn't move. Neither does the tattoo."],
+					["bran", "Thing is, the arm didn't tighten. Not even a twinge. So either the contract's broken, or I am."]
+				], "choice": [
+					{"label": "[Offer him a raise]", "bond": 1, "reply": [["bran", "Put that away. I said I'd tell you. I didn't say I'd take it. Keep your coin. For now."]]},
+					{"label": "[Wait]", "bond": 3, "reply": [["bran", "Right. You trust me to make the call. That's either very smart or very stupid. I sent him home with a bruise."]]},
+					{"label": "[Hand him the letter paper]", "bond": 0, "reply": [["bran", "Testing me? Fine. Bad joke, though. I'll remember it at invoice time."]]}
+				], "end": [["bran", "From now on I fight like I mean it. Don't make it weird."]]},
+				{"rank": 4, "title": "The Holder", "lines": [
+					["bran", "I found him. The man who holds my paper. A broker on Gallows Ferry, buys contracts by the barrel."],
+					["bran", "I want to buy myself back. Or rewrite it. Or put his head through the counting-house window. Haven't decided."],
+					["bran", "I'm not asking for a favour. I'm asking for a squad and a couple of days. Billed to me."],
+					["", "He picks at the edge of the ink. For once he doesn't look at you while he talks."]
+				], "choice": [
+					{"label": "[Nod: go]", "bond": 3, "reply": [["bran", "Good. Board's at the Guildhall. It's marked personal, which I hate. Put me on it."]]},
+					{"label": "[Point at the Guildhall: take friends]", "bond": 2, "reply": [["bran", "Friends. Sure. Witnesses, more like. Brokers behave better with witnesses."]]}
+				], "end": [["", "A new job is on the Guildhall board: \"Buy Back the Paper\". Bran has to go on it."]]},
+				{"rank": 5, "title": "Blank Clause", "lines": [
+					["bran", "Look."],
+					["", "The tattoo is still there, every clause. But where the holder's name was, the skin is clean."],
+					["bran", "I paid him. Then I made him strike his own name out. Then I may have thrown the pen in the river."],
+					["bran", "So the contract's with nobody now. Which means I'm here because I want to be. Disgusting."],
+					["bran", "Don't tell anyone. I have a reputation."]
+				], "choice": [
+					{"label": "[Smile]", "bond": 2, "reply": [["bran", "Stop that. I'm still sending you an invoice. For the pen."]]},
+					{"label": "[Write \"Ash\" in the blank space with a finger]", "bond": 3, "reply": [["bran", "...Huh. It didn't take. You don't have a name to write. That's fine. I know who it's for."]]}
+				]}
+			]
+		},
+		"gristle": {
+			"color": "9fbf6a",
+			"likes": ["staff:infirmary", "party"], "likes_text": "the Infirmary, and fieldwork with plenty of wounds",
+			"dislikes": ["envoy:coven", "idle"], "dislikes_text": "the Coven, and sitting around unbilled",
+			"perks": {
+				"3": {"name": "House Calls", "desc": "Injured people heal 1 extra day each day.", "effect": {"heal": 1}},
+				"5": {"name": "Account Closed", "desc": "Faster revives on missions.", "effect": {"mission_revive": 0.3}}
+			},
+			"scenes": [
+				{"rank": 1, "title": "Your Account", "lines": [
+					["gristle", "Sit. No, there. That's the chair for people who pay later."],
+					["", "She opens a ledger thicker than her arm. Your page already has entries."],
+					["gristle", "Splinter, three copper. Watching me work, one copper. Breathing in my shop, I'm being generous."],
+					["gristle", "Don't look like that. Everyone owes Mother Gristle. It's how you know you're alive."]
+				], "choice": [
+					{"label": "[Pay a coin]", "bond": 2, "reply": [["gristle", "Oh, a payer. How rare. How suspicious. I'll keep an eye on you, dearie."]]},
+					{"label": "[Pull out an empty pocket]", "bond": 3, "reply": [["gristle", "Ha! Honest poverty. My favourite customer. Interest is charged weekly."]]},
+					{"label": "[Point at Bran's entry]", "bond": 1, "reply": [["gristle", "He disputes every line. I add a line for the disputing. We're very happy."]]}
+				]},
+				{"rank": 2, "title": "Same Bottles", "lines": [
+					["gristle", "Hold this. Don't drink it."],
+					["", "She hands you a green bottle. Then an identical green bottle."],
+					["gristle", "One's for fever. One's for husbands. Same bottle. Different spoon."],
+					["gristle", "People think medicine and poison are opposites. They're the same thing in different amounts, and amounts are a matter of price."]
+				], "choice": [
+					{"label": "[Hand both back carefully]", "bond": 3, "reply": [["gristle", "Careful hands. You'd make a decent apprentice if you could scream for help."]]},
+					{"label": "[Sniff one]", "bond": 1, "reply": [["gristle", "Brave. That was the husband one. You'll be fine. Probably. Sit down for an hour."]]}
+				]},
+				{"rank": 3, "title": "The Assessor", "lines": [
+					["gristle", "You want to know why the Coven threw me out. Everyone does, eventually. It's on the bill."],
+					["gristle", "A Concord assessor came to the woods to write down what we were worth. He got sick. I treated him."],
+					["gristle", "Generously. Repeatedly. Until there was nothing left of him to assess."],
+					["gristle", "The Coven said I'd brought the Concord down on us. They were right. The Concord brought the Blank."],
+					["", "She wipes the same clean bottle for a long time."]
+				], "choice": [
+					{"label": "[Sit with her]", "bond": 3, "reply": [["gristle", "Hm. Quiet company. You don't even charge for it. You should, you know."]]},
+					{"label": "[Nod: he had it coming]", "bond": 2, "reply": [["gristle", "Oh, he did. Doesn't mean I sleep. Means I sleep less badly."]]}
+				], "end": [["gristle", "Send me your wounded. I'll keep them alive. Mostly to bill them."]]},
+				{"rank": 4, "title": "One Debt Owed", "lines": [
+					["gristle", "Everyone owes me. One person owes me a life."],
+					["gristle", "Hester Vane, Coven elder. I pulled her grandson out of a fever when nobody else would touch him."],
+					["gristle", "She voted me out the next spring. I've let that debt grow interest for eleven years."],
+					["gristle", "It's time to collect. Not coin. I want my name back on the tree. Lend me a squad."]
+				], "choice": [
+					{"label": "[Nod]", "bond": 3, "reply": [["gristle", "Good. It's on the Guildhall board. Bring the strong ones. Hester has a temper and a lot of nephews."]]},
+					{"label": "[Mime: gently]", "bond": 2, "reply": [["gristle", "Gently. Yes. I'll ask very gently. With a very large bottle in the other hand."]]}
+				], "end": [["", "A new job is on the Guildhall board: \"Collect from Hester Vane\". Mother Gristle has to go on it."]]},
+				{"rank": 5, "title": "Paid in Full", "lines": [
+					["gristle", "My name's back on the tree. Carved deep, so the white has to work for it."],
+					["gristle", "Hester cried. I billed her for the tissue. We're even now. It's horrible. I've never been even with anyone."],
+					["", "She opens the ledger to your page and draws a line through every entry."],
+					["gristle", "Don't get used to it. This is a one-time professional courtesy."]
+				], "choice": [
+					{"label": "[Pay her anyway]", "bond": 3, "reply": [["gristle", "...You absolute fool. Fine. Fine! New page. Look what you've done."]]},
+					{"label": "[Bow]", "bond": 2, "reply": [["gristle", "Get up, you'll ruin your back and then you'll owe me again."]]}
+				]}
+			]
+		},
+		"ninefingers": {
+			"color": "a29e96",
+			"likes": ["party", "staff:barracks"], "likes_text": "fighting, and drilling the recruits at the Barracks",
+			"dislikes": ["envoy:concord", "staff:command_table"], "dislikes_text": "anything with Concord forms",
+			"perks": {
+				"3": {"name": "Covering Fire", "desc": "+10% success on expeditions Daro goes on.", "effect": {"squad_odds": 10}},
+				"5": {"name": "Reads the Orders", "desc": "+1 day of warning before every Blank surge.", "effect": {"surge_warning": 1}}
+			},
+			"scenes": [
+				{"rank": 1, "title": "The Finger", "lines": [
+					["ninefingers", "You're staring at my hand. Everybody stares at the hand."],
+					["ninefingers", "Fine. I lost it to a paper cut. Form C-114, Requisition of Requisition Forms. It went septic."],
+					["", "Bran, passing: \"Last week it was a bear.\""],
+					["ninefingers", "Last week I liked you more, Coil."]
+				], "choice": [
+					{"label": "[Hold up nine fingers]", "bond": 3, "reply": [["ninefingers", "Oh, that's funny. Silent and a comedian. We're going to get along horribly."]]},
+					{"label": "[Look concerned]", "bond": 1, "reply": [["ninefingers", "Don't. Pity's a form too. I don't sign those."]]}
+				]},
+				{"rank": 2, "title": "Old Habits", "lines": [
+					["ninefingers", "Saluted the scarecrow again this morning. Then I filled in a report on it in my head."],
+					["ninefingers", "Twelve years in. They don't train you to fight. They train you to stand still while someone reads to you."],
+					["ninefingers", "I still wake up at the fourth bell for roll call. Count myself. Nine, ten. Nine. Always nine."]
+				], "choice": [
+					{"label": "[Salute him]", "bond": 3, "reply": [["ninefingers", "...Dismissed, smart-mouth. Actually, that was all right. Don't do it again."]]},
+					{"label": "[Offer a drink]", "bond": 2, "reply": [["ninefingers", "Tobble's? He'll want a secret for the second. I've got plenty. None he can afford."]]}
+				]},
+				{"rank": 3, "title": "The Order", "lines": [
+					["ninefingers", "You want to know why I walked. Fine. Once. Then we never talk about it."],
+					["ninefingers", "Hob's Wick. Forty people, a chapel, a mill. The Concord ruled it had \"no material use\". Erasure order, signed and sealed."],
+					["ninefingers", "We were to strike it from the Ledger. Then the Blank would do the rest. Clean. Bloodless. Paperwork."],
+					["ninefingers", "I tore the order in half. My lieutenant took the finger as a fine. Then I walked."],
+					["", "He says it like a weather report. His hands are shaking."]
+				], "choice": [
+					{"label": "[Put a hand on his shoulder]", "bond": 3, "reply": [["ninefingers", "Yeah. Yeah, all right. Two seconds. Then it's weird."]]},
+					{"label": "[Nod slowly]", "bond": 2, "reply": [["ninefingers", "That's it. That's the right reaction. Everyone else asks if it was worth a finger."]]}
+				], "end": [["ninefingers", "Send me out with the squads. I watch backs. It's the one thing they taught me that's any good."]]},
+				{"rank": 4, "title": "Hob's Wick", "lines": [
+					["ninefingers", "I never went back. Never checked. If the order got signed again by someone with all their fingers..."],
+					["ninefingers", "It's off Tithe Road. Two days through Concord toll posts with my face on a poster."],
+					["ninefingers", "I need to know. Even if it's white. Especially if it's white."]
+				], "choice": [
+					{"label": "[Nod]", "bond": 3, "reply": [["ninefingers", "Right. It's on the board. I'll go in a hood. A big one. Bring someone who talks to guards."]]},
+					{"label": "[Point at his poster, then shrug]", "bond": 2, "reply": [["ninefingers", "The likeness is terrible, anyway. They gave me ten fingers. Amateurs."]]}
+				], "end": [["", "A new job is on the Guildhall board: \"Find Hob's Wick\". Daro has to go on it."]]},
+				{"rank": 5, "title": "Roll of Honour", "lines": [
+					["ninefingers", "It's there. The whole village. The mill's turning. Kids. Goats. Bad beer."],
+					["ninefingers", "And in the chapel there's a plaque. \"Corporal Daro, fallen against the Blank.\" The Concord declared me dead so they wouldn't have to say I deserted."],
+					["ninefingers", "Forty people pray for me every week. They think I'm a hero who died. I didn't have the heart to correct them."],
+					["ninefingers", "First time I've been dead. It's roomier than I expected."]
+				], "choice": [
+					{"label": "[Count his fingers with him: nine]", "bond": 3, "reply": [["ninefingers", "Nine. Yeah. Nine's fine. Nine's what it cost. Cheap, really."]]},
+					{"label": "[Salute]", "bond": 2, "reply": [["ninefingers", "Stop that. ...Fine. Back at you, Unwritten."]]}
+				]}
+			]
+		},
+		"quill": {
+			"color": "d8cfa8",
+			"likes": ["staff:command_table", "governor:hollowmark", "envoy:guild"], "likes_text": "the Command Table, running Hollowmark, or haggling with the Guild",
+			"dislikes": ["idle", "expedition"], "dislikes_text": "idleness and mud",
+			"perks": {
+				"3": {"name": "Creative Accounting", "desc": "+3 Gilt a day.", "effect": {"gilt": 3}},
+				"5": {"name": "Balanced Books", "desc": "+2 Supplies and +1 Insight a day.", "effect": {"supplies": 2, "insight": 1}}
+			},
+			"scenes": [
+				{"rank": 1, "title": "Two Sets of Books", "lines": [
+					["quill", "A quartermaster keeps two sets of books. One for the Concord, which is beautiful. One for us, which is true."],
+					["quill", "Which would you like to see? Most commanders want the beautiful one. It has margins."],
+					["", "Two ledgers sit on the stores counter: one bound in red leather, one in sacking."]
+				], "choice": [
+					{"label": "[Point at the true one]", "bond": 3, "reply": [["quill", "Oh, good. A grown-up. It's grim reading. We have eleven days of turnips and a debt to a goat."]]},
+					{"label": "[Point at the beautiful one]", "bond": 1, "reply": [["quill", "Lovely, isn't it? Every number a lie, every lie in a perfect hand. You'll want the other one eventually."]]}
+				]},
+				{"rank": 2, "title": "Written Off", "lines": [
+					["quill", "Do you know what \"written off\" means in Concord books? A debt you'll never collect. A cost with no return."],
+					["quill", "A village can be written off. A road. A person. Once they're off the books, the Ledger stops seeing them."],
+					["quill", "And what the Ledger doesn't see, the Blank eats. Very tidy. Very efficient. I was very good at it."],
+					["", "Quill closes the ledger gently, the way you'd close a coffin."]
+				], "choice": [
+					{"label": "[Tap the true ledger: keep writing]", "bond": 3, "reply": [["quill", "Yes. That's the job now, isn't it? Writing people back in. Badly. In pencil. Still counts."]]},
+					{"label": "[Frown]", "bond": 1, "reply": [["quill", "Yes, well. I frown at myself too. Twice daily, with meals."]]}
+				]},
+				{"rank": 3, "title": "The List", "lines": [
+					["quill", "I kept a list. Every line I wrote off, every name. Thirty-one."],
+					["", "A folded page, soft from handling. Names in a neat, careful hand."],
+					["quill", "I check them against the Blank reports. Nine are gone. The rest are still holding, somewhere."],
+					["quill", "I'm moving money to them. Quietly. A coin here, a sack of seed there. I took it from your budget. I'm telling you because you'd find out."]
+				], "choice": [
+					{"label": "[Nod: keep doing it]", "bond": 3, "reply": [["quill", "...Thank you. I'll make it back. I'll make it back twice. Watch the ledger."]]},
+					{"label": "[Hold out a hand for the list]", "bond": 2, "reply": [["quill", "No. Sorry. That one's mine to carry. But I'll read you the names some night, if you like."]]}
+				], "end": [["quill", "From now on the beautiful books pay for the true ones. Expect a little more Gilt each day. Don't ask how."]]},
+				{"rank": 4, "title": "The Original", "lines": [
+					["quill", "The list is a copy. The original ledger, the one with my signature on every line, is in a Concord strongbox at Old Mill Crossing."],
+					["quill", "As long as it exists, those thirty-one stay written off. It's the official record."],
+					["quill", "If it went missing, or caught fire, or was very carefully corrected in my hand..."],
+					["quill", "I'd need to go myself. Nobody else can forge me."]
+				], "choice": [
+					{"label": "[Nod]", "bond": 3, "reply": [["quill", "It's on the Guildhall board. Bring someone with a crowbar. I'll bring the good pen."]]},
+					{"label": "[Mime striking a match]", "bond": 2, "reply": [["quill", "Tempting. But burning leaves a gap, and the Blank loves a gap. No. I'm going to fix it."]]}
+				], "end": [["", "A new job is on the Guildhall board: \"Correct the Original\". Quill has to go on it."]]},
+				{"rank": 5, "title": "Balanced", "lines": [
+					["quill", "Done. Thirty-one lines corrected. \"Written off\" became \"carried forward\". The Ledger sees them again."],
+					["quill", "I also added one entry. I hope you don't mind."],
+					["", "At the bottom of the page, in Quill's best hand: \"ASH. Owes nothing. Is owed nothing. Balanced.\""],
+					["quill", "It won't stick, of course. You're not in the Ledger. But it's in mine."]
+				], "choice": [
+					{"label": "[Run a finger over the line]", "bond": 3, "reply": [["quill", "It's the only honest entry in the book. Don't tell the Concord. They'd audit it."]]},
+					{"label": "[Bow]", "bond": 2, "reply": [["quill", "Oh, stop. Get back to work. We have eleven days of turnips."]]}
+				]}
+			]
+		},
+		"tobble": {
+			"color": "7a4a2a",
+			"likes": ["idle", "envoy"], "likes_text": "minding the tavern (idle) and talking to anyone (envoy)",
+			"dislikes": ["expedition", "party"], "dislikes_text": "anything involving his knees",
+			"perks": {
+				"3": {"name": "Loose Lips", "desc": "+1 Insight a day from tavern gossip.", "effect": {"insight": 1}},
+				"5": {"name": "The Last Drop", "desc": "+5% success on every expedition.", "effect": {"all_odds": 5}}
+			},
+			"scenes": [
+				{"rank": 1, "title": "The Second Drink", "lines": [
+					["tobble", "First drink's free. House rule. Second one costs a secret."],
+					["", "He slides a mug across. It is mostly foam and history."],
+					["tobble", "Most folk pay with gossip. Who's sleeping where, who owes who. You, though. You don't talk."],
+					["tobble", "So what's a silent customer pay with, eh?"]
+				], "choice": [
+					{"label": "[Draw a little picture in the foam]", "bond": 3, "reply": [["tobble", "Ha! A goat? A cloud? A goat in a cloud. Worth a drink. Worth two. Don't tell the others."]]},
+					{"label": "[Leave the second drink]", "bond": 1, "reply": [["tobble", "Sensible. Most sensible customer I've had in thirty years. Bit dull."]]},
+					{"label": "[Put a coin down]", "bond": 2, "reply": [["tobble", "Coin's fine. Coin's honest. Secrets are better, but you'll warm up."]]}
+				]},
+				{"rank": 2, "title": "Retiring Next Week", "lines": [
+					["tobble", "Retiring next week. Got a cottage picked out. Frayed Meadow, by the brook. Roses."],
+					["tobble", "Course, half the Meadow's gone white. Might be the brook half. Might be the rose half."],
+					["tobble", "Been retiring next week for thirty years. Keeps me young. Thinking about it, anyway."]
+				], "choice": [
+					{"label": "[Mime: one more week]", "bond": 3, "reply": [["tobble", "One more week. Aye. That's the spirit. Always one more."]]},
+					{"label": "[Point at his knees]", "bond": 1, "reply": [["tobble", "Don't you start. The knees and I have an arrangement. They complain and I ignore them."]]}
+				]},
+				{"rank": 3, "title": "The Secret I Sold", "lines": [
+					["tobble", "I'll tell you one I never sell. Because I sold it once, and that was enough."],
+					["tobble", "Years back, a girl hid in my cellar. Abbey runaway, like our Sister. A man paid well to know where."],
+					["tobble", "I told him. Next morning the cellar was clean. Not empty. Clean. White as new paper."],
+					["tobble", "That's the Blank. It doesn't just eat. It's hired."],
+					["", "He polishes a mug that was clean when he started."]
+				], "choice": [
+					{"label": "[Sit at the bar a while]", "bond": 3, "reply": [["tobble", "Aye. Stay. It's the only payment for that one. Somebody staying."]]},
+					{"label": "[Nod: you know now]", "bond": 2, "reply": [["tobble", "Now you know. Now I'm lighter by one. Funny, I thought I'd feel worse."]]}
+				], "end": [["tobble", "My regulars talk. I'll pass along anything worth reading. On the house. Mostly."]]},
+				{"rank": 4, "title": "The Old Sign", "lines": [
+					["tobble", "Before Hollowmark I had a place in the Meadow. The Last Drop. Best ale on the Tithe Road."],
+					["tobble", "The roof's gone now. The Blank's at the doorstep. But the sign's still hanging. Saw it from the ridge."],
+					["tobble", "I want it. Daft, I know. A board with a mug painted on it. But it's mine."],
+					["tobble", "Knees and all, I'm going. Send someone to carry me back."]
+				], "choice": [
+					{"label": "[Nod]", "bond": 3, "reply": [["tobble", "Good lad. Good... whatever you are. It's on the board. Pack a ladder."]]},
+					{"label": "[Offer to carry him]", "bond": 2, "reply": [["tobble", "Cheek! I'll walk. I'll complain the whole way, but I'll walk."]]}
+				], "end": [["", "A new job is on the Guildhall board: \"Fetch the Last Drop's Sign\". Old Tobble has to go on it."]]},
+				{"rank": 5, "title": "Last Orders", "lines": [
+					["", "The old sign hangs over the tavern door now: a mug, a crack, and THE LAST DROP in flaking gold."],
+					["tobble", "Looks right, doesn't it? Like it was always meant to be here."],
+					["tobble", "I've decided something. I'm not retiring next week."],
+					["tobble", "Somebody has to pour at the end of the world. Might as well be the one who knows where the good barrel is."]
+				], "choice": [
+					{"label": "[Raise a mug]", "bond": 3, "reply": [["tobble", "To the last drop. And the one after it, if we're lucky."]]},
+					{"label": "[Point at the sign, then at him]", "bond": 2, "reply": [["tobble", "Aye. Both of us cracked and still hanging on. Go on, drink's free. Both of them."]]}
+				]}
+			]
+		},
+		"abeyance": {
+			"color": "e8e2d0",
+			"likes": ["researcher", "staff:scriptorium"], "likes_text": "the Scriptorium",
+			"dislikes": ["governor", "envoy"], "dislikes_text": "being in charge of people, or talking to them officially",
+			"perks": {
+				"3": {"name": "Margin Notes", "desc": "+20% study pace in the Scriptorium.", "effect": {"research_pace": 0.2}},
+				"5": {"name": "The Page Writes Back", "desc": "+2 Insight a day.", "effect": {"insight": 2}}
+			},
+			"scenes": [
+				{"rank": 1, "title": "Your Name", "lines": [
+					["abeyance", "The page rewrote itself again last night. I copy it out every morning so I don't lose what it said."],
+					["", "She shows you her notebook. Each entry is different. The last one is a single word, written over and over."],
+					["abeyance", "It wrote your name. Which is odd, because you don't have one."],
+					["abeyance", "I can't read it. I mean the letters won't stay still. But it's yours. I'd know it anywhere."]
+				], "choice": [
+					{"label": "[Lean in to look]", "bond": 3, "reply": [["abeyance", "Do you see it? No? It goes shy when you look at it. Like you do."]]},
+					{"label": "[Step back]", "bond": 1, "reply": [["abeyance", "Sorry. That's a lot, isn't it. The Abbey said I was too much as well."]]}
+				]},
+				{"rank": 2, "title": "The Polite Voices", "lines": [
+					["abeyance", "People ask about the voices. They expect me to be frightened."],
+					["abeyance", "They're very polite. They say please. They say excuse me. They ask what year it is."],
+					["abeyance", "I think they're the erased. Everyone the Blank took. They don't know they're gone, so they keep asking for directions."],
+					["abeyance", "I give them directions. To where, I don't know. Somewhere with a door."]
+				], "choice": [
+					{"label": "[Sit and listen with her]", "bond": 3, "reply": [["abeyance", "...One of them just said hello to you. You're the first person they've noticed. Interesting."]]},
+					{"label": "[Offer her tea]", "bond": 2, "reply": [["abeyance", "Thank you. They like tea too. Well. The idea of tea."]]}
+				]},
+				{"rank": 3, "title": "What the Abbey Teaches", "lines": [
+					["abeyance", "At the Abbey they teach that the Ledger is truth. If it's written, it is. If it's struck out, it never was."],
+					["abeyance", "I copied Erasure orders for six years. Beautiful work. My serifs were famous."],
+					["abeyance", "Then the page came to me, and every night it wrote back something I'd struck out. A name. A street. A dog."],
+					["abeyance", "Truth isn't what's written. Truth is what refuses to stay crossed out."]
+				], "choice": [
+					{"label": "[Point at yourself]", "bond": 3, "reply": [["abeyance", "Yes. Exactly. You're the best argument I've ever met. I may write a paper on you."]]},
+					{"label": "[Hand her a fresh quill]", "bond": 2, "reply": [["abeyance", "Oh, a good one. I'll use it for the margins. That's where I keep the true things now."]]}
+				], "end": [["abeyance", "I'll work the margins at the Scriptorium. Things go faster when you know what to look for."]]},
+				{"rank": 4, "title": "A Map", "lines": [
+					["abeyance", "The page drew a map last night. Not words. Lines. The Lampwick Hills, and a chapel I've never seen."],
+					["abeyance", "There's an X. The page has never been that direct. It's usually so polite."],
+					["abeyance", "I think it wants to go home. Or it wants me to see something. I have to take it. Will you send people with me?"]
+				], "choice": [
+					{"label": "[Nod]", "bond": 3, "reply": [["abeyance", "Thank you. It's on the Guildhall board. I'll pack the notebook. And the page. Obviously the page."]]},
+					{"label": "[Mime: careful]", "bond": 2, "reply": [["abeyance", "I'm always careful. It's the page that isn't."]]}
+				], "end": [["", "A new job is on the Guildhall board: \"Follow the Page\". Sister Abeyance has to go on it."]]},
+				{"rank": 5, "title": "Not Yet", "lines": [
+					["abeyance", "The chapel was empty. Just a lectern, and on it, a book with every page torn out but one."],
+					["abeyance", "My page fit the gap exactly. It went in, and the book wrote one line, and then it was still."],
+					["abeyance", "I copied it for you. It's about you, I think. I'm almost sure."],
+					["", "She hands you a slip of paper. In her famous serifs: NOT YET."],
+					["abeyance", "I don't know if it's a warning or a promise. I've decided it's a promise."]
+				], "choice": [
+					{"label": "[Fold it into your coat]", "bond": 3, "reply": [["abeyance", "Keep it close. And if it ever changes, tell me. Well. Show me."]]},
+					{"label": "[Take her hand]", "bond": 2, "reply": [["abeyance", "Oh. The voices have gone quiet. All of them. That's never happened. Stay a moment."]]}
+				]}
+			]
+		}
+	}
+}

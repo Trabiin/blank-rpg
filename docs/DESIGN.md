@@ -260,6 +260,18 @@ About **20 core characters** (all the combat heroes plus the most important staf
   posting rivals together has effects, good or bad.
 - Every core character gets an epilogue line that depends on their bond and fate.
 
+**Built (MVP, `data/bonds.json`, Bonds screen on H):** six bonds: Bran, Mother Gristle and Daro (field) plus
+Quill, Tobble and Sister Abeyance (core staff). Ranks need 6/16/30/46/64 points. Points: +2 for the first chat of
+the day in Hollowmark, +2 a day in a liked role, -1 a day in a disliked one, +2 for a successful expedition, +1 per
+8 kills fighting beside Ash (max 4 per mission), and +0 to +3 from the one choice in each rank scene (Ash never
+speaks; choices are gestures). Points never drop below the current rank and stop at the next rank until its scene
+is seen: the person gets a heart over their head in town and "wants a word". Each person has five rank scenes
+(replayable from the Bonds screen), perks at ranks 3 and 5 (mission HP/damage/revives, healing, expedition odds,
+surge warning, daily Gilt/Supplies/Insight, study pace), and a **personal job** on the Guildhall board at rank 4
+that they must go on; rank 5 needs it done. Scenes use a placeholder visual-novel layout (code-drawn bust, text
+box) that the AI portraits (#12) and the dialogue system (#11) will replace. Rivalries are still only the
+expedition pair modifiers.
+
 The other ~30 recruits are lighter: a trait, a couple of lines, a reason to recruit them, and a quip in
 expedition reports.
 

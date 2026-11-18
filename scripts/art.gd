@@ -114,3 +114,12 @@ static func _count(groups: Dictionary, targets: Dictionary) -> int:
 		if targets.has(g):
 			n += (groups[g] as Array).size()
 	return mini(n, 24)
+
+
+## A small heart drawn in code (bonds). s = half its width in pixels.
+static func draw_heart(ci: CanvasItem, c: Vector2, s: float, col: Color) -> void:
+	var r := s * 0.52
+	ci.draw_circle(c + Vector2(-s * 0.48, -s * 0.35), r, col)
+	ci.draw_circle(c + Vector2(s * 0.48, -s * 0.35), r, col)
+	ci.draw_colored_polygon(PackedVector2Array([c + Vector2(-s * 0.98, -s * 0.18), c + Vector2(s * 0.98, -s * 0.18),
+		c + Vector2(0, s * 0.95)]), col)
