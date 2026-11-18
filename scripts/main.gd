@@ -32,7 +32,7 @@ var respawn_t := 0.0
 var blank_tick := 0.0
 var game_over := false
 var pause_menu: InkMenu
-var boosts := {"damage": 0, "hp": 0, "revive": 1.0, "guard": 0.0, "power_rate": 1.0, "lines": []}  # from research
+var boosts := {"damage": 0, "hp": 0, "revive": 1.0, "guard": 0.0, "power_rate": 1.0, "ink_regen": 1.0, "lines": []}  # from research
 var over_menu: InkMenu
 var banter  # banter.gd: walking banter at the top of the screen
 var dialogue_box  # dialogue_box.gd: conversations (the game pauses while one plays)
@@ -95,6 +95,7 @@ func _ready() -> void:
 		h.hp = h.max_hp
 		h.base_damage += int(boosts["damage"])
 		h.power_rate *= float(boosts["power_rate"])
+		h.ink_regen *= float(boosts.get("ink_regen", 1.0))
 	_set_leader(heroes[0])
 
 	camera = Camera2D.new()
@@ -115,6 +116,7 @@ func _ready() -> void:
 	hud.party = self
 	layer.add_child(hud)
 	touch = TouchScript.new()
+	touch.party = self
 	layer.add_child(touch)
 	banter = BanterScript.new()
 	banter.gap = 1.0
@@ -372,7 +374,7 @@ func snapshot() -> Dictionary:
 	for h in heroes:
 		var hero: Hero = h
 		hs.append({"name": hero.hero_name, "hp": hero.hp, "x": hero.global_position.x, "y": hero.global_position.y,
-			"dead": hero.dead, "power": hero.power})
+			"dead": hero.dead, "power": hero.power, "ink": hero.ink})
 	return {
 		"map": map_path,
 		"area_name": area.area_name,
@@ -403,6 +405,7 @@ func _apply_snapshot(d: Dictionary) -> void:
 		hero.global_position = Vector2(float(hd["x"]), float(hd["y"]))
 		hero.hp = clampi(int(hd["hp"]), 0, hero.max_hp)
 		hero.power = float(hd.get("power", 1.0))
+		hero.ink = clampf(float(hd.get("ink", hero.max_ink)), 0.0, hero.max_ink)
 		if bool(hd.get("dead", false)) or hero.hp <= 0:
 			hero.hp = 0
 			hero.dead = true

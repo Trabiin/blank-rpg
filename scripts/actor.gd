@@ -30,6 +30,9 @@ func _ready() -> void:
 func take_hit(amount: int, from: Vector2, force := 160.0) -> bool:
 	if dead or invuln_t > 0.0:
 		return false
+	amount = _adjust_damage(amount)
+	if amount <= 0:
+		return true  # soaked (a hero's shield): no knockback, no flash
 	hp = max(hp - amount, 0)
 	var away := global_position - from
 	if away.length() < 0.01:
@@ -43,6 +46,11 @@ func take_hit(amount: int, from: Vector2, force := 160.0) -> bool:
 		_on_death()
 		died.emit(self)
 	return true
+
+
+## Lets a subclass shrink or soak a hit before it lands (abilities: shields, guard).
+func _adjust_damage(amount: int) -> int:
+	return amount
 
 
 func _on_hit() -> void:

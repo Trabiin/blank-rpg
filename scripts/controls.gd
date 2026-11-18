@@ -17,6 +17,12 @@ func _ready() -> void:
 	_add_action("clock_faster", [], [JOY_BUTTON_RIGHT_SHOULDER])
 	for i in 4:
 		_add_action("clock_speed_%d" % i, [KEY_1 + i, KEY_KP_1 + i], [])
+	# Abilities in missions (issue #7): 1-4 (same keys as the clock, which is frozen out there),
+	# gamepad LB / RB / LT / RT. Touch buttons press these too.
+	_add_action("ability_1", [KEY_1, KEY_KP_1], [JOY_BUTTON_LEFT_SHOULDER])
+	_add_action("ability_2", [KEY_2, KEY_KP_2], [JOY_BUTTON_RIGHT_SHOULDER])
+	_add_action("ability_3", [KEY_3, KEY_KP_3], [], JOY_AXIS_TRIGGER_LEFT, 1.0)
+	_add_action("ability_4", [KEY_4, KEY_KP_4], [], JOY_AXIS_TRIGGER_RIGHT, 1.0)
 	_add_action("ledger", [KEY_L], [JOY_BUTTON_BACK])
 	_add_action("roster", [KEY_R], [JOY_BUTTON_Y])
 	_add_action("buildings", [KEY_B], [JOY_BUTTON_LEFT_STICK])

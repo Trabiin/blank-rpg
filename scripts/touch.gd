@@ -1,6 +1,7 @@
 extends Control
 ## On-screen controls for touch devices: a floating stick on the left half,
-## Attack and Swap buttons on the right. They feed the normal input actions.
+## Attack and Swap buttons on the right, plus one button per ability of the hero you control
+## (when party is set: missions). They feed the normal input actions.
 
 var stick_index := -1
 var stick_origin := Vector2.ZERO
@@ -9,6 +10,19 @@ var button_touches := {}  # touch index -> action name
 const STICK_R := 34.0
 const BTN_ATTACK_R := 30.0
 const BTN_SWAP_R := 20.0
+const BTN_ABILITY_R := 16.0
+const ABILITY_ANGLES := [195.0, 230.0, 265.0, 300.0]  # around the Attack button
+var party  # main.gd in missions (null in town: no ability buttons)
+
+
+func _ability_count() -> int:
+	if party == null or party.leader == null:
+		return 0
+	return mini(party.leader.abilities.size(), ABILITY_ANGLES.size())
+
+
+func _ability_center(i: int) -> Vector2:
+	return _attack_center() + Vector2.RIGHT.rotated(deg_to_rad(ABILITY_ANGLES[i])) * 60.0
 
 
 func _ready() -> void:
@@ -45,6 +59,10 @@ func _input(event: InputEvent) -> void:
 			if pos.distance_to(_attack_center()) < BTN_ATTACK_R + 10.0:
 				button_touches[event.index] = "attack"
 				Input.action_press("attack")
+			elif _ability_at(pos) >= 0:
+				var act := "ability_%d" % (_ability_at(pos) + 1)
+				button_touches[event.index] = act
+				Input.action_press(act)
 			elif pos.distance_to(_pause_center()) < 18.0:
 				button_touches[event.index] = "pause"
 				Input.action_press("pause")
@@ -70,6 +88,18 @@ func _input(event: InputEvent) -> void:
 			v = v.normalized()
 		_apply_stick(v)
 		queue_redraw()
+
+
+func _ability_at(pos: Vector2) -> int:
+	for i in _ability_count():
+		if pos.distance_to(_ability_center(i)) < BTN_ABILITY_R + 6.0:
+			return i
+	return -1
+
+
+func _process(_delta: float) -> void:
+	if visible and _ability_count() > 0:
+		queue_redraw()  # cooldowns and Ink change every frame
 
 
 func _apply_stick(v: Vector2) -> void:
@@ -106,6 +136,21 @@ func _draw() -> void:
 	draw_circle(s, BTN_SWAP_R, Color(1, 1, 1, 0.18 if not button_touches.values().has("swap") else 0.4))
 	draw_arc(s, BTN_SWAP_R, 0, TAU, 32, Color(1, 1, 1, 0.5), 1.5)
 	draw_string(ThemeDB.fallback_font, s + Vector2(-12, 4), "SWAP", HORIZONTAL_ALIGNMENT_LEFT, -1, 9, Color(1, 1, 1, 0.8))
+	for i in _ability_count():
+		var hero: Hero = party.leader
+		var ab: Dictionary = hero.abilities[i]
+		var ready := Abilities.blocker(hero, i) == ""
+		var col := Abilities.color_of(ab)
+		var ac := _ability_center(i)
+		var held := button_touches.values().has("ability_%d" % (i + 1))
+		draw_circle(ac, BTN_ABILITY_R, Color(col, 0.4 if held else (0.22 if ready else 0.08)))
+		draw_arc(ac, BTN_ABILITY_R, 0, TAU, 24, Color(col, 0.8 if ready else 0.3), 1.5)
+		var cd: float = hero.cooldowns[i]
+		if cd > 0.0:
+			draw_arc(ac, BTN_ABILITY_R - 3.0, -PI / 2.0, -PI / 2.0 + TAU * cd / float(ab.get("cooldown", 1.0)), 20, Color(1, 1, 1, 0.5), 2.0)
+		var label := str(ab.get("short", ab.get("name", "?"))).substr(0, 8)
+		var lw := ThemeDB.fallback_font.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1, 7).x
+		draw_string(ThemeDB.fallback_font, ac + Vector2(-lw / 2.0, 3), label, HORIZONTAL_ALIGNMENT_LEFT, -1, 7, Color(1, 1, 1, 0.9 if ready else 0.45))
 	var pc := _pause_center()
 	draw_circle(pc, 13.0, Color(1, 1, 1, 0.18))
 	draw_rect(Rect2(pc + Vector2(-4, -5), Vector2(3, 10)), Color(1, 1, 1, 0.8))
