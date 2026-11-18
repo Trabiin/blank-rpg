@@ -166,19 +166,27 @@ func _draw() -> void:
 
 	# People list
 	_row_rects.clear()
+	var row_h := minf(ROW_H, (vs.y - 40.0) / float(maxi(n, 1)))  # a big roster squeezes onto one screen
 	for i in n:
 		var id: String = ids[i]
 		var r := Empire.recruit(id)
-		var row := Rect2(LIST_X, 32 + i * ROW_H, LIST_W, ROW_H - 3)
+		var row := Rect2(LIST_X, 32 + i * row_h, LIST_W, row_h - 3)
 		_row_rects.append(row)
 		var on := i == sel
 		draw_rect(row, Color(0.16, 0.13, 0.09) if on else Color(0.09, 0.08, 0.11))
 		if on:
 			draw_rect(row, GOLD if focus == 0 else Color(0.55, 0.48, 0.3), false, 1.0)
-		draw_rect(Rect2(row.position + Vector2(5, 7), Vector2(5, 13)), TIER_COLORS[r["tier"]])
-		_text(row.position + Vector2(16, 12), r["name"], 10, GOLD if on else Color("ece6da"))
 		var injured := int(Empire.recruits[id]["injured"]) > 0
-		_text(row.position + Vector2(16, 23), Empire.role_label(id), 8, Color("ff9b8a") if injured else Color(0.62, 0.6, 0.62))
+		var role_col := Color("ff9b8a") if injured else Color(0.62, 0.6, 0.62)
+		if row_h >= 26.0:
+			draw_rect(Rect2(row.position + Vector2(5, 7), Vector2(5, 13)), TIER_COLORS[r["tier"]])
+			_text(row.position + Vector2(16, 12), r["name"], 10, GOLD if on else Color("ece6da"))
+			_text(row.position + Vector2(16, 23), Empire.role_label(id), 8, role_col)
+		else:  # compact: name and role on one line
+			var mid := row.size.y / 2.0
+			draw_rect(Rect2(row.position + Vector2(5, mid - 5), Vector2(5, 10)), TIER_COLORS[r["tier"]])
+			draw_string(font, row.position + Vector2(16, mid + 3.5), r["name"], HORIZONTAL_ALIGNMENT_LEFT, 92, 9, GOLD if on else Color("ece6da"))
+			draw_string(font, row.position + Vector2(110, mid + 3), Empire.role_label(id), HORIZONTAL_ALIGNMENT_LEFT, LIST_W - 114, 7, role_col)
 	if n == 0:
 		return
 

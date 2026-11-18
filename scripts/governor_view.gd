@@ -201,15 +201,16 @@ func _draw() -> void:
 
 	_row_rects.clear()
 	var y := LIST_Y
+	var row_h := clampf((vs.y - LIST_Y - 70.0) / float(maxi(_rows.size(), 1)), 13.0, ROW_H)  # a big roster squeezes up
 	for i in _rows.size():
 		var row: Dictionary = _rows[i]
-		var rr := Rect2(8, y, vs.x - 16, ROW_H - 2)
+		var rr := Rect2(8, y, vs.x - 16, row_h - 2)
 		_row_rects.append(rr)
 		var on := i == sel
 		draw_rect(rr, Color(0.16, 0.13, 0.09) if on else Color(0.09, 0.08, 0.11))
 		if on:
 			draw_rect(rr, GOLD, false, 1.0)
-		var base := rr.position + Vector2(0, 12)
+		var base := rr.position + Vector2(0, minf(12.0, row_h - 3.0))
 		if row["kind"] == "recall":
 			_text(base + Vector2(hx[0] - 8, 0), "Recall %s (leave %s ungoverned)" % [Empire.recruit(gov)["name"], p["name"]], 9, GOLD if on else Color("ece6da"))
 			_text(base + Vector2(hx[3] - 8, 0), _rate_text(Empire.fray_rate(p, "")), 9, BAD)
@@ -217,7 +218,7 @@ func _draw() -> void:
 			var id: String = row["id"]
 			var col := Color("ece6da") if row["enabled"] else Color(0.42, 0.41, 0.44)
 			if id == gov:
-				draw_circle(rr.position + Vector2(7, 8.5), 2.5, GOLD)
+				draw_circle(rr.position + Vector2(7, (row_h - 2.0) / 2.0), 2.5, GOLD)
 			_text(base + Vector2(hx[0] - 8, 0), Empire.recruit(id)["name"], 9, GOLD if on and row["enabled"] else col)
 			var doing := Empire.role_label(id)
 			if row["note"] != "":
@@ -229,7 +230,7 @@ func _draw() -> void:
 			var r := Empire.fray_rate(p, id)
 			_text(base + Vector2(hx[3] - 8, 0), _rate_text(r), 9, (BAD if r > 0 else GOOD) if row["enabled"] else col)
 			_text(base + Vector2(hx[4] - 8, 0), Empire.output_text(e), 9, Color("e8d9a8") if row["enabled"] else col)
-		y += ROW_H
+		y += row_h
 
 	# Why: every reason behind the highlighted choice
 	y += 8
@@ -237,7 +238,7 @@ func _draw() -> void:
 		var row: Dictionary = _rows[sel]
 		if row["kind"] == "person":
 			var e := Empire.governor_effect(row["id"], pid)
-			for w in e["why"]:
+			for w in e["why"].slice(0, maxi(int((vs.y - 24.0 - y) / 11.0) - 1, 1)):  # as many reasons as fit
 				_text(Vector2(14, y + 8), ("+ " if w[1] else "- ") + w[0], 8, Color("cfe0b0") if w[1] else BAD)
 				y += 11
 			if row["id"] != gov and Empire.role_of(row["id"]) != "idle":

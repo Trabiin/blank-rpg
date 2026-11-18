@@ -14,6 +14,7 @@ const ExpeditionView := preload("res://scripts/expedition_view.gd")
 const ResearchView := preload("res://scripts/research_view.gd")
 const DiplomacyView := preload("res://scripts/diplomacy_view.gd")
 const BondsView := preload("res://scripts/bonds_view.gd")
+const NewcomersView := preload("res://scripts/newcomers_view.gd")
 const SceneView := preload("res://scripts/scene_view.gd")
 const SiteScript := preload("res://scripts/building_site.gd")
 
@@ -47,6 +48,7 @@ var expedition_view
 var research_view
 var diplomacy_view
 var bonds_view
+var newcomers_view
 var scene_view  # bond scenes started by talking to someone in town
 var sites := {}  # building id -> building_site.gd on its plot
 var lamp: Node2D  # Hollowmark's own Wardlamp, drawn once it is lit
@@ -58,6 +60,7 @@ var table_pos := Vector2.ZERO  # bottom-centre of the Command Table
 var table_body: StaticBody2D
 var target := {}  # what the attack button would use: {"kind": "npc"/"table", "id", "pos", "label"}
 var talk_index := {}  # recruit id -> next line to say
+var pitched := {}  # visitor id -> true once they have made their pitch (talk again to take them on)
 var autosave_t := AUTOSAVE_EVERY
 var leaving := false
 
@@ -136,6 +139,11 @@ func _ready() -> void:
 	bonds_view = BondsView.new()
 	bonds_view.visible = false
 	roster_layer.add_child(bonds_view)
+	newcomers_view = NewcomersView.new()
+	newcomers_view.visible = false
+	roster_layer.add_child(newcomers_view)
+	newcomers_view.closed.connect(_place_people)  # someone taken on leaves the gate
+	Empire.lead_arrived.connect(func(_id): _place_people())
 	scene_view = SceneView.new()
 	scene_view.visible = false
 	roster_layer.add_child(scene_view)
@@ -290,6 +298,22 @@ func _place_people() -> void:
 			npc.collision_mask = 0
 			npcs[id] = npc
 		npc.global_position = pos
+	# Newcomers waiting to be taken on stand just inside the south gate.
+	var vspots: Array = area.markers.get("visitors", [])
+	var vn := 0
+	for id in Empire.visitors:
+		if Empire.recruits.has(id) or vspots.is_empty():
+			continue
+		seen[id] = true
+		var vpos: Vector2 = vspots[0] + Vector2([0, 18, -18, 36, -36, 54, 72][vn % 7], 0)
+		vn += 1
+		var vnpc: Hero = npcs.get(id)
+		if vnpc == null:
+			vnpc = _make_person(id, vpos, Empire.recruit(id).get("look", {}))
+			vnpc.collision_layer = 1
+			vnpc.collision_mask = 0
+			npcs[id] = vnpc
+		vnpc.global_position = vpos
 	for id in npcs.keys():
 		if not seen.has(id):
 			npcs[id].queue_free()
@@ -315,7 +339,7 @@ func _find_target() -> Dictionary:
 		if d < best_d:
 			best_d = d
 			best = {"kind": "npc", "id": id, "pos": (npcs[id] as Node2D).global_position, "label": "Talk to " + Empire.recruit(id)["name"]
-				+ ("  (wants a word)" if Empire.bond_next_scene(id) > 0 else "")}
+				+ ("  (wants a word)" if Empire.bond_next_scene(id) > 0 else "") + ("  (looking for work)" if Empire.is_visitor(id) else "")}
 	# The table is wide: measure to its nearest edge, not its middle.
 	var tr := Rect2(table_pos - Vector2(TABLE_SIZE.x / 2.0, TABLE_SIZE.y), TABLE_SIZE)
 	var nearest := Vector2(clampf(p.x, tr.position.x, tr.end.x), clampf(p.y, tr.position.y, tr.end.y))
@@ -355,6 +379,9 @@ func _use(t: Dictionary) -> void:
 		touch.release_all()
 		return
 	var id: String = t["id"]
+	if Empire.is_visitor(id):
+		_talk_visitor(id)
+		return
 	var ready_rank := Empire.bond_next_scene(id)
 	if ready_rank > 0:  # they have something to say: play their bond scene
 		(npcs[id] as Hero).facing = (leader.global_position - (npcs[id] as Node2D).global_position).normalized()
@@ -366,7 +393,7 @@ func _use(t: Dictionary) -> void:
 	var lines: Array = r.get("lines", [])
 	var npc: Hero = npcs[id]
 	npc.facing = (leader.global_position - npc.global_position).normalized()
-	var short_name: String = r["name"].get_slice(" ", 0) if not r["name"].begins_with("Old") and not r["name"].begins_with("Mother") and not r["name"].begins_with("Sister") else r["name"]
+	var short_name := Empire.short_name(id)
 	var line := "..."
 	if int(Empire.recruits[id]["injured"]) > 0:
 		line = "Still stitching myself back together. Ask me again in %d days." % int(Empire.recruits[id]["injured"])
@@ -383,6 +410,28 @@ func _use(t: Dictionary) -> void:
 	if gained > 0:
 		line += "   (bond +%d)" % gained
 	hud.say("%s: %s" % [short_name, line], 4.5)
+
+
+## A newcomer at the gate: the first chat is their pitch, the next one takes them on (if you can pay).
+func _talk_visitor(id: String) -> void:
+	var r := Empire.recruit(id)
+	var npc: Hero = npcs[id]
+	npc.facing = (leader.global_position - npc.global_position).normalized()
+	var who := Empire.short_name(id)
+	var cost := Empire.hire_cost(id)
+	var price := "free" if cost.is_empty() else Empire.cost_text(cost)
+	if not pitched.has(id):
+		pitched[id] = true
+		hud.say("%s: %s   (Talk again to take them on: %s.)" % [who, r.get("pitch", "Looking for work."), price], 6.0)
+		return
+	var why := Empire.hire_blocker(id)
+	if why != "":
+		hud.say("%s: Come back when you can afford me. (%s: %s.)" % [who, price, why], 4.5)
+		return
+	if Empire.hire(id):
+		pitched.erase(id)
+		hud.say("%s: %s" % [who, r.get("welcome", "Glad to be here.")], 5.0)
+		_place_people()
 
 
 # ---------------------------------------------------------------- clock, notices, leaving
@@ -445,6 +494,7 @@ func open_menu(note := "") -> void:
 		{"id": "research", "label": "Research", "detail": "T"},
 		{"id": "diplomacy", "label": "Diplomacy", "detail": "F"},
 		{"id": "bonds", "label": "Bonds", "detail": "H"},
+		{"id": "newcomers", "label": "Newcomers", "detail": "N"},
 		{"id": "save", "label": "Save game"},
 		{"id": "load", "label": "Load game", "enabled": Saves.latest_slot() != "", "note": "(no saves yet)"},
 		{"id": "title", "label": "Quit to title"},
@@ -485,6 +535,9 @@ func _on_menu(id: String) -> void:
 		"bonds":
 			_close_menu()
 			bonds_view.open()
+		"newcomers":
+			_close_menu()
+			newcomers_view.open()
 		"save", "load":
 			slot_mode = id
 			menu.visible = false
@@ -530,11 +583,11 @@ func _process(delta: float) -> void:
 
 	var frame := Engine.get_process_frames()
 	var screen_open: bool = roster_view.visible or buildings_view.visible or expedition_view.visible or research_view.visible \
-			or diplomacy_view.visible or bonds_view.visible or scene_view.visible
+			or diplomacy_view.visible or bonds_view.visible or scene_view.visible or newcomers_view.visible
 	if screen_open or frame == roster_view.closed_frame or frame == buildings_view.closed_frame \
 			or frame == expedition_view.closed_frame or frame == research_view.closed_frame \
 			or frame == diplomacy_view.closed_frame or frame == bonds_view.closed_frame \
-			or frame == scene_view.closed_frame or frame == menu_closed_frame:
+			or frame == scene_view.closed_frame or frame == newcomers_view.closed_frame or frame == menu_closed_frame:
 		leader.controlled = not screen_open
 		return
 	leader.controlled = true
@@ -558,6 +611,9 @@ func _process(delta: float) -> void:
 		return
 	if Input.is_action_just_pressed("bonds"):
 		bonds_view.open()
+		return
+	if Input.is_action_just_pressed("newcomers"):
+		newcomers_view.open()
 		return
 	for i in Empire.SPEEDS.size():
 		if Input.is_action_just_pressed("clock_speed_%d" % i):
@@ -632,7 +688,13 @@ func _draw_lamp() -> void:
 
 func _draw_tags(canvas: Node2D) -> void:
 	var font := ThemeDB.fallback_font
-	for id in npcs:
+	# The one Ash would talk to goes first; other names that would overlap a drawn one are skipped.
+	var order: Array = npcs.keys()
+	if order.has(target.get("id", "")):
+		order.erase(target["id"])
+		order.push_front(target["id"])
+	var drawn: Array = []
+	for id in order:
 		var npc: Hero = npcs[id]
 		var d := npc.global_position.distance_to(leader.global_position)
 		if d > 80.0:
@@ -642,6 +704,15 @@ func _draw_tags(canvas: Node2D) -> void:
 		var name_s: String = r["name"]
 		var w := font.get_string_size(name_s, HORIZONTAL_ALIGNMENT_LEFT, -1, 6).x
 		var p := npc.global_position + Vector2(-w / 2.0, -26)
+		if Empire.is_visitor(id) and target.get("id", "") != id:  # a gold "!" over newcomers looking for work
+			var bob := sin(Time.get_ticks_msec() * 0.006)
+			var bp := npc.global_position + Vector2(-1.5, -35 + bob)
+			canvas.draw_string_outline(font, bp, "!", HORIZONTAL_ALIGNMENT_LEFT, -1, 9, 2, Color(0, 0, 0, 0.8 * a))
+			canvas.draw_string(font, bp, "!", HORIZONTAL_ALIGNMENT_LEFT, -1, 9, Color("ffd166", a))
+		var box := Rect2(p + Vector2(-2, -6), Vector2(w + 4, 8))
+		if drawn.any(func(o): return (o as Rect2).intersects(box)):
+			continue
+		drawn.append(box)
 		var col := Color("ffd166", a) if target.get("id", "") == id else Color(0.95, 0.93, 0.88, a)
 		canvas.draw_string_outline(font, p, name_s, HORIZONTAL_ALIGNMENT_LEFT, -1, 6, 2, Color(0, 0, 0, 0.8 * a))
 		canvas.draw_string(font, p, name_s, HORIZONTAL_ALIGNMENT_LEFT, -1, 6, col)
