@@ -262,7 +262,7 @@ func _draw() -> void:
 			draw_rect(Rect2(x + 52, y, bw * clampf(bar[1] / bar[2], 0.05, 1.0), 7), Color(0.85, 0.78, 0.6))
 			_text(Vector2(x + 178, y + 7), str(int(bar[1])), 8, Color(0.85, 0.83, 0.78))
 			y += 11
-		var style: Dictionary = _load().get("styles", {}).get(hd.get("ai", "steady"), {})
+		var style: Dictionary = _load().get("styles", {}).get(AllyAI.preset_id(str(hd.get("ai", "balanced"))), {})
 		y += 6
 		_text(Vector2(x, y + 8), "As an ally: " + str(style.get("name", "?")), 9, Color("8fa7e8"))
 		y += _wrap(Vector2(x, y + 19), str(style.get("desc", "")), w, 8, Color(0.68, 0.66, 0.68)) + 14
@@ -399,7 +399,7 @@ static func apply(h: Hero, id: String) -> void:
 	h.power_rate = float(hd.get("power_rate", 0.95))
 	h.reach = float(hd.get("reach", 20))
 	h.arc = deg_to_rad(float(hd.get("arc", 70)))
-	h.ai_style = str(hd.get("ai", "steady"))
+	h.ai_style = AllyAI.preset_id(str(hd.get("ai", "balanced")))
 	var heal: Dictionary = hd.get("heal", {})
 	if not heal.is_empty():
 		h.heal_every = float(heal.get("every", 6.0))
