@@ -1,0 +1,26 @@
+{
+	"_comment": "Verity's plans (issue #33): scripted pressure that aims the Blank at a province for a few days. Each plan starts on its day (in order), then a random plan repeats every repeat_gap days. target: a province id, or a rule: concord_frayest (a Concord province, else exposed_frayest), yours_frayest (your frayest province that is not Hollowmark, else Hollowmark), exposed_frayest (frayest province touching erased land or the Blank's edge). per_day: extra Fray per day while it lasts. counter: governor (halved while you have a governor posted there), lamp (cancelled while a Wardlamp burns there), or empty. notice: %s = province name. Story beats can add pressure too: Empire.add_pressure(province_id, label, per_day, days, counter).",
+	"plans": [
+		{
+			"id": "chalk", "day": 6, "target": "concord_frayest",
+			"label": "Verity's chalk lines", "per_day": 3, "days": 5, "counter": "",
+			"notice": "Someone has chalked neat lines across %s. The Blank is following them. Verity aims at the Concord first."
+		},
+		{
+			"id": "surveyors", "day": 11, "target": "yours_frayest",
+			"label": "Verity's surveyors", "per_day": 2, "days": 6, "counter": "governor",
+			"notice": "Quiet surveyors are measuring %s for a clean page. A governor could run them off."
+		},
+		{
+			"id": "notices", "day": 17, "target": "hollowmark",
+			"label": "Erasure notices, signed V.H.", "per_day": 1, "days": 6, "counter": "lamp",
+			"notice": "Polite erasure notices are nailed to every door in %s. A lit Wardlamp would burn them off."
+		},
+		{
+			"id": "redraw", "day": 23, "target": "exposed_frayest",
+			"label": "Verity redraws the border", "per_day": 3, "days": 4, "counter": "governor",
+			"notice": "The Blank's edge near %s has been redrawn, very neatly. A governor could hold the old line."
+		}
+	],
+	"repeat_gap": [7, 10]
+}

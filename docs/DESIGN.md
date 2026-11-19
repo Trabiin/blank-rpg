@@ -103,6 +103,10 @@ The Blank advances on its own and gets worse when you give it openings:
 - **Faster when:** a province has no governor, sits next to an erased province, has unrepaired damage from a
   surge, or when a story choice or Verity's plans aim it there. Each source is listed in the province panel, so the
   player can always see *why* it is moving.
+- **Verity's plans:** every week or so Verity aims the Blank at one province for a few days (chalk lines on Concord
+  land, surveyors on yours, erasure notices in Hollowmark). Each plan is a listed Fray source with its counter (a
+  governor halves it, a Wardlamp cancels it) and a chalk ring on the map. Data: `data/blank.json`; story beats call
+  `Empire.add_pressure()`.
 - **Slower when:** a governor with good Grit is posted, a **Wardlamp** burns there, or research says so.
 - **Surges:** every few days the Blank lunges at one province. It appears as a timed **Defense mission**. Win it to
   knock that province's Fray down; ignore it and the Fray jumps.
