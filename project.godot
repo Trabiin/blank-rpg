@@ -10,6 +10,7 @@ config/features=PackedStringArray("4.3", "GL Compatibility")
 
 [autoload]
 
+Audio="*res://scripts/audio.gd"
 Controls="*res://scripts/controls.gd"
 Saves="*res://scripts/save.gd"
 Empire="*res://scripts/empire.gd"

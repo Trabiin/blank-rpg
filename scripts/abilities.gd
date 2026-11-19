@@ -70,6 +70,7 @@ static func use(h: Hero, i: int) -> bool:
 	h.cooldowns[i] = float(a.get("cooldown", 1.0))
 	h.cast_t = Hero.SWING_TIME
 	h.cast_color = color_of(a)
+	Audio.sfx("cast", 0.9 + 0.2 * float(i))
 	var parent := h.get_parent()
 	match str(a.get("kind", "")):
 		"heal":

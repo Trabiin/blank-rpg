@@ -25,6 +25,7 @@ func open(r: Dictionary) -> void:
 	_t = 0.0
 	_shown_frame = Engine.get_process_frames()
 	visible = true
+	Audio.sfx("fanfare" if r.get("outcome", "") == "success" else "error")
 	queue_redraw()
 
 
