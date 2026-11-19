@@ -40,6 +40,16 @@
 			"rewards": {"gilt": 20, "supplies": 8, "ink": 1},
 			"fray": -6,
 			"loot": {"gilt": [0.3, 1, 2], "supplies": [0.15, 1, 2], "ink": [0.04, 1, 1]}
+		},
+		{
+			"id": "auditor_duel", "name": "Boss: The Auditor", "province": "tithe", "story": true, "after": "act1_concord",
+			"map": "res://maps/tithe_tollgate.txt",
+			"brief": "The Concord has sent its answer to an unregistered town: the Auditor, who strikes people out of the Ledger with a quill the size of a lance. He is waiting at the Tithe Road tollgate, and Hollowmark is next on his list. Watch the red lanes and the dotted lines, and hit him when his nib sticks.",
+			"objective": {"kind": "boss", "boss": "auditor", "label": "Strike out the Auditor"},
+			"enemies": {"nibbler": 1},
+			"rewards": {"gilt": 150, "supplies": 30, "ink": 6, "renown": 5, "insight": 4},
+			"xp": 60,
+			"loot": {}
 		}
 	]
 }

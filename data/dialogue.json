@@ -4,7 +4,8 @@
 		"verity": {"name": "Verity Hale", "color": "e8e2d0", "colors": {"skin": "f1d9c6", "cloth": "ece6d6", "trim": "c9a54a", "hair": "d9d2c0"}},
 		"ilse": {"name": "Ilse", "color": "4f7f8f", "colors": {"skin": "d8c2b0", "cloth": "33505c", "trim": "9fc0c8", "hair": "1f2a30"}},
 		"velvette": {"name": "Velvette", "color": "a03a6a", "colors": {"skin": "e8c0a8", "cloth": "5a1f3c", "trim": "e0b04a", "hair": "2a1420"}},
-		"townsfolk": {"name": "Townsfolk", "color": "8f8578", "colors": {"skin": "d9a07a", "cloth": "6a5a48", "trim": "a89a80", "hair": "4a3a2a"}}
+		"townsfolk": {"name": "Townsfolk", "color": "8f8578", "colors": {"skin": "d9a07a", "cloth": "6a5a48", "trim": "a89a80", "hair": "4a3a2a"}},
+		"auditor": {"name": "The Auditor", "color": "26222c", "colors": {"skin": "e6dccd", "cloth": "26222c", "trim": "efe6cf", "hair": "15101a"}}
 	},
 	"talks": {
 		"meadow_intro": {"title": "The Frayed Meadow", "lines": [
@@ -58,6 +59,27 @@
 			["abeyance", "I stole it from the Abbey. It rewrites itself every night. Last night it wrote a name. Yours. You don't have one.", "surprised"],
 			["abeyance", "The ink-sickness makes me hear things. Mostly polite things. Mostly.", "sad"],
 			["abeyance", "I'd like to stay near you, if that's allowed. Whatever's writing on this page seems very interested in where you go."]
+		]},
+		"auditor_intro": {"title": "The Tithe Road Tollgate", "lines": [
+			["", "The tollgate is too quiet. Someone has swept the road. Someone has swept the birds off it, too."],
+			["", "A tall figure in black stands at the gate, writing. Its quill is longer than a pike, and it does not drip. It would not dare."],
+			["auditor", "Ah. The discrepancy."],
+			["auditor", "I am the Auditor, Concord Office of Corrections. I have reviewed Hollowmark. Its taxes are unpaid, its governor has absconded, and it is currently being run by a person who does not exist."],
+			["auditor", "You are not on the Ledger. Your town is about to join you."],
+			["", "He turns a page. Somewhere behind you, a fence post quietly stops having been there."],
+			["auditor", "Hold still. This will not hurt. Nothing that never happened can hurt."]
+		]},
+		"auditor_phase2": {"title": "Final Notice", "lines": [
+			["auditor", "Irregular. Highly irregular. You should have been struck out three times by now.", "angry"],
+			["auditor", "Very well. FINAL NOTICE.", "angry"],
+			["", "He signs the air. Ink runs down the quill like it has somewhere urgent to be. Clerks crawl out of the margins to help."]
+		]},
+		"auditor_outro": {"title": "Struck Out", "lines": [
+			["", "The great quill splits down the shaft with a sound like a ledger slammed shut."],
+			["auditor", "This... is not... in the procedures.", "surprised"],
+			["auditor", "You cannot strike out a Corrections officer. There is no form for it. There is no form for YOU."],
+			["", "His edges go first, then his title, then his name. The last thing to fade is a neat signature, still waiting for a date."],
+			["", "The tollgate creaks open. The road to Hollowmark is yours, and so, apparently, is the paperwork."]
 		]}
 	},
 	"first_talk": {
