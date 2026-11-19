@@ -22,6 +22,7 @@ func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_select_first_enabled()
+	chosen.connect(_chosen_sfx)
 
 
 func setup(p_title: String, p_items: Array, p_subtitle := "") -> void:
@@ -48,6 +49,7 @@ func _move(step: int) -> void:
 		if items[selected].get("enabled", true):
 			break
 	queue_redraw()
+	_sfx("ui_move")
 
 
 func _choose(i: int) -> void:
@@ -148,3 +150,14 @@ func _draw() -> void:
 			_rects[i] = r.merge(Rect2(r.position.x, y, r.size.x, 12.0))
 			y += 11.0
 		y += 20.0
+
+
+## Menu sounds (#20): a tick when moving, a click on a pick, a softer one on back.
+func _chosen_sfx(id: String) -> void:
+	_sfx("ui_back" if id == "cancel" else "ui_ok")
+
+
+func _sfx(id: String) -> void:
+	var a := get_node_or_null("/root/Audio")
+	if a:
+		a.sfx(id)

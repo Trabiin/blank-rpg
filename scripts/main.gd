@@ -274,6 +274,7 @@ func _on_enemy_died(_e: Actor) -> void:
 			found[k] = int(found.get(k, 0)) + int(got[k])
 		if not got.is_empty():
 			found_flash = 1.5
+			Audio.sfx("coin")
 		var item := Satchel.roll_drop()  # field items go straight into the satchel
 		if item != "":
 			Satchel.add(item)
@@ -293,6 +294,8 @@ func _on_enemy_died(_e: Actor) -> void:
 ## Shared XP for the whole party (issue #15). Level-ups take effect on the spot.
 func _award_xp(amount: int) -> Array:
 	var ups := Progress.award(heroes.map(func(h): return (h as Hero).hero_id), amount)
+	if not ups.is_empty():
+		Audio.sfx("levelup")
 	for up in ups:
 		for h in heroes:
 			var hero: Hero = h

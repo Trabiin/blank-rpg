@@ -103,6 +103,7 @@ func update(delta: float) -> void:
 
 func _on_phase(_p: int) -> void:
 	main.hud.say("FINAL NOTICE. He is not holding back any more.", 3.0)
+	Audio.sfx("burst", 0.6)
 	adds_t = 1.2
 	if not Dialogue.is_seen("talk:" + _talk_id("phase2")):
 		main.play_talk(_talk_id("phase2"))

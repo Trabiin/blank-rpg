@@ -155,6 +155,7 @@ func try_attack() -> void:
 	swing_power = power
 	power = 0.0
 	swing_hit_done = false
+	Audio.sfx("swing", 0.85 + 0.25 * swing_power, -6.0 + 6.0 * swing_power)
 
 
 func _apply_hit() -> void:

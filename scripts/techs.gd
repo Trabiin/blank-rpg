@@ -187,6 +187,7 @@ static func play(h: Hero, which: String) -> void:
 	var p := AudioStreamPlayer.new()
 	p.stream = _sounds[which]
 	p.volume_db = -10.0
+	p.bus = "SFX"
 	h.add_child(p)
 	p.finished.connect(p.queue_free)
 	p.play()
