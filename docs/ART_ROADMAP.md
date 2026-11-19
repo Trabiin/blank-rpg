@@ -27,10 +27,10 @@ Chapter 1 + Act 1 (what the game is building now). Full game means Chapters 2 to
 
 | Item | Size | Why |
 |---|---|---|
-| Layout grid | **640x360**, scaled to any screen (1080p, 4K); UI, text and FX render at full resolution | Already the project setting. See 1.1b: sizes in this table are option A and wait on the detail test |
+| Layout grid | **640x360**, scaled to any screen (1080p, 4K); UI, text and FX render at full resolution | Already the project setting. Option A was picked in the detail test (1.1b) |
 | Tile grid | **16x16** | Matches today's maps and the SNES feel |
 | Heroes and humans | **32x32 canvas, figure about 26 to 28 px tall** (about 1.7 tiles) | The "chunkier heroes" Ojon asked for. The 48 px PixelLab test was too tall; 32 px sits right next to 16 px tiles, as in Secret of Mana |
-| Children, small animals, small enemies | 24x24 or 32x32 canvas, figure 12 to 20 px | Nibblers, moths, Mr. Biscuits, the Merrow Three |
+| Children, small animals, small enemies | **32x32 canvas** with a "small body" prompt, figure 12 to 20 px (24 px canvases gave unusable results in the trial) | Nibblers, moths, Mr. Biscuits, the Merrow Three |
 | Large enemies | 48x48 | Tithe Enforcer and similar |
 | Bosses | 96x96 to 128x128 | The Auditor and every chapter boss. If PixelLab caps the canvas lower, generate at its maximum and Claude builds the rest from parts (body + separate arm/weapon pieces animated in code) |
 | Buildings | 48 to 112 px wide, drawn on the 16 px grid | Hollowmark buildings, three upgrade looks each |
@@ -40,7 +40,7 @@ Chapter 1 + Act 1 (what the game is building now). Full game means Chapters 2 to
 PixelLab rule of thumb: always generate at the final size (32x32 canvas for humans). Never generate big and shrink:
 shrinking pixel art destroys it.
 
-### 1.1b Screen resolution and the detail test (decided: mock up both)
+### 1.1b Screen resolution and the detail test (decided 2026-11-19: option A)
 
 The game already runs at 1080p, 1440p and 4K. 640x360 is the layout grid, not the output size: the project uses
 Godot's `canvas_items` stretch mode, so text, menus, code-drawn FX and portraits render at the screen's full
@@ -48,7 +48,16 @@ resolution. Only the pixel art is drawn at a fixed density (a 16 px tile shows a
 Modern pixel games (Sea of Stars, Eastward, Octopath) work the same way: the modern feel comes from lighting,
 particles, smooth camera, sharp UI and portraits.
 
-Ojon chose (2026-11-19) to see two detail levels side by side before committing:
+**Result:** Ojon tested both side by side (PR #81, new Nibbler in PR #82) and picked **option A**: 16 px tiles, Ash on a
+32 px canvas, camera zoom 2. Ash's look and animations decided it. The table below is kept for the record.
+
+Lessons from the trial:
+- Small enemies: generate natively on a **32 px canvas** with a "small body" prompt. PixelLab's 24 px standard generator
+  gave unusable results, and resizing a bigger sprite down loses detail.
+- PixelLab tilesets can come back with the lower and upper terrain swapped compared with the descriptions. Check
+  which side is which on import before wiring a set in.
+
+The two options that were compared:
 
 | | Option A: standard detail | Option B: double detail |
 |---|---|---|
@@ -252,9 +261,9 @@ humanoids about 60 to 80.
 
 | Enemy | Size | Directions | Special frames | Gens |
 |---|---|---|---|---|
-| Nibbler (Blank) | 24 px blob with mouth | 4 | Lunge bite, dissolve-to-paper death | ~40 |
-| Spitter (Blank) | 24 to 32 px | 4 | Spit wind-up; the ink glob projectile (Code) | ~45 |
-| Letter-moth | 16 to 24 px, flies in packs | 2 | Flutter loop, dive | ~30 |
+| Nibbler (Blank) | 32 px canvas, small blob with mouth | 4 | Lunge bite, dissolve-to-paper death | ~40 |
+| Spitter (Blank) | 32 px canvas | 4 | Spit wind-up; the ink glob projectile (Code) | ~45 |
+| Letter-moth | 32 px canvas, small body, flies in packs | 2 | Flutter loop, dive | ~30 |
 | Tithe Enforcer (Concord) | 48 px, front shield | 5 | Shield block, red-ring slam wind-up, stagger | ~80 |
 | Elite / variant recolours (Gutterwoods, Tithe Road, surge versions) | | | Palette swap in code | 0 |
 | Extra Act 1 enemies (suggested, so each biome has one signature foe: a marsh reed-thing, a mill scarecrow, a Guild sellsword) | | | | ~55 |
@@ -456,7 +465,7 @@ when to have the paid PixelLab month running.
 
 | Phase | What | Tools | Gens / images | Paid PixelLab? |
 |---|---|---|---|---|
-| **0. Style lock** | Detail test first (1.1b: option A vs B mockups, Ojon picks); then settle palette and generate the rest of the samples; build the pipeline (section 4); produce the target screenshot; write `docs/ART_PROMPTS.md` | PL, Code | ~40 | No, free tier over about a week |
+| **0. Style lock** | Detail test done (1.1b: option A); settle palette and generate the rest of the samples; build the pipeline (section 4); produce the target screenshot; write `docs/ART_PROMPTS.md` | PL, Code | ~40 | No, free tier over about a week |
 | **1. The party** | Ash, Bran, Gristle, Daro: full action sets; HUD face icons; code trails for each weapon | PL, Code | ~560 | **Start month 1** |
 | **2. First impression: Prologue** | Meadow biome, Nibbler, Spitter, Blank FX polish, lighting and day/night, ambient particles. After this the first 10 minutes look finished | PL, Code | ~180 | Month 1 |
 | **3. Hollowmark** | Town tileset, 6 buildings × 3 levels, Wardlamp, scaffolding, town props, Quill / Tobble / Abeyance, townsfolk, Concord clerks and governor | PL, Code | ~570 | Month 1 to 2 |
@@ -486,7 +495,7 @@ with any phase, since they use a different tool; doing a few each day on the fre
 
 ## 6. Decisions for Ojon
 
-1. **Detail level:** option A (16 px tiles, 32 px heroes) or B (32 px tiles, 64 px heroes), decided by the side-by-side mockups in 1.1b.
+1. ~~**Detail level**~~ Decided 2026-11-19: option A (16 px tiles, 32 px heroes), see 1.1b.
 2. **Velvette vs Lysandre:** one character or two? Needed before her sprite and expressions.
 3. **Gear on sprites:** recommended no (signature weapon only), which saves thousands of gens.
 4. **PixelLab paid months:** recommended two months for the MVP pass (Phases 1 to 6), paused between chapters later.
