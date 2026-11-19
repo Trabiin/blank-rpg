@@ -1,0 +1,41 @@
+; Last Ink style palette (docs/ART_STYLE.md): the fixed 38 colours every art pass sprite and tile is locked to.
+; Passed as target_palette to PixelLab and enforced again by tools/palette_lock.py snap() on import.
+; Paper white #f3eee2 is NOT here: it stays reserved for the Blank (code effects and --blank sprites).
+#12141f  ink black: outlines, Ink
+#1f2233  ink shadow
+#2e3247  night slate
+#3d4152  stone dark
+#575b6b  stone
+#7a7d88  stone light
+#a3a3a6  stone highlight
+#2a2019  wood darkest
+#3a2a1c  wood dark
+#5a3e28  wood
+#7d5836  wood light
+#a07a4e  wood highlight
+#c9a97a  straw / plaster warm
+#8f8270  plaster shadow
+#b5a68a  plaster
+#d6cdba  bone (non-Blank whites)
+#1c2619  foliage darkest
+#2a3a22  foliage dark
+#3d5130  foliage
+#566b3a  foliage light
+#7d8c4c  foliage highlight
+#a3a865  moss highlight
+#2b3448  slate roof dark
+#3f4c66  slate roof
+#5b6b85  slate roof light
+#5c2a26  clay roof dark
+#85402f  clay roof
+#a85d3e  clay roof light
+#6b4532  skin dark
+#a06a4c  skin
+#d19c7c  skin light
+#3a5f9e  accent Ash ink-blue
+#7fa8ec  Ink glow / Wardlamp
+#c2622d  accent Bran rust
+#e8c65a  accent Daro brass
+#f2c25c  candle / lamplight
+#6fd13a  accent Gristle poison green
+#a3243b  accent crimson

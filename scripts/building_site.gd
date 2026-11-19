@@ -27,7 +27,7 @@ var _extras: Array = []
 var highlight := false
 var _has_art := false  # art pass sprite in use: skip the code-drawn flag, door and candle
 ## Chimney tops on the art pass sprites (offset from the plot's bottom-centre, per level), for the smoke.
-const SMOKE := {"inkworks_1": Vector2(13.5, -65), "inkworks_2": Vector2(11.5, -69), "inkworks_3": Vector2(10.5, -73)}
+const SMOKE := {}  # e.g. "inkworks_3": Vector2(x, y); empty: the current sprites draw their own chimney smoke
 var _over: Node2D  # code-drawn parts above the sprites: plate, scaffolding, smoke
 
 

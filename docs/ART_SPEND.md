@@ -9,13 +9,14 @@ Claude stops and asks before going on if credit is about to run out or a phase r
 | 0. Style lock + pipeline | ~$1 | $0.00 | Reused the approved detail-trial Ash; the rest is code |
 | 1. The party | ~$6 to $12 | **$1.34** (PixelLab) | 9 base candidates ($0.26, ~$0.03 each), 4 heroes × 25 to 30 animation directions ($1.08) |
 | 2. Prologue (meadow, Nibbler, Spitter, FX) | ~$3 to $5 | **$0.59** (PixelLab) | 4 meadow tilesets ($0.03), 18 prop candidates ($0.12), 3 Spitter candidates ($0.09), Nibbler + Spitter animations ($0.35); Blank, light and motes are code |
-| 3. Hollowmark | ~$6 to $12 | **$1.66** (PixelLab) | 108 building/prop candidates ($0.75, incl. a camera-view test and redoing buildings front-facing), 3 town tilesets ($0.02), 14 character candidates ($0.42), idle/walk for Quill, Tobble, Abeyance and 4 townsfolk ($0.47) |
+| 3. Hollowmark, first try | ~$6 to $12 | **$1.66** (PixelLab) | 108 building/prop candidates ($0.75), 3 town tilesets ($0.02), 14 character candidates ($0.42), idle/walk for Quill, Tobble, Abeyance and 4 townsfolk ($0.47). Characters kept; buildings, props and tiles replaced by the style lock |
+| 3b. Style lock + env redo | (not planned) | **$4.60** (PixelLab) | Target plaza and workflow tests ($0.43), 41 palette-locked Pro calls for 9 buildings, 10 level looks and 24 props, several options each ($3.99, about $0.10 per call), 6 tilesets ($0.04). Redid the meadow and town environment art against docs/ART_STYLE.md |
 | 4. Act 1 world | ~$6 to $10 | | |
 | 5. The Auditor and recruits | ~$5 to $10 | | |
 | 6. UI and icons | ~$2 to $4 | | |
 | 7. Portraits and painted art (OpenAI) | ~$6 to $12 | | |
 | 8. Polish sweep | ~$2 to $4 | | |
-| **Total so far** | ~$16 to $30 for phases 0 to 3 | **$3.58** | PixelLab credit left: $6.10 (2026-11-19) |
+| **Total so far** | ~$16 to $30 for phases 0 to 3 | **$8.18** | PixelLab credit left: $1.50 (2026-11-19): top-up needed before Phase 4 |
 
 ## Why Phase 1 came in far under
 
@@ -24,3 +25,11 @@ PixelLab's v3 animation on a 32 px character costs **one generation per directio
 (4 to 16), and only 5 of 8 directions are generated (the rest are mirrored in game). A full hero action set is
 about **$0.25**. If later phases price the same way, the pixel-art side of the MVP will land well below the
 $25 to $60 estimate; bosses (96 to 128 px) and Pro-mode calls cost more per call, so the big check is Phase 5.
+
+## Cost of the style-locked workflow
+
+Since the style lock (docs/ART_STYLE.md), buildings and props are made with PixelLab's Pro image endpoint at about
+$0.08 to $0.12 per call instead of $0.006 per map object, because it is the call that takes the target as a style
+reference and locks the palette. One call returns several options (9 at 80 px, 25 at 48 px, 64 at 32 px), so
+the extra cost buys picks that fit together. Ground tilesets and character animation prices are unchanged.
+Expect Phase 4 (four biomes) at about $5 to $8 this way.

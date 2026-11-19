@@ -25,7 +25,7 @@ const KINDS := {
 	"fountain": [22, 9, 3, 3, 0.0, Vector2(42, 26)],
 	"crates": [30, 0, 2, 2, 0.0, Vector2(28, 14)],
 	"barrels": [33, 0, 2, 1, 0.0, Vector2(26, 8)],
-	"produce": [24, 20, 5, 2, 0.0, Vector2(76, 10)],
+	"produce": [24, 20, 5, 2, 0.0, Vector2(36, 10)],
 	"bench": [28, 4, 3, 1, 0.0, Vector2(40, 6)],
 	"banner": [5, 27, 1, 2, 3.0],
 	"grave": [0, 0, 1, 2, 0.0, Vector2(16, 6), Rect2(566, 82, 22, 26)],
@@ -63,15 +63,6 @@ func _ready() -> void:
 	spr.offset = Vector2(0, -spr.texture.get_height() / 2.0 + 3.0)
 	spr.flip_h = seed_v % 2 == 1 and kind in ["bush", "shrub", "rock", "rock_big", "grave"]
 	spr.material = Art.art_world_material() if has_art else Art.world_material()
-	if kind == "banner" and has_art:
-		# The art pass pennant hangs from a crossbar: stand it on a code-drawn pole.
-		spr.offset.y -= 14.0
-		var pole := ColorRect.new()
-		pole.color = Color("3a2a1c")
-		pole.size = Vector2(2, 30)
-		pole.position = Vector2(-1, -29)
-		pole.material = spr.material
-		add_child(pole)
 	add_child(spr)
 	if k.size() > 5:
 		var box: Vector2 = k[5]

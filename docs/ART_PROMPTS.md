@@ -58,11 +58,10 @@ At 32 px every direction costs one generation (about $0.008). Only the five righ
 
 ## Palette
 
-`tools/master_palette.hex`: Ink black, the reserved Blank paper white, bone, one accent per main character, and 48
-shades sampled from the approved sprites and meadow tiles. `tools/palette_lock.py`:
+`tools/style_palette.hex`: the fixed 38 colours of docs/ART_STYLE.md (the Blank's paper white is not in it). `tools/palette_lock.py`:
 - `clean()` on every sprite: hard alpha, Ink black outline, and near-white pixels pushed to bone, so paper white
   stays the Blank's alone (pass `--blank` for Blank creatures).
-- `snap()` additionally maps to the master palette; used for tiles and props from Phase 2 on.
+- `snap()` additionally maps to the style palette; every art pass asset goes through it (tiles with `outline=False`).
 
 ## Pipeline
 
@@ -96,18 +95,23 @@ portrait. Filled in when Phase 7 starts.
   so deaths are a code crumple + the existing paper burst.
 - Art pass tiles and props use `Art.art_world_material()`: the same Blank fade, with a much lighter mood grade.
 
-## Phase 3 additions (Hollowmark)
+## Phase 3 additions (Hollowmark) and the style lock
 
-- **Buildings use `view: low top-down`**, not high: high top-down came back as isometric diamonds on a ground patch,
-  which clashes with the game's front-facing 3/4 camera. Add ", building only, no ground". 80x80 for a 5x5 plot.
-- **Building levels:** level 3 first, then levels 1 and 2 from it with `init_image` = the level 3 sprite.
-  `init_image_strength` ~70 gives a humbler level 1 with the same roof and colours, ~130 a plainer level 2;
-  200+ comes back nearly identical to the source. Stored as `assets/buildings/<look>_<level>.png`.
-- **Town ground:** tileset lower = the meadow grass (with the meadow GGGG tile as `lower_reference_image`), upper
-  "worn uneven grey cobblestones with moss in the cracks". This set came back unswapped; still store by content
-  (`assets/tiles/town/`, G = grass, D = cobbles). Maps opt in with `@ground town`.
-- **Props** (high top-down is fine for small things): town props in `assets/props/`, the Wardlamp as
-  `wardlamp_<level>.png` (glow in code), the Command Table as `command_table.png`. Banners came back as a pennant on a
-  crossbar, so the pole is code.
-- **Hub people:** 32 px characters, idle only for staff who stand at posts; townsfolk (`folk_man`, `folk_woman`,
-  `folk_elder`, `folk_child`) get idle + walk and wander the plaza (`scripts/townsfolk.gd`).
+**Read docs/ART_STYLE.md first: it replaces the per-asset settings above for buildings, props and tiles.** The first
+Phase 3 batch (map objects, mixed views, palette only cleaned) did not fit together and was replaced.
+
+- **Buildings and props:** `POST /v2/generate-image-v2` with `style_image` = `docs/style/ref_building.png` (buildings)
+  or `docs/style/ref_props.png` (props), `style_options.color_palette = false`, `target_palette` = the 38 colours of
+  `tools/style_palette.hex`. Sizes: 80x80 for a plot building (9 options per call), 48 or 32 for props. Non-square
+  sizes come back small on a square canvas, so ask for square.
+- **Building levels:** level 3 first; levels 1 and 2 pass the chosen level 3 as `reference_images` with "the first
+  humble version of the ... in the reference image" / "a plainer, slightly smaller earlier version". Stored as
+  `assets/buildings/<look>_<level>.png`.
+- **Tiles:** `create-tileset` with `lower_reference_image` = `docs/style/ref_grass.png`, cobbles with
+  `upper_reference_image` = `docs/style/ref_cobble.png`, `color_image` = the palette strip (`target_palette` needs
+  the pricier pro tileset mode). Snapped with `snap(outline=False)`; stored by content (G grass, D dirt or cobbles).
+  One of the three meadow sets came back broken (dirt in the wrong corners): check every set on a sheet.
+- **Characters:** `create-character-v3` with Ash's settings, then `snap()` on every frame.
+- **Map-object inpainting** into a crop of the target was tried for cheap props: unreliable, not used.
+- Hub people: Quill, Tobble, Abeyance idle only; townsfolk (`folk_man`, `folk_woman`, `folk_elder`, `folk_child`)
+  idle + walk, wandering the plaza (`scripts/townsfolk.gd`).

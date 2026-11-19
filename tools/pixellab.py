@@ -210,6 +210,43 @@ def save_object(job, path):
     return True
 
 
+# ---------------------------------------------------------------- style-locked images (docs/ART_STYLE.md)
+def style_palette():
+    return [l.split()[0] for l in open(os.path.join(HERE, "style_palette.hex")) if l.strip() and not l.startswith(";")]
+
+
+def _ref(path):
+    from PIL import Image
+    w, h = Image.open(path).size
+    return {"image": {"type": "base64", "base64": base64.b64encode(open(path, "rb").read()).decode()}, "size": {"width": w, "height": h}}
+
+
+def generate_styled(pl, description, size, style_png, refs=(), seed=5):
+    """Pro image job anchored to the style target: style_png (a crop in docs/style/) sets the look, the 38-colour
+    style palette is enforced, refs (e.g. a building's level 3) guide the subject. Returns the job id; the
+    finished job's last_response.images holds several options (9 at 80 px, 25 at 48 px, 64 at 32 px)."""
+    body = {"description": description, "image_size": {"width": size[0], "height": size[1]}, "seed": seed,
+            "no_background": True, "style_image": _ref(style_png), "style_options": {"color_palette": False},
+            "target_palette": {"colors": style_palette()}}
+    if refs:
+        body["reference_images"] = [_ref(p) for p in refs]
+    return pl._req("POST", "/generate-image-v2", body)["background_job_id"]
+
+
+def save_styled(job, prefix):
+    """Writes each option of a finished generate_styled job as <prefix>_<k>.png."""
+    out = []
+    for k, im in enumerate((job.get("last_response") or {}).get("images") or []):
+        data = im["base64"] if isinstance(im, dict) else im
+        if data.startswith("data:"):
+            data = data.split(",", 1)[1]
+        path = f"{prefix}_{k}.png"
+        with open(path, "wb") as f:
+            f.write(base64.b64decode(data))
+        out.append(path)
+    return out
+
+
 def spend_summary():
     """Sum of logged spend per phase."""
     tot = {}

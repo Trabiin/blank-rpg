@@ -57,14 +57,15 @@ static func world_material() -> ShaderMaterial:
 	return _world_material
 
 
-## The same Blank fade for art pass tiles and props, with a much lighter mood grade (they are muted already).
+## The same Blank fade for art pass tiles and props, with no mood grade: they are locked to the style palette
+## (docs/ART_STYLE.md), so their colours are shown as drawn and only the day/night light changes them.
 static func art_world_material() -> ShaderMaterial:
 	if _art_world_material == null:
 		_art_world_material = ShaderMaterial.new()
 		_art_world_material.shader = WORLD_TINT
-		_art_world_material.set_shader_parameter("desat", 0.08)
-		_art_world_material.set_shader_parameter("tint", Vector3(0.97, 0.98, 1.0))
-		_art_world_material.set_shader_parameter("gain", 1.3)
+		_art_world_material.set_shader_parameter("desat", 0.0)
+		_art_world_material.set_shader_parameter("tint", Vector3(1.0, 1.0, 1.0))
+		_art_world_material.set_shader_parameter("gain", 1.0)
 		_art_world_material.set_shader_parameter("blank_x", world_material().get_shader_parameter("blank_x"))
 	return _art_world_material
 
