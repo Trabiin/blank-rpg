@@ -63,6 +63,7 @@ func setup(p_obj: Dictionary, p_main) -> void:
 			var look: Dictionary = Empire.recruit(rid).get("look", {})
 			captive = HeroScript.new()
 			captive.hero_name = Empire.short_name(rid)
+			captive.hero_id = rid  # picks their art pass sprite if they have one (else the paper doll)
 			captive.outfit = look.get("outfit", "archer")
 			var cols := {}
 			for k in look.get("colors", {}):

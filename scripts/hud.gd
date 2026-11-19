@@ -86,10 +86,17 @@ func _draw() -> void:
 	for h in party.heroes:
 		var hero: Hero = h
 		var y := vs.y - 38.0
-		var panel := Rect2(x, y, 112, 32)
+		# Art pass heroes get a face icon cut from their sprite; the plate grows to fit it.
+		var face: Texture2D = hero.art.face() if hero.art != null else null
+		var fw := 24.0 if face != null else 0.0
+		var panel := Rect2(x, y, 112 + fw, 32)
 		draw_rect(panel, Color(0.05, 0.04, 0.08, 0.72))
 		if hero.controlled:
 			draw_rect(panel, Color("ffd166"), false, 1.0)
+		if face != null:
+			draw_rect(Rect2(x + 3, y + 6, 20, 20), Color(0.16, 0.15, 0.2, 0.9))
+			draw_texture_rect(face, Rect2(x + 3, y + 6, 20, 20), false, Color(0.45, 0.45, 0.45) if hero.dead else Color.WHITE)
+			x += fw
 		var name_col := Color(0.6, 0.6, 0.6) if hero.dead else Color.WHITE
 		_text(Vector2(x + 5, y + 10), hero.hero_name + ("  (down)" if hero.dead else ""), 9, name_col, false)
 		var pct := int(round(hero.power * 100.0))

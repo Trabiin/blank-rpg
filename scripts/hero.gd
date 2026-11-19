@@ -1,7 +1,8 @@
 class_name Hero
 extends Actor
 ## A party member. Either player-controlled or driven by the ally AI.
-## Visuals are a paper doll: CC0 Puny Characters body + outfit layers, recolored per hero.
+## Visuals: an art pass sprite set (scripts/sprite_set.gd, data/sprites.json) when the character has one,
+## otherwise the old paper doll (CC0 Puny Characters body + outfit layers, recolored per hero).
 
 const SWING_TIME := 0.24
 const REVIVE_TIME := 2.5
@@ -16,6 +17,12 @@ var colors := {
 }
 var body_sprite: Sprite2D
 var outfit_sprite: Sprite2D
+## Art pass sprite (null while this character still uses the paper doll).
+var art: SpriteSet
+var art_sprite: Sprite2D
+var _art_id := ""
+var _anim := ""
+var _anim_t := 0.0
 var overlay: Node2D
 var controlled := false
 var party  # main.gd or hub.gd: gives access to leader, shake()
@@ -27,6 +34,9 @@ var power_rate := 0.95
 var base_damage := 10
 var reach := 20.0
 var arc := deg_to_rad(70.0)
+## Weapon trail drawn in code over every swing (data/heroes.json "trail"): a sweep, or a jab for pikes.
+var trail_color := Color("e8e4d8")
+var trail_thrust := false
 var swing_t := 0.0
 var swing_power := 1.0
 var swing_hit_done := false
@@ -318,9 +328,29 @@ func _nearest_enemy(from: Vector2, max_dist: float) -> Enemy:
 func build_doll() -> void:
 	body_sprite = _layer(Art.BODY, Art.recolor_material("body", colors))
 	outfit_sprite = _layer(Art.OUTFITS[outfit], Art.recolor_material(outfit, colors))
+	art_sprite = Sprite2D.new()
+	art_sprite.visible = false
+	add_child(art_sprite)
 	overlay = Node2D.new()
 	add_child(overlay)
 	overlay.draw.connect(_draw_overlay)
+
+
+## Which sprite set this body wears: the town sets "id" meta on people, missions set hero_id.
+func art_id() -> String:
+	return str(get_meta("id")) if has_meta("id") else hero_id
+
+
+func _refresh_art() -> void:
+	var want := art_id()
+	if want == _art_id:
+		return
+	_art_id = want
+	art = SpriteSet.of(want)
+	var on := art != null
+	art_sprite.visible = on
+	body_sprite.visible = not on
+	outfit_sprite.visible = not on
 
 
 func _layer(tex: Texture2D, mat: ShaderMaterial) -> Sprite2D:
@@ -343,6 +373,12 @@ static func dir_row(v: Vector2) -> int:
 func _update_frame() -> void:
 	if body_sprite == null:
 		return
+	_refresh_art()
+	var blink := invuln_t > 0.0 and not dead and int(invuln_t * 20.0) % 2 == 0
+	modulate.a = 0.45 if blink else 1.0
+	if art != null:
+		_update_art()
+		return
 	var col := 0
 	if dead:
 		col = 23
@@ -359,8 +395,49 @@ func _update_frame() -> void:
 	var frame := dir_row(facing) * 24 + col
 	body_sprite.frame = frame
 	outfit_sprite.frame = frame
-	var blink := invuln_t > 0.0 and not dead and int(invuln_t * 20.0) % 2 == 0
-	modulate.a = 0.45 if blink else 1.0
+
+
+## Picks the art pass animation from the hero's state. Timed actions (swing, cast, dash, tech)
+## follow their own timers so the pose always matches the hit; the rest just play.
+func _update_art() -> void:
+	var row := dir_row(facing)
+	var anim := "idle"
+	var progress := -1.0  # 0..1 through a timed action, or -1 to play at the animation's fps
+	if dead:
+		anim = "ko"
+	elif tech_flash_t > 0.0 and art.has("tech"):
+		anim = "tech"  # release: second half of the clip
+		progress = 0.5 + 0.5 * (1.0 - tech_flash_t / 0.35)
+	elif charging and charge_t >= Techs.TAP and art.has("tech"):
+		anim = "tech"  # wind-up: hold the crouch, flickering between its last two frames
+		var n := art.frames_of("tech")
+		var hold := clampi(n / 2 - 2 + (int(charge_t * 8.0) % 2), 0, n - 1)
+		progress = (float(hold) + 0.5) / float(n)
+	elif dash_t > 0.0:
+		anim = "attack"
+		progress = 0.7
+	elif swing_t > 0.0:
+		anim = "attack"
+		progress = 1.0 - swing_t / SWING_TIME
+	elif cast_t > 0.0:
+		anim = "cast" if art.has("cast") else "attack"
+		progress = 1.0 - cast_t / SWING_TIME
+	elif flash_t > 0.0 or (invuln_t > 0.45 and art.has("hurt")):
+		anim = "hurt"
+	elif moving:
+		anim = "walk"
+	if not art.has(anim):
+		anim = "idle" if art.has("idle") else "rot"
+	if anim != _anim:
+		_anim = anim
+		_anim_t = 0.0
+	else:
+		_anim_t += get_process_delta_time()
+	if progress >= 0.0:
+		var n2 := art.frames_of(anim)
+		art.apply_frame(art_sprite, anim, row, clampi(int(progress * n2), 0, n2 - 1))
+	else:
+		art.apply(art_sprite, anim, row, _anim_t)
 
 
 func _process(_delta: float) -> void:
@@ -394,8 +471,28 @@ func _draw_overlay() -> void:
 	if controlled:
 		var y := -21.0 + sin(anim_t * 4.0) * 1.0
 		overlay.draw_colored_polygon(PackedVector2Array([Vector2(-2.5, y - 3), Vector2(2.5, y - 3), Vector2(0, y)]), Color("ffd166"))
-	# A full-power swing gets a gold arc on top of the sprite's own slash.
-	if swing_t > 0.0 and swing_power >= 1.0:
-		var t := 1.0 - swing_t / SWING_TIME
-		var a0 := facing.angle() - arc
-		overlay.draw_arc(Vector2(0, -6), reach - 3.0, a0, a0 + 2.0 * arc * t, 16, Color("ffe08a", 0.7), 1.5)
+	if swing_t > 0.0:
+		_draw_trail(1.0 - swing_t / SWING_TIME)
+
+
+## The weapon trail: a fading sweep (or a jab) in the hero's colour, gold on a full-power swing.
+func _draw_trail(t: float) -> void:
+	var full := swing_power >= 1.0
+	var col := Color("ffe08a") if full else trail_color
+	var fade := 1.0 - maxf(t - 0.6, 0.0) / 0.4  # the tail fades over the last part of the swing
+	var c0 := Vector2(0, -8)
+	if trail_thrust:
+		var tip := c0 + facing * lerpf(8.0, reach, minf(t * 1.6, 1.0))
+		var back := c0 + facing * 6.0
+		overlay.draw_line(back, tip, Color(col, 0.35 * fade), 4.0)
+		overlay.draw_line(back.lerp(tip, 0.4), tip, Color(col, 0.8 * fade), 1.5)
+		overlay.draw_circle(tip, 1.5 if full else 1.0, Color(col.lightened(0.4), fade))
+		return
+	var a0 := facing.angle() - arc
+	var head := a0 + 2.0 * arc * minf(t * 1.25, 1.0)
+	var tail := maxf(a0, head - arc * 1.2)
+	var r := reach - 4.0
+	# Three strokes: a wide soft band, the main line and a bright edge.
+	overlay.draw_arc(c0, r - 2.0, tail, head, 14, Color(col, 0.22 * fade), 5.0)
+	overlay.draw_arc(c0, r, tail, head, 14, Color(col, 0.65 * fade), 1.5)
+	overlay.draw_arc(c0, r + 1.0, lerpf(tail, head, 0.5), head, 8, Color(col.lightened(0.5), 0.9 * fade), 1.0)
