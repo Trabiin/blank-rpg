@@ -132,7 +132,7 @@ static func apply(m: Dictionary, outcome: String, dry := false) -> Array:
 		"reclaim":
 			if won and p["owner"] == "erased":
 				lines.append("%d Ink rewrites %s: back on the map, unclaimed, Fray %d." % [RECLAIM_INK, p["name"], RECLAIM_FRAY])
-				lines.append("Claim it from the Command Table with a governor (G).")
+				lines.append("Claim it from the Command Table with a governor%s." % Prompts.tag("govern"))
 				if not dry:
 					Empire.res["ink"] = maxi(int(Empire.res.get("ink", 0)) - RECLAIM_INK, 0)
 					p["owner"] = "free"
@@ -147,7 +147,7 @@ static func apply(m: Dictionary, outcome: String, dry := false) -> Array:
 			if won and rid != "" and not Empire.recruits.has(rid):
 				if not dry:
 					Empire.recruits[rid] = {"role": "idle", "target": "", "injured": 0}
-				lines.append("%s joins your roster. Find them in Hollowmark or give them a job (R)." % Empire.recruit(rid).get("name", rid))
+				lines.append("%s joins your roster. Find them in Hollowmark or give them a job%s." % [Empire.recruit(rid).get("name", rid), Prompts.tag("roster")])
 				var j := Empire.job(jid)
 				for fid in j.get("standing", {}):
 					if not dry:

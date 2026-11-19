@@ -133,7 +133,7 @@ func _gui_input(event: InputEvent) -> void:
 		for i in _row_rects.size():
 			if (_row_rects[i] as Rect2).has_point(event.position):
 				sel = i
-	elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+	elif Prompts.tapped(event):
 		for i in _row_rects.size():
 			if (_row_rects[i] as Rect2).has_point(event.position):
 				sel = i
@@ -246,7 +246,7 @@ func _draw() -> void:
 		else:
 			_text(Vector2(14, y + 8), "An ungoverned province frays %d faster a day and delivers %d%% less." % [Empire.FRAY_UNGOVERNED, int(round((1.0 - Empire.UNGOVERNED_OUTPUT) * 100))], 8, BAD)
 
-	_text(Vector2(8, vs.y - 10), "Up/Down choose   Enter post   Esc or G close", 7, Color(0.5, 0.48, 0.52))
+	_text(Vector2(8, vs.y - 10), Prompts.help([["updown", "choose"], ["ui_accept", "post"], [["ui_cancel", "govern"], "close"]], "Tap someone to post them"), 7, Color(0.5, 0.48, 0.52))
 	if flash_t > 0.0:
 		var a := clampf(flash_t / 0.4, 0.0, 1.0)
 		_text(Vector2(240, vs.y - 10), flash, 9, Color(1, 0.9, 0.7, a))

@@ -195,6 +195,6 @@ func _draw() -> void:
 	draw_string(font, _speed_rect.position + Vector2(4, 7), sp, HORIZONTAL_ALIGNMENT_LEFT, -1, 7, Color(0.62, 0.6, 0.64))
 	_skip_rect = Rect2(_speed_rect.end.x + 4, box.end.y + 1, 30, 9)
 	draw_string(font, _skip_rect.position + Vector2(4, 7), "Skip", HORIZONTAL_ALIGNMENT_LEFT, -1, 7, Color(0.62, 0.6, 0.64))
-	var hint := "Enter / tap: next    Tab: text speed    Esc: skip"
+	var hint := Prompts.help([["ui_accept", "next"], ["swap", "text speed"], ["ui_cancel", "skip"]], "Tap: next")
 	draw_string(font, Vector2(vs.x - font.get_string_size(hint, HORIZONTAL_ALIGNMENT_LEFT, -1, 7).x - 14, vs.y - 2), hint,
 		HORIZONTAL_ALIGNMENT_LEFT, -1, 7, Color(0.5, 0.48, 0.52))

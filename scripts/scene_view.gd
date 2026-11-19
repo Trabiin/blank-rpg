@@ -333,7 +333,8 @@ func _draw() -> void:
 				y += 20
 		"done":
 			draw_multiline_string(font, box.position + Vector2(12, 22), _outro, HORIZONTAL_ALIGNMENT_LEFT, box.size.x - 24, 10, -1, Color("9fd18b"))
-	var hint := "Enter / tap: next    Esc: skip" if _stage != "choice" else "Up/Down choose    Enter / tap: pick"
+	var hint := Prompts.help([["ui_accept", "next"], ["ui_cancel", "skip"]], "Tap: next") if _stage != "choice" \
+		else Prompts.help([["updown", "choose"], ["ui_accept", "pick"]], "Tap an answer")
 	if _stage == "done":
-		hint = "Enter / tap: close"
+		hint = Prompts.help([["ui_accept", "close"]], "Tap to close")
 	draw_string(font, Vector2(vs.x - font.get_string_size(hint, HORIZONTAL_ALIGNMENT_LEFT, -1, 7).x - 14, vs.y - 3), hint, HORIZONTAL_ALIGNMENT_LEFT, -1, 7, Color(0.5, 0.48, 0.52))

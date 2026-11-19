@@ -187,7 +187,7 @@ func _gui_input(event: InputEvent) -> void:
 			if (_scene_rects[i] as Rect2).has_point(event.position):
 				focus = 1
 				scene_sel = i
-	elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+	elif Prompts.tapped(event):
 		if _close_rect().has_point(event.position):
 			close()
 			return
@@ -298,7 +298,7 @@ func _draw() -> void:
 	if missing > 0:
 		_text(Vector2(10, y + 10), "%d more people Ash could get close to haven't joined yet." % missing, 7, DIM, LIST_W)
 	_draw_details(vs, ids[sel])
-	_text(Vector2(8, vs.y - 8), "Up/Down choose   Enter talk / scenes   Right scenes   Esc or H close", 7, Color(0.5, 0.48, 0.52))
+	_text(Vector2(8, vs.y - 8), Prompts.help([["updown", "choose"], ["ui_accept", "talk / scenes"], ["leftright", "people / scenes"], [["ui_cancel", "bonds"], "close"]], "Tap a name, tap again to talk   Tap a scene twice to play it"), 7, Color(0.5, 0.48, 0.52))
 	if flash_t > 0.0:
 		var a := clampf(flash_t / 0.4, 0.0, 1.0)
 		var w := font.get_string_size(flash, HORIZONTAL_ALIGNMENT_LEFT, -1, 9).x
@@ -357,7 +357,7 @@ func _draw_details(vs: Vector2, id: String) -> void:
 			state = "under way"
 			col = GOLD
 		elif rank >= 4:
-			state = "on the Guildhall board (E)" if Empire.level_of("guildhall") > 0 else "needs a Guildhall (B)"
+			state = ("on the Guildhall board" + Prompts.tag("expeditions")) if Empire.level_of("guildhall") > 0 else ("needs a Guildhall" + Prompts.tag("buildings"))
 			col = GOLD
 		y += _wrap(Vector2(x, y + 9), "Personal job, %s: %s." % [Empire.job(pj).get("name", "?"), state], w, 8, col) + 1
 	y += 8
@@ -380,7 +380,7 @@ func _draw_details(vs: Vector2, id: String) -> void:
 				label = "%d. %s" % [row["rank"], row["title"]]
 				col = TEXT
 			"ready":
-				label = "%d. %s  (new: Enter to play)" % [row["rank"], row["title"]]
+				label = "%d. %s  (new: %s to play)" % [row["rank"], row["title"], Prompts.confirm()]
 				col = HEART
 			_:
 				label = "%d. ???" % row["rank"]

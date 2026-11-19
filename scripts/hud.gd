@@ -42,7 +42,6 @@ func size_px() -> Vector2:
 
 
 const INK_COL := Color("6aa8ff")
-const PAD_LABELS := ["LB", "RB", "LT", "RT"]
 
 
 ## The leader's abilities, bottom-right: key, name, Ink cost, cooldown sweep.
@@ -65,14 +64,16 @@ func _draw_ability_bar(hero: Hero, vs: Vector2) -> void:
 			draw_rect(Rect2(x, y, w * cd / float(a.get("cooldown", 1.0)), 32), Color(1, 1, 1, 0.08))
 		draw_rect(r, col if why == "" else Color(col, 0.35), false, 1.0)
 		var txt_col := Color.WHITE if why == "" else Color(0.6, 0.6, 0.6)
-		_text(Vector2(x + 4, y + 10), "%d" % (i + 1), 9, col, false)
-		_text(Vector2(x + 14, y + 10), str(a.get("name", "")), 8, txt_col, false)
+		var k := Prompts.key("ability_%d" % (i + 1))  # 1-4, or LB / RB / LT / RT on a pad
+		if k == "":
+			k = str(i + 1)
+		_text(Vector2(x + 4, y + 10), k, 9, col, false)
+		var kw := ThemeDB.fallback_font.get_string_size(k, HORIZONTAL_ALIGNMENT_LEFT, -1, 9).x
+		_text(Vector2(x + 8 + kw, y + 10), str(a.get("name", "")), 8, txt_col, false)
 		var cost_col := INK_COL if why != "ink" else Color("ff6b6b")
 		_text(Vector2(x + 4, y + 22), "%d Ink" % int(a.get("cost", 0)), 8, cost_col, false)
 		if cd > 0.0:
 			_text(Vector2(x + 44, y + 22), "%.1fs" % cd, 8, Color(0.8, 0.8, 0.85), false)
-		else:
-			_text(Vector2(x + 60, y + 22), PAD_LABELS[i], 7, Color(0.55, 0.55, 0.6), false)
 		x += w + 4.0
 
 
@@ -148,12 +149,19 @@ func _draw() -> void:
 			yy += 16.0
 	if help_t > 0.0 and not party.touch_active():
 		var a2 := clampf(help_t / 1.0, 0.0, 1.0)
-		_text(Vector2(vs.x - 236, 14), "Move: WASD / arrows / stick", 8, Color(1, 1, 1, a2))
-		_text(Vector2(vs.x - 236, 25), "Attack: J / Space (pad A), hold when full: tech", 8, Color(1, 1, 1, a2))
-		_text(Vector2(vs.x - 236, 36), "Swap hero: Tab / Q (gamepad Y)", 8, Color(1, 1, 1, a2))
-		_text(Vector2(vs.x - 236, 47), "Pause: Esc / P (gamepad Start)", 8, Color(1, 1, 1, a2))
-		_text(Vector2(vs.x - 236, 58), "Abilities: 1-4 (gamepad LB RB LT RT)", 8, Color(1, 1, 1, a2))
-		_text(Vector2(vs.x - 236, 69), "Quick menu: C (gamepad Back)", 8, Color(1, 1, 1, a2))
+		# Matches the device in use (issue #23): keys on a keyboard, button names on a pad.
+		var pad := Prompts.pad()
+		var abil := "%s %s %s %s" % [Prompts.key("ability_1"), Prompts.key("ability_2"), Prompts.key("ability_3"), Prompts.key("ability_4")]
+		var lines_h := [
+			"Move: " + ("left stick / D-pad" if pad else "WASD / arrows"),
+			"Attack: %s, hold when full: tech" % Prompts.key("attack"),
+			"Swap hero: " + Prompts.key("swap"),
+			"Pause: " + Prompts.key("pause"),
+			"Abilities: " + (abil if pad else "1-4"),
+			"Quick menu: " + Prompts.key("quick_menu"),
+		]
+		for li in lines_h.size():
+			_text(Vector2(vs.x - 236, 14 + 11 * li), lines_h[li], 8, Color(1, 1, 1, a2))
 	if center_text != "":
 		draw_rect(Rect2(Vector2.ZERO, vs), Color(0.95, 0.94, 0.9, 0.55))
 		var lines2 := center_text.split("\n")

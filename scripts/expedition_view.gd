@@ -210,7 +210,7 @@ func _gui_input(event: InputEvent) -> void:
 			if (_row_rects[i] as Rect2).has_point(event.position) and sel != i:
 				sel = i
 				_mark_read()
-	elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+	elif Prompts.tapped(event):
 		for i in _row_rects.size():
 			if (_row_rects[i] as Rect2).has_point(event.position):
 				sel = i
@@ -286,9 +286,9 @@ func _draw_board(vs: Vector2) -> void:
 	var sub := "Guildhall level %d: up to %d squad%s out at once (%d out now). Squads of %d to %d. Supplies pay the rations." % [
 		gh, Empire.expedition_slots(), "" if Empire.expedition_slots() == 1 else "s", Empire.expeditions.size(), Empire.SQUAD_MIN, Empire.SQUAD_MAX]
 	if gh > 0 and Empire.expeditions.size() >= Empire.expedition_slots():
-		sub = "All squads are out (%d/%d). Wait for them, or upgrade the Guildhall (B) to send more at once." % [Empire.expeditions.size(), Empire.expedition_slots()]
+		sub = "All squads are out (%d/%d). Wait for them, or upgrade the Guildhall%s to send more at once." % [Empire.expeditions.size(), Empire.expedition_slots(), Prompts.tag("buildings")]
 	if gh <= 0:
-		sub = "Expeditions run from the Guildhall. Build it first on the Buildings screen (B)."
+		sub = "Expeditions run from the Guildhall. Build it first on the Buildings screen%s." % Prompts.tag("buildings")
 	_text(Vector2(8, 34), sub, 8, GOLD if gh > 0 else BAD)
 	var cols := [14.0, 214.0, 280.0, 318.0, 360.0]
 	var hc := Color(0.55, 0.53, 0.56)
@@ -359,7 +359,7 @@ func _draw_board(vs: Vector2) -> void:
 	elif row["kind"] == "reports" and not Empire.reports.is_empty():
 		var r: Dictionary = Empire.reports[0]
 		_text(Vector2(14, y), "Latest: Day %d, %s" % [int(r["day"]), r["title"]], 9, GOLD)
-	_text(Vector2(8, vs.y - 10), "Up/Down choose   Enter pick   Esc or E close", 7, Color(0.5, 0.48, 0.52))
+	_text(Vector2(8, vs.y - 10), Prompts.help([["updown", "choose"], ["ui_accept", "pick"], [["ui_cancel", "expeditions"], "close"]], "Tap a row to pick"), 7, Color(0.5, 0.48, 0.52))
 
 
 func _draw_squad(vs: Vector2) -> void:
@@ -408,7 +408,7 @@ func _draw_squad(vs: Vector2) -> void:
 	var w := vs.x - x - 10
 	_text(Vector2(x, 60), "Success chance", 9, Color(0.75, 0.72, 0.7))
 	if squad.is_empty():
-		_wrap(Vector2(x, 78), "Tick people on the left (Enter). The chance and every reason behind it show up here as you pick.", w, 8, SOFT)
+		_wrap(Vector2(x, 78), "Tick people on the left (%s). The chance and every reason behind it show up here as you pick." % Prompts.confirm(), w, 8, SOFT)
 	else:
 		var odds := Empire.expedition_odds(job_id, squad)
 		var c := int(odds["chance"])
@@ -432,7 +432,7 @@ func _draw_squad(vs: Vector2) -> void:
 				leaving.append("%s (%s)" % [Empire.short_name(id), Empire.role_label(id)])
 		if not leaving.is_empty():
 			_wrap(Vector2(x, yy + 38), "Leaves their job while away: " + ", ".join(leaving), w, 8, Color(0.85, 0.7, 0.55))
-	_text(Vector2(8, vs.y - 10), "Up/Down choose   Enter tick / send   Esc back", 7, Color(0.5, 0.48, 0.52))
+	_text(Vector2(8, vs.y - 10), Prompts.help([["updown", "choose"], ["ui_accept", "tick / send"], ["ui_cancel", "back"]], "Tap people to tick them, then tap Send   Close: back"), 7, Color(0.5, 0.48, 0.52))
 
 
 func _draw_reports(vs: Vector2) -> void:
@@ -469,4 +469,4 @@ func _draw_reports(vs: Vector2) -> void:
 		elif line.find("joins your roster") >= 0:
 			lc = Color(0.15, 0.4, 0.15)
 		yy += _wrap(Vector2(x, yy + 4), line, w, 9, lc) + 5
-	_text(Vector2(8, vs.y - 10), "Up/Down choose report   Esc back", 7, Color(0.5, 0.48, 0.52))
+	_text(Vector2(8, vs.y - 10), Prompts.help([["updown", "choose report"], ["ui_cancel", "back"]], "Tap a report to read it   Close: back"), 7, Color(0.5, 0.48, 0.52))

@@ -147,4 +147,4 @@ func _draw() -> void:
 	draw_rect(_btn, Color(0.22, 0.17, 0.08))
 	draw_rect(_btn, Color(GOLD, 0.6 + 0.4 * pulse), false, 1.0)
 	_text_c(cx, _btn.position.y + 15.0, "Return to Hollowmark", 10, GOLD)
-	_text_c(cx, panel.end.y + 14.0, "Enter / A / tap", 8, Color(0.75, 0.72, 0.66, 0.9))
+	_text_c(cx, panel.end.y + 14.0, Prompts.confirm(), 8, Color(0.75, 0.72, 0.66, 0.9))

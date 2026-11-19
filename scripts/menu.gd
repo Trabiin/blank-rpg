@@ -15,6 +15,12 @@ var title_size := 22
 var top := 0.34  # fraction of screen height where the title (or first item) starts
 var _rects: Array = []
 var _t := 0.0
+# Long lists (issue #23): they move up, then scroll so the selected row stays on screen.
+var _scroll := 0.0
+var _max_scroll := 0.0
+var _follow := true  # keys move the view with the selection; dragging frees it
+var _touch_from := Vector2.INF  # where a finger went down on a scrolling list
+var _touch_item := -1
 
 
 func _ready() -> void:
@@ -66,10 +72,14 @@ func _input(event: InputEvent) -> void:
 			selected = i
 			queue_redraw()
 		return
+	if _max_scroll > 0.0 and _scroll_input(event):
+		return
 	var pick := -2  # -2 = nothing, -1 = cancel, >= 0 = item index
 	if event.is_action_pressed("ui_down"):
+		_follow = true
 		_move(1)
 	elif event.is_action_pressed("ui_up"):
+		_follow = true
 		_move(-1)
 	elif event.is_action_pressed("ui_accept"):
 		pick = selected
@@ -90,6 +100,36 @@ func _input(event: InputEvent) -> void:
 		chosen.emit("cancel")
 	elif pick >= 0:
 		_choose(pick)
+
+
+## On a list too long for the screen a finger can drag it, and a tap picks on release
+## (so starting a drag never picks). The mouse wheel scrolls too. True when handled.
+func _scroll_input(event: InputEvent) -> bool:
+	if event is InputEventScreenDrag:
+		_follow = false
+		_scroll = clampf(_scroll - event.relative.y, 0.0, _max_scroll)
+		get_viewport().set_input_as_handled()
+		return true
+	if event is InputEventMouseButton and event.pressed \
+			and event.button_index in [MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN]:
+		_follow = false
+		_scroll = clampf(_scroll + (-16.0 if event.button_index == MOUSE_BUTTON_WHEEL_UP else 16.0), 0.0, _max_scroll)
+		get_viewport().set_input_as_handled()
+		return true
+	if event is InputEventScreenTouch:
+		get_viewport().set_input_as_handled()
+		if event.pressed:
+			_touch_from = event.position
+			_touch_item = _hit(event.position)
+		elif _touch_from != Vector2.INF:
+			var moved: float = (event.position as Vector2).distance_to(_touch_from)
+			var i := _touch_item
+			_touch_from = Vector2.INF
+			if moved < 10.0 and i >= 0 and i == _hit(event.position):
+				selected = i
+				_choose(i)
+		return true
+	return false
 
 
 func _hit(p: Vector2) -> int:
@@ -117,7 +157,15 @@ func _draw() -> void:
 	var font := ThemeDB.fallback_font
 	if dim > 0.0:
 		draw_rect(Rect2(Vector2.ZERO, vs), Color(0.04, 0.03, 0.07, dim))
+	# Lay the list out first, so a long one can move up and scroll.
+	var head := (20.0 if title != "" else 0.0) + (13.0 * subtitle.split("\n").size() if subtitle != "" else 0.0) + 16.0
+	var list_h := 0.0
+	for it in items:
+		list_h += 31.0 if str(it.get("detail", "")) != "" else 20.0
 	var y := vs.y * top
+	var bottom := vs.y - 8.0
+	if y + head + list_h > bottom:
+		y = maxf(float(title_size) + 4.0, bottom - head - list_h)
 	if title != "":
 		_centered(font, y, title, title_size, Color("f3f1ea"))
 		y += 20.0
@@ -126,9 +174,35 @@ func _draw() -> void:
 			_centered(font, y, line, 9, Color(0.8, 0.78, 0.74))
 			y += 13.0
 	y += 16.0
+	var list_top := y - 14.0  # first row's top edge
+	_max_scroll = maxf(0.0, list_top + list_h - bottom)
+	if _max_scroll > 0.0 and _follow:
+		var row_top := list_top
+		for i in selected:
+			row_top += 31.0 if str(items[i].get("detail", "")) != "" else 20.0
+		var row_h := 31.0 if selected < items.size() and str(items[selected].get("detail", "")) != "" else 20.0
+		if row_top - _scroll < list_top:
+			_scroll = row_top - list_top
+		elif row_top + row_h - _scroll > bottom:
+			_scroll = row_top + row_h - bottom
+	_scroll = clampf(_scroll, 0.0, _max_scroll)
+	if _max_scroll > 0.0:
+		# Little arrows say there is more above or below.
+		var cx := vs.x / 2.0
+		var arrow := Color(1.0, 0.82, 0.4, 0.75)
+		if _scroll > 0.5:
+			draw_colored_polygon(PackedVector2Array([Vector2(cx - 5, list_top - 2), Vector2(cx + 5, list_top - 2), Vector2(cx, list_top - 7)]), arrow)
+		if _scroll < _max_scroll - 0.5:
+			draw_colored_polygon(PackedVector2Array([Vector2(cx - 5, vs.y - 6), Vector2(cx + 5, vs.y - 6), Vector2(cx, vs.y - 1)]), arrow)
+	y -= _scroll
 	_rects.clear()
 	for i in items.size():
 		var it: Dictionary = items[i]
+		var row_h2 := 31.0 if str(it.get("detail", "")) != "" else 20.0
+		if _max_scroll > 0.0 and (y - 14.0 < list_top - 0.5 or y - 14.0 + row_h2 > bottom + 0.5):
+			_rects.append(Rect2(-100, -100, 0, 0))  # scrolled out of view: not drawn, not tappable
+			y += row_h2
+			continue
 		var enabled: bool = it.get("enabled", true)
 		var col := Color("ffd166") if i == selected else Color(0.92, 0.9, 0.86)
 		if not enabled:

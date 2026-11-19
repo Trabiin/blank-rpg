@@ -119,7 +119,7 @@ func _gui_input(event: InputEvent) -> void:
 			if (_opt_rects[i] as Rect2).has_point(event.position):
 				focus = 1
 				opt = i
-	elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+	elif Prompts.tapped(event):
 		for i in _row_rects.size():
 			if (_row_rects[i] as Rect2).has_point(event.position):
 				sel = i
@@ -252,7 +252,7 @@ func _draw() -> void:
 	var show: Dictionary = opts[opt if focus == 1 else current]
 	if show["preview"] != "":
 		_wrap(Vector2(OPT_X, oy + 12), show["preview"], size.x - OPT_X - 8, 8, Color("cfe0b0"))
-	var help := "Up/Down choose   Enter assign   Left back" if focus == 1 else "Up/Down choose person   Enter or Right: pick a role   Esc close"
+	var help := Prompts.help([["updown", "choose"], ["ui_accept", "assign"], ["ui_cancel", "back"]], "Tap a role to assign it") if focus == 1 else Prompts.help([["updown", "choose person"], ["ui_accept", "pick a role"], [["ui_cancel", "roster"], "close"]], "Tap a person, then tap a role")
 	_text(Vector2(OPT_X, vs.y - 10), help, 7, Color(0.5, 0.48, 0.52))
 	if flash_t > 0.0:
 		var a := clampf(flash_t / 0.4, 0.0, 1.0)

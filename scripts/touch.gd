@@ -15,6 +15,12 @@ const ABILITY_ANGLES := [195.0, 230.0, 265.0, 300.0]  # around the Attack button
 var party  # main.gd in missions (null in town: no ability buttons)
 
 
+## In town there is nobody to swap to and no quick menu, and Hollowmark's own Menu button
+## sits top-right, so only the stick and a Talk button show (issue #23).
+func _in_town() -> bool:
+	return party == null
+
+
 func _ability_count() -> int:
 	if party == null or party.leader == null:
 		return 0
@@ -68,13 +74,13 @@ func _input(event: InputEvent) -> void:
 				var act := "ability_%d" % (_ability_at(pos) + 1)
 				button_touches[event.index] = act
 				Input.action_press(act)
-			elif pos.distance_to(_pause_center()) < 18.0:
+			elif not _in_town() and pos.distance_to(_pause_center()) < 18.0:
 				button_touches[event.index] = "pause"
 				Input.action_press("pause")
-			elif pos.distance_to(_menu_center()) < 16.0 and InputMap.has_action("quick_menu"):
+			elif not _in_town() and pos.distance_to(_menu_center()) < 16.0 and InputMap.has_action("quick_menu"):
 				button_touches[event.index] = "quick_menu"
 				Input.action_press("quick_menu")
-			elif pos.distance_to(_swap_center()) < BTN_SWAP_R + 10.0:
+			elif not _in_town() and pos.distance_to(_swap_center()) < BTN_SWAP_R + 10.0:
 				button_touches[event.index] = "swap"
 				Input.action_press("swap")
 			elif pos.x < get_viewport_rect().size.x * 0.5 and stick_index == -1:
@@ -139,7 +145,16 @@ func _draw() -> void:
 	var a := _attack_center()
 	draw_circle(a, BTN_ATTACK_R, Color(1, 1, 1, 0.18 if not button_touches.values().has("attack") else 0.4))
 	draw_arc(a, BTN_ATTACK_R, 0, TAU, 32, Color(1, 1, 1, 0.5), 1.5)
-	draw_string(ThemeDB.fallback_font, a + Vector2(-17, 4), "ATTACK", HORIZONTAL_ALIGNMENT_LEFT, -1, 9, Color(1, 1, 1, 0.8))
+	var a_label := "TALK" if _in_town() else "ATTACK"
+	var alw := ThemeDB.fallback_font.get_string_size(a_label, HORIZONTAL_ALIGNMENT_LEFT, -1, 9).x
+	draw_string(ThemeDB.fallback_font, a + Vector2(-alw / 2.0, 4), a_label, HORIZONTAL_ALIGNMENT_LEFT, -1, 9, Color(1, 1, 1, 0.8))
+	if not _in_town():
+		_draw_mission_buttons()
+	_draw_stick()
+
+
+## Swap, abilities, pause and the quick menu: missions only.
+func _draw_mission_buttons() -> void:
 	var s := _swap_center()
 	draw_circle(s, BTN_SWAP_R, Color(1, 1, 1, 0.18 if not button_touches.values().has("swap") else 0.4))
 	draw_arc(s, BTN_SWAP_R, 0, TAU, 32, Color(1, 1, 1, 0.5), 1.5)
@@ -167,6 +182,9 @@ func _draw() -> void:
 	draw_circle(mc, 13.0, Color(1, 1, 1, 0.18))
 	for i in 3:
 		draw_rect(Rect2(mc + Vector2(-5, -5 + i * 4), Vector2(10, 2)), Color(1, 1, 1, 0.8))
+
+
+func _draw_stick() -> void:
 	if stick_index != -1:
 		draw_circle(stick_origin, STICK_R, Color(1, 1, 1, 0.12))
 		draw_arc(stick_origin, STICK_R, 0, TAU, 32, Color(1, 1, 1, 0.4), 1.5)

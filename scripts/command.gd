@@ -248,14 +248,14 @@ func _menu_items(note := "") -> void:
 	menu.setup("Command", [
 		{"id": "resume", "label": "Resume"},
 		{"id": "town", "label": "Back to Hollowmark", "detail": "walk around town"},
-		{"id": "roster", "label": "Roster", "detail": "R"},
-		{"id": "buildings", "label": "Buildings", "detail": "B"},
-		{"id": "expeditions", "label": "Expeditions", "detail": "E"},
-		{"id": "research", "label": "Research", "detail": "T"},
-		{"id": "diplomacy", "label": "Diplomacy", "detail": "F"},
-		{"id": "bonds", "label": "Bonds", "detail": "H"},
-		{"id": "newcomers", "label": "Newcomers", "detail": "N"},
-		{"id": "gear", "label": "Party gear & shop", "detail": "K"},
+		{"id": "roster", "label": "Roster", "detail": Prompts.key("roster")},
+		{"id": "buildings", "label": "Buildings", "detail": Prompts.key("buildings")},
+		{"id": "expeditions", "label": "Expeditions", "detail": Prompts.key("expeditions")},
+		{"id": "research", "label": "Research", "detail": Prompts.key("research")},
+		{"id": "diplomacy", "label": "Diplomacy", "detail": Prompts.key("diplomacy")},
+		{"id": "bonds", "label": "Bonds", "detail": Prompts.key("bonds")},
+		{"id": "newcomers", "label": "Newcomers", "detail": Prompts.key("newcomers")},
+		{"id": "gear", "label": "Party gear & shop", "detail": Prompts.key("gear")},
 		{"id": "save", "label": "Save game"},
 		{"id": "load", "label": "Load game", "enabled": Saves.latest_slot() != "", "note": "(no saves yet)"},
 		{"id": "options", "label": "Options"},
@@ -543,7 +543,7 @@ func _gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:
 		hovered = _province_at(event.position)
 		ledger_hover = _res_rect().has_point(event.position)
-	elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+	elif Prompts.tapped(event):
 		var i := _province_at(event.position)
 		if i >= 0:
 			if i == selected:
@@ -733,6 +733,12 @@ func _text_c(center: Vector2, s: String, fsize: int, col: Color, outline := 0) -
 	_text(center - Vector2(w / 2.0, 0), s, fsize, col, outline)
 
 
+## "  R" (keyboard), "  Y" (pad) or "" (touch, or no button): the shortcut on a button label.
+func _k(action: String) -> String:
+	var k := Prompts.key(action)
+	return "" if k == "" else "  " + k
+
+
 func _draw() -> void:
 	var vs := size
 	draw_rect(Rect2(Vector2.ZERO, vs), Color("0e0b12"))
@@ -752,12 +758,12 @@ func _draw() -> void:
 	var rb := _roster_button_rect()
 	draw_rect(rb, Color(0.1, 0.09, 0.12, 0.92))
 	draw_rect(rb, Color(0.45, 0.4, 0.48), false, 1.0)
-	_text_c(Vector2(rb.get_center().x, rb.position.y + 12), "Roster (%d)  R" % Empire.recruits.size(), 9, Color(0.85, 0.82, 0.76))
+	_text_c(Vector2(rb.get_center().x, rb.position.y + 12), "Roster (%d)" % Empire.recruits.size() + _k("roster"), 9, Color(0.85, 0.82, 0.76))
 	var bb := _buildings_button_rect()
 	draw_rect(bb, Color(0.1, 0.09, 0.12, 0.92))
 	draw_rect(bb, Color(0.45, 0.4, 0.48), false, 1.0)
 	var busy := "" if Empire.construction.is_empty() else " *"
-	_text_c(Vector2(bb.get_center().x, bb.position.y + 12), "Buildings%s  B" % busy, 9, GOLD if busy != "" else Color(0.85, 0.82, 0.76))
+	_text_c(Vector2(bb.get_center().x, bb.position.y + 12), "Buildings%s" % busy + _k("buildings"), 9, GOLD if busy != "" else Color(0.85, 0.82, 0.76))
 	var tb := _town_button_rect()
 	draw_rect(tb, Color(0.1, 0.09, 0.12, 0.92))
 	draw_rect(tb, Color(0.45, 0.4, 0.48), false, 1.0)
@@ -767,32 +773,32 @@ func _draw() -> void:
 	draw_rect(eb, Color(0.45, 0.4, 0.48), false, 1.0)
 	var unread := Empire.unread_reports()
 	var out := Empire.expeditions.size()
-	var etext := "Expeditions  E"
+	var etext := "Expeditions"
 	if unread > 0:
-		etext = "Reports (%d)  E" % unread
+		etext = "Reports (%d)" % unread
 	elif out > 0:
-		etext = "Squads out: %d  E" % out
-	_text_c(Vector2(eb.get_center().x, eb.position.y + 12), etext, 9, GOLD if unread > 0 else Color(0.85, 0.82, 0.76))
+		etext = "Squads out: %d" % out
+	_text_c(Vector2(eb.get_center().x, eb.position.y + 12), etext + _k("expeditions"), 9, GOLD if unread > 0 else Color(0.85, 0.82, 0.76))
 	var rsb := _research_button_rect()
 	draw_rect(rsb, Color(0.1, 0.09, 0.12, 0.92))
 	draw_rect(rsb, Color(0.45, 0.4, 0.48), false, 1.0)
-	var rtext := "Research  T"
+	var rtext := "Research"
 	var rcol := Color(0.85, 0.82, 0.76)
 	if Empire.research_active != "":
 		var stalled := float(Empire.research_pace()["pace"]) <= 0.0
-		rtext = "Research %d%%%s  T" % [int(Empire.research_fraction(Empire.research_active) * 100), " (stalled)" if stalled else ""]
+		rtext = "Research %d%%%s" % [int(Empire.research_fraction(Empire.research_active) * 100), " (stalled)" if stalled else ""]
 		rcol = Color(1, 0.55, 0.5) if stalled else Color("d7b8f0")
-	_text_c(Vector2(rsb.get_center().x, rsb.position.y + 12), rtext, 9, rcol)
+	_text_c(Vector2(rsb.get_center().x, rsb.position.y + 12), rtext + _k("research"), 9, rcol)
 	var db := _diplomacy_button_rect()
 	draw_rect(db, Color(0.1, 0.09, 0.12, 0.92))
 	draw_rect(db, Color(0.45, 0.4, 0.48), false, 1.0)
-	var dtext := "Diplomacy  F"
+	var dtext := "Diplomacy"
 	var dcol := Color(0.85, 0.82, 0.76)
 	if Empire.surge.get("id", "") != "" and Empire.surge.get("aid", "") == "" and Empire.territory().find(Empire.surge["id"]).get("owner", "") == "you" \
 			and Empire.faction_ids().any(func(f): return Empire.deal_blocker(f, "aid") == ""):
-		dtext = "Ask for aid!  F"
+		dtext = "Ask for aid!"
 		dcol = GOLD
-	_text_c(Vector2(db.get_center().x, db.position.y + 12), dtext, 9, dcol)
+	_text_c(Vector2(db.get_center().x, db.position.y + 12), dtext + _k("diplomacy"), 9, dcol)
 	_draw_legend()
 	_draw_panel()
 	if toast_t > 0.0:
@@ -1010,7 +1016,7 @@ func _draw_panel() -> void:
 	_text(Vector2(x + 11, y), OWNER_NAMES[owner], 9, Color(0.8, 0.78, 0.74))
 	if owner in Empire.faction_ids():
 		var tier := Empire.tier_of(owner)
-		_text(Vector2(x + 11, y + 11), "Standing: %s %+d   Diplomacy: F" % [Empire.tier_name(tier), Empire.standing_of(owner)], 8,
+		_text(Vector2(x + 11, y + 11), "Standing: %s %+d   Diplomacy%s" % [Empire.tier_name(tier), Empire.standing_of(owner), Prompts.tag("diplomacy")], 8,
 			Color("9fd18b") if Empire.has_perk(owner) else (Color("ff9b8a") if tier == "hostile" else Color(0.7, 0.68, 0.7)))
 		y += 10
 	y += 18
@@ -1108,7 +1114,7 @@ func _draw_panel() -> void:
 		draw_rect(r, GOLD if not blocked else Color(0.45, 0.42, 0.4), false, 1.0)
 		var label: String = m["name"] if m.has("type") else "Play: " + m["name"]
 		_text_c(Vector2(r.get_center().x, r.position.y + 12), label + ("  (+%d more)" % more if more > 0 else ""), 9, GOLD if not blocked else Color(0.7, 0.67, 0.62))
-		var sub := "Enter / A / tap" if not blocked else "Locked: " + str(m["blocker"])
+		var sub := ("Tap again" if Prompts.touch() else Prompts.key("ui_accept")) if not blocked else "Locked: " + str(m["blocker"])
 		_text_c(Vector2(r.get_center().x, r.position.y + 22), sub, 8, Color(0.75, 0.7, 0.55) if not blocked else Color(1, 0.6, 0.5))
 	else:
 		var note := "No missions here right now"

@@ -227,7 +227,7 @@ func _shop_pick(i: int) -> void:
 
 
 func _gui_input(event: InputEvent) -> void:
-	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+	if Prompts.tapped(event):
 		var p: Vector2 = event.position
 		if _close_rect().has_point(p):
 			close()
@@ -327,15 +327,15 @@ func _draw() -> void:
 		return
 	if tab == "equip":
 		_draw_equip(vs)
-		var help := "Left/Right hero   Up/Down slot   Enter change   Esc or K close"
+		var help := Prompts.help([["leftright", "hero"], ["updown", "slot"], ["ui_accept", "change"], [["ui_cancel", "gear"], "close"]], "Tap a hero, tap a slot twice to change it")
 		if picking:
-			help = "Up/Down choose   Enter put it on   Esc back"
+			help = Prompts.help([["updown", "choose"], ["ui_accept", "put it on"], ["ui_cancel", "back"]], "Tap gear twice to put it on")
 		if _shop_open() and not picking:
-			help += "   Tab shop"
+			help += "   " + Prompts.help([["swap", "shop"]], "Tap the Shop tab")
 		_text(Vector2(8, vs.y - 8), help, 7, Color(0.5, 0.48, 0.52))
 	else:
 		_draw_shop(vs)
-		_text(Vector2(8, vs.y - 8), "Up/Down choose   Enter buy / sell   Tab equip   Esc or K close", 7, Color(0.5, 0.48, 0.52))
+		_text(Vector2(8, vs.y - 8), Prompts.help([["updown", "choose"], ["ui_accept", "buy / sell"], ["swap", "equip"], [["ui_cancel", "gear"], "close"]], "Tap an item twice to buy or sell"), 7, Color(0.5, 0.48, 0.52))
 	if flash_t > 0.0:
 		var a := clampf(flash_t / 0.4, 0.0, 1.0)
 		var fw := font.get_string_size(flash, HORIZONTAL_ALIGNMENT_LEFT, -1, 9).x
@@ -463,8 +463,8 @@ func _draw_equip(vs: Vector2) -> void:
 			ry += _wrap(Vector2(rx + 8, ry + 8), Progress.item(iid).get("blurb", ""), rw - 16, 8, Color(0.78, 0.76, 0.74))
 		ry += 18
 		var spare := Progress.options(id, _slot()).size()
-		_text(Vector2(rx + 8, ry), ("Enter to swap: %d spare that fit." % spare) if spare > 0 else
-			("Enter to take it off." if iid != "" else "No spare gear for this slot."), 8, GOLD if spare > 0 else SOFT, rw - 16)
+		_text(Vector2(rx + 8, ry), ("%s to swap: %d spare that fit." % [Prompts.confirm(), spare]) if spare > 0 else
+			(Prompts.confirm() + " to take it off." if iid != "" else "No spare gear for this slot."), 8, GOLD if spare > 0 else SOFT, rw - 16)
 		ry += 18
 		_text(Vector2(rx + 8, ry), "Levels", 8, Color(0.75, 0.72, 0.7))
 		ry += 2
@@ -563,6 +563,6 @@ func _draw_shop(vs: Vector2) -> void:
 	ry += 20
 	if kind2 == "buy":
 		var why2 := Progress.shop_blocker(k2)
-		_text(Vector2(rx + 8, ry), ("Enter to buy for %d Gilt." % int(it2["price"])) if why2 == "" else ("Can't buy: %s." % why2), 8, GOLD if why2 == "" else BAD, rw - 16)
+		_text(Vector2(rx + 8, ry), ("%s to buy for %d Gilt." % [Prompts.confirm(), int(it2["price"])]) if why2 == "" else ("Can't buy: %s." % why2), 8, GOLD if why2 == "" else BAD, rw - 16)
 	else:
-		_text(Vector2(rx + 8, ry), "Enter to sell one for %d Gilt." % Progress.sell_price(k2), 8, GOLD, rw - 16)
+		_text(Vector2(rx + 8, ry), "%s to sell one for %d Gilt." % [Prompts.confirm(), Progress.sell_price(k2)], 8, GOLD, rw - 16)

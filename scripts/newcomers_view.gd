@@ -102,7 +102,7 @@ func _gui_input(event: InputEvent) -> void:
 		for i in _row_rects.size():
 			if (_row_rects[i] as Rect2).has_point(event.position):
 				sel = i
-	elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+	elif Prompts.tapped(event):
 		if _close_rect().has_point(event.position):
 			close()
 			return
@@ -174,7 +174,7 @@ func _draw() -> void:
 			_text(rr.position + Vector2(10, 23), r.get("title", ""), 8, SOFT, LIST_W - 16)
 		y += row_h
 	_draw_details(vs, ids[sel])
-	_text(Vector2(8, vs.y - 8), "Up/Down choose   Enter take on / show hook   Esc or N close", 7, Color(0.5, 0.48, 0.52))
+	_text(Vector2(8, vs.y - 8), Prompts.help([["updown", "choose"], ["ui_accept", "take on / show hook"], [["ui_cancel", "newcomers"], "close"]], "Tap a name, tap again to take them on"), 7, Color(0.5, 0.48, 0.52))
 	if flash_t > 0.0:
 		var a := clampf(flash_t / 0.4, 0.0, 1.0)
 		var fw := minf(font.get_string_size(flash, HORIZONTAL_ALIGNMENT_LEFT, -1, 9).x, vs.x - 40)
@@ -228,5 +228,5 @@ func _draw_details(vs: Vector2, id: String) -> void:
 		var why := Empire.hire_blocker(id)
 		draw_rect(hr, Color(0.2, 0.16, 0.08) if why == "" else Color(0.12, 0.1, 0.12))
 		draw_rect(hr, GOLD if why == "" else DIM, false, 1.0)
-		var label := "Take them on (Enter)" if why == "" else "Can't: %s" % why
+		var label := "Take them on (%s)" % Prompts.confirm() if why == "" else "Can't: %s" % why
 		_text(hr.position + Vector2(8, 12), label, 9, GOLD if why == "" else BAD, hr.size.x - 12)

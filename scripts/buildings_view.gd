@@ -436,11 +436,11 @@ func _draw() -> void:
 	elif focus == 1 and act < acts.size() and acts[act]["preview"] != "":
 		_wrap(Vector2(DETAIL_X, ay + 12), acts[act]["preview"], w, 8, Color("cfe0b0"))
 
-	var help := "Up/Down choose   Enter or Right: open   Esc / B close"
+	var help := Prompts.help([["updown", "choose"], ["ui_accept", "open"], [["ui_cancel", "buildings"], "close"]], "Tap a building, then tap what to do")
 	if focus == 1:
-		help = "Up/Down choose   Enter: do it   Left / Esc: back"
+		help = Prompts.help([["updown", "choose"], ["ui_accept", "do it"], ["ui_cancel", "back"]], "Tap what to do   Tap the building list to go back")
 	elif focus == 2:
-		help = "Up/Down choose who   Enter: post them   Left / Esc: back"
+		help = Prompts.help([["updown", "choose who"], ["ui_accept", "post them"], ["ui_cancel", "back"]], "Tap who to post")
 	_text(Vector2(DETAIL_X, vs.y - 8), help, 7, Color(0.5, 0.48, 0.52))
 	if flash_t > 0.0:
 		var a2 := clampf(flash_t / 0.4, 0.0, 1.0)
