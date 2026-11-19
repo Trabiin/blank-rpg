@@ -1,0 +1,69 @@
+{
+	"_comment": "Art pass sprite sets (scripts/sprite_set.gd). Written by tools/import_sprites.py; one entry per character id. size: frame size; feet: the pixel that stands on the actor's origin; anims: fps, loop, frames, drawn dirs (left-hand dirs are mirrored in game).",
+	"sprites": {
+		"ash": {
+			"size": [44, 44],
+			"feet": [22, 35],
+			"face": [12, 6, 20, 20],
+			"anims": {
+				"rot": {"fps": 1, "loop": true, "frames": 1, "dirs": ["south", "south-east", "east", "north-east", "north"]},
+				"idle": {"fps": 5.0, "loop": true, "frames": 4, "dirs": ["south", "south-east", "east", "north-east", "north"]},
+				"walk": {"fps": 10.0, "loop": true, "frames": 6, "dirs": ["south", "south-east", "east", "north-east", "north"]},
+				"attack": {"fps": 24.0, "loop": false, "frames": 6, "dirs": ["south", "south-east", "east", "north-east", "north"]},
+				"cast": {"fps": 20.0, "loop": false, "frames": 6, "dirs": ["south", "south-east", "east", "north-east", "north"]},
+				"tech": {"fps": 12.0, "loop": false, "frames": 8, "dirs": ["south", "south-east", "east", "north-east", "north"]},
+				"hurt": {"fps": 12.0, "loop": false, "frames": 4, "dirs": ["south", "east", "north"]},
+				"ko": {"fps": 8.0, "loop": false, "frames": 6, "dirs": ["south"]},
+				"victory": {"fps": 8.0, "loop": false, "frames": 6, "dirs": ["south"]}
+			}
+		},
+		"bran": {
+			"size": [44, 44],
+			"feet": [19, 36],
+			"face": [9, 6, 20, 20],
+			"anims": {
+				"rot": {"fps": 1, "loop": true, "frames": 1, "dirs": ["south", "south-east", "east", "north-east", "north"]},
+				"idle": {"fps": 5.0, "loop": true, "frames": 4, "dirs": ["south", "south-east", "east", "north-east", "north"]},
+				"walk": {"fps": 10.0, "loop": true, "frames": 6, "dirs": ["south", "south-east", "east", "north-east", "north"]},
+				"attack": {"fps": 24.0, "loop": false, "frames": 6, "dirs": ["south", "south-east", "east", "north-east", "north"]},
+				"cast": {"fps": 20.0, "loop": false, "frames": 6, "dirs": ["south", "south-east", "east", "north-east", "north"]},
+				"tech": {"fps": 12.0, "loop": false, "frames": 8, "dirs": ["south", "south-east", "east", "north-east", "north"]},
+				"hurt": {"fps": 12.0, "loop": false, "frames": 4, "dirs": ["south", "east", "north"]},
+				"ko": {"fps": 8.0, "loop": false, "frames": 6, "dirs": ["south"]},
+				"victory": {"fps": 8.0, "loop": false, "frames": 6, "dirs": ["south"]}
+			}
+		},
+		"gristle": {
+			"size": [44, 44],
+			"feet": [22, 35],
+			"face": [12, 6, 20, 20],
+			"anims": {
+				"rot": {"fps": 1, "loop": true, "frames": 1, "dirs": ["south", "south-east", "east", "north-east", "north"]},
+				"idle": {"fps": 5.0, "loop": true, "frames": 4, "dirs": ["south", "south-east", "east", "north-east", "north"]},
+				"walk": {"fps": 10.0, "loop": true, "frames": 6, "dirs": ["south", "south-east", "east", "north-east", "north"]},
+				"attack": {"fps": 24.0, "loop": false, "frames": 6, "dirs": ["south", "south-east", "east", "north-east", "north"]},
+				"cast": {"fps": 20.0, "loop": false, "frames": 6, "dirs": ["south", "south-east", "east", "north-east", "north"]},
+				"tech": {"fps": 12.0, "loop": false, "frames": 8, "dirs": ["south", "south-east", "east", "north-east", "north"]},
+				"hurt": {"fps": 12.0, "loop": false, "frames": 4, "dirs": ["south", "east", "north"]},
+				"ko": {"fps": 8.0, "loop": false, "frames": 6, "dirs": ["south"]},
+				"victory": {"fps": 8.0, "loop": false, "frames": 6, "dirs": ["south"]}
+			}
+		},
+		"ninefingers": {
+			"size": [44, 44],
+			"feet": [22, 36],
+			"face": [12, 6, 20, 20],
+			"anims": {
+				"rot": {"fps": 1, "loop": true, "frames": 1, "dirs": ["south", "south-east", "east", "north-east", "north"]},
+				"idle": {"fps": 5.0, "loop": true, "frames": 4, "dirs": ["south", "south-east", "east", "north-east", "north"]},
+				"walk": {"fps": 10.0, "loop": true, "frames": 6, "dirs": ["south", "south-east", "east", "north-east", "north"]},
+				"attack": {"fps": 24.0, "loop": false, "frames": 6, "dirs": ["south", "south-east", "east", "north-east", "north"]},
+				"cast": {"fps": 20.0, "loop": false, "frames": 6, "dirs": ["south", "south-east", "east", "north-east", "north"]},
+				"tech": {"fps": 12.0, "loop": false, "frames": 8, "dirs": ["south", "south-east", "east", "north-east", "north"]},
+				"hurt": {"fps": 12.0, "loop": false, "frames": 4, "dirs": ["south", "east", "north"]},
+				"ko": {"fps": 8.0, "loop": false, "frames": 6, "dirs": ["south"]},
+				"victory": {"fps": 8.0, "loop": false, "frames": 6, "dirs": ["south"]}
+			}
+		}
+	}
+}

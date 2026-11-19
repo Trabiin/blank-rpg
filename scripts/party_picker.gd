@@ -33,7 +33,7 @@ var font: Font
 var _row_rects: Array = []
 var _go_rect := Rect2()
 var _back_rect := Rect2()
-var _dolls: Array = []  # [body Sprite2D, outfit Sprite2D] per preview slot
+var _dolls: Array = []  # [body Sprite2D, outfit Sprite2D, art pass Sprite2D] per preview slot
 var _doll_ids: Array = []
 var t := 0.0
 
@@ -52,6 +52,11 @@ func _ready() -> void:
 			s.visible = false
 			add_child(s)
 			pair.append(s)
+		var a := Sprite2D.new()  # art pass sprite (scripts/sprite_set.gd), used when the hero has one
+		a.scale = Vector2(DOLL_SCALE, DOLL_SCALE)
+		a.visible = false
+		add_child(a)
+		pair.append(a)
 		_dolls.append(pair)
 		_doll_ids.append("")
 
@@ -313,8 +318,14 @@ func _update_dolls() -> void:
 		var pos := Vector2(x + w * (i + 0.5) / Empire.PARTY_SIZE, py + 18)
 		# The highlighted hero walks on the spot; everyone else stands.
 		var col := int(t * 8.0) % 4 if id == hl or hl == "" else 0
+		var art_s: Sprite2D = _dolls[i][2]
+		var sset := SpriteSet.of(id) if id != "" else null
+		art_s.visible = sset != null
+		if sset != null:
+			art_s.position = pos + Vector2(0, 7 * DOLL_SCALE)  # feet line of the old doll frame
+			sset.apply(art_s, "walk" if id == hl or hl == "" else "idle", 0, t)
 		for s in [body, outfit]:
-			(s as Sprite2D).visible = id != ""
+			(s as Sprite2D).visible = id != "" and sset == null
 			(s as Sprite2D).position = pos
 			(s as Sprite2D).frame = col
 
@@ -399,6 +410,9 @@ static func apply(h: Hero, id: String) -> void:
 	h.power_rate = float(hd.get("power_rate", 0.95))
 	h.reach = float(hd.get("reach", 20))
 	h.arc = deg_to_rad(float(hd.get("arc", 70)))
+	var trail: Dictionary = hd.get("trail", {})
+	h.trail_color = Color(str(trail.get("color", "e8e4d8")))
+	h.trail_thrust = str(trail.get("style", "arc")) == "thrust"
 	h.ai_style = AllyAI.preset_id(str(hd.get("ai", "balanced")))
 	var heal: Dictionary = hd.get("heal", {})
 	if not heal.is_empty():
