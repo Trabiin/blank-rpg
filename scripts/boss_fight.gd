@@ -8,7 +8,8 @@ extends MissionObjectives
 ## The map marks where the boss stands with "@mark<char> boss". The arena has no Blank and no
 ## stream of Nibblers; phase 2 calls in a few adds (BOSSES[id].adds).
 ## Talks (data/dialogue.json): <boss>_intro, <boss>_phase2, <boss>_outro. Each plays once per
-## campaign, so retrying after a wipe goes straight back into the fight.
+## campaign, so retrying after a wipe goes straight back into the fight (from the autosave made
+## at the arena entrance; there are no autosaves mid-fight).
 
 const BOSSES := {
 	"auditor": {
@@ -49,6 +50,10 @@ func setup(p_obj: Dictionary, p_main) -> void:
 	bar = BossBar.new()
 	bar.fight = self
 	main.hud.get_parent().add_child(bar)
+	# One autosave at the arena entrance with everyone fresh; none during the fight, so
+	# "Try again" never drops a battered party back in front of a fully healed boss.
+	main.autosave()
+	main.autosave_t = 1e9
 
 
 func _talk_id(suffix: String) -> String:
@@ -61,6 +66,7 @@ func on_kill() -> void:
 
 func update(delta: float) -> void:
 	main.respawn_t = 1e9
+	main.autosave_t = 1e9
 	stage_t += delta
 	match stage:
 		"approach":
