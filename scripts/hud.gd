@@ -42,7 +42,6 @@ func size_px() -> Vector2:
 
 
 const INK_COL := Color("6aa8ff")
-const PAD_LABELS := ["LB", "RB", "LT", "RT"]
 
 
 ## The leader's abilities, bottom-right: key, name, Ink cost, cooldown sweep.
@@ -75,8 +74,6 @@ func _draw_ability_bar(hero: Hero, vs: Vector2) -> void:
 		_text(Vector2(x + 4, y + 22), "%d Ink" % int(a.get("cost", 0)), 8, cost_col, false)
 		if cd > 0.0:
 			_text(Vector2(x + 44, y + 22), "%.1fs" % cd, 8, Color(0.8, 0.8, 0.85), false)
-		else:
-			_text(Vector2(x + 60, y + 22), PAD_LABELS[i], 7, Color(0.55, 0.55, 0.6), false)
 		x += w + 4.0
 
 
