@@ -144,8 +144,6 @@ func pick_track() -> String:
 		return "command"
 	if path.ends_with("main.tscn"):
 		return mission_track(_active_mission())
-	if path.ends_with("detail_trial.tscn"):
-		return "meadow"
 	return track
 
 

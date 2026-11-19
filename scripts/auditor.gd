@@ -61,6 +61,7 @@ var told_opening := false
 
 
 func _ready() -> void:
+	art_id = ""  # drawn by its own code until its art pass phase
 	super._ready()
 	max_hp = MAX_HP
 	hp = MAX_HP

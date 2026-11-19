@@ -27,6 +27,7 @@ var _signs := {}
 var _custom := {}  # char -> [kind, plate text] from @prop lines
 var _marks := {}  # char -> marker id
 var _dirt_chars := ":@"
+var ground_set := ""  # @ground <name>: art pass corner tiles in res://assets/tiles/<name>/ (else the old CC0 look)
 
 
 func world_size() -> Vector2:
@@ -70,6 +71,8 @@ func _parse(path: String) -> void:
 				_custom[key.substr(4)] = [val.get_slice("|", 0), val.get_slice("|", 1) if val.contains("|") else ""]
 			elif key.begins_with("mark"):
 				_marks[key.substr(4)] = val
+			elif key == "ground":
+				ground_set = val.strip_edges()
 			elif key == "dirt":
 				_dirt_chars += val  # these characters sit on the dirt layer too
 	size_tiles = Vector2i(_rows[0].length(), _rows.size())
@@ -104,6 +107,9 @@ func _layer(tex: Texture2D, coords: Array) -> TileMapLayer:
 
 
 func _build_tiles() -> void:
+	if ground_set != "" and ResourceLoader.exists("res://assets/tiles/%s/GGGG.png" % ground_set):
+		_build_corner_ground()
+		return
 	var rng := RandomNumberGenerator.new()
 	rng.seed = hash(area_name)
 	var grass := _layer(Art.OVERWORLD, GRASS)
@@ -130,6 +136,86 @@ func _build_tiles() -> void:
 	mat.set_shader_parameter("blank_x", blank_x)
 	dirt.material = mat
 	add_child(dirt)
+
+
+## Art pass ground (docs/ART_ROADMAP.md 3.5): a PixelLab corner tileset, laid on a dual grid. Each map cell
+## is one corner (G grass, D dirt); a tile sits between four cells, shifted half a tile, so paths keep
+## exactly the shape drawn in the map text. Plain grass tiles are mirrored at random to break repeats.
+func _build_corner_ground() -> void:
+	var folder := "res://assets/tiles/%s/" % ground_set
+	var keys: Array[String] = []
+	for a in ["G", "D"]:
+		for b in ["G", "D"]:
+			for c in ["G", "D"]:
+				for d in ["G", "D"]:
+					keys.append(a + b + c + d)
+	var atlas := Image.create(64, 64, false, Image.FORMAT_RGBA8)
+	for i in keys.size():
+		var img: Image = (load(folder + keys[i] + ".png") as Texture2D).get_image()
+		img.convert(Image.FORMAT_RGBA8)
+		atlas.blit_rect(img, Rect2i(0, 0, 16, 16), Vector2i(i % 4, i / 4) * 16)
+	var ts := TileSet.new()
+	ts.tile_size = Vector2i(16, 16)
+	var src := TileSetAtlasSource.new()
+	src.texture = ImageTexture.create_from_image(atlas)
+	src.texture_region_size = Vector2i(16, 16)
+	for i in keys.size():
+		src.create_tile(Vector2i(i % 4, i / 4))
+	var plain := Vector2i(0, 0)  # GGGG
+	for alt in 3:
+		var a := src.create_alternative_tile(plain)
+		var td := src.get_tile_data(plain, a)
+		td.flip_h = alt != 1
+		td.flip_v = alt != 0
+	ts.add_source(src, 0)
+	var layer := TileMapLayer.new()
+	layer.tile_set = ts
+	layer.material = Art.art_world_material()
+	layer.position = Vector2(8, 8)  # dual grid: tile (x, y) covers the centres of cells x..x+1, y..y+1
+	add_child(layer)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash(area_name)
+	for y in range(-1, size_tiles.y):
+		for x in range(-1, size_tiles.x):
+			var key := ""
+			for c in [Vector2i(x, y), Vector2i(x + 1, y), Vector2i(x, y + 1), Vector2i(x + 1, y + 1)]:
+				key += "D" if _is_dirt(clampi(c.x, 0, size_tiles.x - 1), clampi(c.y, 0, size_tiles.y - 1)) else "G"
+			var i := keys.find(key)
+			var alt := rng.randi() % 4 if i == 0 else 0
+			layer.set_cell(Vector2i(x, y), 0, Vector2i(i % 4, i / 4), alt)
+	var flowers := Node2D.new()
+	flowers.material = Art.art_world_material()
+	add_child(flowers)
+	flowers.draw.connect(_draw_flowers.bind(flowers))
+
+
+## Grass tufts on every grass cell (breaks up the repeat) and wildflowers on "f" cells.
+func _draw_flowers(c: Node2D) -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash(area_name) + 7
+	var tuft_dark := Color("26391f")
+	var tuft_light := Color("6f8f4a")
+	for y in size_tiles.y:
+		for x in size_tiles.x:
+			if _is_dirt(x, y) or rng.randf() < 0.45:
+				continue
+			var p := Vector2(x * 16 + rng.randi_range(2, 12), y * 16 + rng.randi_range(3, 13))
+			c.draw_rect(Rect2(p, Vector2(1, 2)), tuft_dark)
+			c.draw_rect(Rect2(p + Vector2(2, -1), Vector2(1, 3)), tuft_dark)
+			c.draw_rect(Rect2(p + Vector2(1, -2), Vector2(1, 2)), tuft_light)
+			c.draw_rect(Rect2(p + Vector2(3, -2), Vector2(1, 1)), tuft_light)
+	var cols := [Color("d8cfa8"), Color("e0b84a"), Color("b48ac8"), Color("c86a5a")]
+	for y in size_tiles.y:
+		for x in size_tiles.x:
+			if _cell(x, y) != "f":
+				continue
+			for i in 3:
+				var p := Vector2(x * 16 + rng.randi_range(2, 13), y * 16 + rng.randi_range(2, 13))
+				var col: Color = cols[rng.randi() % cols.size()]
+				c.draw_rect(Rect2(p + Vector2(0, 1), Vector2(1, 2)), Color("2c3a22"))
+				c.draw_rect(Rect2(p + Vector2(-1, 0), Vector2(3, 1)), col)
+				c.draw_rect(Rect2(p + Vector2(0, -1), Vector2(1, 3)), col)
+				c.draw_rect(Rect2(p, Vector2(1, 1)), col.lightened(0.35))
 
 
 func _build_objects(entities: Node2D) -> void:

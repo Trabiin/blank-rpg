@@ -30,7 +30,6 @@ func _ready() -> void:
 		items.append({"id": "continue", "label": "Continue", "detail": Saves.describe(latest)})
 	items.append({"id": "new", "label": "New Game"})
 	items.append({"id": "command", "label": "Hollowmark (preview)", "detail": "the town and the Command Table"})
-	items.append({"id": "trial", "label": "Art detail trial", "detail": "compare option A and B (temporary)"})
 	items.append({"id": "boss_test", "label": "Boss test: The Auditor", "detail": "fresh level 6 party, straight into the fight (temporary)"})
 	items.append({"id": "load", "label": "Load Game", "enabled": latest != "", "note": "(no saves yet)"})
 	items.append({"id": "options", "label": "Options", "detail": "speed, difficulty, sound, controls"})
@@ -84,8 +83,6 @@ func _on_choice(id: String) -> void:
 			Saves.pending = {}
 			Empire.reset()
 			get_tree().change_scene_to_file(Saves.HUB_SCENE)
-		"trial":
-			get_tree().change_scene_to_file("res://scenes/detail_trial.tscn")
 		"boss_test":  # Act 1's last fight without playing Act 1 first (issue #17)
 			Saves.pending = {}
 			Empire.reset()

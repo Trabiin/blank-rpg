@@ -21,9 +21,11 @@ const SPIT_COLORS := {"body": Color("cbc6d3"), "core": Color("4a0f22"), "shine":
 
 
 func _ready() -> void:
+	art_id = "spitter"
 	super._ready()
-	sprite.material = Art.recolor_material("slime", SPIT_COLORS)
-	sprite.scale = Vector2(1.15, 1.15)
+	if art == null:
+		sprite.material = Art.recolor_material("slime", SPIT_COLORS)
+		sprite.scale = Vector2(1.15, 1.15)
 	strafe = 1.0 if randf() < 0.5 else -1.0
 
 
@@ -105,6 +107,9 @@ func _on_hit() -> void:
 
 
 func _process(delta: float) -> void:
+	if art != null:
+		_process_spitter_art(delta)
+		return
 	var f := 0
 	if dying_t >= 0.0:
 		dying_t += delta
@@ -125,6 +130,29 @@ func _process(delta: float) -> void:
 	if state == State.WINDUP:
 		swell += 0.35 * (1.0 - state_t / SPIT_WINDUP)
 	sprite.scale = Vector2(swell, swell)
+	sprite.position = Vector2(randf_range(-0.8, 0.8), 0) if state == State.WINDUP else Vector2.ZERO
+	queue_redraw()
+	overlay.queue_redraw()
+
+
+## Art pass: the spit animation's first two thirds are the swell (wind-up), the rest the spit.
+func _process_spitter_art(delta: float) -> void:
+	if dying_t >= 0.0 or flash_t > 0.0 or not (state in [State.WINDUP, State.RECOVER]):
+		_process_art(delta)
+		return
+	var n := art.frames_of("attack")
+	var i := 0
+	if state == State.WINDUP:
+		i = int((1.0 - state_t / SPIT_WINDUP) * float(n) * 0.66)
+	else:
+		i = int(float(n) * 0.66) + int((0.6 - clampf(state_t, 0.0, 0.6)) * 10.0)
+		if i >= n:
+			art.apply(sprite, "idle", art_row(), anim_t)
+			sprite.position = Vector2.ZERO
+			queue_redraw()
+			overlay.queue_redraw()
+			return
+	art.apply_frame(sprite, "attack", art_row(), clampi(i, 0, n - 1))
 	sprite.position = Vector2(randf_range(-0.8, 0.8), 0) if state == State.WINDUP else Vector2.ZERO
 	queue_redraw()
 	overlay.queue_redraw()

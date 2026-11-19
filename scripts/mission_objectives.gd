@@ -135,7 +135,7 @@ func _move_blank(dx: float) -> void:
 	var b = main.blank
 	var limit: float = main.world.x + 80.0 if end_t >= 0.0 else start_blank_x
 	b.base_x = clampf(b.base_x + dx, 120.0, maxf(limit, start_blank_x))
-	Art.world_material().set_shader_parameter("blank_x", b.base_x)
+	Art.set_blank_x(b.base_x)
 
 
 func _edge_point(y: float, spread: float) -> Vector2:

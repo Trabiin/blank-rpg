@@ -7,6 +7,7 @@
 # 2x2 props anchor at their top-left tile. The Blank eats everything east of @blank (tiles).
 @name The Frayed Meadow
 @blank 69
+@ground meadow
 @sign1 WELCOME TO THE FRAYED MEADOW|pop. 212   pop. 40   pop. ?
 @sign2 HOLLOWMARK  ->  (east)|(east is gone)
 @sign3 STUMP CIRCLE|Please do not feed the silence

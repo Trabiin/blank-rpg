@@ -163,6 +163,53 @@ class PL:
         return z.namelist()
 
 
+# ---------------------------------------------------------------- tiles and props
+def create_tileset(pl, lower, upper, transition="", seed=None, size=16, lower_ref=None, **extra):
+    body = {"lower_description": lower, "upper_description": upper, "transition_description": transition,
+            "tile_size": {"width": size, "height": size}, "view": "high top-down",
+            "shading": "basic shading", "detail": "medium detail"}
+    if seed is not None:
+        body["seed"] = seed
+    if lower_ref:
+        body["lower_reference_image"] = {"type": "base64", "base64": base64.b64encode(open(lower_ref, "rb").read()).decode()}
+    body.update(extra)
+    r = pl._req("POST", "/create-tileset", body)
+    return r["tileset_id"], r["background_job_id"]
+
+
+def save_tileset(pl, tileset_id, out_dir):
+    """Writes the 16 corner tiles as <NW><NE><SW><SE>.png with L = lower and U = upper terrain."""
+    t = pl._req("GET", f"/tilesets/{tileset_id}")["tileset"]
+    os.makedirs(out_dir, exist_ok=True)
+    keys = []
+    for tile in t["tiles"]:
+        c = tile.get("corners") or {}
+        key = "".join("U" if c.get(k) == "upper" else "L" for k in ("NW", "NE", "SW", "SE"))
+        with open(os.path.join(out_dir, key + ".png"), "wb") as f:
+            f.write(base64.b64decode(tile["image"]["base64"]))
+        keys.append(key)
+    return keys
+
+
+def create_object(pl, description, w, h, **extra):
+    body = {"description": description, "image_size": {"width": w, "height": h}, "view": "high top-down",
+            "outline": "single color outline", "shading": "medium shading", "detail": "medium detail"}
+    body.update(extra)
+    r = pl._req("POST", "/map-objects", body)
+    return r["object_id"], r["background_job_id"]
+
+
+def save_object(job, path):
+    """A finished map-object job carries its PNG as base64 in last_response.image."""
+    img = (job.get("last_response") or {}).get("image")
+    if not img:
+        return False
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "wb") as f:
+        f.write(base64.b64decode(img))
+    return True
+
+
 def spend_summary():
     """Sum of logged spend per phase."""
     tot = {}

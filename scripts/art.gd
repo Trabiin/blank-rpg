@@ -47,6 +47,7 @@ const GROUPS := {
 }
 
 static var _world_material: ShaderMaterial
+static var _art_world_material: ShaderMaterial
 
 
 static func world_material() -> ShaderMaterial:
@@ -54,6 +55,24 @@ static func world_material() -> ShaderMaterial:
 		_world_material = ShaderMaterial.new()
 		_world_material.shader = WORLD_TINT
 	return _world_material
+
+
+## The same Blank fade for art pass tiles and props, with a much lighter mood grade (they are muted already).
+static func art_world_material() -> ShaderMaterial:
+	if _art_world_material == null:
+		_art_world_material = ShaderMaterial.new()
+		_art_world_material.shader = WORLD_TINT
+		_art_world_material.set_shader_parameter("desat", 0.08)
+		_art_world_material.set_shader_parameter("tint", Vector3(0.97, 0.98, 1.0))
+		_art_world_material.set_shader_parameter("gain", 1.3)
+		_art_world_material.set_shader_parameter("blank_x", world_material().get_shader_parameter("blank_x"))
+	return _art_world_material
+
+
+## Where the Blank starts eating colour, for both world materials.
+static func set_blank_x(x: float) -> void:
+	world_material().set_shader_parameter("blank_x", x)
+	art_world_material().set_shader_parameter("blank_x", x)
 
 
 static func tile_region(cx: int, cy: int, w := 1, h := 1) -> AtlasTexture:

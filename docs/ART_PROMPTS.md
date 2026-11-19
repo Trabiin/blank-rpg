@@ -82,3 +82,16 @@ Every paid PixelLab job is one line in `tools/art_spend.jsonl` (phase, what, USD
 
 Portraits keep the style block in `docs/PORTRAITS.md`; expressions use the image edit endpoint on the locked neutral
 portrait. Filled in when Phase 7 starts.
+
+## Phase 2 additions (meadow)
+
+- **Tilesets:** `POST /v2/create-tileset`, 16 px, high top-down, basic shading (~$0.008 each). The kept set came back
+  with lower/upper swapped (as warned in ART_ROADMAP 1.1b), so it is stored by content: `assets/tiles/meadow/<NW><NE><SW><SE>.png`
+  with G = grass and D = dirt. A map opts in with `@ground meadow`; `Area` lays it on a dual grid so paths keep the
+  shape drawn in the map text. Grass tufts and wildflowers on top are code.
+  Kept: lower "dark muted meadow grass, short tufts, dusky green", upper "packed earthy brown dirt path, a few pebbles".
+- **Props:** `POST /v2/map-objects` (~$0.006 each, PNG comes back in the job's `last_response.image`), 2 candidates per
+  kind, trimmed and cleaned into `assets/props/<kind>.png`; `Prop` uses them over the CC0 sheet wherever the kind appears.
+- **Enemies:** Blank creatures import with `--blank` (they keep paper white). Death "dissolve" prompts did not dissolve,
+  so deaths are a code crumple + the existing paper burst.
+- Art pass tiles and props use `Art.art_world_material()`: the same Blank fade, with a much lighter mood grade.

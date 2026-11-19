@@ -82,7 +82,7 @@ func _ready() -> void:
 	add_child(area)
 	area.build(MAP, entities)
 	world = area.world_size()
-	Art.world_material().set_shader_parameter("blank_x", 1e9)  # no Blank inside the walls (yet)
+	Art.set_blank_x(1e9)  # no Blank inside the walls (yet)
 	add_child(entities)
 	_build_walls()
 	_build_table()

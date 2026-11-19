@@ -8,14 +8,14 @@ Claude stops and asks before going on if credit is about to run out or a phase r
 |---|---|---|---|
 | 0. Style lock + pipeline | ~$1 | $0.00 | Reused the approved detail-trial Ash; the rest is code |
 | 1. The party | ~$6 to $12 | **$1.34** (PixelLab) | 9 base candidates ($0.26, ~$0.03 each), 4 heroes × 25 to 30 animation directions ($1.08) |
-| 2. Prologue (meadow, Nibbler, Spitter, FX) | ~$3 to $5 | | |
+| 2. Prologue (meadow, Nibbler, Spitter, FX) | ~$3 to $5 | **$0.59** (PixelLab) | 4 meadow tilesets ($0.03), 18 prop candidates ($0.12), 3 Spitter candidates ($0.09), Nibbler + Spitter animations ($0.35); Blank, light and motes are code |
 | 3. Hollowmark | ~$6 to $12 | | |
 | 4. Act 1 world | ~$6 to $10 | | |
 | 5. The Auditor and recruits | ~$5 to $10 | | |
 | 6. UI and icons | ~$2 to $4 | | |
 | 7. Portraits and painted art (OpenAI) | ~$6 to $12 | | |
 | 8. Polish sweep | ~$2 to $4 | | |
-| **Total so far** | ~$7 to $13 for phases 0 and 1 | **$1.34** | PixelLab credit left: $8.35 (2026-11-19) |
+| **Total so far** | ~$10 to $18 for phases 0 to 2 | **$1.93** | PixelLab credit left: $7.76 (2026-11-19) |
 
 ## Why Phase 1 came in far under
 
