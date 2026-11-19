@@ -2,7 +2,7 @@ extends Node2D
 ## TEMPORARY art test (ART_ROADMAP 1.1b): the same small meadow at two pixel detail levels, so
 ## Ojon can pick one on their own screen. Opened from the title screen ("Art detail trial").
 ##
-##   Option A: 16 px tiles, Ash on a 32 px canvas, Nibbler 24 px, camera zoom 2 (today's density).
+##   Option A: 16 px tiles, Ash on a 32 px canvas, Nibbler 32 px, camera zoom 2 (today's density).
 ##   Option B: 32 px tiles, Ash on a 64 px canvas, Nibbler 48 px, camera zoom 1 (double density).
 ##
 ## Both show the same number of tiles on screen, so only the detail changes. Everything comes from
@@ -17,7 +17,7 @@ const ROOT := "res://assets/detail_trial/"
 const DIRS := ["south", "south-east", "east", "north-east", "north", "north-west", "west", "south-west"]
 const OPTIONS := {
 	"a": {"tile": 16, "zoom": 2.0, "name": "Option A: standard detail",
-		"info": "16 px tiles  ·  Ash 32 px canvas  ·  Nibbler 24 px canvas  ·  zoom 2"},
+		"info": "16 px tiles  ·  Ash 32 px canvas  ·  Nibbler 32 px canvas  ·  zoom 2"},
 	"b": {"tile": 32, "zoom": 1.0, "name": "Option B: double detail",
 		"info": "32 px tiles  ·  Ash 64 px canvas  ·  Nibbler 48 px canvas  ·  zoom 1"},
 }
