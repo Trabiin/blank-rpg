@@ -44,6 +44,8 @@ var seed_v := 0
 
 
 static func footprint(k: String) -> Vector2i:
+	if not KINDS.has(k):
+		return Vector2i(1, 1)  # free-standing art (e.g. the town mockup): the map char is its bottom-centre tile
 	return Vector2i(KINDS[k][2], KINDS[k][3])
 
 
@@ -51,7 +53,7 @@ func _ready() -> void:
 	collision_layer = 1
 	if kind in FLAT:
 		z_index = -1
-	var k: Array = KINDS[kind]
+	var k: Array = KINDS.get(kind, [30, 0, 1, 1, 0.0])
 	var spr := Sprite2D.new()
 	spr.texture = Art.region(k[6]) if k.size() > 6 else Art.tile_region(k[0], k[1], k[2], k[3])
 	var art_path := "res://assets/props/%s.png" % kind  # art pass sprite, trimmed to its pixels
@@ -72,6 +74,8 @@ func _ready() -> void:
 	add_child(spr)
 	if has_art and not kind in FLAT and spr.texture.get_height() > 12:
 		Art.add_cast_shadow(self, spr.texture, 3.0)
+	if not KINDS.has(kind) and has_art:  # free-standing art: a footprint box from the sprite's size
+		k = k + [Vector2(spr.texture.get_width() * 0.8, minf(spr.texture.get_height() * 0.3, 28.0))]
 	if k.size() > 5:
 		var box: Vector2 = k[5]
 		var rect := RectangleShape2D.new()

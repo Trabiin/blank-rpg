@@ -47,6 +47,8 @@ func _process(_delta: float) -> bool:
 			empire.active_mission = m
 			change_scene_to_file("res://scenes/main.tscn")
 		elif scene == "town":
+			if args.has("map"):  # map=mockup_town: another layout in maps/
+				load("res://scripts/hub.gd").map_override = "res://maps/%s.txt" % args["map"]
 			change_scene_to_file("res://scenes/hub.tscn")
 	var total := int(args.get("frames", "90"))
 	if args.has("at") and frame == 20:
