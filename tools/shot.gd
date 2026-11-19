@@ -23,6 +23,11 @@ func _process(_delta: float) -> bool:
 		var dlg = load("res://scripts/dialogue.gd")  # loaded late: class scripts need the autoloads
 		for k in dlg.data().get("talks", {}):
 			dlg.mark_seen("talk:" + str(k))  # no opening conversation in the way
+		if args.has("fx"):  # fx=mist:80,vignette:0 sets Options > Visual effects sliders for this run
+			var st = load("res://scripts/settings.gd")
+			for pair in str(args["fx"]).split(","):
+				var kv := pair.split(":")
+				st.fx[kv[0]] = int(kv[1])
 		if args.has("day"):
 			empire.day_t = float(args["day"])  # 0.5 noon, 0.75 dusk, 0.9 night
 		var party: PackedStringArray = str(args.get("party", "ash,bran,gristle")).split(",")
@@ -31,6 +36,11 @@ func _process(_delta: float) -> bool:
 				empire.recruits[id]["role"] = "idle"
 		for id in party:
 			empire.recruits[id] = {"role": "party", "target": "", "injured": 0}
+		if args.has("levels"):  # every Hollowmark building at this level, and the Wardlamp lit
+			for id in empire.building_ids():
+				if id != "wardlamp":
+					empire.buildings[id] = int(args["levels"])
+			empire.lamps["hollowmark"] = clampi(int(args["levels"]) - 1, 1, 2)
 		var scene := str(args.get("scene", "mission"))
 		if scene == "mission":
 			var m: Dictionary = load("res://scripts/missions.gd").find(str(args.get("mission", "meadow_patrol")))
@@ -51,6 +61,9 @@ func _process(_delta: float) -> bool:
 			if args.has("enemies"):
 				for i in int(args["enemies"]):
 					cur._spawn_enemy(pos + Vector2(60 + 24 * i, -30 + 30 * (i % 3)))
+	if args.has("zoom") and frame == 22 and current_scene != null and "camera" in current_scene:
+		current_scene.camera.zoom = Vector2.ONE * float(args["zoom"])  # wider overview shots
+		current_scene.camera.reset_smoothing()
 	if args.has("spread") and frame >= total - 40 and frame <= total - 10:
 		_spread()
 	if frame == total - int(args.get("lead", "30")) and args.has("act"):

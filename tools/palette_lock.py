@@ -3,8 +3,8 @@
 
 clean(img):  hard alpha (no half-transparent fringe), outline pixels set to Ink black, and the
              reserved Blank paper white pushed down to bone so only the Blank uses it.
-snap(img):   additionally maps every colour to the nearest master palette colour (tools/master_palette.hex),
-             measured in a perceptual (OKLab) space. Used for tiles and props so different days match.
+snap(img):   additionally maps every colour to the nearest style palette colour (tools/style_palette.hex, the
+             fixed 38 colours of docs/ART_STYLE.md), measured in OKLab. Every art pass asset goes through it.
 
     python3 tools/palette_lock.py in.png out.png [--snap] [--blank]
 """
@@ -34,7 +34,7 @@ def oklab(rgb):
             0.0259040371 * l_ + 0.7827717662 * m_ - 0.8086757660 * s_)
 
 
-def load_palette(path=os.path.join(HERE, "master_palette.hex")):
+def load_palette(path=os.path.join(HERE, "style_palette.hex")):
     cols = []
     for line in open(path):
         tok = line.strip().split()
@@ -106,10 +106,13 @@ def drop_specks(img, min_size=10):
     return img
 
 
-def snap(img, palette=None, blank=False):
-    palette = palette or load_palette()
+def snap(img, palette=None, blank=False, outline=True):
+    """outline=False for ground tiles: no Ink outline (they are opaque, and their edges must tile)."""
+    palette = list(palette or load_palette())
+    if blank:
+        palette.append(PAPER)  # Blank creatures keep the reserved paper white
     labs = [oklab(c) for c in palette]
-    img = clean(img, blank=blank)
+    img = clean(img, blank=blank, outline=outline)
     px = img.load()
     cache = {}
     for y in range(img.size[1]):

@@ -6,9 +6,10 @@
 #   @dirt <chars>           characters that sit on the dirt layer (plaza markers)
 # Buildings and other big props anchor at their top-left tile; fill the rest with grass or dirt.
 @name Hollowmark
-@propH house|TOWN HALL
-@propI house|THE SPILT INK
-@propJ barn|STORES
+@ground town
+@propH townhall|TOWN HALL
+@propI tavern|THE SPILT INK
+@propJ stores|STORES
 @propF fountain
 @propM stall
 @propP produce
@@ -17,6 +18,11 @@
 @propN bench
 @propV banner
 @propG grave
+@propW house
+@propO well
+@propQ cart
+@propZ noticeboard
+@propl lamppost
 @markC table
 @markh hall
 @markv tavern
@@ -32,31 +38,31 @@
 @markK site_guildhall
 @markL lamp
 @markY visitors
-@dirt CFMPNVhvqwmx12L
+@dirt CFMPNVhvqwmx12LOQZlXU
 @sign1 THE INKLANDS  (south)|Missions leave from the Command Table
 @sign2 HOLLOWMARK|pop. 212   pop. 40   pop. you
 ---
 t.ttttttt...t.tttttt.ttttt.tt.ttttt..tt...t..t
 ..t.tt..tt.t..ttt.t...tt...t...t.ttttttttttt.t
 tT.........................................T.t
-t.......H............I.........J.............t
-t.............................................
+t............................................t
+t...W...H...W...W....I....W....J....W.........
 .............................................t
 t.......................................f....t
-t.............X..U...........U.......X.......t
+t............................................t
 ..........::...........::........::...........
-t..t.....:::::::::::::::::2:::::::::::........
-........::h:::::::::::::v:::::::::q::::......t
+t..t........X:U:::::::::::2:U:X::::::X........
+.....U..::h:::::::::::::v:::::::::q::::......t
 t......:::V::::V::::L::::::::::::::::::.......
-t...f..::::C::::::F:::::::::::M::::::::......t
-t......:::::::x::::::::::::::::::::::::.T....t
-.......::::::::::::::::::::::::::::::::......t
-tT.....::::::::::::::::::::::::::::::::....T..
-t......::::::@:::::::::::::::::::::::::......t
-t......::::::::::::N:::::::::::m:::::::......t
-t......:::::::::::::::::::::P::::::::::......t
-t......::::::::::::::::::::::::::::::::.......
-t.......::::::::::::::::::::::::::::::....t...
+t...f..::::C::::::F:::::::::::M::.:::::......t
+t.......l:::::x::::::::::::::::::::::l:.T....t
+........::::::::::::.::::::::::::::::::......t
+tT.....:::::::::::::::::Z:::::::::O::::....T..
+t......::::::@:::::::::::::::.::::::::.......t
+t......::::::::::::N:::::::::::m::::::.......t
+t......:l:::Q:::::::::::::::P::::::::l:......t
+t......::::::::.:::::::::::::::::::::::.......
+t...........::::::::::::::::::::::::......t...
 t...:::::..B....E.....::::.A......K.....D....t
 t...:::...............::::....................
 t.b.:::...............::::....................

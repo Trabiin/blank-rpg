@@ -32,6 +32,21 @@ const REMAPPABLE := [
 	["alert_go", "Go to alert / goal"],  # only if that action exists (issue #22)
 ]
 
+## Scene effects (docs/ART_STYLE.md "Sitting in the world"), each a 0-100 slider on the options screen's
+## Visual effects page. Read live by Ambience and the lamps, so changes show at once.
+## [id, label, default, explanation]
+const FX := [
+	["shadows", "Cast shadows", 100, "Shadows thrown to the right by buildings and props (light from the top left)."],
+	["clouds", "Cloud shadows", 100, "Cloud shadows drifting over the ground by day."],
+	["cloud_size", "Cloud size", 50, "Bigger or smaller clouds."],
+	["wind", "Cloud speed", 40, "How fast the clouds drift."],
+	["mist", "Ground mist", 50, "Low mist, thickest at dawn, dusk and night."],
+	["vignette", "Vignette", 40, "Darker screen edges that pull the eye to the middle."],
+	["lamp_shadows", "Lamp shadows", 100, "Lamps and your lantern cast shadows off props after dark. 0 = off."],
+	["lamp_glow", "Lamp brightness", 60, "How strongly lamps and your lantern light things up."],
+]
+
+static var fx := {}  # id -> 0..100
 static var battle_speed_i := 2
 static var difficulty := 1
 static var shake_i := 2
@@ -61,6 +76,8 @@ static func load_settings() -> void:
 	shake_i = clampi(int(cfg.get_value("options", "screen_shake", shake_i)), 0, SHAKES.size() - 1)
 	for bus in BUSES:
 		volumes[bus] = clampi(int(cfg.get_value("volume", bus, volumes[bus])), 0, 100)
+	for f in FX:
+		fx[f[0]] = clampi(int(cfg.get_value("fx", f[0], f[2])), 0, 100)
 	var b = cfg.get_value("controls", "bindings", {})
 	bindings = b if typeof(b) == TYPE_DICTIONARY else {}
 
@@ -74,7 +91,24 @@ static func save() -> void:
 	for bus in BUSES:
 		cfg.set_value("volume", bus, volumes[bus])
 	cfg.set_value("controls", "bindings", bindings)
+	for f in FX:
+		cfg.set_value("fx", f[0], fx_value(f[0]))
 	cfg.save(PATH)
+
+
+## A scene effect's slider, 0..100 (the default when the player never touched it).
+static func fx_value(id: String) -> int:
+	load_settings()
+	if not fx.has(id):
+		for f in FX:
+			if f[0] == id:
+				fx[id] = f[2]
+	return int(fx.get(id, 0))
+
+
+## The same as 0..1.
+static func fxf(id: String) -> float:
+	return fx_value(id) / 100.0
 
 
 ## Title screen calls this on start. Safe to call again.
