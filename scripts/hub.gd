@@ -120,6 +120,7 @@ func _ready() -> void:
 	hud = HudScript.new()
 	hud.hub = self
 	layer.add_child(hud)
+	layer.add_child(_alert_tray())  # alerts with "go there" and the pinned story goal (issue #22)
 	touch = TouchScript.new()
 	layer.add_child(touch)
 	banter = BanterScript.new()
@@ -527,8 +528,45 @@ func _on_day_passed(d: int) -> void:
 	hud.toast("Day %d begins." % d, "Supplies ran out. People are going hungry." if Empire.hungry else "")
 
 
-func _on_notice(text: String, warning: bool) -> void:
-	hud.notice(text, warning)
+func _on_notice(_text: String, _warning: bool) -> void:
+	pass  # notices now live in Alerts and show in the alert tray (issue #22)
+
+
+# ---------------------------------------------------------------- alerts (issue #22)
+
+func _alert_tray() -> Control:
+	var tray := preload("res://scripts/alert_tray.gd").new()
+	tray.host = self
+	tray.origin = Vector2(6, 39)
+	tray.width = 300.0
+	return tray
+
+
+## The alert tray stays quiet while a screen, menu or conversation is open.
+func alerts_blocked() -> bool:
+	return leaving or get_tree().paused or menu.visible or roster_view.visible or buildings_view.visible \
+		or expedition_view.visible or research_view.visible or diplomacy_view.visible or bonds_view.visible \
+		or scene_view.visible or newcomers_view.visible or gear_view.visible or dialogue_box.visible \
+		or chapter_card.visible or Engine.get_process_frames() == menu_closed_frame
+
+
+## "Go there" from town: screens open right here; provinces and missions are on the Command Table.
+func alert_go(target: Dictionary) -> void:
+	match target.get("view", ""):
+		"buildings": buildings_view.open()
+		"expeditions": expedition_view.open()
+		"research": research_view.open()
+		"diplomacy": diplomacy_view.open()
+		"bonds": bonds_view.open()
+		"newcomers": newcomers_view.open()
+		_:
+			if not target.has("province"):
+				return
+			if not Story.command_on():
+				hud.say("The Concord's clerks have the table under seal. Not yours. Not yet.", 3.0)
+				return
+			Alerts.focus = target
+			_leave(Saves.COMMAND_SCENE)
 
 
 func _on_hollowmark_lost() -> void:

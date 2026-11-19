@@ -31,10 +31,9 @@ func toast(text: String, warn := "") -> void:
 	toast_t = 3.5
 
 
+## A one-off line from town (not from the Empire): shown in the alert tray, never kept (issue #22).
 func notice(text: String, warning: bool) -> void:
-	notices.append([text, warning, 7.0])
-	if notices.size() > 3:
-		notices.pop_front()
+	Alerts.inst().say(text, warning)
 
 
 func _process(delta: float) -> void:
@@ -165,18 +164,7 @@ func _draw() -> void:
 		_centered(64, toast_text, 13, Color(1, 0.95, 0.85, a2))
 		if toast_warn != "":
 			_centered(80, toast_warn, 9, Color(1, 0.6, 0.5, a2))
-	var ny := 52.0
-	var goal := Story.current_goal()  # the story's next step (issue #18; Esc -> Story for all of it)
-	if not goal.is_empty():
-		var gs := "Story: " + str(goal["text"])
-		var gw := font.get_string_size(gs, HORIZONTAL_ALIGNMENT_LEFT, -1, 8).x
-		draw_rect(Rect2(6, 39, gw + 12, 13), Color(0.06, 0.05, 0.08, 0.7))
-		_text(Vector2(12, 49), gs, 8, Color("ffd166"), false)
-		ny = 64.0
-	for n in notices:
-		var a3 := clampf(float(n[2]) / 0.6, 0.0, 1.0)
-		_text(Vector2(8, ny), n[0], 8, Color(1, 0.62, 0.52, a3) if n[1] else Color(0.9, 0.88, 0.8, a3))
-		ny += 11.0
+	# The story goal, alerts and notices are drawn by the alert tray (alert_tray.gd, issue #22).
 	if help_t > 0.0 and not hub.touch_active():
 		var a4 := clampf(help_t, 0.0, 1.0)
 		_text(Vector2(vs.x - 236, 36), "Walk: WASD / arrows / stick", 8, Color(1, 1, 1, a4))

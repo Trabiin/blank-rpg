@@ -34,6 +34,7 @@ func _ready() -> void:
 	_add_action("newcomers", [KEY_N], [])  # gamepad: through the menus
 	_add_action("gear", [KEY_K], [])  # party gear and the shop (issue #15); gamepad: through the menus
 	_add_action("quick_menu", [KEY_C], [JOY_BUTTON_BACK])  # missions only; Back is the ledger on the Command Table
+	_add_action("alert_go", [KEY_TAB], [], JOY_AXIS_TRIGGER_RIGHT, 1.0)  # go to the newest alert / the story goal (issue #22); not in missions
 	# Menus use Godot's ui_* actions; also let WASD, J and the stick drive them.
 	_extend("ui_up", [KEY_W], JOY_AXIS_LEFT_Y, -1.0)
 	_extend("ui_down", [KEY_S], JOY_AXIS_LEFT_Y, 1.0)

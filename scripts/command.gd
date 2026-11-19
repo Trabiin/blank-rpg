@@ -86,6 +86,7 @@ func _ready() -> void:
 	Empire.notice.connect(_on_notice)
 	Empire.hollowmark_lost.connect(_on_hollowmark_lost)
 	add_child(preload("res://scripts/blank_watch.gd").new())  # the Blank's creep, made visible (issue #33)
+	add_child(_alert_tray())  # alerts with "go there", map markers and the pinned story goal (issue #22)
 
 	var roster_layer := CanvasLayer.new()
 	roster_layer.layer = 4
@@ -161,10 +162,53 @@ func _on_day_passed(d: int) -> void:
 	toast_t = 3.5 if toast2 == "" else 5.0
 
 
-func _on_notice(text: String, warning: bool) -> void:
-	notices.append([text, warning, 7.0])
-	if notices.size() > 4:
-		notices.pop_front()
+func _on_notice(_text: String, _warning: bool) -> void:
+	pass  # notices now live in Alerts and show in the alert tray (issue #22)
+
+
+# ---------------------------------------------------------------- alerts (issue #22)
+
+func _alert_tray() -> Control:
+	var tray := preload("res://scripts/alert_tray.gd").new()
+	tray.host = self
+	tray.on_map = true
+	tray.origin = MAP_ORIGIN + Vector2(4, MAP_CELLS.y * CELL - 16)  # stacks up from just above the legend
+	tray.grow_up = true
+	tray.width = 270.0
+	return tray
+
+
+## The alert tray stays quiet while a screen, menu or briefing is open.
+func alerts_blocked() -> bool:
+	var frame := Engine.get_process_frames()
+	return get_tree().paused or menu.visible or slot_menu.visible or over_menu.visible or brief_menu.visible \
+		or frame == menu_closed_frame or roster_view.visible or buildings_view.visible or governor_view.visible \
+		or expedition_view.visible or research_view.visible or diplomacy_view.visible or bonds_view.visible \
+		or newcomers_view.visible or party_picker.visible or gear_view.visible
+
+
+## "Go there": select the province (and open the mission's briefing when it can be played now),
+## or open the screen the alert is about.
+func alert_go(target: Dictionary) -> void:
+	if target.has("province"):
+		var p := territory.find(target["province"])
+		if p.is_empty():
+			return
+		selected = p["index"]
+		var mid: String = target.get("mission", "")
+		if mid != "":
+			for m in Missions.list_for_province(p["id"]):
+				if m.get("id", "") == mid and str(m.get("blocker", "")) == "":
+					_open_brief(m)
+		return
+	match target.get("view", ""):
+		"buildings": buildings_view.open()
+		"expeditions": expedition_view.open()
+		"research": research_view.open()
+		"diplomacy": diplomacy_view.open()
+		"bonds": bonds_view.open()
+		"newcomers": newcomers_view.open()
+		"town": _leave(Saves.HUB_SCENE)
 
 
 func _on_hollowmark_lost() -> void:
@@ -752,11 +796,6 @@ func _draw() -> void:
 		_text_c(Vector2(_map_rect().get_center().x, MAP_ORIGIN.y + 22), toast, 12, Color(1, 0.95, 0.85, a), 4)
 		if toast2 != "":
 			_text_c(Vector2(_map_rect().get_center().x, MAP_ORIGIN.y + 36), toast2, 9, Color(1, 0.55, 0.5, a), 4)
-	var ny := MAP_ORIGIN.y + (52.0 if toast_t > 0.0 else 22.0)
-	for n in notices:
-		var a := clampf(float(n[2]) / 0.6, 0.0, 1.0)
-		_text_c(Vector2(_map_rect().get_center().x, ny), n[0], 9, Color(1, 0.62, 0.55, a) if n[1] else Color(0.92, 0.9, 0.84, a), 4)
-		ny += 13.0
 	if show_ledger or ledger_hover:
 		_draw_ledger()
 	if Empire.SPEEDS[Empire.speed] == 0:
