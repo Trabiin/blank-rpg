@@ -184,6 +184,14 @@ func _draw() -> void:
 		elif row_top + row_h - _scroll > bottom:
 			_scroll = row_top + row_h - bottom
 	_scroll = clampf(_scroll, 0.0, _max_scroll)
+	if _max_scroll > 0.0:
+		# Little arrows say there is more above or below.
+		var cx := vs.x / 2.0
+		var arrow := Color(1.0, 0.82, 0.4, 0.75)
+		if _scroll > 0.5:
+			draw_colored_polygon(PackedVector2Array([Vector2(cx - 5, list_top - 2), Vector2(cx + 5, list_top - 2), Vector2(cx, list_top - 7)]), arrow)
+		if _scroll < _max_scroll - 0.5:
+			draw_colored_polygon(PackedVector2Array([Vector2(cx - 5, vs.y - 6), Vector2(cx + 5, vs.y - 6), Vector2(cx, vs.y - 1)]), arrow)
 	y -= _scroll
 	_rects.clear()
 	for i in items.size():
@@ -214,11 +222,3 @@ func _draw() -> void:
 			_rects[i] = r.merge(Rect2(r.position.x, y, r.size.x, 12.0))
 			y += 11.0
 		y += 20.0
-	if _max_scroll > 0.0:
-		# Little arrows say there is more above or below.
-		var cx := vs.x / 2.0
-		var arrow := Color(1.0, 0.82, 0.4, 0.75)
-		if _scroll > 0.5:
-			draw_colored_polygon(PackedVector2Array([Vector2(cx - 5, list_top - 2), Vector2(cx + 5, list_top - 2), Vector2(cx, list_top - 7)]), arrow)
-		if _scroll < _max_scroll - 0.5:
-			draw_colored_polygon(PackedVector2Array([Vector2(cx - 5, vs.y - 6), Vector2(cx + 5, vs.y - 6), Vector2(cx, vs.y - 1)]), arrow)
