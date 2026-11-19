@@ -29,6 +29,10 @@ var _custom := {}  # char -> [kind, plate text] from @prop lines
 var _marks := {}  # char -> marker id
 var _dirt_chars := ":@"
 var ground_set := ""  # @ground <name>: art pass corner tiles in res://assets/tiles/<name>/ (else the old CC0 look)
+## @mood: the biome's own light and air, read by scripts/ambience.gd. grade multiplies the day/night light
+## (a gentle tint: cool forest, cold marsh, warm hills); mist scales the ground mist; motes tints the drifting
+## motes (pollen, spores, midges). Keeps every biome in the one palette but lets each read apart.
+var mood := {"grade": Color.WHITE, "mist": 1.0, "motes": Color(1.0, 0.97, 0.85)}
 
 
 func world_size() -> Vector2:
@@ -74,6 +78,17 @@ func _parse(path: String) -> void:
 				_marks[key.substr(4)] = val
 			elif key == "ground":
 				ground_set = val.strip_edges()
+			elif key == "mood":
+				# @mood grade=0.85,0.95,0.9 mist=1.6 motes=0.8,1,0.7
+				for part in val.split(" ", false):
+					var kv := part.split("=")
+					if kv.size() != 2:
+						continue
+					var n := kv[1].split(",")
+					if n.size() == 3:
+						mood[kv[0]] = Color(float(n[0]), float(n[1]), float(n[2]))
+					else:
+						mood[kv[0]] = float(kv[1])
 			elif key == "dirt":
 				_dirt_chars += val  # these characters sit on the dirt layer too
 	size_tiles = Vector2i(_rows[0].length(), _rows.size())

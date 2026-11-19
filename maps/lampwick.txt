@@ -4,6 +4,7 @@
 @name Lampwick Hills
 @blank 69
 @ground hills
+@mood grade=1.04,0.98,0.86 mist=0.5 motes=1.0,0.9,0.55
 @propP boulder
 @propC outcrop
 @propI inkspring

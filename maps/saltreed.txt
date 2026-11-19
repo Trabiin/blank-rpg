@@ -4,6 +4,7 @@
 @name Saltreed Marsh
 @blank 69
 @ground marsh
+@mood grade=0.82,0.88,0.96 mist=2.0 motes=0.55,0.6,0.5
 @propD reeds
 @propM marshstump
 @propY lilypad

@@ -4,6 +4,7 @@
 @name The Gutterwoods
 @blank 69
 @ground forest
+@mood grade=0.80,0.93,0.86 mist=1.3 motes=0.75,0.95,0.6
 @propF fortree
 @propU fungus
 @propL log

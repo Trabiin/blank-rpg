@@ -4,6 +4,7 @@
 @name Old Mill Crossing
 @blank 69
 @ground marsh
+@mood grade=0.92,0.92,0.95 mist=1.5 motes=1.0,0.95,0.8
 @propD reeds
 @propM marshstump
 @propY lilypad
