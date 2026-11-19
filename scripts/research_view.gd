@@ -96,7 +96,7 @@ func _pick(i: int) -> void:
 			_say("Already known: %s." % n["effect"])
 		"active":
 			Empire.shelve_research()
-			_say("Set aside %s. Progress is kept; Enter again to resume." % n["name"])
+			_say("Set aside %s. Progress is kept; %s again to resume." % [n["name"], Prompts.confirm()])
 		_:
 			var why := Empire.research_blocker(id)
 			if why != "":
@@ -189,13 +189,13 @@ func _draw() -> void:
 	var sub := ""
 	var sub_col := GOLD
 	if Empire.level_of("scriptorium") <= 0:
-		sub = "Research happens in the Scriptorium. Build it first on the Buildings screen (B)."
+		sub = "Research happens in the Scriptorium. Build it first on the Buildings screen%s." % Prompts.tag("buildings")
 		sub_col = BAD
 	elif p <= 0.0:
 		sub = "Nobody is working the Scriptorium, so study is stalled. Give it a researcher (B, or R for the roster)."
 		sub_col = BAD
 	elif Empire.research_active == "":
-		sub = "Nothing being studied. Pick a node and press Enter. Study pace: %d%%." % int(round(p * 100))
+		sub = "Nothing being studied. Pick a node and press %s. Study pace: %d%%." % [Prompts.confirm(), int(round(p * 100))]
 	else:
 		var a := Empire.research_node(Empire.research_active)
 		sub = "Studying %s: done in %s at %d%% pace." % [a["name"], Empire.research_left_text(Empire.research_active), int(round(p * 100))]
@@ -247,7 +247,7 @@ func _draw() -> void:
 		y += ROW_H
 
 	_draw_details(vs)
-	_text(Vector2(8, vs.y - 8), "Up/Down choose   Enter study / set aside   Esc or T close", 7, Color(0.5, 0.48, 0.52))
+	_text(Vector2(8, vs.y - 8), Prompts.help([["updown", "choose"], ["ui_accept", "study / set aside"], [["ui_cancel", "research"], "close"]], "Tap a node, tap again to study it"), 7, Color(0.5, 0.48, 0.52))
 	if flash_t > 0.0:
 		var a := clampf(flash_t / 0.4, 0.0, 1.0)
 		var w := font.get_string_size(flash, HORIZONTAL_ALIGNMENT_LEFT, -1, 9).x
@@ -286,7 +286,7 @@ func _draw_details(vs: Vector2) -> void:
 			_bar(Rect2(x, y, w, 6), Empire.research_fraction(id), GOLD if state == "active" else SOFT)
 			y += 8
 			_text(Vector2(x, y + 8), "%d%% done. %s" % [int(Empire.research_fraction(id) * 100),
-				("Done in " + Empire.research_left_text(id) + ".") if state == "active" else "Enter to resume."], 8, SOFT, w)
+				("Done in " + Empire.research_left_text(id) + ".") if state == "active" else Prompts.confirm() + " to resume."], 8, SOFT, w)
 		_:
 			var cost: Dictionary = n["cost"]
 			_text(Vector2(x, y + 8), "Costs %s, paid when you start." % Empire.cost_text(cost), 8, INSIGHT if Empire.can_afford(cost) else BAD, w)

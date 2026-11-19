@@ -457,8 +457,8 @@ func _draw() -> void:
 	if note_t > 0.0:
 		_str(font, Vector2(x0, fy), note, 9, Color("9fe07a"))
 	else:
-		var hint := "Tap a tab or row.  Tap outside to close." if party and party.touch_active() \
-			else "Left/Right or Q/E: tabs    J/A: pick    X/B: back    C/Back: close"
+		var hint := "Tap a tab or row.  Tap outside to close." if (party and party.touch_active()) or Prompts.touch() \
+			else Prompts.help([["leftright", "tabs"], ["ui_accept", "pick"], ["ui_cancel", "back"], ["quick_menu", "close"]])
 		if sub_sel >= 0 and sub_sel < sub.size() and str(sub[sub_sel]["id"]).begins_with("ai:"):
 			hint = _style_desc(str(sub[sub_sel]["id"]).substr(3))  # what the highlighted AI preset does (issue #9)
 		_str(font, Vector2(x0, fy), hint, 8, DIM)

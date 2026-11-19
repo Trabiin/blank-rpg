@@ -131,13 +131,13 @@ func _draw() -> void:
 		var col := Color("ff9b8a") if k == "supplies" and Empire.hungry else Color(0.85, 0.83, 0.78)
 		_text(Vector2(x, 31), s, 8, col, false)
 		x += font.get_string_size(s, HORIZONTAL_ALIGNMENT_LEFT, -1, 8).x + 14.0
-	_button(roster_rect(), "Roster  R")
-	_button(buildings_rect(), "Buildings  B")
+	_button(roster_rect(), ("Roster  " + Prompts.key("roster")).strip_edges())
+	_button(buildings_rect(), ("Buildings  " + Prompts.key("buildings")).strip_edges())
 	_button(menu_rect(), "Menu")
 
 	# What the attack button does right now.
 	if not hub.target.is_empty():
-		var key := "Tap" if hub.touch_active() else "J / Enter"
+		var key := "Tap" if hub.touch_active() else Prompts.key("attack")
 		var r := _prompt_rect()
 		draw_rect(r, Color(0.06, 0.05, 0.08, 0.8))
 		draw_rect(r, Color("ffd166"), false, 1.0)
@@ -180,10 +180,15 @@ func _draw() -> void:
 	if help_t > 0.0 and not hub.touch_active():
 		var a4 := clampf(help_t, 0.0, 1.0)
 		_text(Vector2(vs.x - 236, 36), "Walk: WASD / arrows / stick", 8, Color(1, 1, 1, a4))
-		_text(Vector2(vs.x - 236, 47), "Talk / use: J, Space or Enter (gamepad A)", 8, Color(1, 1, 1, a4))
-		_text(Vector2(vs.x - 236, 58), "Clock: 1-4 (shoulders)   Menu: Esc", 8, Color(1, 1, 1, a4))
-		_text(Vector2(vs.x - 236, 69), "Roster R  Buildings B  Research T  Factions F  Bonds H", 8, Color(1, 1, 1, a4))
-		_text(Vector2(vs.x - 236, 80), "Newcomers N", 8, Color(1, 1, 1, a4))
+		_text(Vector2(vs.x - 236, 47), "Talk / use: " + Prompts.key("attack"), 8, Color(1, 1, 1, a4))
+		if Prompts.pad():  # issue #23: the prompts follow the device in use
+			_text(Vector2(vs.x - 236, 58), "Clock: %s / %s   Menu: %s" % [Prompts.key("clock_slower"), Prompts.key("clock_faster"), Prompts.key("pause")], 8, Color(1, 1, 1, a4))
+			_text(Vector2(vs.x - 236, 69), "Roster %s  Buildings %s  Expeditions %s" % [Prompts.key("roster"), Prompts.key("buildings"), Prompts.key("expeditions")], 8, Color(1, 1, 1, a4))
+			_text(Vector2(vs.x - 236, 80), "Everything else: the Menu", 8, Color(1, 1, 1, a4))
+		else:
+			_text(Vector2(vs.x - 236, 58), "Clock: 1-4   Menu: Esc", 8, Color(1, 1, 1, a4))
+			_text(Vector2(vs.x - 236, 69), "Roster R  Buildings B  Research T  Factions F  Bonds H", 8, Color(1, 1, 1, a4))
+			_text(Vector2(vs.x - 236, 80), "Newcomers N", 8, Color(1, 1, 1, a4))
 
 
 func _wrap_lines(s: String, width: float, size: int) -> PackedStringArray:

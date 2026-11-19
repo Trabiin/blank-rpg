@@ -228,7 +228,7 @@ func _draw() -> void:
 		_draw_picker(vs)
 	else:
 		_draw_list(vs)
-	var help := "Up/Down choose   Enter send   Esc back" if page == "envoy" else "Up/Down choose   Enter pick envoy / make deal   Esc or F close"
+	var help := Prompts.help([["updown", "choose"], ["ui_accept", "send"], ["ui_cancel", "back"]], "Tap an envoy, tap again to send   Close: back") if page == "envoy" else Prompts.help([["updown", "choose"], ["ui_accept", "pick envoy / make deal"], [["ui_cancel", "diplomacy"], "close"]], "Tap a row, tap again to act")
 	_text(Vector2(8, vs.y - 8), help, 7, Color(0.5, 0.48, 0.52))
 	if flash_t > 0.0:
 		var a := clampf(flash_t / 0.4, 0.0, 1.0)
@@ -343,7 +343,7 @@ func _draw_details(vs: Vector2) -> void:
 		elif why != "":
 			y += _wrap(Vector2(x, y + 9), "Can't yet: %s." % why, w, 8, BAD)
 		else:
-			_text(Vector2(x, y + 9), "Ready. Press Enter.", 8, GOOD, w)
+			_text(Vector2(x, y + 9), "Ready. %s to send." % Prompts.confirm(), 8, GOOD, w)
 		y += 22
 	else:
 		_text(Vector2(x, y), fa["name"], 12, Color("f3efe4"), w)

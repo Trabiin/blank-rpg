@@ -282,7 +282,7 @@ func _draw() -> void:
 		else:
 			draw_string(font, Vector2(cx - 30, py + 24), "empty", HORIZONTAL_ALIGNMENT_CENTER, 60, 8, Color(0.35, 0.33, 0.38))
 
-	var help := "Up/Down choose   Enter pick or drop   R roster   Esc back"
+	var help := Prompts.help([["updown", "choose"], ["ui_accept", "pick or drop"], ["roster", "roster"], ["ui_cancel", "back"]], "Tap heroes to pick or drop them")
 	_text(Vector2(DETAIL_X, vs.y - 4), help, 7, Color(0.5, 0.48, 0.52))
 	if flash_t > 0.0:
 		var a := clampf(flash_t / 0.4, 0.0, 1.0)

@@ -155,3 +155,9 @@ static func confirm() -> String:
 static func tapped(event: InputEvent) -> bool:
 	return (event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT) \
 		or (event is InputEventScreenTouch and event.pressed)
+
+
+## " (B)" after a screen's name in running text: its shortcut on this device, or nothing.
+static func tag(action: String) -> String:
+	var k := key(action)
+	return "" if k == "" else " (%s)" % k

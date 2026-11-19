@@ -578,7 +578,7 @@ func claim_blocker(pid: String) -> String:
 			var fa := faction(p["owner"])
 			if deal(p["owner"], "cede").is_empty():
 				return "%s land. They will never hand it over" % fa["short"]
-			return "%s land. Reach Allied standing and ask for it (F)" % fa["short"]
+			return "%s land. Reach Allied standing and ask for it%s" % [fa["short"], Prompts.tag("diplomacy")]
 	if not borders_yours(pid):
 		return "Too far. Claim the land in between first"
 	var miss := _missing(claim_cost(pid))
@@ -670,7 +670,7 @@ func role_options(id: String) -> Array:
 		var preview := "%s: %s  (now: %s)" % [b["name"], building_effect(bid, lv, with_me)["text"], building_effect(bid, lv, staff)["text"]]
 		out.append({"role": "staff", "target": bid, "label": "Work the %s (%d/%d)" % [b["name"], staff.size(), slots_of(bid)],
 			"enabled": note == "", "note": note, "preview": preview})
-	var expedition_note := "send squads from the Expeditions screen (E)" if level_of("guildhall") > 0 else "needs a Guildhall"
+	var expedition_note := ("send squads from the Expeditions screen" + Prompts.tag("expeditions")) if level_of("guildhall") > 0 else "needs a Guildhall"
 	for fid in faction_ids():
 		var fa := faction(fid)
 		var cur := envoy_of(fid)
@@ -790,7 +790,7 @@ func job_blocker(jid: String) -> String:
 	var needs: Dictionary = j.get("needs", {})
 	var gh := level_of("guildhall")
 	if gh <= 0:
-		return "build the Guildhall first (B)"
+		return "build the Guildhall first" + Prompts.tag("buildings")
 	if gh < int(needs.get("guildhall", 1)):
 		return "needs Guildhall level %d" % int(needs["guildhall"])
 	var p := territory().find(j["province"])
@@ -1037,7 +1037,7 @@ func _resolve_expedition(e: Dictionary) -> void:
 		var rid: String = j.get("recruit", "")
 		if rid != "" and not recruits.has(rid) and recruit_data.has(rid):
 			recruits[rid] = {"role": "idle", "target": "", "injured": 0}
-			lines.append("%s joins your roster. Find them in Hollowmark or give them a job (R)." % recruit(rid)["name"])
+			lines.append("%s joins your roster. Find them in Hollowmark or give them a job%s." % [recruit(rid)["name"], Prompts.tag("roster")])
 	# A quip from someone on the squad
 	var quippers := squad.filter(func(id): return not recruit(id).get("quips", []).is_empty())
 	if not quippers.is_empty():
@@ -1130,7 +1130,7 @@ func has_research(id: String) -> bool:
 func research_pace() -> Dictionary:
 	var lv := level_of("scriptorium")
 	if lv <= 0:
-		return {"pace": 0.0, "why": ["No Scriptorium yet: build it on the Buildings screen (B)"]}
+		return {"pace": 0.0, "why": ["No Scriptorium yet: build it on the Buildings screen" + Prompts.tag("buildings")]}
 	var staff := staff_of("scriptorium")
 	if _working(staff) == 0:
 		return {"pace": 0.0, "why": ["Nobody at the desks: give the Scriptorium a researcher (B or R)"]}
@@ -1883,7 +1883,7 @@ func _advance_construction() -> void:
 		buildings[id] = level_of(id) + 1
 		var b := building(id)
 		if level_of(id) == 1:
-			notice.emit("The %s is finished. Give it staff on the Buildings screen (B)." % b["name"], false)
+			notice.emit("The %s is finished. Give it staff on the Buildings screen%s." % [b["name"], Prompts.tag("buildings")], false)
 		else:
 			notice.emit("The %s is now level %d." % [b["name"], level_of(id)], false)
 		building_finished.emit(id)
@@ -2170,13 +2170,13 @@ func bond_next_text(id: String) -> String:
 	if rank >= BOND_MAX:
 		return "Bound. Nothing left to prove."
 	if bond_next_scene(id) > 0:
-		return "Wants a word. Talk to them in Hollowmark (or press Enter here)."
+		return "Wants a word. Talk to them in Hollowmark (or %s here)." % ("tap them" if Prompts.touch() else "press " + Prompts.confirm())
 	var need := bond_threshold(rank + 1) - bond_points(id)
 	if rank == BOND_MAX - 1 and not personal_done(id):
 		var pj := personal_job(id)
 		if not expedition_running(pj).is_empty():
 			return "Away on their personal job. Back in %s." % job_left_text(expedition_running(pj))
-		return "Rank 5 needs their personal job: \"%s\" on the Guildhall board (E). They have to go on it." % job(pj).get("name", "?")
+		return "Rank 5 needs their personal job: \"%s\" on the Guildhall board%s. They have to go on it." % [job(pj).get("name", "?"), Prompts.tag("expeditions")]
 	if need > 0:
 		return "%d more bond point%s to rank %d." % [need, "" if need == 1 else "s", rank + 1]
 	return ""
@@ -2399,17 +2399,17 @@ func hook_text(id: String) -> String:
 		"building":
 			var lv := int(h.get("level", 1))
 			var bn: String = building(h.get("building", "")).get("name", "?")
-			return ("Build the %s (B)." % bn) if lv <= 1 else ("Raise the %s to level %d (B)." % [bn, lv])
+			return ("Build the %s%s." % [bn, Prompts.tag("buildings")]) if lv <= 1 else ("Raise the %s to level %d%s." % [bn, lv, Prompts.tag("buildings")])
 		"standing":
-			return "Reach %s with the %s (F)." % [tier_name(h.get("tier", "friendly")), faction(h.get("faction", "")).get("short", "?")]
+			return "Reach %s with the %s%s." % [tier_name(h.get("tier", "friendly")), faction(h.get("faction", "")).get("short", "?"), Prompts.tag("diplomacy")]
 		"research":
-			return "Finish %s at the Scriptorium (T)." % research_node(h.get("node", "")).get("name", "?")
+			return "Finish %s at the Scriptorium%s." % [research_node(h.get("node", "")).get("name", "?"), Prompts.tag("research")]
 		"renown":
 			return "Reach %d Renown (expeditions, missions)." % int(h.get("amount", 1))
 		"bond":
-			return "Reach bond rank %d with %s (H)." % [int(h.get("rank", 1)), short_name(h.get("who", ""))]
+			return "Reach bond rank %d with %s%s." % [int(h.get("rank", 1)), short_name(h.get("who", "")), Prompts.tag("bonds")]
 		"rescue":
-			return "Send a squad on \"%s\" from the Guildhall (E)." % job(h.get("job", "")).get("name", "?")
+			return "Send a squad on \"%s\" from the Guildhall%s." % [job(h.get("job", "")).get("name", "?"), Prompts.tag("expeditions")]
 	return ""
 
 
@@ -2443,7 +2443,7 @@ func hook_progress(id: String) -> Array:
 			var st := research_state(nid)
 			if st == "active" or st == "shelved":
 				return ["%d%% studied%s." % [int(research_fraction(nid) * 100.0), "" if st == "active" else ", shelved"], false]
-			return ["Not started%s." % ("" if level_of("scriptorium") > 0 else "; needs a Scriptorium (B)"), false]
+			return ["Not started%s." % ("" if level_of("scriptorium") > 0 else "; needs a Scriptorium" + Prompts.tag("buildings")), false]
 		"renown":
 			return ["Renown %d of %d." % [int(res.get("renown", 0)), int(h.get("amount", 1))], false]
 		"bond":
@@ -2475,7 +2475,7 @@ func hire(id: String) -> bool:
 		return false
 	visitors.erase(id)
 	recruits[id] = {"role": "idle", "target": "", "injured": 0}
-	notice.emit("%s joins your roster. Give them a job (R)." % recruit(id)["name"], false)
+	notice.emit("%s joins your roster. Give them a job%s." % [recruit(id)["name"], Prompts.tag("roster")], false)
 	return true
 
 
@@ -2486,7 +2486,7 @@ func _check_leads() -> void:
 			continue
 		visitors[id] = day
 		var r := recruit(id)
-		notice.emit("%s, %s, is waiting at Hollowmark's south gate. Talk to them in town, or press N." % [r["name"], r.get("title", "")], false)
+		notice.emit("%s, %s, is waiting at Hollowmark's south gate. Talk to them in town, or open Newcomers%s." % [r["name"], r.get("title", ""), (" (" + Prompts.key("newcomers") + ")") if Prompts.key("newcomers") != "" else " from the menu"], false)
 		lead_arrived.emit(id)
 
 
