@@ -3,8 +3,8 @@ extends StaticBody2D
 ## builders work, and the finished building (with a name board and its level) once built.
 ## Origin = the bottom-centre of the 5x5-tile plot.
 ##
-## Every look is CC0 overworld art plus a few code-drawn touches; placeholders until the
-## PixelLab pass (#3). Each look is one entry in LOOKS, so swapping art never touches the hub.
+## Built looks are art pass sprites, res://assets/buildings/<look>_<level>.png, with a few code-drawn
+## touches (smoke, candlelight). LOOKS keeps the collision box and the old CC0 look as a fallback.
 
 const PLOT := Vector2(80, 80)
 ## look -> list of sprites [source rect in the overworld sheet, offset of its bottom-centre
@@ -25,6 +25,9 @@ var _box: CollisionShape2D
 var _sprites: Array = []
 var _extras: Array = []
 var highlight := false
+var _has_art := false  # art pass sprite in use: skip the code-drawn flag, door and candle
+## Chimney tops on the art pass sprites (offset from the plot's bottom-centre, per level), for the smoke.
+const SMOKE := {"inkworks_1": Vector2(13.5, -65), "inkworks_2": Vector2(11.5, -69), "inkworks_3": Vector2(10.5, -73)}
 var _over: Node2D  # code-drawn parts above the sprites: plate, scaffolding, smoke
 
 
@@ -63,6 +66,24 @@ func refresh() -> void:
 	if lv <= 0 or not LOOKS.has(look):
 		return
 	var spec: Dictionary = LOOKS[look]
+	var art_path := "res://assets/buildings/%s_%d.png" % [look, mini(lv, 3)]  # art pass: one sprite per level
+	_has_art = ResourceLoader.exists(art_path)
+	if _has_art:
+		var spr := _sprite(load(art_path), Vector2.ZERO, Color.WHITE)
+		spr.material = Art.art_world_material()
+		_sprites.append(spr)
+	else:
+		_old_parts(spec, lv)
+	var rect := RectangleShape2D.new()
+	rect.size = spec["box"]
+	_box = CollisionShape2D.new()
+	_box.shape = rect
+	_box.position = Vector2(0, -rect.size.y / 2.0)
+	add_child(_box)
+
+
+## The CC0 placeholder look, kept for any building without art pass sprites.
+func _old_parts(spec: Dictionary, lv: int) -> void:
 	for part in spec["parts"]:
 		_sprites.append(_sprite(Art.region(part[0]), part[1], spec.get("tint", Color.WHITE)))
 	# Upgrades show: crates at level 2, barrels too at level 3.
@@ -70,12 +91,6 @@ func refresh() -> void:
 		_extras.append(_sprite(Art.tile_region(30, 0, 2, 2), Vector2(30, 4), Color.WHITE))
 	if lv >= 3:
 		_extras.append(_sprite(Art.tile_region(33, 0, 2, 1), Vector2(-34, 8), Color.WHITE))
-	var rect := RectangleShape2D.new()
-	rect.size = spec["box"]
-	_box = CollisionShape2D.new()
-	_box.shape = rect
-	_box.position = Vector2(0, -rect.size.y / 2.0)
-	add_child(_box)
 
 
 func _sprite(tex: Texture2D, off: Vector2, tint: Color) -> Sprite2D:
@@ -108,15 +123,15 @@ func _draw_over() -> void:
 	var font := ThemeDB.fallback_font
 	if not job.is_empty():
 		_draw_scaffold(lv == 0)
-	if look == "inkworks" and lv > 0:
-		_draw_smoke()
-	if look == "infirmary" and lv > 0:
+	if look == "inkworks" and lv > 0 and (not _has_art or SMOKE.has("%s_%d" % [look, lv])):
+		_draw_smoke(SMOKE.get("%s_%d" % [look, lv], Vector2(-6, -112)))
+	if look == "infirmary" and lv > 0 and not _has_art:
 		# A white flag with a red mark by the door.
 		_over.draw_line(Vector2(26, -2), Vector2(26, -26), Color("4a3222"), 1.0)
 		_over.draw_rect(Rect2(27, -26, 9, 7), Color("f3efe4"))
 		_over.draw_rect(Rect2(30.5, -25, 2, 5), Color("c0392b"))
 		_over.draw_rect(Rect2(29, -23.5, 5, 2), Color("c0392b"))
-	if look == "scriptorium" and lv > 0:
+	if look == "scriptorium" and lv > 0 and not _has_art:
 		var flick := 0.6 + 0.4 * sin(Time.get_ticks_msec() * 0.009 + 1.3)
 		_over.draw_rect(Rect2(-3, -30, 5, 6), Color(1.0, 0.82, 0.4, flick))
 		_over.draw_rect(Rect2(-6, -15, 12, 13), Color("4a3222"))  # a door at the foot of the tower
@@ -181,9 +196,9 @@ func _draw_scaffold(full: bool) -> void:
 		_over.draw_rect(Rect2(-36, -8, 10, 8), Color("7a5434"))  # a stack of planks
 
 
-func _draw_smoke() -> void:
+func _draw_smoke(top: Vector2) -> void:
 	var t := Time.get_ticks_msec() / 1000.0
 	for i in 4:
 		var k := fmod(t * 0.35 + i * 0.25, 1.0)
-		var p := Vector2(-6 + sin(k * 6.0 + i) * 4.0, -112 - k * 26.0)
+		var p := top + Vector2(sin(k * 6.0 + i) * 4.0, -k * 26.0)
 		_over.draw_circle(p, 3.0 + k * 4.0, Color(0.12, 0.12, 0.2, 0.55 * (1.0 - k)))

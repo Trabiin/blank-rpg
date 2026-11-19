@@ -95,3 +95,19 @@ portrait. Filled in when Phase 7 starts.
 - **Enemies:** Blank creatures import with `--blank` (they keep paper white). Death "dissolve" prompts did not dissolve,
   so deaths are a code crumple + the existing paper burst.
 - Art pass tiles and props use `Art.art_world_material()`: the same Blank fade, with a much lighter mood grade.
+
+## Phase 3 additions (Hollowmark)
+
+- **Buildings use `view: low top-down`**, not high: high top-down came back as isometric diamonds on a ground patch,
+  which clashes with the game's front-facing 3/4 camera. Add ", building only, no ground". 80x80 for a 5x5 plot.
+- **Building levels:** level 3 first, then levels 1 and 2 from it with `init_image` = the level 3 sprite.
+  `init_image_strength` ~70 gives a humbler level 1 with the same roof and colours, ~130 a plainer level 2;
+  200+ comes back nearly identical to the source. Stored as `assets/buildings/<look>_<level>.png`.
+- **Town ground:** tileset lower = the meadow grass (with the meadow GGGG tile as `lower_reference_image`), upper
+  "worn uneven grey cobblestones with moss in the cracks". This set came back unswapped; still store by content
+  (`assets/tiles/town/`, G = grass, D = cobbles). Maps opt in with `@ground town`.
+- **Props** (high top-down is fine for small things): town props in `assets/props/`, the Wardlamp as
+  `wardlamp_<level>.png` (glow in code), the Command Table as `command_table.png`. Banners came back as a pennant on a
+  crossbar, so the pole is code.
+- **Hub people:** 32 px characters, idle only for staff who stand at posts; townsfolk (`folk_man`, `folk_woman`,
+  `folk_elder`, `folk_child`) get idle + walk and wander the plaza (`scripts/townsfolk.gd`).

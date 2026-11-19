@@ -17,8 +17,9 @@ const KEYS := [
 	[1.00, Color(0.42, 0.47, 0.68)],
 ]
 
-var party  # main.gd: leader, camera
+var party  # main.gd or hub.gd: leader, camera
 var day_t := 0.5
+var live := false  # follow the running clock (Hollowmark); missions keep the hour they were launched at
 var modulate_node: CanvasModulate
 var lantern: PointLight2D
 var motes: Array = []  # [pos, vel, phase]
@@ -72,6 +73,11 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	t += delta
+	if live and absf(Empire.day_t - day_t) > 0.0005:
+		day_t = Empire.day_t
+		modulate_node.color = light_at(day_t)
+		lantern.energy = 0.9 * darkness(day_t)
+		lantern.enabled = lantern.energy > 0.05
 	if party != null and party.leader != null and is_instance_valid(party.leader):
 		lantern.global_position = party.leader.global_position + Vector2(0, -8)
 	for m in motes:

@@ -6,9 +6,10 @@
 #   @dirt <chars>           characters that sit on the dirt layer (plaza markers)
 # Buildings and other big props anchor at their top-left tile; fill the rest with grass or dirt.
 @name Hollowmark
-@propH house|TOWN HALL
-@propI house|THE SPILT INK
-@propJ barn|STORES
+@ground town
+@propH townhall|TOWN HALL
+@propI tavern|THE SPILT INK
+@propJ stores|STORES
 @propF fountain
 @propM stall
 @propP produce
@@ -17,6 +18,10 @@
 @propN bench
 @propV banner
 @propG grave
+@propO well
+@propQ cart
+@propZ noticeboard
+@propl lamppost
 @markC table
 @markh hall
 @markv tavern
@@ -32,7 +37,7 @@
 @markK site_guildhall
 @markL lamp
 @markY visitors
-@dirt CFMPNVhvqwmx12L
+@dirt CFMPNVhvqwmx12LOQZl
 @sign1 THE INKLANDS  (south)|Missions leave from the Command Table
 @sign2 HOLLOWMARK|pop. 212   pop. 40   pop. you
 ---
@@ -49,12 +54,12 @@ t..t.....:::::::::::::::::2:::::::::::........
 ........::h:::::::::::::v:::::::::q::::......t
 t......:::V::::V::::L::::::::::::::::::.......
 t...f..::::C::::::F:::::::::::M::::::::......t
-t......:::::::x::::::::::::::::::::::::.T....t
+t......:l:::::x::::::::::::::::::::::l:.T....t
 .......::::::::::::::::::::::::::::::::......t
-tT.....::::::::::::::::::::::::::::::::....T..
+tT.....:::::::::::::::::Z:::::::::O::::....T..
 t......::::::@:::::::::::::::::::::::::......t
 t......::::::::::::N:::::::::::m:::::::......t
-t......:::::::::::::::::::::P::::::::::......t
+t......:l:::Q:::::::::::::::P::::::::l:......t
 t......::::::::::::::::::::::::::::::::.......
 t.......::::::::::::::::::::::::::::::....t...
 t...:::::..B....E.....::::.A......K.....D....t

@@ -3,11 +3,12 @@
 # The Blank eats everything east of @blank, starting with the tax office.
 @name Hollowmark: Tax Office Square
 @blank 44
+@ground town
 @propL house|LOCKUP
-@propH house|TOWN HALL
+@propH townhall|TOWN HALL
 @propO house|CONCORD TAX OFFICE
-@propI house|THE SPILT INK
-@propJ barn|STORES
+@propI tavern|THE SPILT INK
+@propJ stores|STORES
 @propQ house|ASSESSOR
 @propF fountain
 @propX crates

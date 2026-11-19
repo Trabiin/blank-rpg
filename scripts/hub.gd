@@ -26,7 +26,9 @@ const MAP := "res://maps/hollowmark.txt"
 const TITLE_SCENE := "res://scenes/title.tscn"
 const AUTOSAVE_EVERY := 60.0
 const TALK_RANGE := 26.0
-const TABLE_SIZE := Vector2(46, 26)  # the Command Table, drawn in code (placeholder art)
+const TABLE_SIZE := Vector2(46, 26)  # the Command Table's footprint (code-drawn when there is no art)
+var table_art: Texture2D = load("res://assets/props/command_table.png") if ResourceLoader.exists("res://assets/props/command_table.png") else null
+const LAMP_FLAME_Y := 10.0  # lantern centre, from the top of the Wardlamp sprite
 ## What staff say about their building when you talk to them, before what it is doing right now.
 const STAFF_LINES := {
 	"command_table": "Every order crosses this table. I make sure fewer of them cost bread.",
@@ -96,6 +98,11 @@ func _ready() -> void:
 	leader.collision_layer = 2
 	heroes = [leader]
 	_place_people()
+	_spawn_townsfolk()
+	var ambience := Ambience.new()  # day/night light, lantern after dark, pollen and fireflies
+	ambience.party = self
+	ambience.live = true
+	add_child(ambience)
 
 	var tags := Node2D.new()
 	tags.z_index = 20
@@ -352,6 +359,46 @@ func _place_people() -> void:
 		if not seen.has(id):
 			npcs[id].queue_free()
 			npcs.erase(id)
+
+
+## A few townsfolk strolling the plaza: more by day, a couple of night owls after dark.
+func _spawn_townsfolk() -> void:
+	if not SpriteSet.has_art("folk_man"):
+		return
+	var blockers: Array = []  # [position, radius]
+	for p in area.props:
+		var fp: Vector2i = p.footprint(p.kind)
+		blockers.append([p.position + Vector2(0, -fp.y * 4.0), maxf(fp.x, fp.y) * 8.0 + 8.0])
+	for id in sites:
+		blockers.append([sites[id].position + Vector2(0, -36), 52.0])
+	blockers.append([table_pos, 34.0])
+	for id in area.markers:
+		for m in area.markers[id]:
+			blockers.append([m, 24.0])
+	var free := {}
+	for y in area.size_tiles.y:
+		for x in area.size_tiles.x:
+			if not area._is_dirt(x, y):
+				continue
+			var c := Vector2(x * 16 + 8, y * 16 + 8)
+			var ok := true
+			for b in blockers:
+				if c.distance_to(b[0]) < b[1]:
+					ok = false
+					break
+			if ok:
+				free[Vector2i(x, y)] = true
+	var keys := free.keys()
+	if keys.is_empty():
+		return
+	var n := int(round(lerpf(6.0, 2.0, Ambience.darkness(Empire.day_t))))
+	for i in n:
+		var f := Townsfolk.new()
+		f.body_id = Townsfolk.BODIES[i % Townsfolk.BODIES.size()]
+		f.free = free
+		var c: Vector2i = keys[randi() % keys.size()]
+		f.position = Vector2(c * 16) + Vector2(8, 8)
+		entities.add_child(f)
 
 
 func shake(_amount: float) -> void:
@@ -787,6 +834,17 @@ func _draw_table() -> void:
 	var c := table_body
 	var w := TABLE_SIZE.x
 	var h := TABLE_SIZE.y
+	if table_art != null:
+		# Art pass sprite; the candle still flickers and the highlight still shows.
+		var tw := float(table_art.get_width())
+		var th := float(table_art.get_height())
+		c.draw_set_transform(Vector2.ZERO, 0.0, Vector2(1.0, 0.4))
+		c.draw_circle(Vector2(0, 2), tw * 0.5, Color(0, 0, 0, 0.25))
+		c.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+		c.draw_texture(table_art, Vector2(-tw / 2.0, -th + 3.0))
+		if target.get("kind", "") == "table":
+			c.draw_rect(Rect2(-tw / 2.0 - 2.0, -th + 1.0, tw + 4.0, th + 4.0), Color("ffd166"), false, 1.0)
+		return
 	var top := Rect2(-w / 2.0, -h, w, h - 8.0)
 	c.draw_set_transform(Vector2.ZERO, 0.0, Vector2(1.0, 0.4))
 	c.draw_circle(Vector2(0, 2), w * 0.55, Color(0, 0, 0, 0.25))
@@ -822,7 +880,29 @@ func _draw_lamp() -> void:
 	c.draw_set_transform(Vector2.ZERO, 0.0, Vector2(1.0, 0.4))
 	c.draw_circle(Vector2(0, 2), 6.0, Color(0, 0, 0, 0.25))
 	c.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+	if c.get_node_or_null("Art") != null:
+		c.get_node("Art").visible = lv > 0
 	var h := 30.0 if lv > 0 else 30.0 * Empire.job_progress(Empire.lamp_jobs["hollowmark"])
+	var art_path := "res://assets/props/wardlamp_%d.png" % clampi(lv, 1, 2)
+	if lv > 0 and ResourceLoader.exists(art_path):
+		# Art pass: the lamp sprite, with the glow drawn in code around its lantern.
+		var tex: Texture2D = load(art_path)
+		var spr: Sprite2D = c.get_node_or_null("Art")
+		if spr == null:
+			spr = Sprite2D.new()
+			spr.name = "Art"
+			spr.centered = false
+			spr.material = Art.art_world_material()
+			spr.show_behind_parent = true
+			c.add_child(spr)
+		spr.texture = tex
+		spr.position = Vector2(-tex.get_width() / 2.0, -tex.get_height() + 2.0)
+		var fl := 0.75 + 0.25 * sin(Time.get_ticks_msec() * 0.011)
+		var gl := 10.0 + 6.0 * lv
+		var lc := Vector2(0, -tex.get_height() + LAMP_FLAME_Y)
+		c.draw_circle(lc, gl, Color(0.55, 0.65, 1.0, 0.10 * fl))
+		c.draw_circle(lc, gl * 0.5, Color(0.6, 0.7, 1.0, 0.18 * fl))
+		return
 	c.draw_rect(Rect2(-1.5, -h, 3, h), Color("2e2a33"))
 	c.draw_rect(Rect2(-4, -2, 8, 3), Color("2e2a33"))
 	if lv > 0:
