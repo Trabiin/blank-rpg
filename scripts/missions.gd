@@ -42,6 +42,8 @@ static func offered(m: Dictionary) -> bool:
 	var after: String = m.get("after", "")
 	if after != "" and not cleared(after):
 		return false
+	if m.has("needs") and not Story.meets(m["needs"]):  # story conditions (issue #18)
+		return false
 	var p := Empire.territory().find(m.get("province", ""))
 	return not p.is_empty() and p["owner"] != "erased"
 

@@ -35,6 +35,11 @@ static func data() -> Dictionary:
 			var parsed = JSON.parse_string(f.get_as_text())
 			if typeof(parsed) == TYPE_DICTIONARY:
 				_data = parsed
+		# The main story's talks and speakers (data/story.json, issue #18) play like any others.
+		for k in ["speakers", "talks"]:
+			if not _data.has(k):
+				_data[k] = {}
+			_data[k].merge(Story.data().get(k, {}))
 	return _data
 
 

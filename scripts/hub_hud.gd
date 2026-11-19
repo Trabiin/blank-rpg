@@ -116,6 +116,8 @@ func _prompt_rect() -> Rect2:
 func _draw() -> void:
 	if hub == null:
 		return
+	if (hub.dialogue_box and hub.dialogue_box.visible) or (hub.chapter_card and hub.chapter_card.visible):
+		return  # conversations and story cards have the screen to themselves
 	var vs := _vs()
 	# Top-left: where, when, how fast.
 	draw_rect(Rect2(6, 6, 226, 30), Color(0.06, 0.05, 0.08, 0.78))
@@ -164,6 +166,13 @@ func _draw() -> void:
 		if toast_warn != "":
 			_centered(80, toast_warn, 9, Color(1, 0.6, 0.5, a2))
 	var ny := 52.0
+	var goal := Story.current_goal()  # the story's next step (issue #18; Esc -> Story for all of it)
+	if not goal.is_empty():
+		var gs := "Story: " + str(goal["text"])
+		var gw := font.get_string_size(gs, HORIZONTAL_ALIGNMENT_LEFT, -1, 8).x
+		draw_rect(Rect2(6, 39, gw + 12, 13), Color(0.06, 0.05, 0.08, 0.7))
+		_text(Vector2(12, 49), gs, 8, Color("ffd166"), false)
+		ny = 64.0
 	for n in notices:
 		var a3 := clampf(float(n[2]) / 0.6, 0.0, 1.0)
 		_text(Vector2(8, ny), n[0], 8, Color(1, 0.62, 0.52, a3) if n[1] else Color(0.9, 0.88, 0.8, a3))

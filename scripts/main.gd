@@ -178,7 +178,10 @@ func _ready() -> void:
 		if not loaded or p.distance_to(leader.global_position) > 120.0:
 			_spawn_enemy(p)
 	if not loaded:  # the first time out, Bran finds Ash; after that he just grumbles
-		if not Dialogue.is_seen("talk:meadow_intro") and "bran" in present():
+		var intro := str(mission.get("intro", ""))  # a story mission's opening talk (issue #18)
+		if intro != "" and not Dialogue.is_seen("talk:" + intro):
+			play_talk(intro)
+		elif not Dialogue.is_seen("talk:meadow_intro") and "bran" in present():
 			play_talk("meadow_intro")
 		else:
 			banter.event("mission_start", present())
