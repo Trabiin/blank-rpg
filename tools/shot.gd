@@ -23,6 +23,11 @@ func _process(_delta: float) -> bool:
 		var dlg = load("res://scripts/dialogue.gd")  # loaded late: class scripts need the autoloads
 		for k in dlg.data().get("talks", {}):
 			dlg.mark_seen("talk:" + str(k))  # no opening conversation in the way
+		if args.has("fx"):  # fx=mist:80,vignette:0 sets Options > Visual effects sliders for this run
+			var st = load("res://scripts/settings.gd")
+			for pair in str(args["fx"]).split(","):
+				var kv := pair.split(":")
+				st.fx[kv[0]] = int(kv[1])
 		if args.has("day"):
 			empire.day_t = float(args["day"])  # 0.5 noon, 0.75 dusk, 0.9 night
 		var party: PackedStringArray = str(args.get("party", "ash,bran,gristle")).split(",")

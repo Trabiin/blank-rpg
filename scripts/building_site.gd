@@ -79,6 +79,7 @@ func refresh() -> void:
 		add_child(sh)
 		move_child(sh, 0)
 		_sprites.append(sh)
+		_sprites.append(Art.add_cast_shadow(self, spr.texture, 3.0))
 	else:
 		_old_parts(spec, lv)
 	var rect := RectangleShape2D.new()
@@ -87,6 +88,8 @@ func refresh() -> void:
 	_box.shape = rect
 	_box.position = Vector2(0, -rect.size.y / 2.0)
 	add_child(_box)
+	if _has_art:
+		_sprites.append(Art.add_occluder(self, Vector2(rect.size.x * 0.9, rect.size.y * 0.5)))
 
 
 ## The CC0 placeholder look, kept for any building without art pass sprites.

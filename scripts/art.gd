@@ -153,9 +153,127 @@ static func draw_cast_shadow(c: CanvasItem, base: Vector2, w: float, tall: float
 	c.draw_set_transform(base + Vector2(w * 0.06, 0.5), 0.0, Vector2(1.0, 0.3))
 	c.draw_circle(Vector2.ZERO, w * 0.52, col)
 	c.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
-	if tall > 28.0:
-		var d := minf(tall * 0.18, 12.0)
-		var pts := PackedVector2Array([base + Vector2(-w * 0.42, -1), base + Vector2(w * 0.5, -1),
-				base + Vector2(w * 0.5 + d, d * 0.55), base + Vector2(-w * 0.42 + d, d * 0.55)])
-		c.draw_colored_polygon(pts, Color(col.r, col.g, col.b, 0.22))
 
+
+
+## How far a cast shadow leans: per pixel of height, this much to the right and this much of the height kept.
+const SHADOW_LEAN := 0.42
+const SHADOW_SQUASH := 0.5
+const SHADOW_COLOR := Color(0.04, 0.05, 0.12, 0.5)
+const SHADOW_SORT := 6.0  # the shadow sorts this far in front of its caster, so it falls over neighbours beside it
+static var _shadow_cache := {}
+
+
+## The object's own silhouette thrown to the right along the ground (light from the top left), minus the
+## object itself. White on transparent, tinted by the sprite that shows it.
+static func shadow_texture(tex: Texture2D) -> ImageTexture:
+	var key := tex.resource_path if tex.resource_path != "" else str(tex.get_instance_id())
+	if _shadow_cache.has(key):
+		return _shadow_cache[key]
+	var img := tex.get_image()
+	if img.is_compressed():
+		img.decompress()
+	var w := img.get_width()
+	var h := img.get_height()
+	var extra := int(ceil(h * SHADOW_LEAN))
+	var out := Image.create(w + extra, h + 2, false, Image.FORMAT_RGBA8)
+	var base := float(h - 1)
+	for oy in h + 2:
+		var hgt := (base + 1.0 - float(oy)) / SHADOW_SQUASH  # height on the object this ground row comes from
+		if hgt < 0.0:
+			hgt = 0.0
+		var sy := int(round(base - hgt))
+		if sy < 0 or sy >= h:
+			continue
+		for ox in w + extra:
+			var sx := int(round(float(ox) - hgt * SHADOW_LEAN))
+			if sx < 0 or sx >= w or img.get_pixel(sx, sy).a < 0.5:
+				continue
+			if ox < w and oy < h and img.get_pixel(ox, oy).a >= 0.5:
+				continue  # the object hides its own shadow
+			out.set_pixel(ox, oy, Color.WHITE)
+	var it := ImageTexture.create_from_image(out)
+	_shadow_cache[key] = it
+	return it
+
+
+## Adds the cast shadow of a sprite (centred, its bottom `bottom` px below the owner's origin) next to `owner`,
+## as a sibling in the same Y-sorted parent: it sorts a little in front of the owner, so it darkens what stands
+## beside it (a neighbour's wall, a barrel by a stall). It follows the owner's lifetime.
+static func add_cast_shadow(owner: Node2D, tex: Texture2D, bottom: float) -> Sprite2D:
+	var sh := Sprite2D.new()
+	sh.texture = shadow_texture(tex)
+	sh.centered = false
+	sh.position = owner.position + Vector2(0, SHADOW_SORT)
+	sh.offset = Vector2(-tex.get_width() / 2.0, bottom - tex.get_height() - SHADOW_SORT)
+	sh.modulate = Color(SHADOW_COLOR, SHADOW_COLOR.a * Settings.fxf("shadows"))
+	sh.visible = Settings.fx_value("shadows") > 0
+	sh.add_to_group("cast_shadow")
+	owner.get_parent().add_child.call_deferred(sh)
+	owner.tree_exiting.connect(sh.queue_free)
+	return sh
+
+
+
+## Light masks: lamps light the ground through a shadowed light (so props throw shadows on it) and light
+## the actors and props through a second, unshadowed one (so nothing stands in its own shadow).
+const LIGHT_GROUND := 2
+const LIGHT_ITEMS := 1
+static var _radial_cache := {}
+
+
+static func _radial(size: int) -> GradientTexture2D:
+	if _radial_cache.has(size):
+		return _radial_cache[size]
+	var g := GradientTexture2D.new()
+	g.width = size
+	g.height = size
+	g.fill = GradientTexture2D.FILL_RADIAL
+	g.fill_from = Vector2(0.5, 0.5)
+	g.fill_to = Vector2(1.0, 0.5)
+	var grad := Gradient.new()
+	grad.set_color(0, Color(1, 1, 1, 1))
+	grad.set_color(1, Color(1, 1, 1, 0))
+	g.gradient = grad
+	_radial_cache[size] = g
+	return g
+
+
+## A lamp: [ground light with shadows, items light]. Drive it with set_lamp() every frame.
+static func add_lamp(parent: Node, pos: Vector2, color: Color, size: int) -> Array:
+	var out := []
+	for ground in [true, false]:
+		var l := PointLight2D.new()
+		l.texture = _radial(size)
+		l.color = color
+		l.position = pos
+		l.range_item_cull_mask = LIGHT_GROUND if ground else LIGHT_ITEMS
+		l.shadow_enabled = ground
+		l.shadow_filter = Light2D.SHADOW_FILTER_PCF5
+		l.shadow_filter_smooth = 1.5
+		parent.add_child(l)
+		out.append(l)
+	return out
+
+
+## Sets a lamp's strength (0..1 before the player's Lamp brightness) and its shadows (Lamp shadows).
+static func set_lamp(lights: Array, energy: float) -> void:
+	var e := energy * Settings.fxf("lamp_glow") / 0.6
+	var sh := Settings.fxf("lamp_shadows")
+	for l in lights:
+		l.energy = e
+		l.enabled = e > 0.05
+		if l.range_item_cull_mask == LIGHT_GROUND:
+			l.shadow_enabled = sh > 0.0
+			l.shadow_color = Color(0, 0, 0, sh)
+
+
+## A footprint that blocks lamp light: a box at the owner's base, `size` = (width, depth).
+static func add_occluder(owner: Node2D, size: Vector2) -> LightOccluder2D:
+	var o := LightOccluder2D.new()
+	var poly := OccluderPolygon2D.new()
+	var hw := size.x / 2.0
+	poly.polygon = PackedVector2Array([Vector2(-hw, -size.y), Vector2(hw, -size.y), Vector2(hw, 0), Vector2(-hw, 0)])
+	o.occluder = poly
+	owner.add_child(o)
+	return o

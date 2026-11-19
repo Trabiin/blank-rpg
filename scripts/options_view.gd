@@ -20,7 +20,7 @@ const W := 440.0
 const ROW_H := 22.0
 const ROW_H_CONTROLS := 17.0  # the Controls page has more rows
 
-var page := "main"  # "main" or "controls"
+var page := "main"  # "main", "controls" or "fx"
 var sel := 0
 var listening := ""  # action id waiting for a new key/button
 var note := ""
@@ -90,7 +90,16 @@ func _rebuild() -> void:
 				"level": Settings.volumes[bus], "detail": ""})
 		_rows.append({"id": "controls", "kind": "open", "label": "Controls", "value": "remap keys and buttons",
 			"detail": ""})
+		_rows.append({"id": "fx_page", "kind": "open", "label": "Visual effects", "value": "shadows, clouds, mist, lamps",
+			"detail": ""})
 		_rows.append({"id": "back", "kind": "button", "label": "Back", "value": "", "detail": ""})
+	elif page == "fx":
+		for f in Settings.FX:
+			var v := Settings.fx_value(f[0])
+			_rows.append({"id": "fx:" + f[0], "kind": "slider", "label": f[1], "value": "Off" if v == 0 else "%d%%" % v,
+				"level": v, "detail": f[3]})
+		_rows.append({"id": "fx_reset", "kind": "button", "label": "Reset effects", "value": "", "detail": ""})
+		_rows.append({"id": "fx_back", "kind": "button", "label": "Back", "value": "", "detail": ""})
 	else:
 		for a in Settings.REMAPPABLE:
 			var id: String = a[0]
@@ -122,6 +131,9 @@ func _step(i: int, step: int) -> void:
 				var bus := id.substr(4)
 				Settings.volumes[bus] = clampi(int(Settings.volumes[bus]) + step * 10, 0, 100)
 				Settings.apply_audio()
+			elif id.begins_with("fx:"):
+				var fid := id.substr(3)
+				Settings.fx[fid] = clampi(Settings.fx_value(fid) + step * 10, 0, 100)
 			else:
 				return
 	Settings.save()
@@ -155,7 +167,7 @@ func _activate(i: int) -> void:
 			if int(_rows[i].get("level", 0)) == int(r.get("level", 0)):
 				_step(i, -10)
 		"open":
-			page = "controls"
+			page = "fx" if r["id"] == "fx_page" else "controls"
 			sel = 0
 			_rebuild()
 		"bind":
@@ -165,8 +177,14 @@ func _activate(i: int) -> void:
 			match r["id"]:
 				"back":
 					close()
-				"controls_back":
+				"controls_back", "fx_back":
 					_back()
+				"fx_reset":
+					for f in Settings.FX:
+						Settings.fx[f[0]] = f[2]
+					Settings.save()
+					_say("Visual effects are back to the defaults.")
+					_rebuild()
 				"reset":
 					Settings.reset_bindings()
 					_say("Controls are back to the defaults.")
@@ -185,9 +203,9 @@ func _value_index(id: String) -> int:
 func _back() -> void:
 	if listening != "":
 		listening = ""
-	elif page == "controls":
+	elif page == "controls" or page == "fx":
+		sel = 7 if page == "controls" else 8
 		page = "main"
-		sel = 7
 		_rebuild()
 	else:
 		close()
@@ -319,14 +337,14 @@ func _draw() -> void:
 	var font := ThemeDB.fallback_font
 	draw_rect(Rect2(Vector2.ZERO, vs), Color(0.04, 0.03, 0.07, 0.75))
 	var w := minf(W, vs.x - 16.0)
-	var row_h := ROW_H if page == "main" else ROW_H_CONTROLS
+	var row_h := ROW_H_CONTROLS if page == "controls" else ROW_H
 	var h := 40.0 + _rows.size() * row_h + 40.0
 	_panel = Rect2((vs.x - w) / 2.0, maxf(6.0, (vs.y - h) / 2.0), w, minf(h, vs.y - 12.0))
 	draw_rect(_panel, PANEL)
 	draw_rect(_panel, Color(1, 1, 1, 0.18), false, 1.0)
 	var x0 := _panel.position.x + 24.0
 	var x1 := _panel.end.x - 14.0
-	_str(font, Vector2(x0 - 8, _panel.position.y + 22), "Options" if page == "main" else "Controls", 16, Color("f3f1ea"))
+	_str(font, Vector2(x0 - 8, _panel.position.y + 22), {"main": "Options", "controls": "Controls", "fx": "Visual effects"}[page], 16, Color("f3f1ea"))
 	if page == "controls":
 		_str(font, Vector2(x1 - 168, _panel.position.y + 22), "Keyboard", 9, SOFT)
 		_str(font, Vector2(x1 - 70, _panel.position.y + 22), "Gamepad", 9, SOFT)
@@ -395,6 +413,6 @@ func _draw() -> void:
 		_str(font, Vector2(x0 - 8, fy), "Press the new key or gamepad input for %s.  Esc / Start: cancel." % Settings.action_label(listening), 9, SOFT)
 	elif detail != "":
 		_str(font, Vector2(x0 - 8, fy), detail, 9, SOFT)
-	var hint := "Up/Down: pick    Left/Right: change    X/B: back" if page == "main" \
+	var hint := "Up/Down: pick    Left/Right: change    X/B: back" if page != "controls" \
 		else "J/A: rebind (keyboard key or gamepad input)    X/B: back"
 	_str(font, Vector2(x0 - 8, fy + 13), hint, 8, DIM)

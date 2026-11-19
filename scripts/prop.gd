@@ -57,7 +57,7 @@ func _ready() -> void:
 	var art_path := "res://assets/props/%s.png" % kind  # art pass sprite, trimmed to its pixels
 	var has_art := ResourceLoader.exists(art_path)
 	if has_art:
-		spr.texture = load(art_path)
+		spr.texture = load(_variant(art_path))
 	spr.centered = true
 	# Bottom of the sprite sits a few pixels below the origin, so Y-sorting feels right.
 	spr.offset = Vector2(0, -spr.texture.get_height() / 2.0 + 3.0)
@@ -70,6 +70,8 @@ func _ready() -> void:
 		sh.draw.connect(func(): Art.draw_cast_shadow(sh, Vector2(0, 2), sw, st))
 		add_child(sh)
 	add_child(spr)
+	if has_art and not kind in FLAT and spr.texture.get_height() > 12:
+		Art.add_cast_shadow(self, spr.texture, 3.0)
 	if k.size() > 5:
 		var box: Vector2 = k[5]
 		var rect := RectangleShape2D.new()
@@ -78,6 +80,8 @@ func _ready() -> void:
 		colb.shape = rect
 		colb.position = Vector2(0, -box.y / 2.0)
 		add_child(colb)
+		if has_art and not kind in FLAT:
+			Art.add_occluder(self, Vector2(box.x * 0.9, maxf(box.y * 0.6, 4.0)))
 	elif k[4] > 0.0:
 		var shape := CircleShape2D.new()
 		shape.radius = k[4]
@@ -93,33 +97,29 @@ func _ready() -> void:
 		plate.draw.connect(_draw_plate.bind(plate))
 
 
+## Recoloured copies (<kind>_v1.png, _v2..., made by tools/depth_pass.py) so a repeated prop doesn't read as a
+## copy: each placement picks one from its map position.
+func _variant(path: String) -> String:
+	var opts := [path]
+	var i := 1
+	while ResourceLoader.exists(path.replace(".png", "_v%d.png" % i)):
+		opts.append(path.replace(".png", "_v%d.png" % i))
+		i += 1
+	return opts[posmod(seed_v * 7 + seed_v / 5, opts.size())]
+
+
 ## Street lamps glow after dark (the light follows the clock, like Ambience's lantern).
-var _light: PointLight2D
+var _lights: Array = []
 
 
 func _add_lamp_light(h: int) -> void:
-	_light = PointLight2D.new()
-	var g := GradientTexture2D.new()
-	g.width = 96
-	g.height = 96
-	g.fill = GradientTexture2D.FILL_RADIAL
-	g.fill_from = Vector2(0.5, 0.5)
-	g.fill_to = Vector2(1.0, 0.5)
-	var grad := Gradient.new()
-	grad.set_color(0, Color(1, 1, 1, 1))
-	grad.set_color(1, Color(1, 1, 1, 0))
-	g.gradient = grad
-	_light.texture = g
-	_light.color = Color(1.0, 0.8, 0.5)
-	_light.position = Vector2(0, -h + 8.0)
-	add_child(_light)
+	_lights = Art.add_lamp(self, Vector2(0, -h + 8.0), Color(1.0, 0.8, 0.5), 176)
 	set_process(true)
 
 
 func _process(_delta: float) -> void:
-	if _light != null:
-		_light.energy = 0.8 * Ambience.darkness(Empire.day_t)
-		_light.enabled = _light.energy > 0.05
+	if not _lights.is_empty():
+		Art.set_lamp(_lights, 0.7 * Ambience.darkness(Empire.day_t))
 
 
 ## A code-drawn name board over a building's door.

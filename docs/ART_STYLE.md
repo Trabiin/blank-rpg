@@ -64,3 +64,25 @@ The town and the countryside are built from one small vocabulary, so different b
 - Pick for fit with the set, not for the most impressive single image.
 - Reject anything off-angle (diagonal, isometric, a ground patch under it), off-scale or off-palette.
 - Each phase PR shows an in-game screenshot beside the target.
+
+## Sitting in the world
+
+Generated sprites come out front-on and evenly lit, so on their own they look pasted onto the ground. Code
+and one offline pass make them belong:
+
+- **Depth pass** (`tools/depth_pass.py`): eave shadow under every roof, contact shade along the base,
+  right-side shade (light from the top left). Palette steps only: each darkening is one step down the
+  material's own ramp. Originals stay in `tools/art_src/`, so rerunning never darkens twice.
+- **Variants** (same tool): roof recolours (stone to clay or blue slate), moss on roofs, wood and plaster
+  shifted a step, written as `<kind>_v1.png`, `_v2`... `scripts/prop.gd` picks one per placement from its
+  map position, so a row of houses never shows the same sprite twice in a row. No flips: they would break
+  the top-left light.
+- **Cast shadows** (`Art.add_cast_shadow`): each prop and building throws its own silhouette to the right
+  along the ground, minus itself. The shadow is a sibling in the Y-sorted entities, sorted a little in front
+  of its caster, so it falls over a neighbour's wall or a barrel beside a stall.
+- **Lamps** (`Art.add_lamp`): two lights each. A shadowed one lights only the ground (light mask 2), so prop
+  footprints (`Art.add_occluder`) throw shadows on it; an unshadowed one lights actors and props (mask 1),
+  so nothing stands in its own shadow.
+- **Scene effects** (`scripts/ambience.gd`): drifting cloud shadows by day, low mist that thickens at dawn,
+  dusk and night, and a vignette. Every effect has a slider in Options > Visual effects (`Settings.FX`).
+- Real 3/4 depth (roofs seen from above) can only come from regenerating the sprites; see docs/ART_SPEND.md.
