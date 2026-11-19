@@ -30,6 +30,42 @@ props = {
  # greenery
  (1,2):'T', (44,4):'T', (2,20):'T', (44,10):'T', (24,26):'T', (35,27):'T', (16,26):'T',
 }
+# Footpaths: from each front door to the nearest street, the way people would actually walk it (BFS over grass,
+# so it bends round other houses' footprints), with a small doorstep. Door offset per building, in tiles.
+from collections import deque
+DOOR = {'a': 0, 'b': 0, 'c': 1, 'd': 0, 'e': -1, 'f': 0, 'C': 1, 'D': -1, 'E': 1, 'F': -1, 'g': -1}
+blocked = set()
+for (x, y), c in props.items():
+    if c in DOOR:
+        for yy in range(y - 2, y + 1):
+            for xx in range(x - 3, x + 4):
+                blocked.add((xx, yy))
+street = {(x, y) for y in range(H) for x in range(W) if g[y][x] == ':'}
+for (x, y), c in props.items():
+    if c not in DOOR:
+        continue
+    start = (x + DOOR[c], y + 1)
+    prev = {start: None}
+    q = deque([start])
+    end = None
+    while q:
+        cur = q.popleft()
+        if cur in street:
+            end = cur
+            break
+        cx, cy = cur
+        for nx, ny in ((cx, cy + 1), (cx - 1, cy), (cx + 1, cy), (cx, cy - 1)):  # prefer heading south first
+            if 0 <= nx < W and 0 <= ny < H and (nx, ny) not in prev and (nx, ny) not in blocked:
+                prev[(nx, ny)] = cur
+                q.append((nx, ny))
+    cur = end
+    cur = prev.get(end) if end else None  # the street cell itself stays paved
+    while cur is not None:
+        g[cur[1]][cur[0]] = ','
+        cur = prev[cur]
+    for dx in (-1, 0, 1):  # doorstep
+        if 0 <= start[0] + dx < W and start[1] < H and g[start[1]][start[0] + dx] == '.':
+            g[start[1]][start[0] + dx] = ','
 for (x,y),c in props.items(): g[y][x]=c
 g[27][41]='C'  # command table, out of the way
 for x in range(W):
@@ -65,5 +101,6 @@ hdr = """# Art mockup (not used by the game): Hollowmark-like streets with house
 ---
 """
 g[27][41]='K'
-open('/home/user/last-ink/maps/mockup_town.txt','w').write(hdr + '\n'.join(''.join(r) for r in g) + '\n')
+import os
+open(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'maps', 'mockup_town.txt'), 'w').write(hdr + '\n'.join(''.join(r) for r in g) + '\n')
 print('\n'.join(''.join(r) for r in g))

@@ -198,10 +198,11 @@ func _build_corner_ground() -> void:
 ## Paved ground (town cobbles): a seamless texture painted over the grass through the map mask, with ragged
 ## mossy edges (shaders/ground_blend.gdshader), so the plaza has no tile grid. Made by tools/make_cobbles.py.
 func _build_paving(tex: Texture2D) -> void:
-	var mask := Image.create(size_tiles.x, size_tiles.y, false, Image.FORMAT_L8)
+	# Red = paving, green = footpath (map char ","): trodden earth paths up to the doors.
+	var mask := Image.create(size_tiles.x, size_tiles.y, false, Image.FORMAT_RGB8)
 	for y in size_tiles.y:
 		for x in size_tiles.x:
-			mask.set_pixel(x, y, Color.WHITE if _is_dirt(x, y) else Color.BLACK)
+			mask.set_pixel(x, y, Color(_is_dirt(x, y), 1.0 if _cell(x, y) == "," else 0.0, 0.0))
 	var pave := Sprite2D.new()
 	pave.texture = ImageTexture.create_from_image(mask)
 	pave.centered = false

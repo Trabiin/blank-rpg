@@ -9,6 +9,10 @@ uniform float tex_size = 128.0;
 uniform vec2 tiles = vec2(80.0, 60.0);
 uniform vec3 moss_dark = vec3(0.165, 0.227, 0.133);   // #2a3a22
 uniform vec3 moss_light = vec3(0.239, 0.318, 0.188);  // #3d5130
+uniform vec3 path_dark = vec3(0.227, 0.165, 0.110);   // #3a2a1c trodden earth
+uniform vec3 path_mid = vec3(0.353, 0.243, 0.157);    // #5a3e28
+uniform vec3 path_light = vec3(0.561, 0.510, 0.439);  // #8f8270 worn spots
+uniform vec3 pebble = vec3(0.341, 0.357, 0.420);      // #575b6b
 uniform float blank_x = 1e9;
 uniform float fade_width = 300.0;
 
@@ -31,8 +35,26 @@ void fragment() {
 		+ texture(TEXTURE, (px + vec2(-6.0, 6.0)) * to_uv).r
 		+ texture(TEXTURE, (px + vec2(6.0, 6.0)) * to_uv).r);
 	m += (value_noise(px / 9.0) - 0.5) * 0.30 + (value_noise(px / 3.0) - 0.5) * 0.12;
+	// Footpaths (green): a tighter blur so a one-tile path stays narrow.
+	float mp = 0.25 * (texture(TEXTURE, (px + vec2(-4.0, -4.0)) * to_uv).g
+		+ texture(TEXTURE, (px + vec2(4.0, -4.0)) * to_uv).g
+		+ texture(TEXTURE, (px + vec2(-4.0, 4.0)) * to_uv).g
+		+ texture(TEXTURE, (px + vec2(4.0, 4.0)) * to_uv).g);
+	mp += (value_noise(px / 5.0) - 0.5) * 0.35;
 	vec4 col = vec4(0.0);
-	if (m > 0.52) {
+	if (m <= 0.52 && mp > 0.5) {
+		float n = value_noise(px / 3.0) + (hash(floor(px)) - 0.5) * 0.25;
+		col = vec4(n > 0.62 ? path_mid : path_dark, 1.0);
+		if (mp > 0.68 && value_noise(px / 4.0 + 7.0) > 0.7) {
+			col = vec4(path_light, 1.0);  // worn middle
+		}
+		if (hash(floor(px / 2.0) + 3.1) > 0.94) {
+			col = vec4(pebble, 1.0);
+		}
+		if (mp < 0.56 && hash(floor(px / 2.0)) > 0.6) {
+			col = vec4(moss_light, 1.0);  // grass creeping in at the edge
+		}
+	} else if (m > 0.52) {
 		col = texture(ground_tex, px / tex_size);
 		// Grass tufts pushing up between the stones near the edge.
 		if (m < 0.62 && hash(floor(px / 2.0)) > 0.72) {
