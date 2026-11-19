@@ -26,6 +26,8 @@ func _ready() -> void:
 		if c is CollisionShape2D:
 			(c.shape as CircleShape2D).radius = 3.0
 	sprite.visible = art != null
+	if art != null:
+		sprite.scale = Vector2(0.75, 0.75)  # a moth, not a bird: the drawn wingspan reads too big at full size
 	orbit_a = randf() * TAU
 	orbit_dir = 1.0 if randf() < 0.5 else -1.0
 	dive_cd = randf_range(1.2, 2.8)

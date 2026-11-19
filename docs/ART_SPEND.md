@@ -12,12 +12,12 @@ Claude stops and asks before going on if credit is about to run out or a phase r
 | 3. Hollowmark, first try | ~$6 to $12 | **$1.66** (PixelLab) | 108 building/prop candidates ($0.75), 3 town tilesets ($0.02), 14 character candidates ($0.42), idle/walk for Quill, Tobble, Abeyance and 4 townsfolk ($0.47). Characters kept; buildings, props and tiles replaced by the style lock |
 | 3b. Style lock + env redo | (not planned) | **$4.60** (PixelLab) | Target plaza and workflow tests ($0.43), 41 palette-locked Pro calls for 9 buildings, 10 level looks and 24 props, several options each ($3.99, about $0.10 per call), 6 tilesets ($0.04). Redid the meadow and town environment art against docs/ART_STYLE.md |
 | 3c. Town in true 3/4 (issue #94) | ~$2 to $2.50 | **$1.56** (PixelLab) | Angle test ($0.08), town hall/tavern/stores ($0.24), 5 plot buildings at level 3 ($0.40), levels 1 and 2 by image edit ($0.32), 8 houses ($0.16), fences/trees/gardens ($0.25). Wasted: $0.11 on two level methods that lost the building's shape (reference image, init image) |
-| 4. Act 1 world | ~$6 to $10 | | |
+| 4. Act 1 world | ~$6 to $10 | **$1.74** (PixelLab) | Forest/marsh/hills tilesets ($0.02; marsh and hills came back flat, replaced by free procedural mud and gravel from tools/make_ground.py), 24 biome props, 4 options per call ($0.66), 7 enemy/Verity bases ($0.22, Verity re-rolled once), 107 animation directions for moth, Enforcer, reedling, scarecrow, sellsword and Verity ($0.85, ~$0.008 each at 32 and 48 px). Biome maps are code (tools/make_biomes.py) |
 | 5. The Auditor and recruits | ~$5 to $10 | | |
 | 6. UI and icons | ~$2 to $4 | | |
 | 7. Portraits and painted art (OpenAI) | ~$6 to $12 | | |
 | 8. Polish sweep | ~$2 to $4 | | |
-| **Total so far** | ~$16 to $30 for phases 0 to 3 | **$9.74** | Topped up $10 on 2026-11-19; PixelLab credit left: $9.94 |
+| **Total so far** | ~$22 to $40 for phases 0 to 4 | **$11.48** | Topped up $10 on 2026-11-19; PixelLab credit left: $8.20 |
 
 ## Why Phase 1 came in far under
 
