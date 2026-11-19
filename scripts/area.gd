@@ -9,6 +9,7 @@ extends Node2D
 const PropScript := preload("res://scripts/prop.gd")
 const DIRT := preload("res://assets/tiles/dirt.png")
 const TERRAIN_BLEND := preload("res://shaders/terrain_blend.gdshader")
+const GROUND_BLEND := preload("res://shaders/ground_blend.gdshader")
 
 const GRASS := [Vector2i(0, 0), Vector2i(0, 0), Vector2i(0, 0), Vector2i(0, 9), Vector2i(1, 9), Vector2i(0, 10), Vector2i(1, 10), Vector2i(5, 9)]
 const FLOWERS := [Vector2i(0, 8), Vector2i(1, 8), Vector2i(3, 11), Vector2i(2, 12), Vector2i(3, 12)]
@@ -180,13 +181,40 @@ func _build_corner_ground() -> void:
 			var key := ""
 			for c in [Vector2i(x, y), Vector2i(x + 1, y), Vector2i(x, y + 1), Vector2i(x + 1, y + 1)]:
 				key += "D" if _is_dirt(clampi(c.x, 0, size_tiles.x - 1), clampi(c.y, 0, size_tiles.y - 1)) else "G"
+			var blend := ResourceLoader.exists(folder + "cobbles.png")
+			if blend:
+				key = "GGGG"  # the textured layer below paints the paved part
 			var i := keys.find(key)
 			var alt := rng.randi() % 4 if i == 0 else 0
 			layer.set_cell(Vector2i(x, y), 0, Vector2i(i % 4, i / 4), alt)
+	if ResourceLoader.exists(folder + "cobbles.png"):
+		_build_paving(load(folder + "cobbles.png"))
 	var flowers := Node2D.new()
 	flowers.material = Art.art_world_material()
 	add_child(flowers)
 	flowers.draw.connect(_draw_flowers.bind(flowers))
+
+
+## Paved ground (town cobbles): a seamless texture painted over the grass through the map mask, with ragged
+## mossy edges (shaders/ground_blend.gdshader), so the plaza has no tile grid. Made by tools/make_cobbles.py.
+func _build_paving(tex: Texture2D) -> void:
+	var mask := Image.create(size_tiles.x, size_tiles.y, false, Image.FORMAT_L8)
+	for y in size_tiles.y:
+		for x in size_tiles.x:
+			mask.set_pixel(x, y, Color.WHITE if _is_dirt(x, y) else Color.BLACK)
+	var pave := Sprite2D.new()
+	pave.texture = ImageTexture.create_from_image(mask)
+	pave.centered = false
+	pave.scale = Vector2(16, 16)
+	pave.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	var mat := ShaderMaterial.new()
+	mat.shader = GROUND_BLEND
+	mat.set_shader_parameter("ground_tex", tex)
+	mat.set_shader_parameter("tex_size", float(tex.get_width()))
+	mat.set_shader_parameter("tiles", Vector2(size_tiles))
+	mat.set_shader_parameter("blank_x", blank_x)
+	pave.material = mat
+	add_child(pave)
 
 
 ## Grass tufts on every grass cell (breaks up the repeat) and wildflowers on "f" cells.

@@ -43,6 +43,13 @@ func _process(delta: float) -> void:
 			position += facing * minf(speed * delta, to.length())
 			moving = true
 	art.apply(spr, "walk" if moving and art.has("walk") else "idle", Hero.dir_row(facing), t)
+	queue_redraw()
+
+
+func _draw() -> void:
+	draw_set_transform(Vector2.ZERO, 0.0, Vector2(1.0, 0.4))
+	draw_circle(Vector2.ZERO, 5.5, Color(0, 0, 0, 0.3))
+	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
 
 ## Next stop: an open tile not too far away, reachable in a straight line over open tiles.

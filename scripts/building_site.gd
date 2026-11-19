@@ -72,6 +72,13 @@ func refresh() -> void:
 		var spr := _sprite(load(art_path), Vector2.ZERO, Color.WHITE)
 		spr.material = Art.art_world_material()
 		_sprites.append(spr)
+		var sh := Node2D.new()  # cast shadow, under the building
+		var sw := float(spr.texture.get_width())
+		var st := float(spr.texture.get_height())
+		sh.draw.connect(func(): Art.draw_cast_shadow(sh, Vector2(0, 2), sw, st))
+		add_child(sh)
+		move_child(sh, 0)
+		_sprites.append(sh)
 	else:
 		_old_parts(spec, lv)
 	var rect := RectangleShape2D.new()

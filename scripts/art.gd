@@ -143,3 +143,19 @@ static func draw_heart(ci: CanvasItem, c: Vector2, s: float, col: Color) -> void
 	ci.draw_circle(c + Vector2(s * 0.48, -s * 0.35), r, col)
 	ci.draw_colored_polygon(PackedVector2Array([c + Vector2(-s * 0.98, -s * 0.18), c + Vector2(s * 0.98, -s * 0.18),
 		c + Vector2(0, s * 0.95)]), col)
+
+
+## Cast shadow under an art pass building or prop (docs/ART_STYLE.md: light from the top left), drawn on `c`
+## with the object's bottom-centre at `base`: a soft contact ellipse, and for tall things a band thrown to the
+## bottom right.
+static func draw_cast_shadow(c: CanvasItem, base: Vector2, w: float, tall: float) -> void:
+	var col := Color(0.03, 0.04, 0.09, 0.32)
+	c.draw_set_transform(base + Vector2(w * 0.06, 0.5), 0.0, Vector2(1.0, 0.3))
+	c.draw_circle(Vector2.ZERO, w * 0.52, col)
+	c.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+	if tall > 28.0:
+		var d := minf(tall * 0.18, 12.0)
+		var pts := PackedVector2Array([base + Vector2(-w * 0.42, -1), base + Vector2(w * 0.5, -1),
+				base + Vector2(w * 0.5 + d, d * 0.55), base + Vector2(-w * 0.42 + d, d * 0.55)])
+		c.draw_colored_polygon(pts, Color(col.r, col.g, col.b, 0.22))
+

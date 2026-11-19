@@ -63,6 +63,12 @@ func _ready() -> void:
 	spr.offset = Vector2(0, -spr.texture.get_height() / 2.0 + 3.0)
 	spr.flip_h = seed_v % 2 == 1 and kind in ["bush", "shrub", "rock", "rock_big", "grave"]
 	spr.material = Art.art_world_material() if has_art else Art.world_material()
+	if has_art and not kind in FLAT:
+		var sh := Node2D.new()  # cast shadow, under the sprite
+		var sw := float(spr.texture.get_width())
+		var st := float(spr.texture.get_height())
+		sh.draw.connect(func(): Art.draw_cast_shadow(sh, Vector2(0, 2), sw, st))
+		add_child(sh)
 	add_child(spr)
 	if k.size() > 5:
 		var box: Vector2 = k[5]
