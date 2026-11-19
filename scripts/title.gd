@@ -12,6 +12,7 @@ var drips: Array = []  # [x offset in logo, length, speed]
 
 
 func _ready() -> void:
+	Settings.apply_all()  # saved options: volume, key bindings (issue #14)
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	get_tree().paused = false
 	var rng := RandomNumberGenerator.new()
@@ -32,7 +33,7 @@ func _ready() -> void:
 	items.append({"id": "trial", "label": "Art detail trial", "detail": "compare option A and B (temporary)"})
 	items.append({"id": "boss_test", "label": "Boss test: The Auditor", "detail": "fresh level 6 party, straight into the fight (temporary)"})
 	items.append({"id": "load", "label": "Load Game", "enabled": latest != "", "note": "(no saves yet)"})
-	items.append({"id": "options", "label": "Options", "enabled": false, "note": "(coming soon)"})
+	items.append({"id": "options", "label": "Options", "detail": "speed, difficulty, sound, controls"})
 	items.append({"id": "credits", "label": "Credits"})
 	menu.setup("", items)
 	menu.chosen.connect(_on_choice)
@@ -91,6 +92,9 @@ func _on_choice(id: String) -> void:
 			Progress.award(PartyPicker.mission_party(), 200)
 			Dialogue.mark_seen("talk:meadow_intro")  # Bran already knows Ash by now
 			Missions.launch(Missions.find("auditor_duel"))
+		"options":
+			menu.visible = false
+			OptionsView.popup(self).closed.connect(func(): menu.visible = true)
 		"credits":
 			menu.visible = false
 			credits.visible = true

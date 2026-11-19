@@ -11,7 +11,7 @@ extends Control
 
 signal closed
 
-const TABS := ["Items", "Abilities", "Party", "Equip"]
+const TABS := ["Items", "Abilities", "Party", "Equip", "Options"]
 const SLOW := 0.1
 const W := 420.0
 const ROW_H := 30.0
@@ -45,6 +45,10 @@ func _ready() -> void:
 	visible = false
 	var parsed = JSON.parse_string(FileAccess.get_file_as_string("res://data/heroes.json"))
 	_hero_data = parsed if typeof(parsed) == TYPE_DICTIONARY else {}
+	# This menu only exists on missions, so it is where battle speed (Options) switches on and off.
+	Settings.in_battle = true
+	Settings.slowed = false
+	Settings.refresh_time_scale(SLOW)
 
 
 func is_open() -> bool:
@@ -57,7 +61,8 @@ func open() -> void:
 	visible = true
 	sub = []
 	note = ""
-	Engine.time_scale = SLOW
+	Settings.slowed = true
+	Settings.refresh_time_scale(SLOW)
 	_rebuild()
 
 
@@ -66,14 +71,16 @@ func close() -> void:
 		return
 	visible = false
 	sub = []
-	Engine.time_scale = 1.0
+	Settings.slowed = false
+	Settings.refresh_time_scale(SLOW)
 	closed.emit()
 
 
 func _exit_tree() -> void:
-	# Never leave the whole game in slow motion if the scene changes under the menu.
-	if visible:
-		Engine.time_scale = 1.0
+	# Never leave the whole game in slow motion (or at battle speed) once the mission scene goes.
+	Settings.in_battle = false
+	Settings.slowed = false
+	Engine.time_scale = 1.0
 
 
 # ---------------------------------------------------------------- rows
@@ -131,6 +138,16 @@ func _open_gear() -> bool:
 	return true
 
 
+## The options screen (issue #14) over the fight, which stays paused underneath until it closes.
+func _open_options() -> void:
+	close()
+	get_tree().paused = true
+	party.touch.release_all()
+	OptionsView.popup(get_parent()).closed.connect(func():
+		if is_inside_tree():
+			get_tree().paused = false)
+
+
 func _rebuild() -> void:
 	rows = []
 	match TABS[tab]:
@@ -166,6 +183,13 @@ func _rebuild() -> void:
 					"right": "DMG %d  Reach %d" % [hero.base_damage, int(hero.reach)],
 					"detail": "HP %d/%d   gauge %.2f/s   Armour and trinkets: not yet" % [hero.hp, hero.max_hp, hero.power_rate],
 					"enabled": true, "info": true})
+		"Options":  # issue #14: a summary here, the full screen one press away
+			rows.append({"id": "speed", "label": "Battle speed", "right": Settings.battle_speed_name(),
+				"detail": "Pick to open Options", "enabled": true})
+			rows.append({"id": "difficulty", "label": "Difficulty", "right": Settings.DIFFICULTIES[Settings.difficulty],
+				"detail": Settings.DIFFICULTY_INFO[Settings.difficulty], "enabled": true})
+			rows.append({"id": "more", "label": "All options", "right": "text, shake, sound, controls",
+				"detail": "", "enabled": true})
 	sel = clampi(sel, 0, maxi(rows.size() - 1, 0))
 	if not rows.is_empty() and not rows[sel].get("enabled", true):
 		_move(1)
@@ -205,6 +229,9 @@ func _pick_row(i: int) -> void:
 	if not r.get("enabled", true):
 		return
 	if TABS[tab] == "Equip" and _open_gear():
+		return
+	if TABS[tab] == "Options":
+		_open_options()
 		return
 	if r.get("info", false) or (TABS[tab] == "Abilities" and not r.has("hero")):
 		_say("Hotkeyed Ink abilities arrive in a later update." if TABS[tab] == "Abilities" else "Gear arrives with levels and loot in a later update.")
