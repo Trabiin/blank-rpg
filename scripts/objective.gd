@@ -7,6 +7,7 @@ extends RefCounted
 ##   kills: disperse `count` Nibblers.
 ##   defense, reclaim, rescue (issue #51): handed to MissionObjectives (mission_objectives.gd),
 ##   which needs the world, so it is set up on the first update() once the map exists.
+##   boss (issue #17): handed to BossFight (boss_fight.gd), a MissionObjectives subclass.
 ## `main` is the mission scene (main.gd), for kinds that need the world: main.entities,
 ## main.blank, main.area, main.hud, main._spawn_enemy().
 
@@ -31,6 +32,8 @@ func setup(objective: Dictionary, mission_main) -> void:
 			target = maxi(int(objective.get("count", 1)), 1)
 	if MissionObjectives.handles(kind):
 		inner = MissionObjectives.new()
+	elif kind == "boss":
+		inner = BossFight.new()
 
 
 func on_kill() -> void:
@@ -89,6 +92,8 @@ static func describe(objective: Dictionary) -> String:
 			return "Break the Blot"
 		"rescue":
 			return "Find %s and bring them back" % Empire.short_name(objective.get("who", ""))
+		"boss":
+			return objective.get("label", "Defeat the boss")
 		_:
 			return objective.get("label", "Objective")
 

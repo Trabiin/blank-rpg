@@ -1,0 +1,38 @@
+# Last Ink map: The Tithe Road tollgate (36 x 26 tiles of 16px), boss arena for The Auditor (#17)
+# Same legend as frayed_meadow.txt / hollowmark.txt. No Blank here: the Concord keeps it off its road.
+#   A  where The Auditor waits (@markA boss)
+@name The Tithe Road Tollgate
+@propH house|TOLLHOUSE
+@propV banner
+@propX crates
+@propU barrels
+@markA boss
+@sign1 TITHE ROAD TOLLGATE|All persons must be registered.|Unregistered persons will be corrected.
+@dirt A
+---
+tttttttttttttttt::::tttttttttttttttt
+tt.t.tt.ttttt.tt::::.t.tttt.t..t.ttt
+tt.......H......::::..............tt
+t.....V.........::::.........V.....t
+tt..............::::..f............t
+t...X...........::::...............t
+t...............::::...........U..tt
+t.........f..f..::::...........f..tt
+tt...f.........::A::::.............t
+tt...R......:::::::::::::....r....tt
+tt.....f...:::::::::::::::.........t
+t.......f.:::::::::::::::::........t
+t...r.....:::::::::::::::::.......tt
+t.........:::::::::::::::::........t
+t.........:::::::::::::::::....r..tt
+t.........:::::::::::::::::........t
+tt.....f...:::::::::::::::...f.....t
+tt....r.....:::::::::::::.....R....t
+t..f...........:::::::.............t
+t...............::::.....f........tt
+tt...U..........::::..........f....t
+tt..............::@:..f......fX.r.tt
+tt.r............1:::..............tt
+tt..............::::...............t
+tt..............::::..............tt
+tttttttttttttttt::::tttttttttttttttt
