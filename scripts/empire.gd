@@ -62,6 +62,8 @@ var recruit_data := {}  # id -> Dictionary from the JSON, in file order
 var trait_data := {}
 var surge := {}  # {"id": province id, "day": day it lands} while one is gathering
 var next_surge_day := 4
+## Verity's plans and story pressure on the Blank: see scripts/blank_plans.gd.
+var blank_plans := BlankPlans.fresh()
 ## Buildings: id -> level (0 = not built). Static facts live in data/buildings.json, see building().
 var buildings := {}
 ## The Hollowmark building crew works on one thing at a time: {"id", "start", "finish"} in days.
@@ -145,6 +147,7 @@ func reset() -> void:
 			recruits[id]["role"] = "party"
 	surge = {}
 	next_surge_day = 4
+	blank_plans = BlankPlans.fresh()
 	Dialogue.seen = {}  # conversations and banter seen this campaign (dialogue.gd)
 	_load_building_data()
 	buildings = {}
@@ -315,6 +318,7 @@ func fray_sources(p: Dictionary, gov := "-") -> Array:
 				out.append(["Coven hedge-wards (Friendly)", -1])
 	elif owner == "free":
 		out.append(["Nobody holds it", FRAY_UNHELD])
+	out.append_array(BlankPlans.sources(p, gov if owner == "you" else "-"))
 	return out
 
 
@@ -341,6 +345,13 @@ func _advance_blank() -> void:
 	for p in t.provinces:
 		if p["owner"] != "erased" and int(p["fray"]) >= 100:
 			_erase(p)
+	BlankPlans.dawn()
+
+
+## Story beats aim the Blank too: +per_day Fray on a province for the next `days` dawns, listed in
+## its panel under `label`. counter: "governor" (halved while governed), "lamp" (a Wardlamp cancels it) or "".
+func add_pressure(province_id: String, label: String, per_day: int, days: int, counter := "") -> void:
+	BlankPlans.add(province_id, label, per_day, days, counter)
 
 
 func _erase(p: Dictionary) -> void:
@@ -1924,6 +1935,7 @@ func to_dict() -> Dictionary:
 		ps.append({"id": p["id"], "owner": p["owner"], "fray": p["fray"], "scar": p.get("scar", 0)})
 	return {"day": day, "day_t": day_t, "speed": speed, "playtime": playtime, "provinces": ps,
 		"res": res, "hungry": hungry, "recruits": recruits, "surge": surge, "next_surge_day": next_surge_day,
+		"blank_plans": blank_plans,
 		"buildings": buildings, "construction": construction, "lamps": lamps, "lamp_jobs": lamp_jobs,
 		"expeditions": expeditions, "reports": reports, "job_ready": job_ready,
 		"research_done": research_done, "research_progress": research_progress, "research_active": research_active,
@@ -1960,6 +1972,7 @@ func from_dict(d: Dictionary) -> void:
 				recruits[id] = {"role": r.get("role", "idle"), "target": r.get("target", ""), "injured": int(r.get("injured", 0))}
 	surge = d.get("surge", {})
 	next_surge_day = int(d.get("next_surge_day", 4))
+	blank_plans = BlankPlans.from_save(d.get("blank_plans", null), day)
 	var saved_satchel = d.get("satchel", null)
 	if typeof(saved_satchel) == TYPE_DICTIONARY:
 		for k in saved_satchel:

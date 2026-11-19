@@ -85,6 +85,7 @@ func _ready() -> void:
 	Empire.ledger_settled.connect(_on_ledger_settled)
 	Empire.notice.connect(_on_notice)
 	Empire.hollowmark_lost.connect(_on_hollowmark_lost)
+	add_child(preload("res://scripts/blank_watch.gd").new())  # the Blank's creep, made visible (issue #33)
 
 	var roster_layer := CanvasLayer.new()
 	roster_layer.layer = 4
