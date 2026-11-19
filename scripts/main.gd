@@ -78,7 +78,7 @@ func _ready() -> void:
 	blank.height = world.y
 	blank.width = world.x
 	add_child(blank)
-	Art.world_material().set_shader_parameter("blank_x", blank.base_x)
+	Art.set_blank_x(blank.base_x)
 
 	add_child(entities)
 	_build_walls()
@@ -116,6 +116,9 @@ func _ready() -> void:
 	add_child(camera)
 	camera.global_position = leader.global_position
 	camera.reset_smoothing()
+	var ambience := Ambience.new()  # art pass: light by the empire clock, lantern, motes
+	ambience.party = self
+	add_child(ambience)
 
 	var layer := CanvasLayer.new()
 	add_child(layer)

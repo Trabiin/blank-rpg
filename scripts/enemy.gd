@@ -32,6 +32,10 @@ var xp := 3  # shared by the party when it falls (issue #15)
 var taunter: Hero = null
 var taunt_t := 0.0
 
+## Art pass sprite set (scripts/sprite_set.gd) by id; subclasses with their own drawing set "" before super._ready().
+var art_id := "nibbler"
+var art: SpriteSet
+
 ## Puny's green slime, recolored into a scrap of the Blank: paper-white with an ink-black core.
 const SLIME_COLORS := {"body": Color("e4e1d8"), "core": Color("15101a"), "shine": Color("ffffff")}
 
@@ -52,6 +56,10 @@ func _ready() -> void:
 	sprite.offset = Vector2(0, -4)
 	sprite.material = Art.recolor_material("slime", SLIME_COLORS)
 	add_child(sprite)
+	art = SpriteSet.of(art_id) if art_id != "" else null
+	if art != null:
+		sprite.material = null  # the art pass sprite replaces the recoloured slime
+		sprite.offset = Vector2.ZERO
 	overlay = Node2D.new()
 	add_child(overlay)
 	overlay.draw.connect(_draw_overlay)
@@ -175,6 +183,9 @@ func _on_death() -> void:
 
 
 func _process(delta: float) -> void:
+	if art != null:
+		_process_art(delta)
+		return
 	# Slime sheet: 0-2 squish, 3-5 hop, 6 hurt flash, 7-8 land, 10-14 burst.
 	var f := 0
 	if dying_t >= 0.0:
@@ -199,6 +210,49 @@ func _process(delta: float) -> void:
 	sprite.position = Vector2(randf_range(-0.7, 0.7), 0) if state == State.WINDUP else Vector2.ZERO
 	queue_redraw()
 	overlay.queue_redraw()
+
+
+## Art pass version of _process: the state picks the animation; lunges follow their timer.
+func _process_art(delta: float) -> void:
+	if dying_t >= 0.0:
+		dying_t += delta
+		if art.has("death"):
+			if dying_t > art.duration("death") + 0.1:
+				queue_free()
+				return
+			art.apply(sprite, "death", art_row(), dying_t)
+		else:
+			# No drawn death: it crumples flat and fades out like a scrap of paper (the burst is Fx).
+			const CRUMPLE := 0.35
+			if dying_t > CRUMPLE:
+				queue_free()
+				return
+			var k := dying_t / CRUMPLE
+			art.apply_frame(sprite, "hurt" if art.has("hurt") else "idle", art_row(), 1)
+			sprite.scale = Vector2(1.0 + 0.4 * k, 1.0 - 0.8 * k)
+			sprite.modulate.a = 1.0 - k
+		queue_redraw()
+		return
+	elif flash_t > 0.0 and art.has("hurt"):
+		art.apply(sprite, "hurt", art_row(), 0.12 - flash_t)
+	else:
+		match state:
+			State.WINDUP:
+				art.apply_frame(sprite, "attack", art_row(), 1)
+			State.LUNGE:
+				var n := art.frames_of("attack")
+				art.apply_frame(sprite, "attack", art_row(), clampi(2 + int((1.0 - state_t / LUNGE_TIME) * (n - 2)), 0, n - 1))
+			_:
+				art.apply(sprite, "walk" if velocity.length() > 8.0 else "idle", art_row(), anim_t)
+	sprite.position = Vector2(randf_range(-0.7, 0.7), 0) if state == State.WINDUP else Vector2.ZERO
+	queue_redraw()
+	overlay.queue_redraw()
+
+
+## Which way the sprite looks: where it is moving, else where it faces.
+func art_row() -> int:
+	var v := velocity if velocity.length() > 8.0 and state != State.LUNGE else facing
+	return Hero.dir_row(v)
 
 
 func _draw() -> void:

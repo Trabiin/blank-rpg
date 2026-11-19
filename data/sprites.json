@@ -64,6 +64,30 @@
 				"ko": {"fps": 8.0, "loop": false, "frames": 6, "dirs": ["south"]},
 				"victory": {"fps": 8.0, "loop": false, "frames": 6, "dirs": ["south"]}
 			}
+		},
+		"nibbler": {
+			"size": [44, 44],
+			"feet": [22, 34],
+			"face": [12, 8, 20, 20],
+			"anims": {
+				"rot": {"fps": 1, "loop": true, "frames": 1, "dirs": ["south", "south-east", "east", "north-east", "north"]},
+				"idle": {"fps": 6.0, "loop": true, "frames": 4, "dirs": ["south", "south-east", "east", "north-east", "north"]},
+				"walk": {"fps": 10.0, "loop": true, "frames": 6, "dirs": ["south", "south-east", "east", "north-east", "north"]},
+				"attack": {"fps": 20.0, "loop": false, "frames": 6, "dirs": ["south", "south-east", "east", "north-east", "north"]},
+				"hurt": {"fps": 16.0, "loop": false, "frames": 4, "dirs": ["south", "east", "north"]}
+			}
+		},
+		"spitter": {
+			"size": [44, 44],
+			"feet": [22, 33],
+			"face": [12, 9, 20, 20],
+			"anims": {
+				"rot": {"fps": 1, "loop": true, "frames": 1, "dirs": ["south", "south-east", "east", "north-east", "north"]},
+				"idle": {"fps": 6.0, "loop": true, "frames": 4, "dirs": ["south", "south-east", "east", "north-east", "north"]},
+				"walk": {"fps": 9.0, "loop": true, "frames": 6, "dirs": ["south", "south-east", "east", "north-east", "north"]},
+				"attack": {"fps": 12.0, "loop": false, "frames": 8, "dirs": ["south", "south-east", "east", "north-east", "north"]},
+				"hurt": {"fps": 16.0, "loop": false, "frames": 4, "dirs": ["south", "east", "north"]}
+			}
 		}
 	}
 }

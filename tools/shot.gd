@@ -23,6 +23,8 @@ func _process(_delta: float) -> bool:
 		var dlg = load("res://scripts/dialogue.gd")  # loaded late: class scripts need the autoloads
 		for k in dlg.data().get("talks", {}):
 			dlg.mark_seen("talk:" + str(k))  # no opening conversation in the way
+		if args.has("day"):
+			empire.day_t = float(args["day"])  # 0.5 noon, 0.75 dusk, 0.9 night
 		var party: PackedStringArray = str(args.get("party", "ash,bran,gristle")).split(",")
 		for id in empire.recruits:
 			if empire.recruits[id]["role"] == "party":
@@ -37,6 +39,18 @@ func _process(_delta: float) -> bool:
 		elif scene == "town":
 			change_scene_to_file("res://scenes/hub.tscn")
 	var total := int(args.get("frames", "90"))
+	if args.has("at") and frame == 20:
+		var cur := current_scene
+		if cur != null and "heroes" in cur:
+			var xy: PackedStringArray = str(args["at"]).split(",")
+			var pos := Vector2(float(xy[0]), float(xy[1])) * 16.0
+			for h in cur.heroes:
+				h.global_position = pos
+			cur.camera.global_position = pos
+			cur.camera.reset_smoothing()
+			if args.has("enemies"):
+				for i in int(args["enemies"]):
+					cur._spawn_enemy(pos + Vector2(60 + 24 * i, -30 + 30 * (i % 3)))
 	if args.has("spread") and frame >= total - 40 and frame <= total - 10:
 		_spread()
 	if frame == total - int(args.get("lead", "30")) and args.has("act"):

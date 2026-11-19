@@ -74,6 +74,7 @@ def main():
     ap.add_argument("--anim", action="append", default=[], help="name:fps:loop|once[:src_name][:dirs=a,b]")
     ap.add_argument("--all-dirs", action="store_true")
     ap.add_argument("--raw-pixels", action="store_true")
+    ap.add_argument("--blank", action="store_true", help="a creature of the Blank: keeps the reserved paper white")
     ap.add_argument("--size", type=int, default=44, help="frame size; 44 fits v3 animation canvases around a 32 px character")
     args = ap.parse_args()
 
@@ -93,7 +94,7 @@ def main():
             canvas = Image.new("RGBA", (size, size), (0, 0, 0, 0))
             canvas.paste(im, ((size - w) // 2, (size - h) // 2))
             im = canvas
-        return im if args.raw_pixels else palette_lock.clean(im)
+        return im if args.raw_pixels else palette_lock.clean(im, blank=args.blank)
 
     entry = {"size": [size, size], "anims": {}}
     # Rotations

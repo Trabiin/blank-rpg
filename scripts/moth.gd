@@ -19,6 +19,7 @@ var paper := Color("efe6cf")
 
 
 func _ready() -> void:
+	art_id = ""  # drawn by its own code until its art pass phase
 	super._ready()
 	radius = 4.0
 	for c in get_children():

@@ -1,5 +1,5 @@
 extends StaticBody2D
-## Scenery from the CC0 overworld sheet. Origin = the bottom-centre of the prop's footprint.
+## Scenery: an art pass sprite from assets/props/<kind>.png when there is one, else the CC0 overworld sheet. Origin = the bottom-centre of the prop's footprint.
 ##
 ## Town buildings are placeholders until the PixelLab art pass (#3): each kind is one line
 ## here, so swapping a sprite never touches the maps or the code that places them.
@@ -47,11 +47,15 @@ func _ready() -> void:
 	var k: Array = KINDS[kind]
 	var spr := Sprite2D.new()
 	spr.texture = Art.region(k[6]) if k.size() > 6 else Art.tile_region(k[0], k[1], k[2], k[3])
+	var art_path := "res://assets/props/%s.png" % kind  # art pass sprite, trimmed to its pixels
+	var has_art := ResourceLoader.exists(art_path)
+	if has_art:
+		spr.texture = load(art_path)
 	spr.centered = true
 	# Bottom of the sprite sits a few pixels below the origin, so Y-sorting feels right.
 	spr.offset = Vector2(0, -spr.texture.get_height() / 2.0 + 3.0)
 	spr.flip_h = seed_v % 2 == 1 and kind in ["bush", "shrub", "rock", "rock_big", "grave"]
-	spr.material = Art.world_material()
+	spr.material = Art.art_world_material() if has_art else Art.world_material()
 	add_child(spr)
 	if k.size() > 5:
 		var box: Vector2 = k[5]

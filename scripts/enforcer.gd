@@ -21,6 +21,7 @@ const LOOK := {"skin": Color("dcb08a"), "metal": Color("57525e"), "cloth": Color
 
 
 func _ready() -> void:
+	art_id = ""  # drawn by its own code until its art pass phase
 	super._ready()
 	radius = 7.0
 	for c in get_children():
