@@ -586,6 +586,7 @@ func open_menu(note := "") -> void:
 		{"id": "gear", "label": "Party gear & shop", "detail": "K"},
 		{"id": "save", "label": "Save game"},
 		{"id": "load", "label": "Load game", "enabled": Saves.latest_slot() != "", "note": "(no saves yet)"},
+		{"id": "options", "label": "Options"},
 		{"id": "title", "label": "Quit to title"},
 	], note)
 	menu.visible = true
@@ -638,6 +639,9 @@ func _on_menu(id: String) -> void:
 		"gear":
 			_close_menu()
 			gear_view.open("town")
+		"options":
+			menu.visible = false
+			OptionsView.popup(self).closed.connect(func(): menu.visible = true)
 		"save", "load":
 			slot_mode = id
 			menu.visible = false

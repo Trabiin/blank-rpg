@@ -256,7 +256,7 @@ func _set_leader(h: Hero) -> void:
 
 
 func shake(amount: float) -> void:
-	shake_amount = maxf(shake_amount, amount)
+	shake_amount = maxf(shake_amount, amount * Settings.shake_scale())  # Options: screen shake
 
 
 func touch_active() -> bool:
@@ -374,6 +374,7 @@ func _pause_items() -> Array:
 		{"id": "load", "label": "Load game", "enabled": Saves.latest_slot() != "", "note": "(no saves yet)"},
 		{"id": "retreat", "label": "Retreat to Hollowmark", "detail": "end the mission, keep what you found"},
 		{"id": "restart", "label": "Restart mission"},
+		{"id": "options", "label": "Options"},
 		{"id": "title", "label": "Quit to title"},
 	]
 
@@ -393,6 +394,9 @@ func _on_pause_choice(id: String) -> void:
 		"restart":
 			get_tree().paused = false
 			get_tree().reload_current_scene()
+		"options":
+			pause_menu.visible = false
+			OptionsView.popup(self).closed.connect(func(): pause_menu.visible = true)
 		"title":
 			autosave()
 			get_tree().paused = false

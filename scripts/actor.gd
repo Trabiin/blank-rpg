@@ -30,7 +30,7 @@ func _ready() -> void:
 func take_hit(amount: int, from: Vector2, force := 160.0) -> bool:
 	if dead or invuln_t > 0.0:
 		return false
-	amount = _adjust_damage(amount)
+	amount = _adjust_damage(Settings.difficulty_damage(self, amount))  # Options: difficulty
 	if amount <= 0:
 		return true  # soaked (a hero's shield): no knockback, no flash
 	hp = max(hp - amount, 0)
