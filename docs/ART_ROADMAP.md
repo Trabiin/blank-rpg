@@ -7,8 +7,8 @@ Nobody on the project draws by hand. Art comes from three places:
 
 | Tool | Who runs it | Used for | Cost |
 |---|---|---|---|
-| **PixelLab** (pixellab.ai) | Ojon generates, Claude cleans up and wires in | Every in-game pixel sprite: characters, animations, enemies, bosses, tilesets, props, buildings, icons, some FX | Free: 5 gens/day. Paid: about $12/month for 2,000 gens (check the current tiers before buying) |
-| **ChatGPT image generation** | Ojon generates, Claude cuts out and wires in | Painted art: portraits and expressions, title and key art, store art, the territory map base, optional story CGs | Free tier: a handful of images a day. Plus ($20/month) gives far more |
+| **PixelLab API** (api.pixellab.ai) | Claude generates through the API, picks, cleans up and wires in; Ojon approves contact sheets | Every in-game pixel sprite: characters, animations, enemies, bosses, tilesets, props, buildings, icons, some FX | Pay per call (about $0.007 to $0.15 a call), prepaid credit with a spend cap |
+| **OpenAI image API** (GPT Image) | Claude generates through the API, cuts out and wires in; Ojon approves | Painted art: portraits and expressions, title and key art, store art, the territory map base, story CGs | About $0.04 to $0.11 an image, prepaid credit with a spend cap |
 | **Claude in code** | Claude | Palette locking, cleanup, sprite sheets, shaders, lighting, particles, all FX that read better as code, UI frames and HUD, the Blank, the territory map overlay, fonts setup | Free |
 | **Free fonts** (SIL Open Font License) | Claude picks, Ojon approves | All in-game text | Free |
 | **Pixelorama** (optional, free, runs in the Chromebook browser) | Ojon, only if wanted | One-pixel fixes on a sprite without waiting for Claude | Free |
@@ -68,7 +68,7 @@ The two options that were compared:
 | Code impact | none | maps keep their layouts but tile size, collision, enemy sizes and FX scale change |
 | Art plan impact | as written in this document | same asset count, about 30 to 50% more retries per asset (bigger AI sprites drift more), so about one extra paid PixelLab month for the MVP |
 
-**Mockup gens for Ojon (PixelLab free tier, about 20 gens, 4 days):** for each option, Ash (8 rotations + walk south),
+**Mockup gens (done in PR #81 and #82):** for each option, Ash (8 rotations + walk south),
 one Nibbler (rotations), and a grass-to-dirt top-down tileset. Settings: high top-down, single-colour black outline,
 basic shading, medium detail. Option A at 32 px character / 24 px Nibbler / 16 px tiles; option B at 64 / 48 / 32.
 Claude builds both meadow screenshots (and a toggle in the live build) from those, with HUD, lighting and the
@@ -145,9 +145,9 @@ A "gen" is one PixelLab generation. Figures from Ojon's free-tier test: a full 8
 
 What that means in practice:
 
-- **Free tier (5/day):** about 16 months for the MVP alone. Fine for trying things in Phase 0, not for the pass.
-- **Paid tier (~2,000/month):** the MVP pass is about **6 to 8 weeks of paid months** (2 months, about $24), the full
-  game about 4 to 5 more paid months spread over the chapters. Pause the subscription between phases.
+**Decided 2026-11-19: both PixelLab and OpenAI run through their APIs** (keys are set up as network secrets, verified
+working). "Gens" in this document are a size measure; through the API the MVP pixel art comes to roughly **$25 to $60**
+and the painted art to roughly **$10 to $15**. Subscriptions are not used.
 
 ### API vs subscription (prices checked 2026-11-19)
 
@@ -161,14 +161,13 @@ Claude can generate, pick, palette-lock and wire in whole batches with no manual
 are paid. It needs API keys added as environment secrets (never pasted in chat) and the two API hosts allowed
 on the network, plus a spend cap on each account.
 
-ChatGPT portraits: about **90 images for the MVP** (incl. retries), **~300 for the full game**. On the free tier that
-is several weeks of daily generating for the MVP; ChatGPT Plus for a month makes it a few sessions.
+Painted images: about **125 for the MVP** (portraits, painted art and CGs, incl. retries), **~300 for the full game**.
 
 ---
 
 ## 3. Full asset inventory
 
-Legend for the Tool column: **PL** = PixelLab, **GPT** = ChatGPT image gen, **Code** = Claude in code.
+Legend for the Tool column: **PL** = PixelLab, **GPT** = OpenAI image API (GPT Image), **Code** = Claude in code.
 
 ### 3.1 Field heroes (fight on missions)
 
@@ -204,8 +203,9 @@ Notes:
 | Ilse of the Mirror | Spear, cracked mirror armour (shimmer done in code) | Icy cyan | Full (Ch. 4) | ~135 |
 | 4 more heroes (still to design) | | | Full | ~540 |
 
-Velvette: still undecided whether she is folded into Lysandre or a separate recruit. Decide before Phase 2 so she
-gets one sprite and one portrait set, not two.
+Velvette and Lysandre are **two separate characters** (decided 2026-11-19). Lysandre stays the Chapter 3 field hero above.
+Velvette (portrait already done) needs her own sprite and expressions once her role and recruitment are designed;
+budget her like a hub character (~30 gens) or a field hero (~135 gens) depending on that.
 
 ### 3.2 Hub characters: core staff, recruits and story NPCs
 
@@ -398,7 +398,7 @@ to change) but gets a real art direction: ink-on-paper panels, torn edges, wax-s
 
 Claude shortlists 3 font pairings with screenshots in Phase 6 for Ojon to pick.
 
-### 3.9 Portraits and expressions (ChatGPT)
+### 3.9 Portraits and expressions (OpenAI image API)
 
 Uses the existing style block in `docs/PORTRAITS.md` and the cutting tool `tools/cut_portraits.py`. Six are done:
 Ash, Bran, Velvette, Verity, Mother Gristle, Ilse.
@@ -408,7 +408,7 @@ plus 1 expression that fits them. Estimate 1.5 images per finished portrait for 
 
 | Group | Characters | Images (neutral + expressions) | With retries |
 |---|---|---|---|
-| Done, need expressions | Ash, Bran, Gristle, Verity (Ilse and Velvette wait for their chapters) | 4 × 5 = 20 | ~30 |
+| Done, need expressions | Ash, Bran, Gristle, Verity (Ilse waits for her chapter; Velvette when her role is designed) | 4 × 5 = 20 | ~30 |
 | MVP deep cast, new | Quill, Tobble, Abeyance, Daro | 4 × 6 = 24 | ~36 |
 | MVP boss | The Auditor | 1 + 2 (angry, surprised) = 3 | ~5 |
 | MVP light recruits | Pell, Hesper, Dunmore, Jessamy, Mr. Biscuits, Merrow Three, Odile, Ottoline | 8 × 2 = 16 | ~24 |
@@ -417,8 +417,8 @@ plus 1 expression that fits them. Estimate 1.5 images per finished portrait for 
 | Full game additions | Lysandre / Velvette, Saffron, Hex & Tally, Ilse expressions, 4 new heroes, ~4 new core staff (incl. Vane & Vesper), ~30 light recruits, the Abbot, the Host, the lighthouse keeper, faction leaders, Verity Unmade variant, the Vacancy (a mostly-code redacted "portrait") | ~200 | ~300 |
 
 Tips that keep the roster consistent:
-- One new chat per character, the style block first, then the character paragraph.
-- Expressions in the same chat as the locked neutral image.
+- Every prompt starts with the style block, then the character paragraph (generations endpoint).
+- Expressions use the image edit endpoint with the locked neutral portrait as input, changing only the face.
 - Keep the plain light-grey background; the cut tool depends on it.
 
 ### 3.10 Title, key art, map and promotional art
@@ -429,7 +429,7 @@ Tips that keep the roster consistent:
 | Title screen key art: Ash at the Blank's edge, the party behind | GPT (same portrait style, wide 16:9) + Code parallax and animated Blank | | ~8 |
 | Logo / wordmark "Last Ink" | GPT for ideas, then Claude rebuilds it cleanly in code or as vector from a chosen font | | ~6 |
 | Chapter title cards (Prologue, Ch. 1 to 6) | GPT backgrounds + Code text | Optional for MVP: Prologue and Ch. 1 only | ~4 MVP, ~14 full |
-| Story CGs: a few big moments (Ash crawling out of the Blank, the tax office eaten, the Auditor's arrival) | GPT | Optional; the polish that makes a story land | ~6 MVP, ~20 full |
+| Story CGs: a few big moments (Ash crawling out of the Blank, the tax office eaten, the Auditor's arrival) | GPT | In the MVP (decided 2026-11-19); the polish that makes a story land | ~6 MVP, ~20 full |
 | Loading / game over / results backgrounds | Code | | 0 |
 | Store page: itch.io cover 630x500, Steam capsules (header 920x430, small 462x174, main 1232x706, library 600x900 and hero 3840x1240), icon | GPT key art, Claude crops and adds the logo | Only when shipping | ~10 |
 | Trailer and GIFs | Claude records from the game | Only when shipping | 0 |
@@ -449,7 +449,7 @@ Done in Phase 0, before any big generating:
 2. **`tools/palette_lock.py`:** snaps PixelLab exports to the master palette, cleans stray pixels, fixes outlines,
    trims and aligns feet to one baseline, mirrors the 3 missing directions.
 3. **`tools/import_sprites.py`:** takes a zip exported from PixelLab, names and packs the frames, runs palette lock,
-   writes the sprite folder. Ojon uploads the zip to the project files; Claude does the rest.
+   writes the sprite folder. With the API, Claude calls PixelLab directly and the same importer handles the results.
 4. **Tileset importer:** turns PixelLab terrain sets into Godot TileSet terrains, so maps auto-tile and the map
    text files keep working.
 5. **Contact sheets:** after each batch Claude posts one image with every new sprite next to the target screenshot,
@@ -460,24 +460,24 @@ Done in Phase 0, before any big generating:
 
 ## 5. Phases and order
 
-Each phase ends with a PR, a "try this" checklist on the live build and Ojon's sign-off. Gen counts tell you
-when to have the paid PixelLab month running.
+Each phase ends with a PR, a "try this" checklist on the live build and Ojon's sign-off. API cost per phase is an estimate
+including retries; Claude reports actual spend with each phase PR.
 
-| Phase | What | Tools | Gens / images | Paid PixelLab? |
+| Phase | What | Tools | Gens / images | API cost (est.) |
 |---|---|---|---|---|
-| **0. Style lock** | Detail test done (1.1b: option A); settle palette and generate the rest of the samples; build the pipeline (section 4); produce the target screenshot; write `docs/ART_PROMPTS.md` | PL, Code | ~40 | No, free tier over about a week |
-| **1. The party** | Ash, Bran, Gristle, Daro: full action sets; HUD face icons; code trails for each weapon | PL, Code | ~560 | **Start month 1** |
-| **2. First impression: Prologue** | Meadow biome, Nibbler, Spitter, Blank FX polish, lighting and day/night, ambient particles. After this the first 10 minutes look finished | PL, Code | ~180 | Month 1 |
-| **3. Hollowmark** | Town tileset, 6 buildings × 3 levels, Wardlamp, scaffolding, town props, Quill / Tobble / Abeyance, townsfolk, Concord clerks and governor | PL, Code | ~570 | Month 1 to 2 |
-| **4. Act 1 world** | Gutterwoods, river and marsh, hills, Concord road biomes; moth, Enforcer, extra Act 1 enemies, Verity sprite. Give each province its own map dressing | PL, Code | ~520 | Month 2 |
-| **5. The Auditor and recruits** | Boss sprite and attacks; the 8 light recruits | PL, Code | ~420 | Month 2 |
-| **6. UI and icons** | Panels, buttons, cursor, ~100 icons, input prompts, font pick | PL, Code, OFL fonts, Kenney prompts | ~185 | Month 2 (end) |
-| **7. Portraits and painted art** | MVP portraits and expressions (~95), territory map, title key art, logo, Prologue / Ch. 1 cards, optional CGs | GPT, Code | ~125 images | No (ChatGPT Plus month recommended) |
-| **8. Polish sweep** | Consistency pass over everything vs the target screenshot, redo the weakest 10%, Chromebook performance check (texture sizes, particles) | PL, Code | ~100 | Leftover month 2 gens |
-| **MVP done** | | | **~2,550 gens, ~125 images** | **About 2 paid months** |
+| **0. Style lock** | Detail test done (1.1b: option A); settle palette and generate the rest of the samples; build the pipeline (section 4); produce the target screenshot; write `docs/ART_PROMPTS.md` | PL, Code | ~40 | ~$1 |
+| **1. The party** | Ash, Bran, Gristle, Daro: full action sets; HUD face icons; code trails for each weapon | PL, Code | ~560 | ~$6 to $12 |
+| **2. First impression: Prologue** | Meadow biome, Nibbler, Spitter, Blank FX polish, lighting and day/night, ambient particles. After this the first 10 minutes look finished | PL, Code | ~180 | ~$3 to $5 |
+| **3. Hollowmark** | Town tileset, 6 buildings × 3 levels, Wardlamp, scaffolding, town props, Quill / Tobble / Abeyance, townsfolk, Concord clerks and governor | PL, Code | ~570 | ~$6 to $12 |
+| **4. Act 1 world** | Gutterwoods, river and marsh, hills, Concord road biomes; moth, Enforcer, extra Act 1 enemies, Verity sprite. Give each province its own map dressing | PL, Code | ~520 | ~$6 to $10 |
+| **5. The Auditor and recruits** | Boss sprite and attacks; the 8 light recruits | PL, Code | ~420 | ~$5 to $10 |
+| **6. UI and icons** | Panels, buttons, cursor, ~100 icons, input prompts, font pick | PL, Code, OFL fonts, Kenney prompts | ~185 | ~$2 to $4 |
+| **7. Portraits and painted art** | MVP portraits and expressions (~95), territory map, title key art, logo, Prologue / Ch. 1 cards, ~6 story CGs | GPT, Code | ~125 images | ~$6 to $12 |
+| **8. Polish sweep** | Consistency pass over everything vs the target screenshot, redo the weakest 10%, Chromebook performance check (texture sizes, particles) | PL, Code | ~100 | ~$2 to $4 |
+| **MVP done** | | | **~2,550 gens, ~125 images** | **~$35 to $70 total** |
 
 Phases 1 and 2 can swap if Ojon would rather see the meadow finished first. Portraits (Phase 7) can run in parallel
-with any phase, since they use a different tool; doing a few each day on the free ChatGPT tier works from now on.
+with any phase, since they use a different tool; through the API they can be made in batches at any time.
 
 **Full game, one block per chapter** (each about 1,000 to 1,300 gens, so roughly one paid month each, plus
 ~40 to 60 portrait images):
@@ -496,11 +496,13 @@ with any phase, since they use a different tool; doing a few each day on the fre
 ## 6. Decisions for Ojon
 
 1. ~~**Detail level**~~ Decided 2026-11-19: option A (16 px tiles, 32 px heroes), see 1.1b.
-2. **Velvette vs Lysandre:** one character or two? Needed before her sprite and expressions.
-3. **Gear on sprites:** recommended no (signature weapon only), which saves thousands of gens.
-4. **PixelLab paid months:** recommended two months for the MVP pass (Phases 1 to 6), paused between chapters later.
-5. **ChatGPT Plus for one month** in Phase 7 (optional, the free tier works but slowly).
-6. **Optional story CGs** in the MVP: yes or later.
+2. ~~**Velvette vs Lysandre**~~ Decided: two separate characters (see 3.1).
+3. ~~**Gear on sprites**~~ Decided: no, each hero carries a signature weapon.
+4. ~~**PixelLab paid months**~~ Decided: PixelLab API, pay per call, no subscription.
+5. ~~**ChatGPT Plus**~~ Decided: OpenAI image API, no subscription.
+6. ~~**Story CGs**~~ Decided: yes, about 6 in the MVP (Phase 7).
+
+All decided 2026-11-19. Still open for later: Velvette's role and recruitment hook.
 
 ---
 
