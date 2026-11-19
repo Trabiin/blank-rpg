@@ -155,6 +155,75 @@
 				"idle": {"fps": 5.0, "loop": true, "frames": 4, "dirs": ["south", "south-east", "east", "north-east", "north"]},
 				"walk": {"fps": 8.0, "loop": true, "frames": 6, "dirs": ["south", "south-east", "east", "north-east", "north"]}
 			}
+		},
+		"moth": {
+			"size": [44, 44],
+			"feet": [22, 31],
+			"face": [12, 14, 20, 20],
+			"anims": {
+				"rot": {"fps": 1, "loop": true, "frames": 1, "dirs": ["south", "south-east", "east", "north-east", "north"]},
+				"idle": {"fps": 12.0, "loop": true, "frames": 4, "dirs": ["south", "south-east", "east", "north-east", "north"]},
+				"attack": {"fps": 10.0, "loop": false, "frames": 4, "dirs": ["south", "south-east", "east", "north-east", "north"]}
+			}
+		},
+		"enforcer": {
+			"size": [68, 68],
+			"feet": [28, 53],
+			"face": [18, 10, 20, 20],
+			"anims": {
+				"rot": {"fps": 1, "loop": true, "frames": 1, "dirs": ["south", "south-east", "east", "north-east", "north"]},
+				"idle": {"fps": 5.0, "loop": true, "frames": 4, "dirs": ["south", "south-east", "east", "north-east", "north"]},
+				"walk": {"fps": 7.0, "loop": true, "frames": 6, "dirs": ["south", "south-east", "east", "north-east", "north"]},
+				"attack": {"fps": 10.0, "loop": false, "frames": 8, "dirs": ["south", "south-east", "east", "north-east", "north"]},
+				"hurt": {"fps": 10.0, "loop": false, "frames": 4, "dirs": ["south", "east", "north"]},
+				"death": {"fps": 8.0, "loop": false, "frames": 6, "dirs": ["south"]}
+			}
+		},
+		"reedling": {
+			"size": [44, 44],
+			"feet": [22, 34],
+			"face": [12, 7, 20, 20],
+			"anims": {
+				"rot": {"fps": 1, "loop": true, "frames": 1, "dirs": ["south", "south-east", "east", "north-east", "north"]},
+				"idle": {"fps": 5.0, "loop": true, "frames": 4, "dirs": ["south", "south-east", "east", "north-east", "north"]},
+				"walk": {"fps": 8.0, "loop": true, "frames": 6, "dirs": ["south", "south-east", "east", "north-east", "north"]},
+				"attack": {"fps": 10.0, "loop": false, "frames": 8, "dirs": ["south", "south-east", "east", "north-east", "north"]},
+				"hurt": {"fps": 10.0, "loop": false, "frames": 4, "dirs": ["south", "east", "north"]}
+			}
+		},
+		"scarecrow": {
+			"size": [44, 44],
+			"feet": [18, 36],
+			"face": [8, 6, 20, 20],
+			"anims": {
+				"rot": {"fps": 1, "loop": true, "frames": 1, "dirs": ["south", "south-east", "east", "north-east", "north"]},
+				"idle": {"fps": 5.0, "loop": true, "frames": 4, "dirs": ["south", "south-east", "east", "north-east", "north"]},
+				"walk": {"fps": 9.0, "loop": true, "frames": 6, "dirs": ["south", "south-east", "east", "north-east", "north"]},
+				"attack": {"fps": 12.0, "loop": false, "frames": 6, "dirs": ["south", "south-east", "east", "north-east", "north"]},
+				"hurt": {"fps": 10.0, "loop": false, "frames": 4, "dirs": ["south", "east", "north"]}
+			}
+		},
+		"sellsword": {
+			"size": [44, 44],
+			"feet": [21, 35],
+			"face": [11, 7, 20, 20],
+			"anims": {
+				"rot": {"fps": 1, "loop": true, "frames": 1, "dirs": ["south", "south-east", "east", "north-east", "north"]},
+				"idle": {"fps": 5.0, "loop": true, "frames": 4, "dirs": ["south", "south-east", "east", "north-east", "north"]},
+				"walk": {"fps": 9.0, "loop": true, "frames": 6, "dirs": ["south", "south-east", "east", "north-east", "north"]},
+				"attack": {"fps": 12.0, "loop": false, "frames": 6, "dirs": ["south", "south-east", "east", "north-east", "north"]},
+				"hurt": {"fps": 10.0, "loop": false, "frames": 4, "dirs": ["south", "east", "north"]}
+			}
+		},
+		"verity": {
+			"size": [44, 44],
+			"feet": [22, 36],
+			"face": [12, 6, 20, 20],
+			"anims": {
+				"rot": {"fps": 1, "loop": true, "frames": 1, "dirs": ["south", "south-east", "east", "north-east", "north"]},
+				"idle": {"fps": 4.0, "loop": true, "frames": 4, "dirs": ["south", "south-east", "east", "north-east", "north"]},
+				"walk": {"fps": 7.0, "loop": true, "frames": 6, "dirs": ["south", "south-east", "east", "north-east", "north"]}
+			}
 		}
 	}
 }

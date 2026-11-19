@@ -42,6 +42,51 @@
 			"loot": {"gilt": [0.3, 1, 2], "supplies": [0.15, 1, 2], "ink": [0.04, 1, 1]}
 		},
 		{
+			"id": "gutterwoods_patrol", "name": "Patrol: Gutterwoods", "province": "gutterwoods", "after": "meadow_prologue",
+			"map": "res://maps/gutterwoods.txt",
+			"brief": "The letter-moths are thick between the trees again. Clear the trail so the Coven's couriers get through.",
+			"objective": {"kind": "kills", "count": 12, "label": "Clear the area"},
+			"rewards": {"gilt": 18, "supplies": 8},
+			"fray": -4,
+			"loot": {"gilt": [0.3, 1, 2], "supplies": [0.15, 1, 2], "ink": [0.04, 1, 1]}
+		},
+		{
+			"id": "saltreed_patrol", "name": "Patrol: Saltreed Marsh", "province": "saltreed", "after": "meadow_prologue",
+			"map": "res://maps/saltreed.txt",
+			"brief": "Reedlings have been spitting at anyone on the boardwalks. Wade in and thin them out.",
+			"objective": {"kind": "kills", "count": 12, "label": "Clear the area"},
+			"rewards": {"gilt": 18, "supplies": 8},
+			"fray": -4,
+			"loot": {"gilt": [0.3, 1, 2], "supplies": [0.15, 1, 2], "ink": [0.04, 1, 1]}
+		},
+		{
+			"id": "oldmill_patrol", "name": "Patrol: Old Mill Crossing", "province": "oldmill", "after": "meadow_prologue",
+			"map": "res://maps/oldmill.txt",
+			"brief": "Something stitched the mill's scarecrows back together. Put them down before the harvest rots.",
+			"objective": {"kind": "kills", "count": 12, "label": "Clear the area"},
+			"rewards": {"gilt": 18, "supplies": 8},
+			"fray": -4,
+			"loot": {"gilt": [0.3, 1, 2], "supplies": [0.15, 1, 2], "ink": [0.04, 1, 1]}
+		},
+		{
+			"id": "lampwick_patrol", "name": "Patrol: Lampwick Hills", "province": "lampwick", "after": "meadow_prologue",
+			"map": "res://maps/lampwick.txt",
+			"brief": "The ink spring draws things out of the hills. Walk the lamp road and see what comes.",
+			"objective": {"kind": "kills", "count": 12, "label": "Clear the area"},
+			"rewards": {"gilt": 18, "supplies": 8},
+			"fray": -4,
+			"loot": {"gilt": [0.3, 1, 2], "supplies": [0.15, 1, 2], "ink": [0.04, 1, 1]}
+		},
+		{
+			"id": "tithe_patrol", "name": "Patrol: The Tithe Road", "province": "tithe", "after": "meadow_prologue",
+			"map": "res://maps/tithe_road.txt",
+			"brief": "Guild sellswords are working the Concord road. Make the toll they collect a painful one.",
+			"objective": {"kind": "kills", "count": 12, "label": "Clear the area"},
+			"rewards": {"gilt": 18, "supplies": 8},
+			"fray": -4,
+			"loot": {"gilt": [0.3, 1, 2], "supplies": [0.15, 1, 2], "ink": [0.04, 1, 1]}
+		},
+		{
 			"id": "auditor_duel", "name": "Boss: The Auditor", "province": "tithe", "story": true, "after": "act1_concord",
 			"map": "res://maps/tithe_tollgate.txt",
 			"brief": "The Concord has sent its answer to an unregistered town: the Auditor, who strikes people out of the Ledger with a quill the size of a lance. He is waiting at the Tithe Road tollgate, and Hollowmark is next on his list. Watch the red lanes and the dotted lines, and hit him when his nib sticks.",

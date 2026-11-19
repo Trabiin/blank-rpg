@@ -11,6 +11,15 @@ extends RefCounted
 ## the empire, applied by apply() when the results screen settles the mission.
 
 const MAP := "res://maps/frayed_meadow.txt"
+## Each Act 1 biome has its own map (tools/make_biomes.py), built round the same open spots as the meadow.
+const BIOME_MAPS := {
+	"gutterwoods": "res://maps/gutterwoods.txt",
+	"saltreed": "res://maps/saltreed.txt",
+	"gallows": "res://maps/saltreed.txt",
+	"oldmill": "res://maps/oldmill.txt",
+	"lampwick": "res://maps/lampwick.txt",
+	"tithe": "res://maps/tithe_road.txt",
+}
 const RECLAIM_INK := 3
 const RECLAIM_FRAY := 60  # what a rewritten province starts at: thin, but standing
 const DEFENSE_FRAY := -5  # the line you held stays a little firmer
@@ -21,6 +30,10 @@ const TYPE_COLORS := {"defense": Color("ff8a6a"), "reclaim": Color("eeebe2"), "r
 const WARD_AT := [50, 31]
 const BLOT_AT := [64, 30]
 const RESCUE_SPOTS := [[60, 9], [60, 50], [59, 22]]
+
+
+static func map_for(pid: String) -> String:
+	return BIOME_MAPS.get(pid, MAP)
 
 
 ## Every type-mission on offer for a province right now, each with a "blocker"
@@ -45,7 +58,7 @@ static func defense(p: Dictionary) -> Dictionary:
 	var days := Empire.surge_days_left()
 	var hard := clampi(int(p["fray"]) / 25, 0, 3)  # worn-thin land is harder to hold
 	return {
-		"id": "defense_" + p["id"], "type": "defense", "effects": true, "province": p["id"], "map": MAP,
+		"id": "defense_" + p["id"], "type": "defense", "effects": true, "province": p["id"], "map": map_for(p["id"]),
 		"name": "Defend %s" % p["name"],
 		"brief": "The Blank is gathering against %s. Hold the wardstone until the surge breaks and it never lands. Every Nibbler you disperse pushes the white back a little. Lands in %d day%s if you do nothing." \
 			% [p["name"], days, "" if days == 1 else "s"],
@@ -67,7 +80,7 @@ static func reclaim(p: Dictionary) -> Dictionary:
 	elif int(Empire.res.get("ink", 0)) < RECLAIM_INK:
 		blocker = "needs %d Ink to rewrite (you have %d)" % [RECLAIM_INK, int(Empire.res.get("ink", 0))]
 	return {
-		"id": "reclaim_" + p["id"], "type": "reclaim", "effects": true, "province": p["id"], "map": MAP,
+		"id": "reclaim_" + p["id"], "type": "reclaim", "effects": true, "province": p["id"], "map": map_for(p["id"]),
 		"name": "Reclaim %s" % p["name"],
 		"brief": "Push into the white and break the Blot that holds %s. It spits Nibblers while it lives. Win, and %d Ink rewrites the land: it comes back unclaimed at %d Fray." \
 			% [p["name"], RECLAIM_INK, RECLAIM_FRAY],
@@ -89,7 +102,7 @@ static func rescue(jid: String) -> Dictionary:
 		blocker = "a squad is already out after them"
 	var spot: Array = RESCUE_SPOTS[absi(hash(rid)) % RESCUE_SPOTS.size()]
 	return {
-		"id": "rescue_" + rid, "type": "rescue", "effects": true, "province": j["province"], "map": MAP, "job": jid,
+		"id": "rescue_" + rid, "type": "rescue", "effects": true, "province": j["province"], "map": map_for(str(j["province"])), "job": jid,
 		"name": "Rescue: %s" % Empire.recruit(rid).get("name", rid),
 		"brief": "%s Go yourself instead of sending a squad: find %s before the white closes over them, then bring them back to where you came in." \
 			% [j.get("blurb", ""), Empire.short_name(rid)],

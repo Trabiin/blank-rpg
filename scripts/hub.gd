@@ -23,6 +23,7 @@ const ChapterCard := preload("res://scripts/chapter_card.gd")
 const BanterScript := preload("res://scripts/banter.gd")
 
 const MAP := "res://maps/hollowmark.txt"
+static var map_override := ""  # tools/shot.gd map=<name>: show another town layout (art mockups)
 const TITLE_SCENE := "res://scenes/title.tscn"
 const AUTOSAVE_EVERY := 60.0
 const TALK_RANGE := 26.0
@@ -82,7 +83,7 @@ func _ready() -> void:
 	entities.y_sort_enabled = true
 	area = Area.new()
 	add_child(area)
-	area.build(MAP, entities)
+	area.build(map_override if map_override != "" else MAP, entities)
 	world = area.world_size()
 	Art.set_blank_x(1e9)  # no Blank inside the walls (yet)
 	add_child(entities)

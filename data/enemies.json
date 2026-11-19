@@ -8,18 +8,24 @@
 		"moth": {"name": "Letter-moth", "plural": "Letter-moths", "hp": 9, "damage": 4, "speed": 86, "xp": 2, "pack": 3,
 			"tip": "Letter-moths: they flash red, then dive. Swing as they come in."},
 		"enforcer": {"name": "Tithe Enforcer", "plural": "Tithe Enforcers", "hp": 72, "damage": 13, "speed": 30, "xp": 9, "pack": 1,
-			"tip": "Tithe Enforcer: his Ledger shield halves hits from the front. Hit him from behind, and leave the red ring."}
+			"tip": "Tithe Enforcer: his Ledger shield halves hits from the front. Hit him from behind, and leave the red ring."},
+		"reedling": {"name": "Reedling", "plural": "Reedlings", "script": "spitter", "sprite": "reedling", "hp": 24, "damage": 8, "speed": 30, "xp": 4, "pack": 2,
+			"tip": "Reedlings: marsh mud that spits. They swell first, so sidestep and wade in."},
+		"scarecrow": {"name": "Mill scarecrow", "plural": "Mill scarecrows", "script": "nibbler", "sprite": "scarecrow", "hp": 36, "speed": 34, "xp": 4, "pack": 1,
+			"tip": "Mill scarecrow: it twitches before the sickle swings. Step out of reach."},
+		"sellsword": {"name": "Guild sellsword", "plural": "Guild sellswords", "script": "nibbler", "sprite": "sellsword", "hp": 44, "speed": 46, "xp": 6, "pack": 2,
+			"tip": "Guild sellswords: fast, and they come in pairs. Watch for the lunge."}
 	},
 	"rosters": {
 		"default": {"nibbler": 3, "spitter": 1},
 		"hollowmark": {"nibbler": 2, "enforcer": 1},
 		"meadow": {"nibbler": 4, "spitter": 1},
 		"gutterwoods": {"nibbler": 2, "moth": 2, "spitter": 1},
-		"oldmill": {"nibbler": 3, "enforcer": 1},
-		"lampwick": {"nibbler": 2, "spitter": 2, "moth": 1},
-		"saltreed": {"nibbler": 3, "spitter": 2},
-		"gallows": {"nibbler": 1, "moth": 2, "enforcer": 1},
-		"tithe": {"nibbler": 2, "enforcer": 2},
+		"oldmill": {"nibbler": 2, "scarecrow": 2, "enforcer": 1},
+		"lampwick": {"nibbler": 2, "spitter": 2, "sellsword": 1, "moth": 1},
+		"saltreed": {"nibbler": 2, "reedling": 3},
+		"gallows": {"nibbler": 1, "moth": 2, "reedling": 1, "enforcer": 1},
+		"tithe": {"nibbler": 1, "sellsword": 2, "enforcer": 2},
 		"whitewater": {"nibbler": 3, "spitter": 2, "moth": 1}
 	}
 }

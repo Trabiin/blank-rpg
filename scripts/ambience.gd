@@ -28,6 +28,7 @@ var clouds: ColorRect  # drifting cloud shadows, fade out after dusk
 var mist: ColorRect  # low drifting mist, thicker at dawn, dusk and night
 var vignette: ColorRect
 var _shadow_alpha := -1.0
+var mood := {"grade": Color.WHITE, "mist": 1.0, "motes": Color(1.0, 0.97, 0.85)}  # the map's @mood (scripts/area.gd)
 
 
 static func light_at(dt: float) -> Color:
@@ -41,6 +42,13 @@ static func light_at(dt: float) -> Color:
 	return KEYS[0][1]
 
 
+## The light right now, with the biome's grade on top.
+func lit_now() -> Color:
+	var c := light_at(day_t) * (mood["grade"] as Color)
+	c.a = 1.0
+	return c
+
+
 ## 0 in full daylight, 1 at deep night.
 static func darkness(dt: float) -> float:
 	var c := light_at(dt)
@@ -50,8 +58,10 @@ static func darkness(dt: float) -> float:
 func _ready() -> void:
 	z_index = 5  # motes float above the actors
 	day_t = Empire.day_t
+	if party != null and "area" in party and party.area != null and "mood" in party.area:
+		mood = party.area.mood
 	modulate_node = CanvasModulate.new()
-	modulate_node.color = light_at(day_t)
+	modulate_node.color = lit_now()
 	get_parent().add_child.call_deferred(modulate_node)
 	lantern = Art.add_lamp(self, Vector2.ZERO, Color(1.0, 0.82, 0.55), 205)
 	var n := 26
@@ -109,7 +119,7 @@ func _update_effects() -> void:
 		r.global_position = cam - r.size / 2.0
 	vignette.size = view + Vector2(4, 4)
 	vignette.global_position = cam - vignette.size / 2.0
-	var lit := light_at(day_t)
+	var lit := lit_now()
 	var undo := Vector3(1.0 / lit.r, 1.0 / lit.g, 1.0 / lit.b)
 	var dark := darkness(day_t)
 	var cm := clouds.material as ShaderMaterial
@@ -122,7 +132,8 @@ func _update_effects() -> void:
 	# Mist hangs about all day but thickens towards dawn, dusk and night.
 	var dt := fposmod(day_t, 1.0)
 	var dusk := maxf(dark, maxf(1.0 - absf(dt - 0.27) / 0.07, 1.0 - absf(dt - 0.75) / 0.07))
-	mm.set_shader_parameter("amount", Settings.fxf("mist") * lerpf(0.2, 1.0, dusk))
+	var biome_mist: float = mood["mist"]
+	mm.set_shader_parameter("amount", Settings.fxf("mist") * lerpf(0.2 * biome_mist, 1.0, dusk) * minf(biome_mist, 1.6))
 	mm.set_shader_parameter("wind", Vector2(3.0, 0.6) * lerpf(0.3, 1.0, Settings.fxf("wind")))
 	mist.visible = Settings.fx_value("mist") > 0
 	var vm := vignette.material as ShaderMaterial
@@ -144,7 +155,7 @@ func _process(delta: float) -> void:
 		_add_effects()
 	if live and absf(Empire.day_t - day_t) > 0.0005:
 		day_t = Empire.day_t
-		modulate_node.color = light_at(day_t)
+		modulate_node.color = lit_now()
 	_update_effects()
 	if party != null and party.leader != null and is_instance_valid(party.leader):
 		for l in lantern:
@@ -159,7 +170,7 @@ func _draw() -> void:
 		return
 	var cam: Vector2 = party.camera.get_screen_center_position()
 	var dark := darkness(day_t)
-	var lit := light_at(day_t)
+	var lit := lit_now()
 	var undo := Color(1.0 / lit.r, 1.0 / lit.g, 1.0 / lit.b)  # motes give off their own light: cancel the dusk tint
 	for m in motes:
 		# Motes live in a box around the camera and wrap, so the screen always has a few.
@@ -171,4 +182,5 @@ func _draw() -> void:
 			draw_circle(wp, 1.8, Color(1.0, 0.9, 0.45, 0.18 * a) * undo)
 			draw_rect(Rect2(wp, Vector2(1, 1)), Color(1.0, 0.95, 0.6, a) * undo)
 		else:  # pollen and seed fluff in the light
-			draw_rect(Rect2(wp, Vector2(1, 1)), Color(1.0, 0.97, 0.85, 0.45 + 0.25 * sin(t + m[2])))
+			var mc: Color = mood["motes"]
+			draw_rect(Rect2(wp, Vector2(1, 1)), Color(mc.r, mc.g, mc.b, 0.45 + 0.25 * sin(t + m[2])))

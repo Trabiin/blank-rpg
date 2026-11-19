@@ -86,3 +86,16 @@ and one offline pass make them belong:
 - **Scene effects** (`scripts/ambience.gd`): drifting cloud shadows by day, low mist that thickens at dawn,
   dusk and night, and a vignette. Every effect has a slider in Options > Visual effects (`Settings.FX`).
 - Real 3/4 depth (roofs seen from above) can only come from regenerating the sprites; see docs/ART_SPEND.md.
+
+## Camera for buildings (from 2026-11-19, issue #94)
+
+Buildings are drawn in **true 3/4 top-down**: the roof seen from above and receding, like the target's houses.
+Prompt: "top-down 3/4 view from above at the same angle as the reference: the roof is seen from above and recedes
+away from the viewer, large roof surface visible", with a crop of the target's blue-roof house as `style_image`.
+Some come back turned to the corner; that is welcome: Hollowmark mixes angles along winding streets.
+
+- Every option a call returns is its own building, so no sprite repeats in town.
+- Building levels: make level 3 first, then edit it down with `edit-images-v2` ("the same building at its humble
+  beginning: run-down, patched roof... keep the exact same shape, angle and size"), up to 4 buildings per call.
+- Town layout comes from `tools/make_hollowmark.py`: streets, buildings by bottom-centre tile, and footpaths
+  (`,`) routed from every door to the nearest street.

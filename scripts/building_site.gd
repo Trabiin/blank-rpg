@@ -12,9 +12,9 @@ const PLOT := Vector2(80, 80)
 const LOOKS := {
 	"barracks": {"parts": [[Rect2(176, 0, 80, 80), Vector2(4, 0)], [Rect2(80, 432, 32, 32), Vector2(-30, 2)]], "box": Vector2(72, 40)},
 	"infirmary": {"parts": [[Rect2(96, 0, 80, 80), Vector2(0, 0)]], "box": Vector2(72, 40), "tint": Color(0.92, 0.95, 1.0)},
-	"inkworks": {"parts": [[Rect2(0, 336, 48, 112), Vector2(-8, 0)]], "box": Vector2(42, 30), "tint": Color(0.72, 0.76, 0.92)},
-	"scriptorium": {"parts": [[Rect2(48, 352, 48, 80), Vector2(0, 0)]], "box": Vector2(40, 26)},
-	"guildhall": {"parts": [[Rect2(64, 496, 64, 56), Vector2(0, 0)], [Rect2(80, 432, 32, 32), Vector2(-26, 2)]], "box": Vector2(60, 30), "tint": Color(1.0, 0.95, 0.85)},
+	"inkworks": {"parts": [[Rect2(0, 336, 48, 112), Vector2(-8, 0)]], "box": Vector2(72, 36), "tint": Color(0.72, 0.76, 0.92)},
+	"scriptorium": {"parts": [[Rect2(48, 352, 48, 80), Vector2(0, 0)]], "box": Vector2(72, 36)},
+	"guildhall": {"parts": [[Rect2(64, 496, 64, 56), Vector2(0, 0)], [Rect2(80, 432, 32, 32), Vector2(-26, 2)]], "box": Vector2(72, 36), "tint": Color(1.0, 0.95, 0.85)},
 }
 const ROMAN := ["", "I", "II", "III", "IV"]
 

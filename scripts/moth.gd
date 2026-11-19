@@ -19,13 +19,15 @@ var paper := Color("efe6cf")
 
 
 func _ready() -> void:
-	art_id = ""  # drawn by its own code until its art pass phase
+	art_id = "moth"  # art pass sprite; falls back to the code-drawn letter if the set is missing
 	super._ready()
 	radius = 4.0
 	for c in get_children():
 		if c is CollisionShape2D:
 			(c.shape as CircleShape2D).radius = 3.0
-	sprite.visible = false
+	sprite.visible = art != null
+	if art != null:
+		sprite.scale = Vector2(0.75, 0.75)  # a moth, not a bird: the drawn wingspan reads too big at full size
 	orbit_a = randf() * TAU
 	orbit_dir = 1.0 if randf() < 0.5 else -1.0
 	dive_cd = randf_range(1.2, 2.8)
@@ -121,8 +123,29 @@ func _process(delta: float) -> void:
 		if dying_t > 0.25:
 			queue_free()
 			return
+	if art != null:
+		_process_moth_art()
 	queue_redraw()
 	overlay.queue_redraw()
+
+
+## The drawn moth: flutters (idle) above its shadow, flashes red in the wind-up, dives (attack).
+func _process_moth_art() -> void:
+	var row := art_row()
+	if state == State.WINDUP or state == State.LUNGE:
+		var n := art.frames_of("attack") if art.has("attack") else 1
+		var k := 0.25 if state == State.WINDUP else 0.4 + 0.6 * (1.0 - state_t / DIVE_TIME)
+		if art.has("attack"):
+			art.apply_frame(sprite, "attack", row, clampi(int(k * n), 0, n - 1))
+	else:
+		art.apply(sprite, "idle", row, anim_t + orbit_a)
+	sprite.position = Vector2(0, -6.0 + sin(anim_t * 6.0 + orbit_a) * 1.5)
+	if flash_t > 0.0:
+		sprite.modulate = Color(2, 2, 2)
+	elif state == State.WINDUP and int(anim_t * 16.0) % 2 == 0:
+		sprite.modulate = Color(1.6, 0.5, 0.5)
+	else:
+		sprite.modulate = Color.WHITE
 
 
 func _draw() -> void:
@@ -133,8 +156,15 @@ func _draw() -> void:
 
 
 func _draw_overlay() -> void:
-	# A folded letter with flapping wings, hovering above its shadow.
 	var y := -11.0 + sin(anim_t * 6.0 + orbit_a) * 1.5
+	if art != null:
+		if state == State.WINDUP:
+			overlay.draw_string(ThemeDB.fallback_font, Vector2(-2, y - 9), "!", HORIZONTAL_ALIGNMENT_LEFT, -1, 9, Color("ff5d5d"))
+		if hp < max_hp:
+			overlay.draw_rect(Rect2(-4, y - 11, 8, 1.5), Color(0, 0, 0, 0.6))
+			overlay.draw_rect(Rect2(-4, y - 11, 8.0 * hp / max_hp, 1.5), Color("ff6b6b"))
+		return
+	# A folded letter with flapping wings, hovering above its shadow.
 	var flap := absf(sin(anim_t * (26.0 if state != State.WINDUP else 40.0)))
 	var col := paper
 	if flash_t > 0.0:

@@ -7,6 +7,9 @@ extends RefCounted
 ##   spitter  - scripts/spitter.gd: keeps its distance, swells, spits a slow glob
 ##   moth     - scripts/moth.gd: Gutterwoods letter-moths, in packs; circle, flash, dive
 ##   enforcer - scripts/enforcer.gd: Concord heavy; front shield, slow ground-slam with a red ring
+## A kind can reuse another's behaviour with its own art: "script" names the behaviour (a key of
+## SCRIPTS), "sprite" the sprite set (data/sprites.json). The marsh reedling spits like a Spitter;
+## the mill scarecrow and the Guild sellsword chase and lunge like a Nibbler.
 
 const SCRIPTS := {
 	"nibbler": preload("res://scripts/enemy.gd"),
@@ -55,7 +58,7 @@ static func pick(mission: Dictionary, blank_only := false) -> String:
 	var roll := randf() * total
 	for k in r:
 		roll -= float(r[k])
-		if roll <= 0.0 and SCRIPTS.has(k):
+		if roll <= 0.0 and SCRIPTS.has(kind(k).get("script", k)):
 			return k
 	return "nibbler"
 
@@ -76,7 +79,9 @@ static func spawn(parent: Node, pos: Vector2, mission: Dictionary, id := "", bla
 	var out := []
 	var n := randi_range(maxi(1, int(info.get("pack", 1)) - 1), maxi(1, int(info.get("pack", 1))))  # packs vary by one
 	for i in n:
-		var e: Enemy = SCRIPTS[id].new()
+		var e: Enemy = SCRIPTS[info.get("script", id)].new()
+		if info.has("sprite"):
+			e.set_meta("art", info["sprite"])
 		e.position = pos + (Vector2.RIGHT.rotated(TAU * i / n) * 10.0 if n > 1 else Vector2.ZERO)
 		parent.add_child(e)  # _ready runs here; the data overrides the script's defaults after it
 		e.max_hp = int(info.get("hp", e.max_hp))
