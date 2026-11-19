@@ -43,7 +43,9 @@ func _process(_delta: float) -> bool:
 			empire.lamps["hollowmark"] = clampi(int(args["levels"]) - 1, 1, 2)
 		var scene := str(args.get("scene", "mission"))
 		if scene == "mission":
-			var m: Dictionary = load("res://scripts/missions.gd").find(str(args.get("mission", "meadow_patrol")))
+			var m: Dictionary = load("res://scripts/missions.gd").find(str(args.get("mission", "meadow_patrol"))).duplicate()
+			if args.has("map"):  # map=gutterwoods: the mission on another map in maps/
+				m["map"] = "res://maps/%s.txt" % args["map"]
 			empire.active_mission = m
 			change_scene_to_file("res://scenes/main.tscn")
 		elif scene == "town":
@@ -63,6 +65,11 @@ func _process(_delta: float) -> bool:
 			if args.has("enemies"):
 				for i in int(args["enemies"]):
 					cur._spawn_enemy(pos + Vector2(60 + 24 * i, -30 + 30 * (i % 3)))
+			if args.has("kinds"):  # kinds=moth,enforcer: one of each, in a row east of the party
+				var i := 0
+				for k in str(args["kinds"]).split(","):
+					load("res://scripts/enemy_kinds.gd").spawn(cur.entities, pos + Vector2(50 + 36 * i, -10 + 24 * (i % 2)), cur.mission, k)
+					i += 1
 	if args.has("zoom") and frame == 22 and current_scene != null and "camera" in current_scene:
 		current_scene.camera.zoom = Vector2.ONE * float(args["zoom"])  # wider overview shots
 		current_scene.camera.reset_smoothing()

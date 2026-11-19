@@ -21,14 +21,16 @@ const LOOK := {"skin": Color("dcb08a"), "metal": Color("57525e"), "cloth": Color
 
 
 func _ready() -> void:
-	art_id = ""  # drawn by its own code until its art pass phase
+	art_id = "enforcer"  # art pass sprite; falls back to the recoloured paper doll if the set is missing
 	super._ready()
 	radius = 7.0
 	for c in get_children():
 		if c is CollisionShape2D:
 			(c.shape as CircleShape2D).radius = 6.0
-	sprite.visible = false
 	number_color = Color("ffe7a3")
+	if art != null:
+		return
+	sprite.visible = false
 	# Paper doll like the heroes: Puny body + soldier outfit, recolored Concord iron and gilt.
 	for layer in [[Art.BODY, "body"], [Art.OUTFITS["soldier"], "soldier"]]:
 		var s := Sprite2D.new()
@@ -132,6 +134,9 @@ func _on_death() -> void:
 
 
 func _process(delta: float) -> void:
+	if art != null:
+		_process_enforcer_art(delta)
+		return
 	var col := 0
 	if dying_t >= 0.0:
 		dying_t += delta
@@ -157,6 +162,40 @@ func _process(delta: float) -> void:
 	overlay.queue_redraw()
 
 
+## The drawn Enforcer: the slam's 8 frames run over the wind-up (Ledger rising) and the stamp.
+func _process_enforcer_art(delta: float) -> void:
+	var row := art_row()
+	sprite.position = Vector2.ZERO
+	if dying_t >= 0.0:
+		dying_t += delta
+		var d := art.duration("death") if art.has("death") else 0.5
+		if art.has("death"):
+			art.apply(sprite, "death", row, dying_t)
+		modulate.a = maxf(1.0 - maxf(dying_t - d, 0.0) * 3.0, 0.0)
+		if dying_t > d + 0.35:
+			queue_free()
+			return
+	elif flash_t > 0.0 or state == State.STAGGER:
+		art.apply(sprite, "hurt", row, 0.6 - state_t if state == State.STAGGER else 0.12 - flash_t)
+	elif state == State.WINDUP:
+		var n := art.frames_of("attack")
+		var k := 1.0 - state_t / SLAM_WINDUP
+		art.apply_frame(sprite, "attack", row, clampi(int(k * (n - 2)), 0, n - 3))
+		sprite.position = Vector2(randf_range(-0.6, 0.6), 0)
+	elif state == State.RECOVER and state_t > 0.7:
+		var n := art.frames_of("attack")
+		art.apply_frame(sprite, "attack", row, n - 2 if state_t > 0.85 else n - 1)
+	else:
+		art.apply(sprite, "walk" if velocity.length() > 5.0 else "idle", row, anim_t)
+	queue_redraw()
+	overlay.queue_redraw()
+
+
+## Facing drives the sprite, not movement: he turns slowly, and his back is the weak side.
+func art_row() -> int:
+	return Hero.dir_row(facing)
+
+
 func _draw() -> void:
 	if dying_t >= 0.0:
 		return
@@ -173,14 +212,16 @@ func _draw() -> void:
 func _draw_overlay() -> void:
 	if dying_t >= 0.0:
 		return
-	# The Ledger: a gilt-edged book held out in front (drawn in front when facing down/sideways).
-	var p := facing * 7.0 + Vector2(0, -8)
-	overlay.draw_rect(Rect2(p - Vector2(3, 4), Vector2(6, 8)), Color("3b2a1e"))
-	overlay.draw_rect(Rect2(p - Vector2(3, 4), Vector2(6, 8)), Color("c9a53a"), false, 1.0)
+	var top := 10.0 if art != null else 0.0  # the drawn Enforcer stands taller than the paper doll
+	if art == null:
+		# The Ledger: a gilt-edged book held out in front (drawn in front when facing down/sideways).
+		var p := facing * 7.0 + Vector2(0, -8)
+		overlay.draw_rect(Rect2(p - Vector2(3, 4), Vector2(6, 8)), Color("3b2a1e"))
+		overlay.draw_rect(Rect2(p - Vector2(3, 4), Vector2(6, 8)), Color("c9a53a"), false, 1.0)
 	if taunt_t > 0.0:
-		overlay.draw_rect(Rect2(-1.5, -26, 3, 3), Color("f2a65a"))
+		overlay.draw_rect(Rect2(-1.5, -26 - top, 3, 3), Color("f2a65a"))
 	if state == State.WINDUP:
-		overlay.draw_string(ThemeDB.fallback_font, Vector2(-2, -22), "!", HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color("ff5d5d"))
+		overlay.draw_string(ThemeDB.fallback_font, Vector2(-2, -22 - top), "!", HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color("ff5d5d"))
 	if hp < max_hp:
-		overlay.draw_rect(Rect2(-8, -24, 16, 2), Color(0, 0, 0, 0.6))
-		overlay.draw_rect(Rect2(-8, -24, 16.0 * hp / max_hp, 2), Color("ffd166"))
+		overlay.draw_rect(Rect2(-8, -24 - top, 16, 2), Color(0, 0, 0, 0.6))
+		overlay.draw_rect(Rect2(-8, -24 - top, 16.0 * hp / max_hp, 2), Color("ffd166"))

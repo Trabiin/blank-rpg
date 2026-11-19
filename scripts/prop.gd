@@ -35,8 +35,10 @@ const KINDS := {
 	"lamppost": [30, 0, 1, 2, 3.0],
 	"noticeboard": [30, 0, 3, 2, 0.0, Vector2(36, 6)],
 }
+## Small growth you walk through (no collision).
+const NOBLOCK := ["fern", "drygrass", "reeds", "lilypad", "planks", "dock", "roots", "fungus", "inkspring"]
 ## Flat things lie on the ground: always drawn under characters.
-const FLAT := ["pond", "bones", "skull", "garden"]
+const FLAT := ["pond", "bones", "skull", "garden", "lilypad", "planks", "inkspring", "dock"]
 
 var kind := "bush"
 var text := ""  # sign text, or a building's name plate
@@ -74,7 +76,7 @@ func _ready() -> void:
 	add_child(spr)
 	if has_art and not kind in FLAT and spr.texture.get_height() > 12:
 		Art.add_cast_shadow(self, spr.texture, 3.0)
-	if not KINDS.has(kind) and has_art:  # free-standing art: a footprint box from the sprite's size
+	if not KINDS.has(kind) and has_art and not kind in NOBLOCK:  # free-standing art: a footprint box from the sprite's size
 		k = k + [Vector2(spr.texture.get_width() * 0.8, minf(spr.texture.get_height() * 0.3, 28.0))]
 	if k.size() > 5:
 		var box: Vector2 = k[5]

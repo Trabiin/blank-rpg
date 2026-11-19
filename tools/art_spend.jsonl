@@ -448,3 +448,67 @@
 {"t": "2026-11-19T18:15:48Z", "phase": "town34", "tool": "pixellab", "what": "fence", "usd": 0.08202, "job": "0ff9200e-9683-4f12-af5f-32b4d4c5947a", "status": "completed"}
 {"t": "2026-11-19T18:17:35Z", "phase": "town34", "tool": "pixellab", "what": "tree", "usd": 0.08168, "job": "1a4578c6-2d63-4495-96bc-4eb916dad997", "status": "completed"}
 {"t": "2026-11-19T18:19:21Z", "phase": "town34", "tool": "pixellab", "what": "garden", "usd": 0.08203, "job": "ae99c42d-3400-400f-8aca-18ce3e649bc3", "status": "completed"}
+{"t": "2026-11-19T18:25:10Z", "phase": "4", "tool": "pixellab", "what": "phase4 tilesets", "usd": 0.00649, "job": "6eca732e-f06a-48b9-a28b-a34d746a31c8", "status": "completed"}
+{"t": "2026-11-19T18:25:16Z", "phase": "4", "tool": "pixellab", "what": "phase4 tilesets", "usd": 0.00676, "job": "40771cc7-d60a-43d6-814d-259425e45ff5", "status": "completed"}
+{"t": "2026-11-19T18:25:17Z", "phase": "4", "tool": "pixellab", "what": "phase4 tilesets", "usd": 0.0071, "job": "db3856f9-5e50-43ee-b225-385eaaa8dc2f", "status": "completed"}
+{"t": "2026-11-19T18:28:16Z", "phase": "phase4", "tool": "pixellab", "what": "fortree", "usd": 0.08282, "job": "ac17ab7d-310b-49c3-a4fb-ca137c493444", "status": "completed"}
+{"t": "2026-11-19T18:30:20Z", "phase": "phase4", "tool": "pixellab", "what": "forsmall", "usd": 0.08205, "job": "2a9e2483-bd92-4b7e-8cd6-25709a20b3f4", "status": "completed"}
+{"t": "2026-11-19T18:32:24Z", "phase": "phase4", "tool": "pixellab", "what": "marshsmall", "usd": 0.08362, "job": "bef62c81-03c1-4ed6-becb-1e7279890979", "status": "completed"}
+{"t": "2026-11-19T18:33:32Z", "phase": "phase4", "tool": "pixellab", "what": "mill", "usd": 0.0808, "job": "e93f22a9-1d13-4655-b0ba-115370fe44c4", "status": "completed"}
+{"t": "2026-11-19T18:35:11Z", "phase": "phase4", "tool": "pixellab", "what": "hillsmall", "usd": 0.08193, "job": "02a108ae-c2eb-4ada-8f34-ee77bd95f622", "status": "completed"}
+{"t": "2026-11-19T18:36:57Z", "phase": "phase4", "tool": "pixellab", "what": "roadsmall", "usd": 0.08218, "job": "97cecbfe-c8d3-4e9d-ba09-d2da4006f649", "status": "completed"}
+{"t": "2026-11-19T18:38:24Z", "phase": "phase4", "tool": "pixellab", "what": "tollbooth", "usd": 0.08093, "job": "f3a98d73-42ee-4305-922d-380e0bb937d8", "status": "completed"}
+{"t": "2026-11-19T18:39:52Z", "phase": "phase4", "tool": "pixellab", "what": "ferry", "usd": 0.08191, "job": "98f797a2-e4fe-49ee-805b-51fa3cad307f", "status": "completed"}
+{"t": "2026-11-19T18:44:23Z", "phase": "4", "tool": "pixellab", "what": "moth", "usd": 0.02701, "job": "f02eedd1-6511-41fd-b2b9-c86fc43af552", "status": "completed"}
+{"t": "2026-11-19T18:44:23Z", "phase": "4", "tool": "pixellab", "what": "base moth", "usd": 0.02701, "job": "f02eedd1-6511-41fd-b2b9-c86fc43af552", "status": "done"}
+{"t": "2026-11-19T18:46:12Z", "phase": "4", "tool": "pixellab", "what": "enforcer", "usd": 0.02701, "job": "7bd6d9ac-1ac5-42b2-8e23-15a74eac29a4", "status": "completed"}
+{"t": "2026-11-19T18:46:12Z", "phase": "4", "tool": "pixellab", "what": "base enforcer", "usd": 0.02701, "job": "7bd6d9ac-1ac5-42b2-8e23-15a74eac29a4", "status": "done"}
+{"t": "2026-11-19T18:48:46Z", "phase": "4", "tool": "pixellab", "what": "reedling", "usd": 0.03623, "job": "d63ee5e4-9642-4524-a5f0-ccc72ea1c4c9", "status": "completed"}
+{"t": "2026-11-19T18:48:46Z", "phase": "4", "tool": "pixellab", "what": "base reedling", "usd": 0.03623, "job": "d63ee5e4-9642-4524-a5f0-ccc72ea1c4c9", "status": "done"}
+{"t": "2026-11-19T18:51:03Z", "phase": "4", "tool": "pixellab", "what": "scarecrow", "usd": 0.03521, "job": "c870b9af-abf7-49ca-bfea-574bec255fdc", "status": "completed"}
+{"t": "2026-11-19T18:51:03Z", "phase": "4", "tool": "pixellab", "what": "base scarecrow", "usd": 0.03521, "job": "c870b9af-abf7-49ca-bfea-574bec255fdc", "status": "done"}
+{"t": "2026-11-19T18:53:31Z", "phase": "4", "tool": "pixellab", "what": "sellsword", "usd": 0.03206, "job": "2353f026-bad9-464f-8830-6555e51be8c4", "status": "completed"}
+{"t": "2026-11-19T18:53:32Z", "phase": "4", "tool": "pixellab", "what": "base sellsword", "usd": 0.03206, "job": "2353f026-bad9-464f-8830-6555e51be8c4", "status": "done"}
+{"t": "2026-11-19T18:55:35Z", "phase": "4", "tool": "pixellab", "what": "verity", "usd": 0.03319, "job": "334a489b-9068-4d13-95af-90b61659d67f", "status": "completed"}
+{"t": "2026-11-19T18:55:36Z", "phase": "4", "tool": "pixellab", "what": "base verity", "usd": 0.03319, "job": "334a489b-9068-4d13-95af-90b61659d67f", "status": "done"}
+{"t": "2026-11-19T18:57:38Z", "phase": "4", "tool": "pixellab", "what": "verity2", "usd": 0.02996, "job": "00b506e6-c3e3-4686-ae56-9ce198d85c1e", "status": "completed"}
+{"t": "2026-11-19T18:57:38Z", "phase": "4", "tool": "pixellab", "what": "base verity2", "usd": 0.02996, "job": "00b506e6-c3e3-4686-ae56-9ce198d85c1e", "status": "done"}
+{"t": "2026-11-19T18:58:26Z", "phase": "4", "tool": "pixellab", "what": "anim enforcer/idle/south", "usd": 0.0076, "job": "e2cf95c3-ce81-48b2-93c4-2f5063bdccbb", "status": "completed"}
+{"t": "2026-11-19T18:58:27Z", "phase": "4", "tool": "pixellab", "what": "anim enforcer/idle/south-east", "usd": 0.00731, "job": "78145b31-2781-4ece-a5dd-2d1d7a148815", "status": "completed"}
+{"t": "2026-11-19T18:58:27Z", "phase": "4", "tool": "pixellab", "what": "anim enforcer/idle/north", "usd": 0.00743, "job": "20bc7bf9-6c50-4396-9b03-e3bd485bfa74", "status": "completed"}
+{"t": "2026-11-19T18:58:32Z", "phase": "4", "tool": "pixellab", "what": "anim enforcer/idle/east", "usd": 0.00835, "job": "0675f554-9223-409a-b5d6-d49df669914b", "status": "completed"}
+{"t": "2026-11-19T18:58:32Z", "phase": "4", "tool": "pixellab", "what": "anim enforcer/idle/north-east", "usd": 0.00799, "job": "4ca6346f-525f-4e6b-9211-866a7a7c80d8", "status": "completed"}
+{"t": "2026-11-19T18:59:16Z", "phase": "4", "tool": "pixellab", "what": "anim moth/idle/south", "usd": 0.00811, "job": "b831d8d5-4c41-463d-a82b-6bed78d72dc3", "status": "completed"}
+{"t": "2026-11-19T18:59:22Z", "phase": "4", "tool": "pixellab", "what": "anim moth/idle/north-east", "usd": 0.00812, "job": "d73f5235-45e9-426c-b5e8-d2ff4e7a008d", "status": "completed"}
+{"t": "2026-11-19T18:59:30Z", "phase": "4", "tool": "pixellab", "what": "anim moth/idle/north", "usd": 0.00884, "job": "e8ec45c4-99e8-42b0-98a4-6ef11ebc77ea", "status": "completed"}
+{"t": "2026-11-19T18:59:42Z", "phase": "4", "tool": "pixellab", "what": "anim moth/idle/south-east", "usd": 0.01086, "job": "f24d856e-8690-4bab-b427-08266ce84179", "status": "completed"}
+{"t": "2026-11-19T18:59:42Z", "phase": "4", "tool": "pixellab", "what": "anim moth/idle/east", "usd": 0.01037, "job": "a695dd0f-7505-43ad-ab2e-be7c44947929", "status": "completed"}
+{"t": "2026-11-19T19:00:11Z", "phase": "4", "tool": "pixellab", "what": "anim moth/attack/south", "usd": 0.00793, "job": "78d8cbeb-3a59-40d5-bd36-fd23dca7f9d9", "status": "completed"}
+{"t": "2026-11-19T19:00:12Z", "phase": "4", "tool": "pixellab", "what": "anim moth/attack/east", "usd": 0.00788, "job": "f5e2ca93-70bf-4e28-a03c-9a57643dd6cd", "status": "completed"}
+{"t": "2026-11-19T19:00:19Z", "phase": "4", "tool": "pixellab", "what": "anim moth/attack/south-east", "usd": 0.00807, "job": "fca43be2-cb4a-4a40-8ae2-9b13eb4dad92", "status": "completed"}
+{"t": "2026-11-19T19:00:19Z", "phase": "4", "tool": "pixellab", "what": "anim moth/attack/north-east", "usd": 0.00823, "job": "051820e0-2f05-49e2-a088-3013114dbc15", "status": "completed"}
+{"t": "2026-11-19T19:00:19Z", "phase": "4", "tool": "pixellab", "what": "anim moth/attack/north", "usd": 0.00863, "job": "ef00f790-704e-4fcf-9b40-ddfa92fe9765", "status": "completed"}
+{"t": "2026-11-19T19:00:54Z", "phase": "4", "tool": "pixellab", "what": "anim enforcer/walk/south-east", "usd": 0.00784, "job": "f0b0c556-0454-48b0-a602-22e020c3a62d", "status": "completed"}
+{"t": "2026-11-19T19:00:55Z", "phase": "4", "tool": "pixellab", "what": "anim enforcer/walk/north-east", "usd": 0.00788, "job": "3925edde-ae03-479f-86ec-2415d2c4200e", "status": "completed"}
+{"t": "2026-11-19T19:01:02Z", "phase": "4", "tool": "pixellab", "what": "anim enforcer/walk/south", "usd": 0.00839, "job": "bc9b9471-869b-4ad0-b980-336fea3050f4", "status": "completed"}
+{"t": "2026-11-19T19:01:03Z", "phase": "4", "tool": "pixellab", "what": "anim enforcer/walk/north", "usd": 0.00838, "job": "4411fe6f-ea5b-46b6-9f74-4751e5a1fac5", "status": "completed"}
+{"t": "2026-11-19T19:01:45Z", "phase": "4", "tool": "pixellab", "what": "anim enforcer/attack/south", "usd": 0.00872, "job": "4f4ac0bf-0501-4b10-8f3a-9d57c6d8cb07", "status": "completed"}
+{"t": "2026-11-19T19:01:45Z", "phase": "4", "tool": "pixellab", "what": "anim enforcer/attack/south-east", "usd": 0.00845, "job": "4579f371-c28d-4734-8cf1-806f758e2b0e", "status": "completed"}
+{"t": "2026-11-19T19:01:45Z", "phase": "4", "tool": "pixellab", "what": "anim enforcer/attack/north", "usd": 0.0086, "job": "0f94f054-b472-4d51-8bab-22e5d0afc349", "status": "completed"}
+{"t": "2026-11-19T19:01:54Z", "phase": "4", "tool": "pixellab", "what": "anim enforcer/walk/east", "usd": 0.01444, "job": "09cd364c-b374-4db0-af75-a1522e451962", "status": "completed"}
+{"t": "2026-11-19T19:02:00Z", "phase": "4", "tool": "pixellab", "what": "anim enforcer/attack/east", "usd": 0.01033, "job": "274c511c-7335-4791-96c3-badaa069f81e", "status": "completed"}
+{"t": "2026-11-19T19:02:00Z", "phase": "4", "tool": "pixellab", "what": "anim enforcer/attack/north-east", "usd": 0.0101, "job": "8076d6b6-d379-4663-9f76-66a4791ab52a", "status": "completed"}
+{"t": "2026-11-19T19:02:23Z", "phase": "4", "tool": "pixellab", "what": "anim enforcer/hurt/north", "usd": 0.00751, "job": "c2f82353-d28b-4f83-ad7c-6282bb3ac75c", "status": "completed"}
+{"t": "2026-11-19T19:02:32Z", "phase": "4", "tool": "pixellab", "what": "anim enforcer/hurt/south", "usd": 0.00864, "job": "9ffce507-e3d8-4d18-922e-a7f0999ea2e0", "status": "completed"}
+{"t": "2026-11-19T19:02:32Z", "phase": "4", "tool": "pixellab", "what": "anim enforcer/hurt/east", "usd": 0.00821, "job": "8c24e096-3f1c-4764-93da-33a2c9c8783c", "status": "completed"}
+{"t": "2026-11-19T19:03:08Z", "phase": "4", "tool": "pixellab", "what": "anim reedling/idle/south-east", "usd": 0.00857, "job": "066409a7-3cfe-42f8-88aa-40f29d4b9207", "status": "completed"}
+{"t": "2026-11-19T19:03:08Z", "phase": "4", "tool": "pixellab", "what": "anim reedling/idle/east", "usd": 0.00823, "job": "4e481925-698d-4798-8c1c-91aaee4b8d86", "status": "completed"}
+{"t": "2026-11-19T19:03:08Z", "phase": "4", "tool": "pixellab", "what": "anim reedling/idle/north-east", "usd": 0.00814, "job": "f611bdb5-92d2-4f56-9e00-e7245c2953ec", "status": "completed"}
+{"t": "2026-11-19T19:03:09Z", "phase": "4", "tool": "pixellab", "what": "anim reedling/idle/north", "usd": 0.00794, "job": "a14490c7-4d43-4a0f-9431-04e992d19d1b", "status": "completed"}
+{"t": "2026-11-19T19:03:16Z", "phase": "4", "tool": "pixellab", "what": "anim reedling/idle/south", "usd": 0.00904, "job": "f3c44825-b209-4544-8306-299d4a7921e3", "status": "completed"}
+{"t": "2026-11-19T19:03:46Z", "phase": "4", "tool": "pixellab", "what": "anim enforcer/death/south", "usd": 0.01687, "job": "1eeb7018-011c-44c7-a819-4c83f03ab6d9", "status": "completed"}
+{"t": "2026-11-19T19:03:52Z", "phase": "4", "tool": "pixellab", "what": "anim reedling/walk/south-east", "usd": 0.00812, "job": "72e74739-2fa5-45c7-8f99-7fae00cdd49e", "status": "completed"}
+{"t": "2026-11-19T19:03:57Z", "phase": "4", "tool": "pixellab", "what": "anim reedling/walk/south", "usd": 0.0089, "job": "b1bb851a-740e-469a-95f1-dc4e7454e85e", "status": "completed"}
+{"t": "2026-11-19T19:03:58Z", "phase": "4", "tool": "pixellab", "what": "anim reedling/walk/north", "usd": 0.00868, "job": "1278a35e-0235-45cd-9596-1d41bde1e385", "status": "completed"}
+{"t": "2026-11-19T19:04:06Z", "phase": "4", "tool": "pixellab", "what": "anim reedling/walk/east", "usd": 0.00951, "job": "697cfe6a-5b63-447f-a35e-62dc23dfbb1c", "status": "completed"}
+{"t": "2026-11-19T19:04:06Z", "phase": "4", "tool": "pixellab", "what": "anim reedling/walk/north-east", "usd": 0.00887, "job": "65165c19-ef30-4e98-a1af-a5731c53bb37", "status": "completed"}

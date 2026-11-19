@@ -56,6 +56,8 @@ func _ready() -> void:
 	sprite.offset = Vector2(0, -4)
 	sprite.material = Art.recolor_material("slime", SLIME_COLORS)
 	add_child(sprite)
+	if has_meta("art"):  # data/enemies.json "sprite": a kind that reuses a script with its own art
+		art_id = str(get_meta("art"))
 	art = SpriteSet.of(art_id) if art_id != "" else null
 	if art != null:
 		sprite.material = null  # the art pass sprite replaces the recoloured slime
