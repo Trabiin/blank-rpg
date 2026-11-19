@@ -140,6 +140,18 @@ What that means in practice:
 - **Paid tier (~2,000/month):** the MVP pass is about **6 to 8 weeks of paid months** (2 months, about $24), the full
   game about 4 to 5 more paid months spread over the chapters. Pause the subscription between phases.
 
+### API vs subscription (prices checked 2026-11-19)
+
+| Service | Subscription | API (pay per call) | MVP estimate via API |
+|---|---|---|---|
+| PixelLab | $12/mo = 2,000 gens, $24/mo = 5,000, $50/mo = 10,000 | 8-direction character $0.03, animated direction $0.013 to $0.03, tileset $0.008 to $0.01, map object $0.01, small image/icon $0.007; Pro (bosses, big buildings) $0.08 to $0.15 | ~$25 to $60 incl. retries (subscription: ~$24) |
+| OpenAI images | ChatGPT Plus $20/mo (no published image count) | GPT Image 2.5 high ~$0.04 to $0.05 per portrait, xhigh ~$0.09; 2048 px key art ~$0.11 | ~$5 to $10 for ~95 portraits + painted art; full game ~$20 to $35 |
+
+The money is about even for PixelLab and clearly cheaper by API for OpenAI. The API's bigger win is workflow:
+Claude can generate, pick, palette-lock and wire in whole batches with no manual clicking, and only used calls
+are paid. It needs API keys added as environment secrets (never pasted in chat) and the two API hosts allowed
+on the network, plus a spend cap on each account.
+
 ChatGPT portraits: about **90 images for the MVP** (incl. retries), **~300 for the full game**. On the free tier that
 is several weeks of daily generating for the MVP; ChatGPT Plus for a month makes it a few sessions.
 
