@@ -495,7 +495,7 @@ func _gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:
 		hovered = _province_at(event.position)
 		ledger_hover = _res_rect().has_point(event.position)
-	elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+	elif Prompts.tapped(event):
 		var i := _province_at(event.position)
 		if i >= 0:
 			if i == selected:

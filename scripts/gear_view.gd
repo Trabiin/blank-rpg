@@ -227,7 +227,7 @@ func _shop_pick(i: int) -> void:
 
 
 func _gui_input(event: InputEvent) -> void:
-	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+	if Prompts.tapped(event):
 		var p: Vector2 = event.position
 		if _close_rect().has_point(p):
 			close()

@@ -133,7 +133,7 @@ func _gui_input(event: InputEvent) -> void:
 		for i in _row_rects.size():
 			if (_row_rects[i] as Rect2).has_point(event.position):
 				sel = i
-	elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+	elif Prompts.tapped(event):
 		for i in _row_rects.size():
 			if (_row_rects[i] as Rect2).has_point(event.position):
 				sel = i

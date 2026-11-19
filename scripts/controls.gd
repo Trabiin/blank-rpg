@@ -62,3 +62,22 @@ func _extend(action: String, keys: Array, axis: int, axis_value: float) -> void:
 		jm.axis = axis
 		jm.axis_value = axis_value
 		InputMap.action_add_event(action, jm)
+
+
+## Button prompts follow the device you last used (issue #23). window_input sees every
+## event before any screen can mark it handled.
+func _enter_tree() -> void:
+	get_tree().root.window_input.connect(Prompts.note)
+	# Godot's built-in ui_accept / ui_cancel have no gamepad buttons, so a pad could move
+	# through menus but never pick or back out. A confirms and B backs out everywhere.
+	_add_pad_button("ui_accept", JOY_BUTTON_A)
+	_add_pad_button("ui_cancel", JOY_BUTTON_B)
+
+
+func _add_pad_button(action: String, button: JoyButton) -> void:
+	for ev in InputMap.action_get_events(action):
+		if ev is InputEventJoypadButton and ev.button_index == button:
+			return
+	var jb := InputEventJoypadButton.new()
+	jb.button_index = button
+	InputMap.action_add_event(action, jb)
