@@ -70,6 +70,7 @@ func _on_choice(id: String) -> void:
 		"new":
 			Saves.pending = {}
 			Empire.reset()
+			Story.begin()  # New Game plays the story from the Prologue (issue #18)
 			get_tree().change_scene_to_file(GAME_SCENE)
 		"continue":
 			Saves.load_and_play(Saves.latest_slot())

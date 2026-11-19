@@ -19,6 +19,7 @@ const NewcomersView := preload("res://scripts/newcomers_view.gd")
 const SceneView := preload("res://scripts/scene_view.gd")
 const SiteScript := preload("res://scripts/building_site.gd")
 const DialogueBox := preload("res://scripts/dialogue_box.gd")
+const ChapterCard := preload("res://scripts/chapter_card.gd")
 const BanterScript := preload("res://scripts/banter.gd")
 
 const MAP := "res://maps/hollowmark.txt"
@@ -55,6 +56,8 @@ var gear_view  # gear_view.gd: party gear and the shop (issue #15)
 var newcomers_view
 var scene_view  # bond scenes started by talking to someone in town
 var dialogue_box  # dialogue_box.gd: talking to people in town
+var chapter_card  # chapter_card.gd: "Chapter 1 complete" and friends (issue #18)
+var story_beat := {}  # the story beat whose talk is playing (data/story.json beats)
 var banter  # banter.gd: people calling out as Ash walks past
 var sites := {}  # building id -> building_site.gd on its plot
 var lamp: Node2D  # Hollowmark's own Wardlamp, drawn once it is lit
@@ -162,7 +165,13 @@ func _ready() -> void:
 	dialogue_box = DialogueBox.new()
 	dialogue_box.visible = false
 	roster_layer.add_child(dialogue_box)
+	dialogue_box.finished.connect(_on_talk_finished)
+	chapter_card = ChapterCard.new()
+	roster_layer.add_child(chapter_card)
+	chapter_card.closed.connect(func(): call_deferred("_story_check"))
 	Empire.expedition_returned.connect(func(_r): _place_people())
+	Empire.expedition_returned.connect(func(_r): call_deferred("_story_check"))
+	Empire.lead_arrived.connect(func(_id): call_deferred("_story_check"))
 
 	var menu_layer := CanvasLayer.new()
 	menu_layer.layer = 5
@@ -201,6 +210,8 @@ func _ready() -> void:
 	camera.reset_smoothing()
 	if Empire.territory().find("hollowmark").get("owner", "") == "erased":
 		_on_hollowmark_lost()
+	else:
+		call_deferred("_story_check")  # the story picks up where it left off (issue #18)
 
 
 func _build_walls() -> void:
@@ -390,7 +401,7 @@ func _use(t: Dictionary) -> void:
 	if t.is_empty():
 		return
 	if t["kind"] == "table":
-		_leave(Saves.COMMAND_SCENE)
+		_open_table()
 		return
 	if t["kind"] == "site":
 		if t["id"] == "guildhall" and Empire.level_of("guildhall") > 0:
@@ -464,9 +475,55 @@ func _talk_visitor(id: String) -> void:
 		_place_people()
 
 
+# ---------------------------------------------------------------- the story (issue #18)
+
+## The Command Table, unless the Concord still has it under seal (before the end of Chapter 1).
+func _open_table() -> void:
+	if Story.command_on():
+		_leave(Saves.COMMAND_SCENE)
+	else:
+		hud.say("The Concord's clerks have the table under seal. Not yours. Not yet.", 3.0)
+
+
+## Plays the next story beat in town if one is due and nothing else is on screen.
+func _story_check() -> void:
+	if leaving or not is_inside_tree() or menu.visible or dialogue_box.visible or chapter_card.visible:
+		return
+	if roster_view.visible or buildings_view.visible or expedition_view.visible or research_view.visible \
+			or diplomacy_view.visible or bonds_view.visible or scene_view.visible or newcomers_view.visible or gear_view.visible:
+		return
+	var b := Story.next_beat()
+	if b.is_empty():
+		return
+	story_beat = b
+	touch.release_all()
+	dialogue_box.play(b["talk"])
+
+
+func _on_talk_finished(id: String) -> void:
+	if story_beat.is_empty() or story_beat.get("talk", "") != id:
+		return
+	var b := story_beat
+	story_beat = {}
+	var then: String = b.get("then", "")
+	if then.begins_with("launch:"):  # straight into a story mission (the Chapter 1 breakout)
+		var m := Missions.find(then.substr(7))
+		if not m.is_empty():
+			# No autosave here: loading the last one replays the scene before the mission.
+			leaving = true
+			Missions.launch(m)
+			return
+	var card: Array = b.get("card", [])
+	if card.size() >= 2:
+		chapter_card.show_card(card[0], card[1])
+	else:
+		call_deferred("_story_check")
+
+
 # ---------------------------------------------------------------- clock, notices, leaving
 
 func _on_day_passed(d: int) -> void:
+	call_deferred("_story_check")
 	hud.toast("Day %d begins." % d, "Supplies ran out. People are going hungry." if Empire.hungry else "")
 
 
@@ -518,6 +575,7 @@ func open_menu(note := "") -> void:
 	menu.setup("Hollowmark", [
 		{"id": "resume", "label": "Resume"},
 		{"id": "table", "label": "Command Table", "detail": "the territory map"},
+		{"id": "story", "label": "Story", "detail": "the Act 1 checklist"},
 		{"id": "roster", "label": "Roster", "detail": "R"},
 		{"id": "buildings", "label": "Buildings", "detail": "B"},
 		{"id": "expeditions", "label": "Expeditions", "detail": "E"},
@@ -547,7 +605,15 @@ func _on_menu(id: String) -> void:
 		"resume", "cancel":
 			_close_menu()
 		"table":
-			_leave(Saves.COMMAND_SCENE)
+			if Story.command_on():
+				_leave(Saves.COMMAND_SCENE)
+			else:
+				_close_menu()
+				_open_table()
+		"story":
+			menu.setup("Story", [{"id": "menu_back", "label": "Back"}], Story.summary())
+		"menu_back":
+			open_menu()
 		"roster":
 			_close_menu()
 			roster_view.open()
@@ -597,7 +663,9 @@ func _on_slot(id: String) -> void:
 # ---------------------------------------------------------------- frame
 
 func _process(delta: float) -> void:
-	Empire.tick(delta)
+	# The clock only runs once Ash runs the town (end of Chapter 1), and stops for story scenes.
+	if Story.command_on() and not dialogue_box.visible and not chapter_card.visible:
+		Empire.tick(delta)
 	Empire.playtime += delta
 	autosave_t -= delta
 	if autosave_t <= 0.0:
@@ -617,12 +685,13 @@ func _process(delta: float) -> void:
 
 	var frame := Engine.get_process_frames()
 	var screen_open: bool = roster_view.visible or buildings_view.visible or expedition_view.visible or research_view.visible \
-			or diplomacy_view.visible or bonds_view.visible or scene_view.visible or newcomers_view.visible or gear_view.visible
+			or diplomacy_view.visible or bonds_view.visible or scene_view.visible or newcomers_view.visible or gear_view.visible \
+			or dialogue_box.visible or chapter_card.visible
 	if screen_open or frame == roster_view.closed_frame or frame == buildings_view.closed_frame \
 			or frame == expedition_view.closed_frame or frame == research_view.closed_frame \
 			or frame == diplomacy_view.closed_frame or frame == bonds_view.closed_frame \
 			or frame == scene_view.closed_frame or frame == newcomers_view.closed_frame or frame == menu_closed_frame \
-			or frame == gear_view.closed_frame:
+			or frame == gear_view.closed_frame or frame == dialogue_box.closed_frame or frame == chapter_card.closed_frame:
 		leader.controlled = not screen_open
 		return
 	leader.controlled = true

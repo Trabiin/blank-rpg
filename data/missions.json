@@ -1,5 +1,5 @@
 {
-	"_comment": "Missions launched from the territory map (issue #5). province: where the map offers it. map: text map in maps/. story: true = plays once. after: only offered once that mission is cleared. objective: {kind, ...} read by scripts/objective.gd (kills: count). rewards: paid on success (gilt, supplies, ink, renown, insight). fray: change to the province's Fray on success (negative pushes the Blank back). enemies: optional spawn weights that replace the province roster in data/enemies.json (#16). loot: per-kill chance [0-1] and amount range of what the party picks up on the way; retreating keeps it, being wiped out loses it.",
+	"_comment": "Missions launched from the territory map (issue #5). province: where the map offers it. map: text map in maps/. story: true = plays once. after: only offered once that mission is cleared. needs: story conditions (scripts/story.gd Story.meets, issue #18). intro: a talk played when the mission starts (first time only). objective: {kind, ...} read by scripts/objective.gd (kills: count). rewards: paid on success (gilt, supplies, ink, renown, insight). fray: change to the province's Fray on success (negative pushes the Blank back). enemies: optional spawn weights that replace the province roster in data/enemies.json (#16). loot: per-kill chance [0-1] and amount range of what the party picks up on the way; retreating keeps it, being wiped out loses it.",
 	"missions": [
 		{
 			"id": "meadow_prologue", "name": "Prologue: Spat Out", "province": "meadow", "story": true,
@@ -10,6 +10,27 @@
 			"rewards": {"gilt": 40, "supplies": 15, "ink": 2, "renown": 2},
 			"fray": -8,
 			"loot": {"gilt": [0.35, 1, 3], "ink": [0.05, 1, 1]}
+		},
+		{
+			"id": "ch1_breakout", "name": "Chapter 1: No Such Person", "province": "hollowmark", "story": true,
+			"needs": {"active": true},
+			"map": "res://maps/tax_office.txt", "intro": "ch1_breakout_intro",
+			"brief": "The Blank is eating the Concord tax office with you locked inside it. Bran has the key. The wardens have other ideas.",
+			"objective": {"kind": "kills", "count": 10, "label": "Break out past the wardens"},
+			"enemies": {"enforcer": 1, "nibbler": 3},
+			"rewards": {"gilt": 30, "supplies": 10, "renown": 1},
+			"loot": {"gilt": [0.4, 1, 3]}
+		},
+		{
+			"id": "act1_concord", "name": "The Concord Answers", "province": "oldmill", "story": true,
+			"needs": {"seen": ["act1_writ"]},
+			"map": "res://maps/frayed_meadow.txt", "intro": "act1_concord_intro",
+			"brief": "A Concord tithe column is marching on Hollowmark to collect 'all outstanding sums', meaning you. Break it at Old Mill Crossing before it reaches the gate.",
+			"objective": {"kind": "kills", "count": 16, "label": "Break the tithe column"},
+			"enemies": {"enforcer": 2, "nibbler": 1},
+			"rewards": {"gilt": 80, "supplies": 20, "ink": 2, "renown": 2},
+			"fray": -5,
+			"loot": {"gilt": [0.45, 2, 4], "supplies": [0.2, 1, 2], "ink": [0.05, 1, 1]}
 		},
 		{
 			"id": "meadow_patrol", "name": "Patrol: Frayed Meadow", "province": "meadow", "after": "meadow_prologue",
