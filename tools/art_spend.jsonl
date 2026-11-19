@@ -427,3 +427,24 @@
 {"t": "2026-11-19T13:44:56Z", "phase": "3s", "tool": "pixellab", "what": "pro scriptorium1", "usd": 0.1165, "job": "ff2e0809-2e22-4575-b9f8-d7acc6ffff82", "status": "completed"}
 {"t": "2026-11-19T13:46:14Z", "phase": "3s", "tool": "pixellab", "what": "pro guildhall2", "usd": 0.11644, "job": "53923d41-8b7f-422f-ba61-6245f775c4c0", "status": "completed"}
 {"t": "2026-11-19T16:41:36Z", "phase": "house-angle-test", "tool": "pixellab", "what": "house 3/4 test", "usd": 0.08072, "job": "8563a0f3-241f-45df-90ef-c9ecef82e6e1", "status": "completed"}
+{"t": "2026-11-19T17:57:20Z", "phase": "town34", "tool": "pixellab", "what": "townhall", "usd": 0.08057, "job": "aab3095f-52ba-428c-beff-a99b8720d735", "status": "completed"}
+{"t": "2026-11-19T17:58:16Z", "phase": "town34", "tool": "pixellab", "what": "tavern", "usd": 0.08079, "job": "c61a851e-0f9f-4946-846a-3b7824991ce6", "status": "completed"}
+{"t": "2026-11-19T17:59:19Z", "phase": "town34", "tool": "pixellab", "what": "stores", "usd": 0.08052, "job": "dca0b283-8e70-4bf2-b61f-c23bbdc016ad", "status": "completed"}
+{"t": "2026-11-19T18:00:54Z", "phase": "town34", "tool": "pixellab", "what": "barracks3", "usd": 0.08068, "job": "112a2f2d-84a4-4641-bf66-1d8cb6bbac19", "status": "completed"}
+{"t": "2026-11-19T18:01:56Z", "phase": "town34", "tool": "pixellab", "what": "infirmary3", "usd": 0.08056, "job": "91479525-80a8-4246-903f-23c4b07f965f", "status": "completed"}
+{"t": "2026-11-19T18:03:05Z", "phase": "town34", "tool": "pixellab", "what": "inkworks3", "usd": 0.08045, "job": "879c49bd-c308-4c41-9793-f8dfc3c61c30", "status": "completed"}
+{"t": "2026-11-19T18:04:13Z", "phase": "town34", "tool": "pixellab", "what": "scriptorium3", "usd": 0.08068, "job": "de2afcde-3764-4ea0-9639-a7c3262c7ed4", "status": "completed"}
+{"t": "2026-11-19T18:05:16Z", "phase": "town34", "tool": "pixellab", "what": "guildhall3", "usd": 0.08052, "job": "faf48109-c16b-4bc9-97e5-d420dc617afb", "status": "completed"}
+{"t": "2026-11-19T18:06:50Z", "phase": "town34", "tool": "pixellab", "what": "houseA", "usd": 0.08074, "job": "612a3f08-2049-46d2-8023-1b312893a2e7", "status": "completed"}
+{"t": "2026-11-19T18:06:57Z", "phase": "town34", "tool": "pixellab", "what": "barracks1", "usd": 0.08064, "job": "3482992e-bfc4-431b-9d3b-e181485da741", "status": "completed"}
+{"t": "2026-11-19T18:07:59Z", "phase": "town34", "tool": "pixellab", "what": "houseB", "usd": 0.08054, "job": "bf64df2e-6e37-4dd7-8075-4c8afaff61a0", "status": "completed"}
+{"t": "2026-11-19T18:09:17Z", "phase": "town34-levels", "tool": "pixellab", "what": "levels", "usd": 0.00812, "job": "ce25820e-c19d-42f4-99bb-79213bffa1dc", "status": "completed"}
+{"t": "2026-11-19T18:09:17Z", "phase": "town34-levels", "tool": "pixellab", "what": "levels", "usd": 0.00786, "job": "58af545b-ce9d-42c3-87fd-6b855d11ebc6", "status": "completed"}
+{"t": "2026-11-19T18:09:18Z", "phase": "town34-levels", "tool": "pixellab", "what": "levels", "usd": 0.00801, "job": "1badee3f-0eff-46c3-8c11-a9902ba1ba07", "status": "completed"}
+{"t": "2026-11-19T18:10:59Z", "phase": "town34-levels", "tool": "pixellab", "what": "edit 1", "usd": 0.08059, "job": "3f7de5ff-89ad-4a24-86f5-ecefb15638e9", "status": "completed"}
+{"t": "2026-11-19T18:12:56Z", "phase": "town34-levels", "tool": "pixellab", "what": "edit 2", "usd": 0.08058, "job": "95e56cd2-4fc8-4f6f-98ba-47ddbcd8fd41", "status": "completed"}
+{"t": "2026-11-19T18:14:05Z", "phase": "town34-levels", "tool": "pixellab", "what": "edit 1", "usd": 0.08021, "job": "35ae1326-3d31-4751-a9ba-53ef2d3b0a0b", "status": "completed"}
+{"t": "2026-11-19T18:15:26Z", "phase": "town34-levels", "tool": "pixellab", "what": "edit 2", "usd": 0.08029, "job": "5c9d701a-a679-447e-a9f9-51903ec86742", "status": "completed"}
+{"t": "2026-11-19T18:15:48Z", "phase": "town34", "tool": "pixellab", "what": "fence", "usd": 0.08202, "job": "0ff9200e-9683-4f12-af5f-32b4d4c5947a", "status": "completed"}
+{"t": "2026-11-19T18:17:35Z", "phase": "town34", "tool": "pixellab", "what": "tree", "usd": 0.08168, "job": "1a4578c6-2d63-4495-96bc-4eb916dad997", "status": "completed"}
+{"t": "2026-11-19T18:19:21Z", "phase": "town34", "tool": "pixellab", "what": "garden", "usd": 0.08203, "job": "ae99c42d-3400-400f-8aca-18ce3e649bc3", "status": "completed"}

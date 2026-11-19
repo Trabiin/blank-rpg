@@ -40,7 +40,7 @@ void fragment() {
 		+ texture(TEXTURE, (px + vec2(4.0, -4.0)) * to_uv).g
 		+ texture(TEXTURE, (px + vec2(-4.0, 4.0)) * to_uv).g
 		+ texture(TEXTURE, (px + vec2(4.0, 4.0)) * to_uv).g);
-	mp += (value_noise(px / 5.0) - 0.5) * 0.35;
+	mp += (value_noise(px / 5.0) - 0.5) * 0.2;
 	vec4 col = vec4(0.0);
 	if (m <= 0.52 && mp > 0.5) {
 		float n = value_noise(px / 3.0) + (hash(floor(px)) - 0.5) * 0.25;

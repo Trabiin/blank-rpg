@@ -125,16 +125,16 @@
 			]}
 		],
 		"hollowmark": [
-			{"id": "town_tavern", "rect": [19, 4, 10, 7], "needs": ["tobble"], "lines": [
+			{"id": "town_tavern", "rect": [29, 5, 9, 8], "needs": ["tobble"], "lines": [
 				["tobble", "You walk past my door again without coming in, I'll start a rumour about you. A good one. Worse."]
 			]},
-			{"id": "town_graves", "rect": [1, 21, 11, 9], "needs": ["pell"], "lines": [
+			{"id": "town_graves", "rect": [1, 22, 10, 9], "needs": ["pell"], "lines": [
 				["pell", "Careful! That one's not ready yet. Well. It's ready. Nobody's ready for it.", "happy"]
 			]},
-			{"id": "town_stores", "rect": [30, 4, 9, 7], "needs": ["quill"], "lines": [
+			{"id": "town_stores", "rect": [36, 3, 9, 7], "needs": ["quill"], "lines": [
 				["quill", "If you're thinking of borrowing from the stores, write it down first. I'll know either way.", "smug"]
 			]},
-			{"id": "town_gate", "rect": [19, 23, 9, 7], "needs": ["bran"], "lines": [
+			{"id": "town_gate", "rect": [19, 25, 10, 7], "needs": ["bran"], "lines": [
 				["bran", "Gate's quiet. I hate quiet. Quiet means nobody's paying anyone to be loud."]
 			]}
 		]

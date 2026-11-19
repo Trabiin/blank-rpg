@@ -36,7 +36,7 @@ const KINDS := {
 	"noticeboard": [30, 0, 3, 2, 0.0, Vector2(36, 6)],
 }
 ## Flat things lie on the ground: always drawn under characters.
-const FLAT := ["pond", "bones", "skull"]
+const FLAT := ["pond", "bones", "skull", "garden"]
 
 var kind := "bush"
 var text := ""  # sign text, or a building's name plate

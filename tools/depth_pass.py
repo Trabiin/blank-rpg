@@ -7,7 +7,7 @@ in palette colours only (each darkening is one step down the material's own ramp
   - contact shade: the bottom rows of every column drop 1 step, so the sprite sits on the ground
   - side shade: the rightmost wall column drops 1 step (light comes from the top left)
 Variants recolour one material ramp into another (slate roof -> clay roof, wood -> darker wood) and can
-sprinkle moss on a roof, so one generated house becomes several that don't read as copies.
+sprinkle moss on a roof. Houses no longer need them: each style-locked call returns 4 different houses.
 
 Originals live in tools/art_src/ (copied there on the first run), so rerunning never darkens twice:
     python3 tools/depth_pass.py
@@ -176,16 +176,11 @@ def depth(img, eaves=True, contact=2, side=True):
 
 
 # Which sprites get which pass, and the variants to write next to them (name suffix -> recipe).
-PROPS = ["house", "tavern", "townhall", "stores", "stall", "well", "cart", "crates", "barrels",
+PROPS = ["house", "house_v1", "house_v2", "house_v3", "house_v4", "house_a", "house_b", "house_c", "house_d",
+         "house_e", "house_f", "house_g", "house_h", "fence", "fence_v1", "tree", "tree_v1", "tree_v2", "tree_v3",
+         "tavern", "townhall", "stores", "stall", "well", "cart", "crates", "barrels",
          "produce", "noticeboard", "bench", "fountain", "command_table"]
 VARIANTS = {
-    "house": {
-        "_v1": [("roof", "clay")],
-        "_v2": [("moss", 3)],
-        "_v3": [("roof", "clay"), ("shift", "wood", -1), ("moss", 7)],
-        "_v4": [("roof", "slate"), ("shift", "wood", 1), ("shift", "plaster", -1)],
-        "_v5": [("roof", "slate"), ("moss", 11)],
-    },
     "crates": {"_v1": [("shift", "wood", -1)], "_v2": [("shift", "wood", 1)]},
     "barrels": {"_v1": [("shift", "wood", -1)], "_v2": [("shift", "wood", 1)]},
     "stall": {"_v1": [("shift", "wood", -1)]},
