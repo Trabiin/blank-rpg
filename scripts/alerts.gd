@@ -237,11 +237,12 @@ static func goal() -> Dictionary:
 			continue
 		if Story.meets(g.get("done", {})):
 			continue
-		return {"text": g.get("text", ""), "hint": g.get("hint", ""), "target": _goal_target(g.get("done", {}))}
+		return {"text": g.get("text", ""), "hint": g.get("hint", ""), "target": goal_target(g.get("done", {}))}
 	return {}
 
 
-static func _goal_target(done: Dictionary) -> Dictionary:
+## Where a story goal can be worked on: its mission on the map, the gate, or a rescue (the journal uses it too).
+static func goal_target(done: Dictionary) -> Dictionary:
 	for id in done.get("cleared", []):
 		var m := Missions.find(id)
 		if not m.is_empty() and Missions.offered(m) and not Missions.cleared(id):

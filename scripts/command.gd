@@ -77,6 +77,8 @@ const GearViewScript := preload("res://scripts/gear_view.gd")
 var gear_view  # gear_view.gd: party gear and the shop (issue #15)
 const NewcomersView := preload("res://scripts/newcomers_view.gd")
 var newcomers_view
+const JournalView := preload("res://scripts/journal_view.gd")
+var journal_view  # quest log, people, codex, history (issue #114)
 var party_picker  # party_picker.gd: who goes on the mission
 var autosave_t := AUTOSAVE_EVERY
 var fog_tex: ImageTexture  # mist over the regions the story has not opened (issue #53)
@@ -181,6 +183,10 @@ func _ready() -> void:
 	gear_view = GearViewScript.new()
 	gear_view.visible = false
 	roster_layer.add_child(gear_view)
+	journal_view = JournalView.new()
+	journal_view.visible = false
+	roster_layer.add_child(journal_view)
+	journal_view.go.connect(alert_go)
 	party_picker.confirmed.connect(_launch_mission)
 	party_picker.roster_requested.connect(_roster_from_picker)
 
@@ -247,7 +253,8 @@ func alerts_blocked() -> bool:
 	return get_tree().paused or menu.visible or slot_menu.visible or over_menu.visible or brief_menu.visible \
 		or frame == menu_closed_frame or roster_view.visible or buildings_view.visible or governor_view.visible \
 		or expedition_view.visible or research_view.visible or diplomacy_view.visible or bonds_view.visible \
-		or newcomers_view.visible or party_picker.visible or gear_view.visible
+		or newcomers_view.visible or party_picker.visible or gear_view.visible \
+		or journal_view.visible
 
 
 ## "Go there": select the province (and open the mission's briefing when it can be played now),
@@ -320,6 +327,7 @@ func _menu_items(note := "") -> void:
 		{"id": "bonds", "label": "Bonds", "detail": Prompts.key("bonds")},
 		{"id": "newcomers", "label": "Newcomers", "detail": Prompts.key("newcomers")},
 		{"id": "gear", "label": "Party gear & shop", "detail": Prompts.key("gear")},
+		{"id": "journal", "label": "Journal", "detail": Prompts.key("journal")},
 		{"id": "save", "label": "Save game"},
 		{"id": "load", "label": "Load game", "enabled": Saves.latest_slot() != "", "note": "(no saves yet)"},
 		{"id": "options", "label": "Options"},
@@ -378,6 +386,9 @@ func _on_menu(id: String) -> void:
 		"gear":
 			_close_menu()
 			gear_view.open("town")
+		"journal":
+			_close_menu()
+			journal_view.open()
 		"title":
 			_leave(TITLE_SCENE)
 
@@ -747,7 +758,8 @@ func _process(delta: float) -> void:
 			or bonds_view.visible or frame == bonds_view.closed_frame \
 			or newcomers_view.visible or frame == newcomers_view.closed_frame \
 			or party_picker.visible or frame == party_picker.closed_frame \
-			or gear_view.visible or frame == gear_view.closed_frame:
+			or gear_view.visible or frame == gear_view.closed_frame \
+			or journal_view.visible or frame == journal_view.closed_frame:
 		return
 	if Input.is_action_just_pressed("roster"):
 		roster_view.open()
@@ -775,6 +787,9 @@ func _process(delta: float) -> void:
 		return
 	if Input.is_action_just_pressed("gear"):
 		gear_view.open("town")
+		return
+	if Input.is_action_just_pressed("journal"):
+		journal_view.open()
 		return
 	for i in Empire.SPEEDS.size():
 		if Input.is_action_just_pressed("clock_speed_%d" % i):
@@ -923,6 +938,8 @@ func _gui_input(event: InputEvent) -> void:
 		research_view.open()
 	elif _diplomacy_button_rect().has_point(tp):
 		diplomacy_view.open()
+	elif _journal_button_rect().has_point(tp):
+		journal_view.open()
 	elif _town_button_rect().has_point(tp):
 		_leave(Saves.HUB_SCENE)
 	elif _res_rect().has_point(tp):
@@ -938,7 +955,7 @@ func _gui_input(event: InputEvent) -> void:
 ## The screen buttons that sit over the map's top edge.
 func _over_map_buttons(pos: Vector2) -> bool:
 	for r in [_roster_button_rect(), _buildings_button_rect(), _town_button_rect(), _expeditions_button_rect(),
-			_research_button_rect(), _diplomacy_button_rect()]:
+			_research_button_rect(), _diplomacy_button_rect(), _journal_button_rect()]:
 		if (r as Rect2).has_point(pos):
 			return true
 	return false
@@ -1124,6 +1141,12 @@ func _diplomacy_button_rect() -> Rect2:
 	return Rect2(rs.position - Vector2(90, 0), Vector2(86, 16))
 
 
+## Second row, left of Diplomacy (issue #114).
+func _journal_button_rect() -> Rect2:
+	var db := _diplomacy_button_rect()
+	return Rect2(db.position - Vector2(78, 0), Vector2(74, 16))
+
+
 func _speed_rect(i: int) -> Rect2:
 	return Rect2(Vector2(452 + i * 34, 3), Vector2(31, 15))
 
@@ -1235,6 +1258,10 @@ func _draw_overlay(c: CanvasItem) -> void:
 		dtext = "Ask for aid!"
 		dcol = GOLD
 	_text_c(Vector2(db.get_center().x, db.position.y + 12), dtext + _k("diplomacy"), 9, dcol)
+	var jb := _journal_button_rect()
+	UiSkin.panel(_cv, jb, "button")
+	var jnew := Journal.unread_count() > 0
+	_text_c(Vector2(jb.get_center().x, jb.position.y + 12), "Journal%s" % (" *" if jnew else "") + _k("journal"), 9, GOLD if jnew else Color(0.85, 0.82, 0.76))
 	_draw_legend()
 	_draw_panel()
 	if toast_t > 0.0:

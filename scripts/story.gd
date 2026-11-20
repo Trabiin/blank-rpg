@@ -132,22 +132,3 @@ static func current_goal() -> Dictionary:
 		if not g["done"]:
 			return g
 	return {}
-
-
-## The Story screen's text: the chapter, then the checklist.
-static func summary() -> String:
-	var lines := []
-	if not active():
-		lines.append("This campaign started before the story was added, so Chapter 1 is skipped.")
-	elif not Missions.cleared("meadow_prologue"):
-		lines.append("Prologue: Spat Out")
-	elif not Missions.cleared(BREAKOUT):
-		lines.append("Chapter 1: No Such Person")
-	elif not Missions.cleared("auditor_duel"):
-		lines.append("Act 1: The Unregistered Town")
-	else:
-		lines.append("Act 1 complete: The Unregistered Town. Verity Hale has written. Hold the Marches.")
-	lines.append("")
-	for g in goals():
-		lines.append("%s  %s%s" % ["[x]" if g["done"] else "[ ]", g["text"], "" if g["done"] or g["hint"] == "" else "   (%s)" % g["hint"]])
-	return "\n".join(lines)

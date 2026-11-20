@@ -1,5 +1,5 @@
 {
-	"_comment": "The main story (issue #18, scripts/story.gd). speakers and talks use the same format as data/dialogue.json and are merged into it by Dialogue.data(), so Dialogue.talk(\"ch1_arrest\") works anywhere. beats: what plays in Hollowmark, checked in order every time Ash is in town; the first beat whose conditions hold and whose talk has not been seen plays. A beat: talk (id), when (conditions, see Story.meets: active (a campaign started with the story on), cleared, not_cleared, seen, joined, renown, held, day), then (what happens after the talk: launch:<mission id>, command_on, act1_end, open_region:<region id> to lift the fog over a region of the territory map; several can be joined with commas), card ([title, subtitle] shown after the talk). goals: the Act 1 checklist shown in the Story screen (Esc -> Story): text, hint, done (conditions), show (conditions; hidden until they hold).",
+	"_comment": "The main story (issue #18, scripts/story.gd). speakers and talks use the same format as data/dialogue.json and are merged into it by Dialogue.data(), so Dialogue.talk(\"ch1_arrest\") works anywhere. beats: what plays in Hollowmark, checked in order every time Ash is in town; the first beat whose conditions hold and whose talk has not been seen plays. A beat: talk (id), when (conditions, see Story.meets: active (a campaign started with the story on), cleared, not_cleared, seen, joined, renown, held, day), then (what happens after the talk: launch:<mission id>, command_on, act1_end, open_region:<region id> to lift the fog over a region of the territory map; several can be joined with commas), card ([title, subtitle] shown after the talk). goals: the story checklist, shown in the journal's Quests tab (I, issue #114) under the chapter they belong to: text, chapter (a chapter id from data/journal.json), hint, done (conditions), show (conditions; hidden until they hold).",
 	"speakers": {
 		"clerk": {"name": "Clerk Pettigrew", "color": "b8a888", "colors": {"skin": "e0c0a0", "cloth": "4a4a58", "trim": "c9a54a", "hair": "6a6a6a"}},
 		"governor": {"name": "Governor Thale", "color": "c9a54a", "colors": {"skin": "e8c8b0", "cloth": "6a2a2a", "trim": "e0c060", "hair": "c8c0b0"}},
@@ -101,14 +101,14 @@
 			"card": ["Act 1 complete: The Unregistered Town", "Verity Hale has made her offer. Until she makes her move, the Marches are yours to hold. New goals are under Story in the pause menu."]}
 	],
 	"goals": [
-		{"text": "Escape the tax office", "hint": "Chapter 1", "done": {"cleared": ["ch1_breakout"]}, "show": {"active": true}},
-		{"text": "Take charge of Hollowmark", "hint": "Chapter 1", "done": {"seen": ["ch1_takeover"]}, "show": {"active": true}},
-		{"text": "Find the hedge-witch in the Gutterwoods", "hint": "Rescue job (E) or Rescue mission on the map", "done": {"joined": ["gristle"]}, "show": {"seen": ["act1_rumours"]}},
-		{"text": "Free the deserter on Tithe Road", "hint": "Rescue job (E) or Rescue mission on the map", "done": {"joined": ["ninefingers"]}, "show": {"seen": ["act1_rumours"]}},
-		{"text": "The Concord Answers: break the tithe column", "hint": "story mission at Old Mill Crossing", "done": {"cleared": ["act1_concord"]}, "show": {"seen": ["act1_writ"]}},
-		{"text": "The Auditor: stop him on the Tithe Road", "hint": "story mission at Tithe Road", "done": {"cleared": ["auditor_duel"]}, "show": {"seen": ["act1_concord_after"]}},
-		{"text": "Take Whitewater back from the Blank", "hint": "Reclaim mission on the territory map, then claim it with a governor", "done": {"owns": ["whitewater"]}, "show": {"seen": ["act1_end"]}},
-		{"text": "Hold six provinces", "hint": "claim free neighbours from the Command Table", "done": {"held": 6}, "show": {"seen": ["act1_end"]}},
-		{"text": "Win a seventh province by treaty", "hint": "a faction that likes you enough will cede land (Diplomacy, F)", "done": {"held": 7}, "show": {"seen": ["act1_end"]}}
+		{"text": "Escape the tax office", "chapter": "ch1", "hint": "Get past the wardens and out through the front door", "done": {"cleared": ["ch1_breakout"]}, "show": {"active": true}},
+		{"text": "Take charge of Hollowmark", "chapter": "ch1", "hint": "Walk back into the square at dawn", "done": {"seen": ["ch1_takeover"]}, "show": {"active": true}},
+		{"text": "Find the hedge-witch in the Gutterwoods", "chapter": "act1", "hint": "Rescue job (E) or Rescue mission on the map", "done": {"joined": ["gristle"]}, "show": {"seen": ["act1_rumours"]}},
+		{"text": "Free the deserter on Tithe Road", "chapter": "act1", "hint": "Rescue job (E) or Rescue mission on the map", "done": {"joined": ["ninefingers"]}, "show": {"seen": ["act1_rumours"]}},
+		{"text": "The Concord Answers: break the tithe column", "chapter": "act1", "hint": "story mission at Old Mill Crossing", "done": {"cleared": ["act1_concord"]}, "show": {"seen": ["act1_writ"]}},
+		{"text": "The Auditor: stop him on the Tithe Road", "chapter": "act1", "hint": "story mission at Tithe Road", "done": {"cleared": ["auditor_duel"]}, "show": {"seen": ["act1_concord_after"]}},
+		{"text": "Take Whitewater back from the Blank", "chapter": "act1", "hint": "Reclaim mission on the territory map, then claim it with a governor", "done": {"owns": ["whitewater"]}, "show": {"seen": ["act1_end"]}},
+		{"text": "Hold six provinces", "chapter": "act1", "hint": "claim free neighbours from the Command Table", "done": {"held": 6}, "show": {"seen": ["act1_end"]}},
+		{"text": "Win a seventh province by treaty", "chapter": "act1", "hint": "a faction that likes you enough will cede land (Diplomacy, F)", "done": {"held": 7}, "show": {"seen": ["act1_end"]}}
 	]
 }

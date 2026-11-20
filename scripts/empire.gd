@@ -126,6 +126,8 @@ var satchel := {}
 var ai_presets := {}
 ## Charged tech mode per recruit id under AI: "auto" or "call" (scripts/ally_techs.gd).
 var ai_techs := {}
+## The journal's own state (scripts/journal.gd, issue #114): enemies met, history log, codex read markers.
+var journal := {}
 
 
 func territory() -> Territory:
@@ -191,6 +193,7 @@ func reset() -> void:
 	last_mission = {}
 	progress = Progress.fresh()
 	visitors = {}
+	journal = Journal.fresh()
 	rng.seed = 1234
 	if _territory != null:
 		_territory.reload_data()
@@ -1096,6 +1099,7 @@ func _resolve_expedition(e: Dictionary) -> void:
 		"chance": int(odds["chance"]), "lines": lines, "read": false})
 	if reports.size() > REPORTS_KEPT:
 		reports.resize(REPORTS_KEPT)
+	Journal.record_expedition(reports[0])  # kept for good in the journal's History (issue #114)
 	notice.emit("Squad back from %s: %s. Report: E" % [territory().find(j["province"]).get("name", "?"), {"great": "great success", "success": "success", "fail": "it went badly"}[outcome]], outcome == "fail")
 	expedition_returned.emit(reports[0])
 
@@ -1992,6 +1996,7 @@ func to_dict() -> Dictionary:
 		"next_trouble_day": next_trouble_day, "diplo_log": diplo_log,
 		"bonds": bonds,
 		"visitors": visitors,
+		"journal": journal,
 		"missions_cleared": missions_cleared,
 		"progress": progress,
 		"dialogue": Dialogue.seen,
@@ -2106,6 +2111,7 @@ func from_dict(d: Dictionary) -> void:
 			bonds[id] = {"points": maxi(int(b.get("points", 0)), 0), "rank": clampi(int(b.get("rank", 0)), 0, 5),
 				"talk_day": int(b.get("talk_day", 0)), "personal_done": bool(b.get("personal_done", false))}
 	_load_visitors(d)
+	journal = Journal.from_save(d.get("journal", null))
 	progress = Progress.from_save(d.get("progress", {}))
 	if d.has("rng_state"):
 		rng.state = int(d["rng_state"])

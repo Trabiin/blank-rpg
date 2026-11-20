@@ -378,6 +378,13 @@ Ink colors (magic): **Red** (fire), **Blue** (frost), **Gold** (light, healing),
   Difficulty also scales the Blank's spread.
 - **Objectives and alerts:** the current story goal is pinned; Blank surges, finished buildings and returning
   expeditions raise a notice with a "go there" button.
+- **Journal** (I, rebindable; also in every menu and the mission pause menu; issue #114): **Quests** (the main
+  story for the current chapter, personal stories, what each faction wants next, open and timed missions and
+  Verity's plans, each with its next step and "show on map"), **People** (the roster, visitors, rumoured recruits
+  with how to bring them in, and figures met who never join), **Codex** (places, factions, enemies with their
+  weaknesses once beaten, the Blank, Ink colours; unlocked by meeting things, with live numbers) and **History**
+  (a recap per chapter, every mission result and expedition report). Words in `data/journal.json`, so each chapter
+  adds its entries without code; the tests fail if a region, faction, enemy or Ink colour has no codex entry.
 - **Assign screens show consequences up front** (output, Fray slowdown, success chance) before you commit.
 - **No random encounters.** Enemies are visible on the field and avoidable.
 - Remappable controls, text speed, screen shake toggle, colorblind-safe telegraphs.
@@ -590,6 +597,7 @@ alcohol, innuendo and flirting. **No explicit sexual content.** Gore is stylized
 | Attack | J / Space / Z | A (bottom face) | Attack button |
 | Swap hero | Tab / Q | Y (top face) | Swap button |
 | Pause menu | Esc / P | Start | Pause button (top right) |
+| Journal | I (rebindable) | through the menus; LB / RB switch tabs | Journal button on the Command Table, or the menu |
 
 ## 14. Milestones
 
