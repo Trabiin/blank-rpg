@@ -109,11 +109,11 @@
 		},
 		"abeyance": {
 			"size": [44, 44],
-			"feet": [21, 36],
-			"face": [11, 6, 20, 20],
+			"feet": [22, 36],
+			"face": [12, 6, 20, 20],
 			"anims": {
 				"rot": {"fps": 1, "loop": true, "frames": 1, "dirs": ["south", "south-east", "east", "north-east", "north"]},
-				"idle": {"fps": 5.0, "loop": true, "frames": 4, "dirs": ["south", "south-east", "east", "north-east", "north"]}
+				"idle": {"fps": 4.0, "loop": true, "frames": 4, "dirs": ["south", "south-east", "east", "north-east", "north"]}
 			}
 		},
 		"folk_man": {
@@ -122,17 +122,17 @@
 			"face": [12, 6, 20, 20],
 			"anims": {
 				"rot": {"fps": 1, "loop": true, "frames": 1, "dirs": ["south", "south-east", "east", "north-east", "north"]},
-				"idle": {"fps": 5.0, "loop": true, "frames": 4, "dirs": ["south", "south-east", "east", "north-east", "north"]},
+				"idle": {"fps": 4.0, "loop": true, "frames": 4, "dirs": ["south", "south-east", "east", "north-east", "north"]},
 				"walk": {"fps": 8.0, "loop": true, "frames": 6, "dirs": ["south", "south-east", "east", "north-east", "north"]}
 			}
 		},
 		"folk_woman": {
 			"size": [44, 44],
-			"feet": [21, 36],
-			"face": [11, 6, 20, 20],
+			"feet": [24, 37],
+			"face": [14, 5, 20, 20],
 			"anims": {
 				"rot": {"fps": 1, "loop": true, "frames": 1, "dirs": ["south", "south-east", "east", "north-east", "north"]},
-				"idle": {"fps": 5.0, "loop": true, "frames": 4, "dirs": ["south", "south-east", "east", "north-east", "north"]},
+				"idle": {"fps": 4.0, "loop": true, "frames": 4, "dirs": ["south", "south-east", "east", "north-east", "north"]},
 				"walk": {"fps": 8.0, "loop": true, "frames": 6, "dirs": ["south", "south-east", "east", "north-east", "north"]}
 			}
 		},
@@ -217,12 +217,12 @@
 		},
 		"verity": {
 			"size": [44, 44],
-			"feet": [22, 36],
+			"feet": [22, 35],
 			"face": [12, 6, 20, 20],
 			"anims": {
 				"rot": {"fps": 1, "loop": true, "frames": 1, "dirs": ["south", "south-east", "east", "north-east", "north"]},
 				"idle": {"fps": 4.0, "loop": true, "frames": 4, "dirs": ["south", "south-east", "east", "north-east", "north"]},
-				"walk": {"fps": 7.0, "loop": true, "frames": 6, "dirs": ["south", "south-east", "east", "north-east", "north"]}
+				"walk": {"fps": 8.0, "loop": true, "frames": 6, "dirs": ["south", "south-east", "east", "north-east", "north"]}
 			}
 		},
 		"auditor": {
@@ -260,8 +260,8 @@
 		},
 		"dunmore": {
 			"size": [44, 44],
-			"feet": [22, 35],
-			"face": [12, 7, 20, 20],
+			"feet": [19, 36],
+			"face": [9, 5, 20, 20],
 			"anims": {
 				"rot": {"fps": 1, "loop": true, "frames": 1, "dirs": ["south", "south-east", "east", "north-east", "north"]},
 				"idle": {"fps": 4.0, "loop": true, "frames": 4, "dirs": ["south", "south-east", "east", "north-east", "north"]}
@@ -287,8 +287,8 @@
 		},
 		"merrow": {
 			"size": [44, 44],
-			"feet": [22, 32],
-			"face": [12, 11, 20, 20],
+			"feet": [22, 36],
+			"face": [12, 13, 20, 20],
 			"anims": {
 				"rot": {"fps": 1, "loop": true, "frames": 1, "dirs": ["south", "south-east", "east", "north-east", "north"]},
 				"idle": {"fps": 4.0, "loop": true, "frames": 4, "dirs": ["south", "south-east", "east", "north-east", "north"]}
@@ -297,16 +297,16 @@
 		"odile": {
 			"size": [44, 44],
 			"feet": [22, 36],
-			"face": [12, 5, 20, 20],
+			"face": [12, 6, 20, 20],
 			"anims": {
 				"rot": {"fps": 1, "loop": true, "frames": 1, "dirs": ["south", "south-east", "east", "north-east", "north"]},
 				"idle": {"fps": 4.0, "loop": true, "frames": 4, "dirs": ["south", "south-east", "east", "north-east", "north"]}
 			}
 		},
 		"ottoline": {
-			"size": [48, 48],
-			"feet": [24, 39],
-			"face": [14, 6, 20, 20],
+			"size": [44, 44],
+			"feet": [22, 38],
+			"face": [12, 4, 20, 20],
 			"anims": {
 				"rot": {"fps": 1, "loop": true, "frames": 1, "dirs": ["south", "south-east", "east", "north-east", "north"]},
 				"idle": {"fps": 4.0, "loop": true, "frames": 4, "dirs": ["south", "south-east", "east", "north-east", "north"]}

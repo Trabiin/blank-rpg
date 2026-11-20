@@ -792,3 +792,96 @@
 {"t": "2026-11-20T03:22:44Z", "phase": "6", "tool": "pixellab", "what": "ic8", "usd": 0.08201, "job": "40a9d3d6-0bb4-49f2-9256-0bd13e737cf7", "status": "completed"}
 {"t": "2026-11-20T03:25:43Z", "phase": "6", "tool": "pixellab", "what": "ic9", "usd": 0.08206, "job": "154ca9d1-da3c-497d-9835-c67d29fbad7c", "status": "completed"}
 {"t": "2026-11-20T03:27:41Z", "phase": "6", "tool": "pixellab", "what": "ic10", "usd": 0.08205, "job": "d5cb9c90-efc1-4b4b-9cfb-e42470392cb3", "status": "completed"}
+{"t": "2026-11-20T08:19:50Z", "phase": "8", "tool": "pixellab", "what": "odile pilot", "usd": 0.01929, "job": "ed8e52bf-1826-4ce2-b829-4113b08b68bd", "status": "completed"}
+{"t": "2026-11-20T08:21:55Z", "phase": "8", "tool": "pixellab", "what": "odile pilots", "usd": 0.02711, "job": "98205d8b-0f2c-4828-ba84-838a97e147bb", "status": "completed"}
+{"t": "2026-11-20T08:22:45Z", "phase": "8", "tool": "pixellab", "what": "odile pilots", "usd": 0.03578, "job": "81dc5f22-ac21-462f-8b86-cd305cc33340", "status": "completed"}
+{"t": "2026-11-20T08:23:49Z", "phase": "8", "tool": "pixellab", "what": "odile idle", "usd": 0.00756, "job": "e80f5de8-48f4-43a3-be2f-530905028c52", "status": "completed"}
+{"t": "2026-11-20T08:23:55Z", "phase": "8", "tool": "pixellab", "what": "odile idle", "usd": 0.00842, "job": "cd04763e-6e23-4854-8688-bf3fc7777df8", "status": "completed"}
+{"t": "2026-11-20T08:24:02Z", "phase": "8", "tool": "pixellab", "what": "odile idle", "usd": 0.00873, "job": "26f8fd30-605d-4a6e-84cd-4ea380a739b7", "status": "completed"}
+{"t": "2026-11-20T08:24:08Z", "phase": "8", "tool": "pixellab", "what": "odile idle", "usd": 0.00986, "job": "b25be4b7-f7d0-4848-84ae-3c65980c0c21", "status": "completed"}
+{"t": "2026-11-20T08:24:14Z", "phase": "8", "tool": "pixellab", "what": "odile idle", "usd": 0.01029, "job": "c77c218a-b57a-4932-94fc-2090529bf889", "status": "completed"}
+{"t": "2026-11-20T08:27:38Z", "phase": "8", "tool": "pixellab", "what": "bases", "usd": 0.02554, "job": "474f4c46-af37-4259-84b7-a7af24bcbe5d", "status": "completed"}
+{"t": "2026-11-20T08:27:44Z", "phase": "8", "tool": "pixellab", "what": "bases", "usd": 0.0261, "job": "82ca42c8-036a-47f2-b7a1-95ead6d619ec", "status": "completed"}
+{"t": "2026-11-20T08:27:45Z", "phase": "8", "tool": "pixellab", "what": "bases", "usd": 0.02657, "job": "c349b9b4-77c4-49dc-b8a8-53da949c7181", "status": "completed"}
+{"t": "2026-11-20T08:27:58Z", "phase": "8", "tool": "pixellab", "what": "bases", "usd": 0.02933, "job": "bf797ec5-7c2b-4050-8470-8a142e6f991e", "status": "completed"}
+{"t": "2026-11-20T08:28:06Z", "phase": "8", "tool": "pixellab", "what": "bases", "usd": 0.02912, "job": "91ad45d9-e906-4811-b67f-09c887ba198f", "status": "completed"}
+{"t": "2026-11-20T08:28:12Z", "phase": "8", "tool": "pixellab", "what": "bases", "usd": 0.03171, "job": "ed24e623-6aa2-4100-b7f3-23b903f31bff", "status": "completed"}
+{"t": "2026-11-20T08:28:37Z", "phase": "8", "tool": "pixellab", "what": "bases", "usd": 0.03602, "job": "a4c00b58-ad4e-43f0-95ab-29d26a9deffc", "status": "completed"}
+{"t": "2026-11-20T08:28:56Z", "phase": "8", "tool": "pixellab", "what": "bases", "usd": 0.03911, "job": "d03f3453-7475-417b-92e7-b5cfb23a24ef", "status": "completed"}
+{"t": "2026-11-20T08:30:25Z", "phase": "8", "tool": "pixellab", "what": "bases", "usd": 0.0268, "job": "4016e3da-4a7f-44af-807d-4a0711a92286", "status": "completed"}
+{"t": "2026-11-20T08:32:21Z", "phase": "8", "tool": "pixellab", "what": "bases", "usd": 0.02663, "job": "3dd657a9-7cc1-4f77-b728-fe9774058016", "status": "completed"}
+{"t": "2026-11-20T08:33:02Z", "phase": "8", "tool": "pixellab", "what": "anims", "usd": 0.00752, "job": "a0049d66-b733-44be-983b-6cddf8614364", "status": "completed"}
+{"t": "2026-11-20T08:33:02Z", "phase": "8", "tool": "pixellab", "what": "anims", "usd": 0.00746, "job": "953da1c1-8fca-4d04-87ff-1872179aaff7", "status": "completed"}
+{"t": "2026-11-20T08:33:02Z", "phase": "8", "tool": "pixellab", "what": "anims", "usd": 0.00789, "job": "aeb3479d-bb15-4c4c-bc7c-147b5df19c94", "status": "completed"}
+{"t": "2026-11-20T08:33:09Z", "phase": "8", "tool": "pixellab", "what": "anims", "usd": 0.00857, "job": "9d62c025-fc80-42eb-ab27-fac0e5285b55", "status": "completed"}
+{"t": "2026-11-20T08:33:23Z", "phase": "8", "tool": "pixellab", "what": "anims", "usd": 0.01029, "job": "93714e42-1c9e-48bb-b42f-b265cc5eeca2", "status": "completed"}
+{"t": "2026-11-20T08:33:30Z", "phase": "8", "tool": "pixellab", "what": "anims", "usd": 0.00755, "job": "9aacf7d1-1341-4279-ad67-bdbe23e6dcf7", "status": "completed"}
+{"t": "2026-11-20T08:33:30Z", "phase": "8", "tool": "pixellab", "what": "anims", "usd": 0.00742, "job": "cabaad5c-265e-46a5-98a3-4f0edd4a7327", "status": "completed"}
+{"t": "2026-11-20T08:33:30Z", "phase": "8", "tool": "pixellab", "what": "anims", "usd": 0.00749, "job": "aa62abdd-d381-4846-b599-040d984bb705", "status": "completed"}
+{"t": "2026-11-20T08:33:30Z", "phase": "8", "tool": "pixellab", "what": "anims", "usd": 0.00748, "job": "061df28f-9fc3-485f-9479-badc8a87f685", "status": "completed"}
+{"t": "2026-11-20T08:33:42Z", "phase": "8", "tool": "pixellab", "what": "anims", "usd": 0.0088, "job": "3c6075d6-5e8e-45e2-927c-e223820ee961", "status": "completed"}
+{"t": "2026-11-20T08:34:14Z", "phase": "8", "tool": "pixellab", "what": "anims", "usd": 0.00762, "job": "0526fdb9-f78e-4ae8-b615-033dc46d4457", "status": "completed"}
+{"t": "2026-11-20T08:34:14Z", "phase": "8", "tool": "pixellab", "what": "anims", "usd": 0.00747, "job": "d479b9d6-58fc-4d16-aac4-387792f7d537", "status": "completed"}
+{"t": "2026-11-20T08:34:15Z", "phase": "8", "tool": "pixellab", "what": "anims", "usd": 0.00736, "job": "b5c2541e-79bc-439b-b1ac-155418de2c71", "status": "completed"}
+{"t": "2026-11-20T08:34:21Z", "phase": "8", "tool": "pixellab", "what": "anims", "usd": 0.00793, "job": "f30ee99d-1d8c-4506-bdfc-238f91777cd7", "status": "completed"}
+{"t": "2026-11-20T08:34:28Z", "phase": "8", "tool": "pixellab", "what": "anims", "usd": 0.00945, "job": "4566cc02-b8a5-4ceb-a94d-1f30551d0a67", "status": "completed"}
+{"t": "2026-11-20T08:34:43Z", "phase": "8", "tool": "pixellab", "what": "anims", "usd": 0.00809, "job": "e7ef0ea6-9a47-4aac-8dee-8f5d716e2fe7", "status": "completed"}
+{"t": "2026-11-20T08:34:49Z", "phase": "8", "tool": "pixellab", "what": "anims", "usd": 0.00807, "job": "52e8a0b9-0a47-4991-90fa-9135128823d4", "status": "completed"}
+{"t": "2026-11-20T08:34:49Z", "phase": "8", "tool": "pixellab", "what": "anims", "usd": 0.00821, "job": "403b034a-2635-4ce4-9c9e-57008be69c14", "status": "completed"}
+{"t": "2026-11-20T08:34:56Z", "phase": "8", "tool": "pixellab", "what": "anims", "usd": 0.00897, "job": "8b036740-3622-44c1-8079-c294efa5bf98", "status": "completed"}
+{"t": "2026-11-20T08:34:56Z", "phase": "8", "tool": "pixellab", "what": "anims", "usd": 0.0094, "job": "903e5712-d4f9-4d17-9124-d22c26569ea0", "status": "completed"}
+{"t": "2026-11-20T08:36:09Z", "phase": "8", "tool": "pixellab", "what": "anims", "usd": 0.00747, "job": "4c19312c-d6d8-43c5-9980-4fcb442d703c", "status": "completed"}
+{"t": "2026-11-20T08:36:09Z", "phase": "8", "tool": "pixellab", "what": "anims", "usd": 0.00754, "job": "c618602d-0280-4168-acb5-f4a36d228a58", "status": "completed"}
+{"t": "2026-11-20T08:36:09Z", "phase": "8", "tool": "pixellab", "what": "anims", "usd": 0.00739, "job": "b49d1b03-4041-42d8-8021-101f32905422", "status": "completed"}
+{"t": "2026-11-20T08:36:15Z", "phase": "8", "tool": "pixellab", "what": "anims", "usd": 0.00821, "job": "716887b3-22fc-42e0-9d23-ac3e120b949e", "status": "completed"}
+{"t": "2026-11-20T08:36:16Z", "phase": "8", "tool": "pixellab", "what": "anims", "usd": 0.00815, "job": "7e2d9ffe-bed4-4e9e-9fdf-f117a2c05e25", "status": "completed"}
+{"t": "2026-11-20T08:36:46Z", "phase": "8", "tool": "pixellab", "what": "anims", "usd": 0.00748, "job": "1237a97c-dfb0-48b0-9d3b-3427ecbf3c1b", "status": "completed"}
+{"t": "2026-11-20T08:36:46Z", "phase": "8", "tool": "pixellab", "what": "anims", "usd": 0.00739, "job": "aab587a1-72fc-4ca3-b03a-7921816652e6", "status": "completed"}
+{"t": "2026-11-20T08:36:52Z", "phase": "8", "tool": "pixellab", "what": "anims", "usd": 0.00852, "job": "59b0b476-4499-457b-9f84-0598dd3b341c", "status": "completed"}
+{"t": "2026-11-20T08:36:52Z", "phase": "8", "tool": "pixellab", "what": "anims", "usd": 0.00794, "job": "1eafda3b-9013-45c6-8c1a-3a08f4397f9c", "status": "completed"}
+{"t": "2026-11-20T08:36:59Z", "phase": "8", "tool": "pixellab", "what": "anims", "usd": 0.00883, "job": "9435ecf9-2c3e-4aad-a33e-8ea5f0b58e27", "status": "completed"}
+{"t": "2026-11-20T08:37:35Z", "phase": "8", "tool": "pixellab", "what": "anims", "usd": 0.00814, "job": "e80a877b-aeae-4595-aea8-af56dd016b8d", "status": "completed"}
+{"t": "2026-11-20T08:37:35Z", "phase": "8", "tool": "pixellab", "what": "anims", "usd": 0.00809, "job": "f7189440-405a-4eaf-bba7-f823dde5bcbf", "status": "completed"}
+{"t": "2026-11-20T08:37:36Z", "phase": "8", "tool": "pixellab", "what": "anims", "usd": 0.0082, "job": "f538917f-cba3-4093-9838-4cabc3df52c2", "status": "completed"}
+{"t": "2026-11-20T08:37:36Z", "phase": "8", "tool": "pixellab", "what": "anims", "usd": 0.00808, "job": "6548d3a4-2c5e-49c8-9b65-fa38a3dbfc8e", "status": "completed"}
+{"t": "2026-11-20T08:37:48Z", "phase": "8", "tool": "pixellab", "what": "anims", "usd": 0.00967, "job": "dc22c0b5-8b3a-4381-acc2-d2b179a48578", "status": "completed"}
+{"t": "2026-11-20T08:38:24Z", "phase": "8", "tool": "pixellab", "what": "anims", "usd": 0.00837, "job": "a03264e1-3094-48e0-a56e-c70bd65ea7d4", "status": "completed"}
+{"t": "2026-11-20T08:38:24Z", "phase": "8", "tool": "pixellab", "what": "anims", "usd": 0.0082, "job": "a7a1755b-6c8d-41f9-a214-511a1f9a5422", "status": "completed"}
+{"t": "2026-11-20T08:38:24Z", "phase": "8", "tool": "pixellab", "what": "anims", "usd": 0.00824, "job": "e5900346-6f24-448e-be6f-aca82df18e00", "status": "completed"}
+{"t": "2026-11-20T08:38:37Z", "phase": "8", "tool": "pixellab", "what": "anims", "usd": 0.00974, "job": "46d6ba50-eeeb-4874-bb19-64b536af792a", "status": "completed"}
+{"t": "2026-11-20T08:39:02Z", "phase": "8", "tool": "pixellab", "what": "anims", "usd": 0.01256, "job": "3d1bf38a-6331-4fe7-887d-5f9e78e2b8f4", "status": "completed"}
+{"t": "2026-11-20T08:39:38Z", "phase": "8", "tool": "pixellab", "what": "anims", "usd": 0.0083, "job": "61d45a3c-f1f5-4404-8994-01e97c66fcbf", "status": "completed"}
+{"t": "2026-11-20T08:39:38Z", "phase": "8", "tool": "pixellab", "what": "anims", "usd": 0.00809, "job": "6be3f2ab-6919-4dc3-ab53-3f0124a18a23", "status": "completed"}
+{"t": "2026-11-20T08:39:39Z", "phase": "8", "tool": "pixellab", "what": "anims", "usd": 0.00808, "job": "4969740a-320e-4893-95ec-b6f5e736680e", "status": "completed"}
+{"t": "2026-11-20T08:39:39Z", "phase": "8", "tool": "pixellab", "what": "anims", "usd": 0.00861, "job": "69ac8c10-29cb-4ef6-aab7-53f43cfbe338", "status": "completed"}
+{"t": "2026-11-20T08:39:45Z", "phase": "8", "tool": "pixellab", "what": "anims", "usd": 0.00917, "job": "509c5a4e-69a0-41c4-aa4c-26d85abb3d51", "status": "completed"}
+{"t": "2026-11-20T08:40:22Z", "phase": "8", "tool": "pixellab", "what": "anims", "usd": 0.00803, "job": "21d11b3d-6ac2-4a82-9095-d9f7ab20c8fb", "status": "completed"}
+{"t": "2026-11-20T08:40:22Z", "phase": "8", "tool": "pixellab", "what": "anims", "usd": 0.00839, "job": "f74c2016-bf75-474b-8096-f27281625309", "status": "completed"}
+{"t": "2026-11-20T08:40:22Z", "phase": "8", "tool": "pixellab", "what": "anims", "usd": 0.00799, "job": "02a6a8a9-d62b-4750-a92d-687521688354", "status": "completed"}
+{"t": "2026-11-20T08:40:22Z", "phase": "8", "tool": "pixellab", "what": "anims", "usd": 0.00818, "job": "fbe100ac-a8b1-4f88-ad0e-81a4bb518ff0", "status": "completed"}
+{"t": "2026-11-20T08:40:22Z", "phase": "8", "tool": "pixellab", "what": "anims", "usd": 0.00787, "job": "e51484a4-6173-4405-8478-a073efb25e55", "status": "completed"}
+{"t": "2026-11-20T08:40:52Z", "phase": "8", "tool": "pixellab", "what": "anims", "usd": 0.00762, "job": "0919fe6c-aa8b-4366-bead-ba1002ae83ea", "status": "completed"}
+{"t": "2026-11-20T08:40:52Z", "phase": "8", "tool": "pixellab", "what": "anims", "usd": 0.00747, "job": "e9c6ed08-8ca4-49a1-906b-e221f0239ac4", "status": "completed"}
+{"t": "2026-11-20T08:40:53Z", "phase": "8", "tool": "pixellab", "what": "anims", "usd": 0.00763, "job": "49602ace-e487-4535-8d24-d152f665ba26", "status": "completed"}
+{"t": "2026-11-20T08:40:59Z", "phase": "8", "tool": "pixellab", "what": "anims", "usd": 0.0077, "job": "85834635-7912-4566-a0b2-59ae785b7b77", "status": "completed"}
+{"t": "2026-11-20T08:41:05Z", "phase": "8", "tool": "pixellab", "what": "anims", "usd": 0.00899, "job": "61d49b55-9882-4441-8682-677fc5fd2131", "status": "completed"}
+{"t": "2026-11-20T08:41:35Z", "phase": "8", "tool": "pixellab", "what": "anims", "usd": 0.00737, "job": "5f46852a-5be0-4dd5-99dc-a4c62de4bb23", "status": "completed"}
+{"t": "2026-11-20T08:41:36Z", "phase": "8", "tool": "pixellab", "what": "anims", "usd": 0.00753, "job": "f5c70046-a577-48df-9406-dd3ed9914521", "status": "completed"}
+{"t": "2026-11-20T08:41:36Z", "phase": "8", "tool": "pixellab", "what": "anims", "usd": 0.00782, "job": "52b775cf-6e13-4be4-9a96-57b55cedefae", "status": "completed"}
+{"t": "2026-11-20T08:41:42Z", "phase": "8", "tool": "pixellab", "what": "anims", "usd": 0.00845, "job": "7a087013-200f-45c8-9254-b3ab1a71b072", "status": "completed"}
+{"t": "2026-11-20T08:41:48Z", "phase": "8", "tool": "pixellab", "what": "anims", "usd": 0.00867, "job": "a7bebb55-502f-4b17-8341-bfeae0e5b1f0", "status": "completed"}
+{"t": "2026-11-20T08:42:25Z", "phase": "8", "tool": "pixellab", "what": "anims", "usd": 0.00792, "job": "a0f26022-775d-40ec-80b4-f1ef959a27d0", "status": "completed"}
+{"t": "2026-11-20T08:42:25Z", "phase": "8", "tool": "pixellab", "what": "anims", "usd": 0.00815, "job": "ea74c7ee-ea3b-4e65-818f-bd73201a15ff", "status": "completed"}
+{"t": "2026-11-20T08:42:44Z", "phase": "8", "tool": "pixellab", "what": "anims", "usd": 0.00988, "job": "7ec4c58d-6827-4cc0-9c85-7ee476f8f683", "status": "completed"}
+{"t": "2026-11-20T08:42:50Z", "phase": "8", "tool": "pixellab", "what": "anims", "usd": 0.01151, "job": "d3cfb6b4-dd70-4ae7-9e74-0dea79b94955", "status": "completed"}
+{"t": "2026-11-20T08:43:15Z", "phase": "8", "tool": "pixellab", "what": "anims", "usd": 0.01368, "job": "77d39a63-72fd-48b1-86a0-f5d354263be6", "status": "completed"}
+{"t": "2026-11-20T08:43:51Z", "phase": "8", "tool": "pixellab", "what": "anims", "usd": 0.00835, "job": "ee7d9287-8e5e-4a63-95e2-99b097667bea", "status": "completed"}
+{"t": "2026-11-20T08:43:51Z", "phase": "8", "tool": "pixellab", "what": "anims", "usd": 0.00867, "job": "45957ae8-eafb-44f5-8515-6610c585ab75", "status": "completed"}
+{"t": "2026-11-20T08:43:52Z", "phase": "8", "tool": "pixellab", "what": "anims", "usd": 0.0083, "job": "ca82290c-6ca6-4c0f-9597-94b81822b7c1", "status": "completed"}
+{"t": "2026-11-20T08:43:58Z", "phase": "8", "tool": "pixellab", "what": "anims", "usd": 0.00861, "job": "68368836-29bb-4830-8566-02877ee7f479", "status": "completed"}
+{"t": "2026-11-20T08:43:58Z", "phase": "8", "tool": "pixellab", "what": "anims", "usd": 0.00882, "job": "a028e20c-afdf-4c5c-8fe5-3671bef10310", "status": "completed"}
+{"t": "2026-11-20T08:44:41Z", "phase": "8", "tool": "pixellab", "what": "anims", "usd": 0.00904, "job": "ad7fa257-4a7a-4698-b6aa-f14a73cd960a", "status": "completed"}
+{"t": "2026-11-20T08:44:48Z", "phase": "8", "tool": "pixellab", "what": "anims", "usd": 0.01, "job": "5d940717-3c55-4725-87f4-7e1f9cde4a71", "status": "completed"}
+{"t": "2026-11-20T08:44:48Z", "phase": "8", "tool": "pixellab", "what": "anims", "usd": 0.00956, "job": "5e3bebec-fcf9-4a48-bd45-0887d2a86b11", "status": "completed"}
+{"t": "2026-11-20T08:44:49Z", "phase": "8", "tool": "pixellab", "what": "anims", "usd": 0.00916, "job": "147811d5-6f62-4f6a-a53a-0a66925b95c6", "status": "completed"}
+{"t": "2026-11-20T08:44:55Z", "phase": "8", "tool": "pixellab", "what": "anims", "usd": 0.01027, "job": "b7a48194-7afb-4455-892f-0c248e42bf21", "status": "completed"}
