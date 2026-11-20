@@ -115,3 +115,16 @@ Phase 3 batch (map objects, mixed views, palette only cleaned) did not fit toget
 - **Map-object inpainting** into a crop of the target was tried for cheap props: unreliable, not used.
 - Hub people: Quill, Tobble, Abeyance idle only; townsfolk (`folk_man`, `folk_woman`, `folk_elder`, `folk_child`)
   idle + walk, wandering the plaza (`scripts/townsfolk.gd`).
+
+## Phase 8 remakes (one body plan)
+
+Odile, Verity, Abeyance, Dunmore, Ottoline, the folk man and woman and the Merrow Three were remade to the
+heroes' body plan (docs/ART_STYLE.md "Proportions"). What worked:
+- **No reference image.** create-character-v3 with Ash as `reference_image` just redraws Ash.
+- End the description with `sturdy build with a large head like the other heroes` (for an ordinary build:
+  `average build with a large head`). Without it PixelLab draws the slim, small-headed figures we replaced.
+  `stocky ... big head and short legs` overshoots into chibi.
+- Giants: generate on a 36 px canvas instead of resizing (Ottoline came out 34 px).
+- Children: generate each child on 32 px as a normal figure, animate, then shrink every frame to 0.7 with
+  `tools/compose_group.py`, which also stands a group (the Merrow Three) side by side in one sprite.
+- Cost: a base about $0.027, idle in 5 directions about $0.045, walk in 5 directions about $0.05.
