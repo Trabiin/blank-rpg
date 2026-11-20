@@ -264,17 +264,28 @@ About **20 core characters** (all the combat heroes plus the most important staf
   posting rivals together has effects, good or bad.
 - Every core character gets an epilogue line that depends on their bond and fate.
 
-**Built (MVP, `data/bonds.json`, Bonds screen on H):** six bonds: Bran, Mother Gristle and Daro (field) plus
-Quill, Tobble and Sister Abeyance (core staff). Ranks need 6/16/30/46/64 points. Points: +2 for the first chat of
+**Built (`data/bonds.json`, Bonds screen on H):** ten bonds: Bran, Mother Gristle, Daro, Big Ottoline, Jessamy,
+Odile and Velvette (field) plus Quill, Tobble and Sister Abeyance (core staff). Ranks need 6/16/30/46/64 points. Points: +2 for the first chat of
 the day in Hollowmark, +2 a day in a liked role, -1 a day in a disliked one, +2 for a successful expedition, +1 per
 8 kills fighting beside Ash (max 4 per mission), and +0 to +3 from the one choice in each rank scene (Ash never
 speaks; choices are gestures). Points never drop below the current rank and stop at the next rank until its scene
 is seen: the person gets a heart over their head in town and "wants a word". Each person has five rank scenes
-(replayable from the Bonds screen), perks at ranks 3 and 5 (mission HP/damage/revives, healing, expedition odds,
-surge warning, daily Gilt/Supplies/Insight, study pace), and a **personal job** on the Guildhall board at rank 4
-that they must go on; rank 5 needs it done. Scenes use a placeholder visual-novel layout (code-drawn bust, text
-box) that the AI portraits (#12) and the dialogue system (#11) will replace. Rivalries are still only the
-expedition pair modifiers.
+(replayable from the Bonds screen), perks at ranks 3 and 5 (mission HP/damage/revives/damage taken/gauge, healing,
+expedition odds and speed, surge warning, daily Gilt/Supplies/Insight, Gilt per province held, study pace, cheaper
+buildings, faction standing, Hollowmark Fray), and a **personal job** on the Guildhall board at rank 4 that they
+must go on; rank 5 needs it done. If the Blank erases the job's province, rank 5 is out of reach until a Reclaim
+mission brings the province back (Ojon, 2026-11-20: losing someone's home should cost something).
+Scenes show the portraits (`assets/portraits/`) in a visual-novel layout; lines can ask for an expression, which
+shows once #107 draws it. Each bonded hero also has a first chat in town and walking banter with other heroes
+(`data/dialogue.json`).
+
+The four 2026-11-20 heroes' arcs: **Ottoline** shut the Crimson Encore's door on six people to keep the Blank off
+a hundred and six (personal job: answer the knocking at that door, on Gallows Ferry). **Jessamy** paid a notary to strike
+her out of the Ledger and has faded in daylight ever since (job: make him write her back in, Tithe Road).
+**Odile** found her own mother's countersignature on the order to collect Lowmere (job: settle the account at Old
+Mill). **Velvette** killed eleven Concord-chosen "volunteers" on stage (job: a last performance on her old
+impresario's showboat in the Saltreed). Rivalries are still only the expedition pair modifiers (romance and
+rivalries: #116; playable personal missions: #113).
 
 The other ~30 recruits are lighter: a trait, a couple of lines, a reason to recruit them, and a quip in
 expedition reports.
