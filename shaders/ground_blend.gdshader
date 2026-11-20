@@ -14,6 +14,9 @@ uniform vec3 path_mid = vec3(0.353, 0.243, 0.157);    // #5a3e28
 uniform vec3 path_light = vec3(0.561, 0.510, 0.439);  // #8f8270 worn spots
 uniform vec3 pebble = vec3(0.341, 0.357, 0.420);      // #575b6b
 uniform float blank_x = 1e9;
+uniform float blur = 6.0;          // how far the map mask is softened, px: bigger = rounder patches
+uniform float wobble = 0.30;       // how much the edge wanders
+uniform float wobble_scale = 9.0;  // size of the wander, px
 uniform float fade_width = 300.0;
 
 float hash(vec2 p) {
@@ -30,11 +33,18 @@ float value_noise(vec2 p) {
 void fragment() {
 	vec2 px = floor(UV * tiles * 16.0) + 0.5;
 	vec2 to_uv = 1.0 / (16.0 * tiles);
-	float m = 0.25 * (texture(TEXTURE, (px + vec2(-6.0, -6.0)) * to_uv).r
-		+ texture(TEXTURE, (px + vec2(6.0, -6.0)) * to_uv).r
-		+ texture(TEXTURE, (px + vec2(-6.0, 6.0)) * to_uv).r
-		+ texture(TEXTURE, (px + vec2(6.0, 6.0)) * to_uv).r);
-	m += (value_noise(px / 9.0) - 0.5) * 0.30 + (value_noise(px / 3.0) - 0.5) * 0.12;
+	// Two rings of taps plus the centre: the outer ring rounds big blocky patches, the centre and inner ring
+	// keep a one- or two-tile trail from fading away under a wide blur.
+	float outer = 0.0;
+	float inner = 0.0;
+	for (int i = 0; i < 8; i++) {
+		float a = float(i) * 0.785398;
+		vec2 d = vec2(cos(a), sin(a));
+		outer += texture(TEXTURE, (px + d * blur) * to_uv).r;
+		inner += texture(TEXTURE, (px + d.yx * vec2(1.0, -1.0) * min(blur, 6.0) * 0.8) * to_uv).r;
+	}
+	float m = texture(TEXTURE, px * to_uv).r * 0.25 + inner / 8.0 * 0.35 + outer / 8.0 * 0.4;
+	m += (value_noise(px / wobble_scale) - 0.5) * wobble + (value_noise(px / 3.0) - 0.5) * 0.12;
 	// Footpaths (green): a tighter blur so a one-tile path stays narrow.
 	float mp = 0.25 * (texture(TEXTURE, (px + vec2(-4.0, -4.0)) * to_uv).g
 		+ texture(TEXTURE, (px + vec2(4.0, -4.0)) * to_uv).g
