@@ -1,0 +1,303 @@
+{
+ "area_name": "The Gutterwoods",
+ "banter": [
+  [
+   "bran",
+   "Back in the grass. Try to come home with the same number of limbs.",
+   ""
+  ]
+ ],
+ "empire": {
+  "ai_presets": {},
+  "blank_plans": {
+   "next": 0,
+   "pressure": [],
+   "repeat_day": 0
+  },
+  "bonds": {
+   "bran": {
+    "personal_done": false,
+    "points": 14,
+    "rank": 2,
+    "talk_day": 8
+   }
+  },
+  "buildings": {
+   "barracks": 0,
+   "command_table": 1,
+   "guildhall": 0,
+   "infirmary": 0,
+   "inkworks": 0,
+   "scriptorium": 0
+  },
+  "construction": {
+   "finish": 11.55,
+   "id": "barracks",
+   "start": 9.55
+  },
+  "day": 9,
+  "day_t": 0.55,
+  "deal_ready": {},
+  "dialogue": {
+   "event:mission_start": true,
+   "story:on": true,
+   "talk:ch1_takeover": true,
+   "talk:meadow_intro": true
+  },
+  "diplo_log": [],
+  "expeditions": [
+   {
+    "finish": 9.2,
+    "job": "forage_meadow",
+    "squad": [
+     "tobble",
+     "pell"
+    ],
+    "start": 8.2
+   }
+  ],
+  "hungry": false,
+  "intel_until": 0,
+  "job_ready": {},
+  "lamp_jobs": {},
+  "lamps": {},
+  "missions_cleared": [
+   "meadow_prologue",
+   "ch1_breakout",
+   "meadow_patrol"
+  ],
+  "next_surge_day": 4,
+  "next_trouble_day": 5,
+  "pacts": [],
+  "playtime": 3725.78602133333,
+  "progress": {
+   "bag": {},
+   "heroes": {
+    "ash": {
+     "gear": {
+      "weapon": "quill_knife"
+     },
+     "level": 4,
+     "xp": 40
+    },
+    "bran": {
+     "gear": {
+      "weapon": "contract_cleaver"
+     },
+     "level": 4,
+     "xp": 40
+    },
+    "gristle": {
+     "gear": {
+      "weapon": "bone_ladle"
+     },
+     "level": 4,
+     "xp": 40
+    }
+   }
+  },
+  "provinces": [
+   {
+    "fray": 4,
+    "id": "hollowmark",
+    "owner": "you",
+    "scar": 0
+   },
+   {
+    "fray": 38,
+    "id": "meadow",
+    "owner": "free",
+    "scar": 0
+   },
+   {
+    "fray": 12,
+    "id": "gutterwoods",
+    "owner": "coven",
+    "scar": 0
+   },
+   {
+    "fray": 8,
+    "id": "oldmill",
+    "owner": "free",
+    "scar": 0
+   },
+   {
+    "fray": 24,
+    "id": "lampwick",
+    "owner": "free",
+    "scar": 0
+   },
+   {
+    "fray": 61,
+    "id": "saltreed",
+    "owner": "free",
+    "scar": 0
+   },
+   {
+    "fray": 2,
+    "id": "gallows",
+    "owner": "guild",
+    "scar": 0
+   },
+   {
+    "fray": 0,
+    "id": "tithe",
+    "owner": "concord",
+    "scar": 0
+   },
+   {
+    "fray": 100,
+    "id": "whitewater",
+    "owner": "erased",
+    "scar": 0
+   }
+  ],
+  "recruits": {
+   "ash": {
+    "injured": 0,
+    "role": "party",
+    "target": ""
+   },
+   "bran": {
+    "injured": 0,
+    "role": "party",
+    "target": ""
+   },
+   "gristle": {
+    "injured": 0,
+    "role": "party",
+    "target": ""
+   },
+   "ninefingers": {
+    "injured": 0,
+    "role": "idle",
+    "target": ""
+   },
+   "pell": {
+    "injured": 0,
+    "role": "expedition",
+    "target": "forage_meadow"
+   },
+   "quill": {
+    "injured": 0,
+    "role": "idle",
+    "target": ""
+   },
+   "tobble": {
+    "injured": 0,
+    "role": "expedition",
+    "target": "forage_meadow"
+   }
+  },
+  "reports": [],
+  "res": {
+   "gilt": 200,
+   "ink": 5,
+   "insight": 14,
+   "renown": 0,
+   "supplies": 30
+  },
+  "research_active": "ward_lampwright",
+  "research_done": [
+   "ward_margins"
+  ],
+  "research_paid": [
+   "ward_lampwright"
+  ],
+  "research_progress": {
+   "ward_lampwright": 0.4
+  },
+  "rng_state": "5147283058137325692",
+  "satchel": {
+   "draught": 1,
+   "salts": 1,
+   "tonic": 3
+  },
+  "speed": 1,
+  "standing": {
+   "concord": -55,
+   "coven": -15,
+   "guild": 22
+  },
+  "surge": {},
+  "visitors": {}
+ },
+ "found": {},
+ "found_items": [],
+ "heroes": [
+  {
+   "dead": false,
+   "hp": 52,
+   "ink": 23,
+   "name": "Ash",
+   "power": 1,
+   "x": 200,
+   "y": 504
+  },
+  {
+   "dead": false,
+   "hp": 81,
+   "ink": 15,
+   "name": "Bran",
+   "power": 1,
+   "x": 204.87858581543,
+   "y": 497.51171875
+  },
+  {
+   "dead": false,
+   "hp": 48,
+   "ink": 23,
+   "name": "Gristle",
+   "power": 1,
+   "x": 215.53987121582,
+   "y": 482.318908691406
+  }
+ ],
+ "kills": 5,
+ "leader": 0,
+ "map": "res://maps/gutterwoods.txt",
+ "mission": {
+  "after": "meadow_prologue",
+  "brief": "The letter-moths are thick between the trees again. Clear the trail so the Coven's couriers get through.",
+  "fray": -4,
+  "id": "gutterwoods_patrol",
+  "loot": {
+   "gilt": [
+    0.3,
+    1,
+    2
+   ],
+   "ink": [
+    0.04,
+    1,
+    1
+   ],
+   "supplies": [
+    0.15,
+    1,
+    2
+   ]
+  },
+  "map": "res://maps/gutterwoods.txt",
+  "name": "Patrol: Gutterwoods",
+  "objective": {
+   "count": 12,
+   "kind": "kills",
+   "label": "Clear the area"
+  },
+  "province": "gutterwoods",
+  "rewards": {
+   "gilt": 18,
+   "supplies": 8
+  }
+ },
+ "mission_time": 0.786021333333333,
+ "objective": {
+  "elapsed": 0.786021333333333,
+  "progress": 0
+ },
+ "playtime": 3725.78602133333,
+ "saved_at": 1795181700,
+ "scene": "res://scenes/main.tscn",
+ "version": 1
+}

@@ -1,0 +1,43 @@
+{
+ "area_name": "Frayed Meadow",
+ "banter": [
+  [
+   "Bran",
+   "It popped. Like a thought you weren't supposed to have."
+  ]
+ ],
+ "heroes": [
+  {
+   "dead": false,
+   "hp": 30,
+   "name": "Ash",
+   "power": 1.0,
+   "x": 412.0,
+   "y": 300.0
+  },
+  {
+   "dead": false,
+   "hp": 12,
+   "name": "Bran",
+   "power": 0.6,
+   "x": 380.0,
+   "y": 322.0
+  },
+  {
+   "dead": true,
+   "hp": 0,
+   "name": "Gristle",
+   "power": 0.0,
+   "x": 350.0,
+   "y": 290.0
+  }
+ ],
+ "kills": 7,
+ "leader": 0,
+ "map": "res://maps/frayed_meadow.txt",
+ "playtime": 412.5,
+ "said_first_kill": true,
+ "said_low_power": false,
+ "saved_at": 1763315140,
+ "version": 1
+}

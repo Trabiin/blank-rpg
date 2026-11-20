@@ -1970,6 +1970,9 @@ func from_dict(d: Dictionary) -> void:
 			if recruit_data.has(id):
 				var r: Dictionary = saved_recruits[id]
 				recruits[id] = {"role": r.get("role", "idle"), "target": r.get("target", ""), "injured": int(r.get("injured", 0))}
+				if not ROLE_NAMES.has(recruits[id]["role"]):  # a job that no longer exists: back to idle
+					recruits[id]["role"] = "idle"
+					recruits[id]["target"] = ""
 	surge = d.get("surge", {})
 	next_surge_day = int(d.get("next_surge_day", 4))
 	blank_plans = BlankPlans.from_save(d.get("blank_plans", null), day)
