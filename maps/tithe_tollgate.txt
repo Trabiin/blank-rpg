@@ -2,8 +2,10 @@
 # Same legend as frayed_meadow.txt / hollowmark.txt. No Blank here: the Concord keeps it off its road.
 #   A  where The Auditor waits (@markA boss)
 @name The Tithe Road Tollgate
-@propH house|TOLLHOUSE
-@propV banner
+@ground road
+@mood grade=1.02,0.96,0.89 mist=0.7 motes=0.9,0.85,0.75
+@propH tollbooth|TOLLHOUSE
+@propV taxbanner
 @propX crates
 @propU barrels
 @markA boss
@@ -12,12 +14,12 @@
 ---
 tttttttttttttttt::::tttttttttttttttt
 tt.t.tt.ttttt.tt::::.t.tttt.t..t.ttt
-tt.......H......::::..............tt
+tt..............::::..............tt
 t.....V.........::::.........V.....t
 tt..............::::..f............t
 t...X...........::::...............t
 t...............::::...........U..tt
-t.........f..f..::::...........f..tt
+t........Hf..f..::::...........f..tt
 tt...f.........::A::::.............t
 tt...R......:::::::::::::....r....tt
 tt.....f...:::::::::::::::.........t

@@ -61,7 +61,7 @@ var told_opening := false
 
 
 func _ready() -> void:
-	art_id = ""  # drawn by its own code until its art pass phase
+	art_id = "auditor"  # art pass sprite (boss about twice a hero's height); falls back to the paper doll and code-drawn quill
 	super._ready()
 	max_hp = MAX_HP
 	hp = MAX_HP
@@ -71,8 +71,10 @@ func _ready() -> void:
 	for c in get_children():
 		if c is CollisionShape2D:
 			(c.shape as CircleShape2D).radius = 8.0
-	sprite.visible = false
 	number_color = Color("ffe7a3")
+	if art != null:
+		return
+	sprite.visible = false
 	for layer in [[Art.BODY, "body"], [Art.OUTFITS["soldier"], "soldier"]]:
 		var s := Sprite2D.new()
 		s.texture = layer[0]
@@ -310,6 +312,9 @@ func _on_death() -> void:
 
 
 func _process(delta: float) -> void:
+	if art != null:
+		_process_art_boss(delta)
+		return
 	var col := 0
 	if dying_t >= 0.0:
 		dying_t += delta
@@ -340,6 +345,48 @@ func _process(delta: float) -> void:
 	overlay.queue_redraw()
 
 
+## The drawn Auditor: each act picks an animation and runs it on that act's own timer, so the
+## telegraphs (aim, raised quill, phase change) line up with the frames.
+func _process_art_boss(delta: float) -> void:
+	var row := Hero.dir_row(aim_dir if act == Act.AIM or act == Act.THRUST or act == Act.STUCK else facing)
+	sprite.position = Vector2.ZERO
+	if dying_t >= 0.0:
+		dying_t += delta
+		art.apply(sprite, "death", Hero.dir_row(Vector2.DOWN), dying_t)
+		if fmod(dying_t, 0.25) < delta:  # pages tear loose as he is struck out
+			Fx.burst(get_parent(), global_position + Vector2(randf_range(-10, 10), randf_range(-60, -5)), [Color.BLACK, QUILL, Color("efe6cf")], 8, 80.0)
+		modulate.a = clampf(1.0 - maxf(dying_t - 1.4, 0.0) * 1.2, 0.0, 1.0)
+		if dying_t > 2.4:
+			queue_free()
+			return
+	elif flash_t > 0.0 and act != Act.TRANSITION:
+		art.apply(sprite, "hurt", row, 0.12 - flash_t)
+	else:
+		var n := art.frames_of("attack")
+		match act:
+			Act.AIM:  # quill drawn back over the wind-up
+				var k := clampf(1.0 - act_t / aim_total, 0.0, 1.0)
+				art.apply_frame(sprite, "attack", row, int(k * 2.99))
+				if k < 1.0 - LOCK_AT:
+					sprite.position = Vector2(randf_range(-0.8, 0.8), 0)
+			Act.THRUST:
+				var k := clampf(1.0 - act_t / (THRUST_LEN / THRUST_SPEED + 0.05), 0.0, 1.0)
+				art.apply_frame(sprite, "attack", row, 3 + int(k * (n - 4)))
+			Act.STUCK:
+				art.apply_frame(sprite, "attack", row, n - 1)
+			Act.LINES:
+				var m := art.frames_of("sweep")
+				art.apply_frame(sprite, "sweep", row, int(clampf(1.0 - act_t / CAST_T, 0.0, 0.999) * m))
+			Act.TRANSITION:
+				var m := art.frames_of("phase")
+				art.apply_frame(sprite, "phase", Hero.dir_row(Vector2.DOWN), int(clampf(1.0 - act_t / TRANSITION_T, 0.0, 0.999) * m))
+				sprite.position = Vector2(randf_range(-0.8, 0.8), 0)
+			_:
+				art.apply(sprite, "walk" if velocity.length() > 5.0 else "idle", row, anim_t)
+	queue_redraw()
+	overlay.queue_redraw()
+
+
 func _draw() -> void:
 	if dying_t >= 0.0:
 		draw_shadow(11.0 * modulate.a)
@@ -360,6 +407,15 @@ func _draw() -> void:
 
 func _draw_overlay() -> void:
 	if dying_t >= 0.0 and dying_t > 0.6:
+		return
+	if art != null:  # the sprite carries the hat and the quill; only the tells are drawn
+		if dying_t < 0.0 and (act == Act.LINES or act == Act.TRANSITION):
+			overlay.draw_string(ThemeDB.fallback_font, Vector2(-3, -64), "!", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color("ff5d5d"))
+		if taunt_t > 0.0:
+			overlay.draw_rect(Rect2(-1.5, -66, 3, 3), Color("f2a65a"))
+		if phase == 2 and dying_t < 0.0:  # ink drips from the nib
+			var tip := facing * 15.0 + Vector2(0, -14)
+			overlay.draw_rect(Rect2(tip + Vector2(-0.5, fmod(anim_t * 30.0, 8.0)), Vector2(1, 2)), Color("8a1f2a"))
 		return
 	# Hat first: a tall black clerk's stovepipe with a parchment band.
 	var head := Vector2(0, -35)

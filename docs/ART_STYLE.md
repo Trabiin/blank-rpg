@@ -99,3 +99,12 @@ Some come back turned to the corner; that is welcome: Hollowmark mixes angles al
   beginning: run-down, patched roof... keep the exact same shape, angle and size"), up to 4 buildings per call.
 - Town layout comes from `tools/make_hollowmark.py`: streets, buildings by bottom-centre tile, and footpaths
   (`,`) routed from every door to the nearest street.
+
+## Figure sizes
+
+PixelLab fills whatever canvas it is given, so every character comes out about 30 px tall at a 32 px canvas.
+Check each new figure against Ash (29 px) before animating it. Targets: adults 28 to 31 px, children and
+small animals about 20 px, big people (Ottoline) about 33 px, bosses about twice a hero (the Auditor is 62 px),
+and never taller than the buildings around them. To change a figure's size, resize its 5 drawn rotations with
+PixelLab's pixel-art `/resize` (it keeps outlines clean, unlike a plain downscale), import them as a new
+character with every direction given (`direction_images`, almost free), then animate that character.
