@@ -5,8 +5,6 @@ extends "res://tests/test_case.gd"
 const EXPRESSIONS := ["", "happy", "angry", "sad", "surprised", "smug"]
 const OBJECTIVE_KINDS := ["kills", "boss", "defense", "reclaim", "rescue"]
 const OWNERS := ["you", "free", "erased"]
-## Target rules scripts/blank_plans.gd pick_target() understands besides province ids.
-const BLANK_RULES := ["concord_frayest", "yours_frayest", "exposed_frayest"]
 
 var D := {}  # file name -> parsed JSON
 
@@ -286,9 +284,12 @@ func test_missions_and_enemies() -> void:
 		check(r == "default" or _provinces().has(r), "enemies.json roster %s: not a province" % r)
 		for k in D["enemies.json"]["rosters"][r]:
 			check(kinds.has(k), "enemies.json roster %s: unknown enemy %s" % [r, k])
+	# A target is a province id or a rule that BlankPlans.pick_target() has a branch for.
+	var picker := FileAccess.get_file_as_string("res://scripts/blank_plans.gd")
 	for pl in D["blank.json"]["plans"]:
 		var target := str(pl.get("target", ""))
-		check(_provinces().has(target) or target in BLANK_RULES, "blank.json %s: target %s is neither a province nor a rule" % [pl["id"], target])
+		check(_provinces().has(target) or picker.contains("\"%s\":" % target),
+			"blank.json %s: target %s is neither a province nor a rule in blank_plans.gd pick_target()" % [pl["id"], target])
 		check(pl.get("counter", "") in ["", "governor", "lamp"], "blank.json %s: unknown counter %s" % [pl["id"], pl.get("counter")])
 
 
