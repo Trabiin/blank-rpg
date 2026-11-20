@@ -54,6 +54,24 @@ func _ready() -> void:
 	credits.setup("Credits", [{"id": "back", "label": "Back"}], _credit_lines())
 	credits.chosen.connect(_close_credits)
 
+	_show_save_notices()
+
+
+## Saves that could not be read were set aside at start-up (scripts/save.gd): say so once.
+func _show_save_notices() -> void:
+	var notes := Saves.take_notices()
+	if notes.is_empty():
+		return
+	var notice := InkMenu.new()
+	notice.dim = 0.85
+	notice.top = 0.25
+	add_child(notice)
+	notice.setup("About your saves", [{"id": "ok", "label": "OK"}], "\n\n".join(notes))
+	menu.visible = false
+	notice.chosen.connect(func(_id):
+		notice.queue_free()
+		menu.visible = true)
+
 
 func _on_slot(id: String) -> void:
 	if id in ["command", "boss_test", "heroes_test", "map_test"]:
@@ -156,6 +174,10 @@ func _draw() -> void:
 	else:
 		_draw_blank(vs)
 	_draw_logo(vs)
+	var ver := "v" + Saves.game_version()
+	var font := ThemeDB.fallback_font
+	var vw := font.get_string_size(ver, HORIZONTAL_ALIGNMENT_LEFT, -1, 10).x
+	draw_string(font, Vector2(vs.x - vw - 6, vs.y - 6), ver, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color(0.75, 0.72, 0.7, 0.7))
 
 
 ## Painted key art (Phase 8), scaled to cover the screen, with a slow drift so the scene breathes.

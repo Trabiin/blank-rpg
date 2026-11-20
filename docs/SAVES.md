@@ -1,0 +1,77 @@
+# Saves: format, upgrades and the rule for every PR
+
+Players will have 10+ hour campaigns. A new build must load every save an older build wrote.
+Issue #110 set this up; this page is the rule every later change follows.
+
+## The rule
+
+**Any PR that adds, renames, moves or reinterprets saved state adds a migration step and a fixture.**
+
+- Only adding a field that `from_dict()` already defaults when it is missing? Then no step is needed,
+  but the loader must tolerate the key being absent (use `d.get(key, default)`, never `d[key]`), and
+  the existing fixtures prove it in CI.
+- Content cut or renamed (a recruit, research node, faction, mission id)? The loader drops unknown ids;
+  a rename needs a step that rewrites the old id to the new one.
+- Two PRs can each add a step at the same time: steps are separate files, so they merge in any order.
+
+## What a save looks like
+
+One JSON file per slot in `user://` (`save_auto.json`, `save_1.json` .. `save_3.json`; on the web this is
+the browser's IndexedDB). Top level is the scene snapshot (mission, hub or Command Table) plus:
+
+| Key | Meaning |
+|---|---|
+| `version` | Save format. `2` since #110. Bumped only if the outer layout changes in a way a step cannot express. |
+| `game_version` | `application/config/version` in `project.godot` of the build that wrote it. Old saves: `"pre-release"`. |
+| `migrations` | Ids of every upgrade step this save already has. New saves list every step the build knows. |
+| `saved_at`, `playtime`, `scene`, `area_name` | For menus and for loading the right scene. |
+| `empire` | The campaign: `Empire.to_dict()` (`scripts/empire.gd`). |
+
+## How loading works (`scripts/save.gd`, `scripts/save_migrations.gd`)
+
+1. The file is parsed. Not JSON, not an object, or no `version`: the slot is **broken**.
+2. `version` higher than this build's `Saves.VERSION`, or a step id this build does not know: the save is
+   **newer**. It is left untouched, shown as "made by a newer version", and cannot be loaded here.
+3. Otherwise every step in `scripts/migrations/` that the save does not list runs, in file-name order.
+   A step that returns `{}` makes the slot broken.
+4. `Empire.from_dict()` starts from a fresh campaign (`Empire.reset()`) and copies in what the save has,
+   so anything new in the data (recruits, provinces, research nodes, bonds, factions) gets its default.
+
+Nothing is ever deleted:
+
+- A **broken** save is copied to `save_<slot>.broken-<time>.json`, the slot is freed, and the title screen
+  tells the player once ("About your saves").
+- Saving over a **newer** save first copies it to `save_<slot>.newer-<time>.json`.
+- Saving over a save that needed upgrading first copies the original to `save_<slot>.v<old version>-<time>.json`.
+
+## Adding a migration step
+
+1. Before changing the code, make a real save that has the old shape: play to the state that matters
+   (or script it, like `tests/run.gd` does) and copy the slot file from the user data folder
+   (`~/.local/share/godot/app_userdata/Last Ink/` on Linux).
+2. Save it as `tests/fixtures/saves/<step id>__<what it shows>.json`.
+3. Add `scripts/migrations/<yyyymmdd>_<what>.gd`:
+
+   ```gdscript
+   extends RefCounted
+   ## What changed in the save, and what old saves get instead.
+
+   static func migrate(save: Dictionary) -> Dictionary:
+       var empire: Dictionary = save.get("empire", {})
+       # ...change `save` / `empire` in place...
+       return save  # or {} if this save truly cannot be converted
+   ```
+
+   `save` is the whole file; the campaign is under `save["empire"]`. Steps may use the game's static
+   classes and data files. Keep a step working forever: later steps run after it on old saves.
+4. Add checks for what your step changed to `tests/test_saves.gd` (see `test_first_build_save_is_converted`).
+5. Run `tools/run_tests.sh saves`.
+
+The tests fail if a step has no fixture, if a step file name is not `<yyyymmdd>_<what>.gd`, or if any
+fixture fails to upgrade, load into the campaign, save again and read back without further upgrades.
+
+## Steps so far
+
+| Step | What it does |
+|---|---|
+| `20261120_save_format_v2` | Format 1 to 2. First-build saves get a campaign and scene, mission saves from before missions.json get the Meadow patrol, banter speaker names become recruit ids, `said_first_kill` / `said_low_power` become seen dialogue events, and the save is marked `pre-release`. |

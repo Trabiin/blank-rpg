@@ -31,7 +31,7 @@ var font: Font
 
 
 func _ready() -> void:
-	set_anchors_preset(Control.PRESET_FULL_RECT)
+	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)  # full screen from the first frame
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	font = ThemeDB.fallback_font
 
@@ -59,7 +59,10 @@ func play_lines(ls: Array, heading := "", talk_id := "") -> void:
 	_exprs = ["", ""]
 	_place_speaker()
 	position = Vector2.ZERO
-	size = get_viewport_rect().size
+	# Only when it changed: setting the size of a full-rect box in the frame it was created (a
+	# mission's opening talk) trips Godot's "size overridden after _ready()" warning.
+	if size != get_viewport_rect().size:
+		size = get_viewport_rect().size
 	visible = true
 	opened_frame = Engine.get_process_frames()
 
