@@ -54,6 +54,8 @@ func _process(_delta: float) -> bool:
 				m["map"] = "res://maps/%s.txt" % args["map"]
 			empire.active_mission = m
 			change_scene_to_file("res://scenes/main.tscn")
+		elif scene == "title":
+			change_scene_to_file("res://scenes/title.tscn")
 		elif scene == "town":
 			if args.has("map"):  # map=mockup_town: another layout in maps/
 				load("res://scripts/hub.gd").map_override = "res://maps/%s.txt" % args["map"]

@@ -125,3 +125,30 @@ character with every direction given (`direction_images`, almost free), then ani
   Made with PixelLab Pro (generate-image-v2) at 32x32: one call gives 64 images, so a prompt listing 8 concepts
   "A..H, one per image" returns 8 options for each ($0.08 for 8 icons, picked by eye).
 - **Less text on screen.** Control hints show only until two missions are cleared.
+
+## Proportions (Phase 8)
+
+One body plan for every person: the heroes' (Ash is the reference). Measured on the south-facing figure, in
+pixels at 1x. `tools/art_audit.json` holds the bands and each sprite's measured head; `tools/audit_art.py` flags
+anything outside them and redraws `lineup.png` (everyone on one ground line) and `heads.png` (heads at 8x
+with a pixel ruler).
+
+| Class | Height | Head (w x h, top of hair or hood to chin) | Notes |
+|---|---|---|---|
+| Adult | 28-31 | 9-12 x 9-11 | About 3 heads tall. Shoulders 16-20 wide |
+| Heavy | 28-31 | 9-12 x 9-11 | Wider (up to 28) but not taller: build is width, never a bigger head |
+| Elder | 26-30 | 9-12 x 9-11 | A stoop takes height, not head size |
+| Giant (Ottoline) | 32-36 | 10-13 x 10-12 | The only adult allowed past 31 |
+| Child | 19-23 | 8-10 x 7-9 | A child's head is nearly an adult's, on a much shorter body |
+| Animal | 14-22 | | |
+| Boss | 54-66 | | About 2x a hero |
+
+PixelLab fills the canvas whatever the prompt says, so sizes are fixed after generation (pixel-art /resize, then
+import with all directions given, then animate; see "Figure sizes"). One figure per sprite: groups such as
+the Merrow Three are separate sprites standing together.
+
+## Prop scale (Phase 8)
+
+Props are sized against a 30 px person. Tallest allowed (px): crates and barrels 16, bench 18, shrub 18, grave
+20, sign 22, boulder 30, cart 26, banner 34, fountain 36, well 40, lamppost 46, stall 56. A door is at least
+22 px tall. A hedge or wall is never one sprite repeated: mix variants, or use a tile edge.

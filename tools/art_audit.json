@@ -1,0 +1,47 @@
+{
+	"_comment": "Spec data for tools/audit_art.py (docs/ART_STYLE.md 'Proportions'). classes: height band and head box per body class, in pixels of the south-facing figure. characters: each sprite's class and its head measured by eye (width x height, top of hair/hood to chin) from the zoomed head sheet; update it when a sprite is remade. props: tallest a prop may be.",
+	"classes": {
+		"adult": {"height": [28, 31], "head_w": [9, 12], "head_h": [9, 11]},
+		"heavy": {"height": [28, 31], "head_w": [9, 12], "head_h": [9, 11]},
+		"elder": {"height": [26, 30], "head_w": [9, 12], "head_h": [9, 11]},
+		"giant": {"height": [32, 36], "head_w": [10, 13], "head_h": [10, 12]},
+		"child": {"height": [19, 23], "head_w": [8, 10], "head_h": [7, 9]},
+		"animal": {"height": [14, 22]},
+		"creature": {"height": [14, 46]},
+		"boss": {"height": [54, 66]}
+	},
+	"characters": {
+		"ash": ["adult", 10, 10],
+		"bran": ["heavy", 10, 10],
+		"gristle": ["elder", 12, 11],
+		"ninefingers": ["adult", 10, 10],
+		"quill": ["adult", 12, 10],
+		"tobble": ["elder", 11, 10],
+		"abeyance": ["adult", 7, 8],
+		"pell": ["adult", 11, 10],
+		"hesper": ["adult", 13, 11],
+		"dunmore": ["heavy", 8, 8],
+		"jessamy": ["adult", 9, 10],
+		"odile": ["adult", 8, 8],
+		"ottoline": ["giant", 16, 14],
+		"merrow": ["child", 5, 5],
+		"biscuits": ["animal"],
+		"verity": ["adult", 6, 7],
+		"folk_man": ["adult", 8, 9],
+		"folk_woman": ["adult", 8, 9],
+		"folk_elder": ["elder", 10, 10],
+		"folk_child": ["child", 8, 7],
+		"sellsword": ["adult", 10, 10],
+		"scarecrow": ["adult", 13, 11],
+		"auditor": ["boss"],
+		"enforcer": ["creature"],
+		"nibbler": ["creature"],
+		"spitter": ["creature"],
+		"reedling": ["creature"],
+		"moth": ["creature"]
+	},
+	"props": {
+		"crates": 16, "barrels": 16, "grave": 20, "bench": 18, "sign": 22, "cart": 26, "banner": 34,
+		"lamppost": 46, "well": 40, "fountain": 36, "stall": 56, "bush": 28, "shrub": 18, "rock": 14, "boulder": 30
+	}
+}
