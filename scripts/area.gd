@@ -184,14 +184,29 @@ func _build_corner_ground() -> void:
 		td.flip_h = alt != 1
 		td.flip_v = alt != 0
 	ts.add_source(src, 0)
+	# Seamless grass (tools/make_ground.py grass): one 256 px texture over the whole map instead of the 16 px
+	# grass tile, whose repeat showed as stripes. With it and a paving texture, the tiles aren't needed at all.
+	var has_grass := ResourceLoader.exists(folder + "grass.png")
+	if has_grass:
+		var lawn := Sprite2D.new()
+		lawn.texture = load(folder + "grass.png")
+		lawn.centered = false
+		lawn.region_enabled = true
+		lawn.region_rect = Rect2(Vector2(-16, -16), world_size() + Vector2(32, 32))
+		lawn.position = Vector2(-16, -16)
+		lawn.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
+		lawn.material = Art.art_world_material()
+		add_child(lawn)
 	var layer := TileMapLayer.new()
 	layer.tile_set = ts
 	layer.material = Art.art_world_material()
 	layer.position = Vector2(8, 8)  # dual grid: tile (x, y) covers the centres of cells x..x+1, y..y+1
-	add_child(layer)
+	var use_tiles := not (has_grass and ResourceLoader.exists(folder + "cobbles.png"))
+	if use_tiles:
+		add_child(layer)
 	var rng := RandomNumberGenerator.new()
 	rng.seed = hash(area_name)
-	for y in range(-1, size_tiles.y):
+	for y in (range(-1, size_tiles.y) if use_tiles else []):
 		for x in range(-1, size_tiles.x):
 			var key := ""
 			for c in [Vector2i(x, y), Vector2i(x + 1, y), Vector2i(x, y + 1), Vector2i(x + 1, y + 1)]:
@@ -202,6 +217,8 @@ func _build_corner_ground() -> void:
 			var i := keys.find(key)
 			var alt := rng.randi() % 4 if i == 0 else 0
 			layer.set_cell(Vector2i(x, y), 0, Vector2i(i % 4, i / 4), alt)
+	if not use_tiles:
+		layer.free()
 	if ResourceLoader.exists(folder + "cobbles.png"):
 		_build_paving(load(folder + "cobbles.png"))
 	var flowers := Node2D.new()
@@ -229,6 +246,10 @@ func _build_paving(tex: Texture2D) -> void:
 	mat.set_shader_parameter("tex_size", float(tex.get_width()))
 	mat.set_shader_parameter("tiles", Vector2(size_tiles))
 	mat.set_shader_parameter("blank_x", blank_x)
+	if ground_set != "town" and ground_set != "road":  # wild ground: big, round, wandering patches
+		mat.set_shader_parameter("blur", 18.0)
+		mat.set_shader_parameter("wobble", 0.5)
+		mat.set_shader_parameter("wobble_scale", 30.0)
 	pave.material = mat
 	add_child(pave)
 
