@@ -176,8 +176,7 @@ func _draw() -> void:
 	var vs := size
 	draw_rect(Rect2(Vector2.ZERO, vs), Color(0.05, 0.04, 0.07, 0.985))
 	var cr := _close_rect()
-	draw_rect(cr, Color(0.1, 0.09, 0.12))
-	draw_rect(cr, Color(0.3, 0.27, 0.33), false, 1.0)
+	UiSkin.panel(self, cr, "button")
 	_text(cr.position + Vector2(9, 12), "Close", 9, Color(0.75, 0.72, 0.7))
 	_row_rects.clear()
 
@@ -232,7 +231,10 @@ func _draw() -> void:
 			col = GOOD
 		elif state == "active":
 			col = GOLD
-		_text(base + Vector2(18, 0), n["name"], 9, GOLD if on and state != "locked" else col, 130)
+		var nx := 18.0
+		if UiSkin.draw_icon(self, id, Rect2(rr.position + Vector2(15, 2), Vector2(14, 14)), Color(1, 1, 1, 0.4) if state == "locked" else Color.WHITE):
+			nx = 34.0
+		_text(base + Vector2(nx, 0), n["name"], 9, GOLD if on and state != "locked" else col, 148 - nx)
 		match state:
 			"done":
 				_text(base + Vector2(150, 0), "known", 8, GOOD)
@@ -266,7 +268,8 @@ func _draw_details(vs: Vector2) -> void:
 	draw_rect(Rect2(x - 8, top, w + 16, vs.y - top - 26), Color(0.08, 0.07, 0.1))
 	draw_rect(Rect2(x - 8, top, 3, vs.y - top - 26), BRANCH_COLORS.get(n["branch"], TEXT))
 	var y := top + 16
-	_text(Vector2(x, y), n["name"], 12, Color("f3efe4"), w)
+	UiSkin.draw_icon(self, id, Rect2(x + w - 34, top + 6, 32, 32))
+	_text(Vector2(x, y), n["name"], 12, Color("f3efe4"), w - 40)
 	y += 12
 	var branch_name := ""
 	for b in Empire.research_branches():

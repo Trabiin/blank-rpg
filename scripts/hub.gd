@@ -584,7 +584,7 @@ func _on_notice(_text: String, _warning: bool) -> void:
 func _alert_tray() -> Control:
 	var tray := preload("res://scripts/alert_tray.gd").new()
 	tray.host = self
-	tray.origin = Vector2(6, 39)
+	tray.origin = Vector2(6, 50)  # under the framed status panel
 	tray.width = 300.0
 	return tray
 

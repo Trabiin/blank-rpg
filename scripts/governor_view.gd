@@ -164,8 +164,7 @@ func _draw() -> void:
 	var claiming: bool = p["owner"] != "you"
 	_text(Vector2(8, 20), ("Claim " if claiming else "Govern ") + p["name"], 15, Color("f3efe4"))
 	var cr := _close_rect()
-	draw_rect(cr, Color(0.1, 0.09, 0.12))
-	draw_rect(cr, Color(0.3, 0.27, 0.33), false, 1.0)
+	UiSkin.panel(self, cr, "button")
 	_text(cr.position + Vector2(9, 12), "Close", 9, Color(0.75, 0.72, 0.7))
 
 	# What this province wants, and where it stands now

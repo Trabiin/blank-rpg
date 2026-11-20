@@ -155,7 +155,7 @@ func _rebuild() -> void:
 			for id in Satchel.ids():
 				var it := Satchel.item(id)
 				var why := Satchel.blocker(id, _heroes())
-				rows.append({"id": id, "label": str(it.get("name", id)), "right": "x%d" % Satchel.count(id),
+				rows.append({"id": id, "icon": id, "label": str(it.get("name", id)), "right": "x%d" % Satchel.count(id),
 					"detail": str(it.get("desc", "")) if why == "" else "%s  (%s)" % [it.get("desc", ""), why],
 					"enabled": why == ""})
 		"Abilities":
@@ -263,7 +263,7 @@ func _pick_row(i: int) -> void:
 			var list := _abilities_of(hero)
 			for i2 in list.size():
 				var why := _ability_blocker(hero, i2)
-				sub.append({"id": "ability:%d" % i2, "label": str(list[i2].get("name", "?")),
+				sub.append({"id": "ability:%d" % i2, "icon": str(list[i2].get("id", "")), "label": str(list[i2].get("name", "?")),
 					"right": ("%d Ink" % int(list[i2].get("cost", 0))) if why == "" else why, "enabled": why == ""})
 			sub_sel = sub.size() - 1
 			_move(1)  # first usable one
@@ -442,8 +442,7 @@ func _draw() -> void:
 	var w := minf(W, vs.x - 24.0)
 	var h := 44.0 + maxf(rows.size(), 3) * ROW_H + 30.0
 	_panel = Rect2((vs.x - w) / 2.0, maxf(12.0, (vs.y - h) / 2.0 - 20.0), w, h)
-	draw_rect(_panel, PANEL)
-	draw_rect(_panel, Color(1, 1, 1, 0.18), false, 1.0)
+	UiSkin.panel(self, _panel, "ledger")
 
 	# Tabs across the top.
 	_tab_rects.clear()
@@ -472,9 +471,12 @@ func _draw() -> void:
 		if i == sel and sub.is_empty():
 			draw_rect(rr, Color(1, 1, 1, 0.06))
 		var col := (GOLD if i == sel else TEXT) if on else DIM
-		_str(font, Vector2(x0, y + 12), str(row["label"]), 11, col)
+		var tx := x0
+		if UiSkin.draw_icon(self, str(row.get("icon", "")), Rect2(x0, y + 3, 22, 22), Color.WHITE if on else Color(1, 1, 1, 0.45)):
+			tx = x0 + 27.0
+		_str(font, Vector2(tx, y + 12), str(row["label"]), 11, col)
 		_str_right(font, x1, y + 12, str(row.get("right", "")), 10, col if on else DIM)
-		_str(font, Vector2(x0, y + 24), str(row.get("detail", "")), 8, Color(0.68, 0.66, 0.64) if on else Color(0.45, 0.45, 0.48))
+		_str(font, Vector2(tx, y + 24), str(row.get("detail", "")), 8, Color(0.68, 0.66, 0.64) if on else Color(0.45, 0.45, 0.48))
 		if i == sel:
 			_marker(x0 - 12.0, y + 12)
 		y += ROW_H
@@ -500,8 +502,7 @@ func _draw() -> void:
 		var sx := minf(_panel.end.x - sw - 8.0, vs.x - sw - 6.0)
 		var sy := clampf(anchor.position.y, 6.0, vs.y - sh - 6.0)
 		_sub_panel = Rect2(sx, sy, sw, sh)
-		draw_rect(_sub_panel, Color(0.1, 0.08, 0.14, 0.97))
-		draw_rect(_sub_panel, GOLD, false, 1.0)
+		UiSkin.panel(self, _sub_panel, "ledger")
 		_str(font, Vector2(sx + 10, sy + 14), sub_title, 9, Color(0.75, 0.73, 0.7))
 		var yy := sy + 30.0
 		for i in sub.size():
@@ -509,7 +510,10 @@ func _draw() -> void:
 			var on: bool = s.get("enabled", true)
 			var col := (GOLD if i == sub_sel else TEXT) if on else DIM
 			_sub_rects.append(Rect2(sx + 2, yy - 13, sw - 4, 17))
-			_str(font, Vector2(sx + 20, yy), str(s["label"]), 10, col)
+			var lx := sx + 20.0
+			if UiSkin.draw_icon(self, str(s.get("icon", "")), Rect2(sx + 18, yy - 12, 14, 14), Color.WHITE if on else Color(1, 1, 1, 0.45)):
+				lx += 17.0
+			_str(font, Vector2(lx, yy), str(s["label"]), 10, col)
 			_str_right(font, sx + sw - 8, yy, str(s.get("right", "")), 8, col if on else DIM)
 			if i == sub_sel:
 				_marker(sx + 10, yy)

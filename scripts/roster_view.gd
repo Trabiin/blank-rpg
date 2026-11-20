@@ -160,8 +160,7 @@ func _draw() -> void:
 	_text(Vector2(LIST_X, 20), "Roster", 15, Color("f3efe4"))
 	_text(Vector2(LIST_X + 64, 19), "%d people   upkeep %d Supplies a day   party %d/%d" % [n, n * Empire.UPKEEP_SUPPLIES, Empire.party_ids().size(), Empire.PARTY_SIZE], 9, Color(0.7, 0.68, 0.7))
 	var cr := _close_rect()
-	draw_rect(cr, Color(0.1, 0.09, 0.12))
-	draw_rect(cr, Color(0.3, 0.27, 0.33), false, 1.0)
+	UiSkin.panel(self, cr, "button")
 	_text(cr.position + Vector2(9, 12), "Close", 9, Color(0.75, 0.72, 0.7))
 
 	# People list
@@ -181,7 +180,10 @@ func _draw() -> void:
 		if row_h >= 26.0:
 			draw_rect(Rect2(row.position + Vector2(5, 7), Vector2(5, 13)), TIER_COLORS[r["tier"]])
 			_text(row.position + Vector2(16, 12), r["name"], 10, GOLD if on else Color("ece6da"))
-			_text(row.position + Vector2(16, 23), Empire.role_label(id), 8, role_col)
+			var rx := 16.0
+			if UiSkin.draw_icon(self, "role_" + Empire.role_of(id), Rect2(row.position + Vector2(15, 15), Vector2(10, 10))):
+				rx = 28.0
+			_text(row.position + Vector2(rx, 23), Empire.role_label(id), 8, role_col)
 		else:  # compact: name and role on one line
 			var mid := row.size.y / 2.0
 			draw_rect(Rect2(row.position + Vector2(5, mid - 5), Vector2(5, 10)), TIER_COLORS[r["tier"]])
@@ -209,7 +211,10 @@ func _draw() -> void:
 	y += 8
 	for t in r.get("traits", []):
 		var td: Dictionary = Empire.trait_data.get(t, {"name": t, "desc": ""})
-		_text(Vector2(x, y), td["name"], 9, Color("e8c66a"))
+		var tx := x
+		if UiSkin.draw_icon(self, "trait_" + str(t), Rect2(x, y - 10, 12, 12)):
+			tx = x + 15
+		_text(Vector2(tx, y), td["name"], 9, Color("e8c66a"))
 		y += 3
 		y += _wrap(Vector2(x, y + 9), td["desc"], 190, 8, Color(0.68, 0.66, 0.68)) + 10
 	y += 4

@@ -12,6 +12,8 @@ var help_t := 14.0
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if Empire.missions_cleared.size() >= 2:  # control hints only for the first missions
+		help_t = 0.0
 
 
 func say(text: String, duration := 3.5) -> void:
@@ -49,7 +51,8 @@ func _draw_ability_bar(hero: Hero, vs: Vector2) -> void:
 	var n := hero.abilities.size()
 	if n == 0:
 		return
-	var w := 84.0
+	var has_icons := UiSkin.icon(str(hero.abilities[0].get("id", ""))) != null
+	var w := 94.0 if has_icons else 84.0
 	var x := vs.x - 8.0 - n * (w + 4.0) + 4.0
 	var y := vs.y - 38.0
 	_text(Vector2(x, y - 4), "Ink %d / %d" % [floori(hero.ink), int(hero.max_ink)], 8, INK_COL)
@@ -57,23 +60,26 @@ func _draw_ability_bar(hero: Hero, vs: Vector2) -> void:
 		var a: Dictionary = hero.abilities[i]
 		var why := Abilities.blocker(hero, i)
 		var r := Rect2(x, y, w, 32)
-		draw_rect(r, Color(0.05, 0.04, 0.08, 0.72))
+		UiSkin.panel(self, r, "button", Color.WHITE if why == "" else Color(0.6, 0.6, 0.65))
 		var col := Abilities.color_of(a)
 		var cd: float = hero.cooldowns[i]
 		if cd > 0.0:
 			draw_rect(Rect2(x, y, w * cd / float(a.get("cooldown", 1.0)), 32), Color(1, 1, 1, 0.08))
-		draw_rect(r, col if why == "" else Color(col, 0.35), false, 1.0)
+		draw_rect(Rect2(x + 2, y + 3, 2, 26), col if why == "" else Color(col, 0.35))  # the ability's colour, as a ribbon
 		var txt_col := Color.WHITE if why == "" else Color(0.6, 0.6, 0.6)
+		var ox := 0.0  # text starts after the ability's icon
+		if UiSkin.draw_icon(self, str(a.get("id", "")), Rect2(x + 7, y + 6, 20, 20), Color.WHITE if why == "" else Color(0.5, 0.5, 0.55)):
+			ox = 24.0
 		var k := Prompts.key("ability_%d" % (i + 1))  # 1-4, or LB / RB / LT / RT on a pad
 		if k == "":
 			k = str(i + 1)
-		_text(Vector2(x + 4, y + 10), k, 9, col, false)
+		_text(Vector2(x + 4 + ox, y + 10), k, 9, col, false)
 		var kw := ThemeDB.fallback_font.get_string_size(k, HORIZONTAL_ALIGNMENT_LEFT, -1, 9).x
-		_text(Vector2(x + 8 + kw, y + 10), str(a.get("name", "")), 8, txt_col, false)
+		_text(Vector2(x + 8 + ox + kw, y + 10), str(a.get("name", "")), 8, txt_col, false)
 		var cost_col := INK_COL if why != "ink" else Color("ff6b6b")
-		_text(Vector2(x + 4, y + 22), "%d Ink" % int(a.get("cost", 0)), 8, cost_col, false)
+		_text(Vector2(x + 4 + ox, y + 22), "%d Ink" % int(a.get("cost", 0)), 8, cost_col, false)
 		if cd > 0.0:
-			_text(Vector2(x + 44, y + 22), "%.1fs" % cd, 8, Color(0.8, 0.8, 0.85), false)
+			_text(Vector2(x + 44 + ox, y + 22), "%.1fs" % cd, 8, Color(0.8, 0.8, 0.85), false)
 		x += w + 4.0
 
 
@@ -90,9 +96,9 @@ func _draw() -> void:
 		var face: Texture2D = hero.art.face() if hero.art != null else null
 		var fw := 24.0 if face != null else 0.0
 		var panel := Rect2(x, y, 112 + fw, 32)
-		draw_rect(panel, Color(0.05, 0.04, 0.08, 0.72))
+		UiSkin.panel(self, panel, "ledger")
 		if hero.controlled:
-			draw_rect(panel, Color("ffd166"), false, 1.0)
+			UiSkin.highlight(self, panel)
 		if face != null:
 			draw_rect(Rect2(x + 3, y + 6, 20, 20), Color(0.16, 0.15, 0.2, 0.9))
 			draw_texture_rect(face, Rect2(x + 3, y + 6, 20, 20), false, Color(0.45, 0.45, 0.45) if hero.dead else Color.WHITE)
@@ -103,7 +109,7 @@ func _draw() -> void:
 		var pcol := Color("ffd166") if pct >= 100 else Color(0.8, 0.8, 0.85)
 		if not hero.charge_ready:  # a ready charged tech shows TECH here instead
 			_text(Vector2(x + 82, y + 10), "%d%%" % pct, 9, pcol, false)
-		_text(Vector2(x + 58, y + 10), "Lv%d" % Progress.level(hero.hero_id), 7, Color(0.75, 0.72, 0.6), false)
+		_text(Vector2(x + 58, y + 10), "Lv%d" % Progress.level(hero.hero_id), 8, Color(0.75, 0.72, 0.6), false)
 		# XP sliver along the top edge of the panel
 		draw_rect(Rect2(x, y, 112.0 * Progress.xp_fraction(hero.hero_id), 1), Color("b9a0e8"))
 		# HP bar
@@ -118,6 +124,7 @@ func _draw() -> void:
 			var tcol := Techs.color_of(hero)
 			draw_rect(Rect2(x + 5, y + 20, 102.0 * Techs.charge_ratio(hero), 4), tcol.lightened(0.6) if hero.charge_ready else Color(tcol, 0.8))
 			if hero.charge_ready:
+				UiSkin.draw_icon(self, "tech_" + hero.hero_id, Rect2(x + 99, y + 2, 10, 10))
 				_text(Vector2(x + 80, y + 10), "TECH", 9, tcol.lightened(0.3), false)
 		# Ink (abilities, issue #7)
 		if hero.max_ink > 0.0:
@@ -150,9 +157,9 @@ func _draw() -> void:
 	if sign_text != "":
 		var lines := sign_text.split("\n")
 		var yy := vs.y * 0.62
-		draw_rect(Rect2(vs.x / 2.0 - 120, yy - 14, 240, 16.0 * lines.size() + 8), Color(0.12, 0.09, 0.06, 0.85))
+		UiSkin.panel(self, Rect2(vs.x / 2.0 - 124, yy - 18, 248, 16.0 * lines.size() + 14), "paper")
 		for line in lines:
-			_text_centered(yy, line, 10, Color("f3e3c3"))
+			_text_centered(yy, line, 10, UiSkin.PAPER_INK)
 			yy += 16.0
 	if help_t > 0.0 and not party.touch_active():
 		var a2 := clampf(help_t / 1.0, 0.0, 1.0)
@@ -168,7 +175,7 @@ func _draw() -> void:
 			"Quick menu: " + Prompts.key("quick_menu"),
 		]
 		for li in lines_h.size():
-			_text(Vector2(vs.x - 236, 14 + 11 * li), lines_h[li], 8, Color(1, 1, 1, a2))
+			_text(Vector2(vs.x - 150, 96 + 11 * li), lines_h[li], 8, Color(1, 1, 1, a2))  # clear of the banter panel
 	if center_text != "":
 		draw_rect(Rect2(Vector2.ZERO, vs), Color(0.95, 0.94, 0.9, 0.55))
 		var lines2 := center_text.split("\n")

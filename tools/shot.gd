@@ -20,6 +20,12 @@ func _process(_delta: float) -> bool:
 	if frame == 2:
 		var empire = root.get_node("Empire")
 		empire.reset()
+		if args.has("font"):  # font=PixelifySans.ttf: try a UI font from assets/fonts for the whole run
+			var ff: FontFile = load("res://assets/fonts/" + str(args["font"]))
+			ff.antialiasing = TextServer.FONT_ANTIALIASING_NONE
+			ff.hinting = TextServer.HINTING_NONE
+			ff.subpixel_positioning = TextServer.SUBPIXEL_POSITIONING_DISABLED
+			ThemeDB.fallback_font = ff
 		var dlg = load("res://scripts/dialogue.gd")  # loaded late: class scripts need the autoloads
 		for k in dlg.data().get("talks", {}):
 			dlg.mark_seen("talk:" + str(k))  # no opening conversation in the way
@@ -77,6 +83,9 @@ func _process(_delta: float) -> bool:
 		_spread()
 	if frame == total - int(args.get("lead", "30")) and args.has("act"):
 		_act(str(args["act"]))
+	if frame == total - 1 and args.has("nohud") and current_scene != null:  # clean ground for UI mockups
+		for c in current_scene.find_children("*", "CanvasLayer", true, false):
+			c.visible = false
 	if frame == total:
 		var img := root.get_texture().get_image()
 		img.save_png(str(args.get("out", "/tmp/shot.png")))
@@ -88,6 +97,14 @@ func _process(_delta: float) -> bool:
 ## Small staged moments for screenshots: "swing" makes every hero swing, "spread" fans them out.
 func _act(what: String) -> void:
 	var cur := current_scene
+	if what.begins_with("call:"):  # act=call:quick_menu.open or call:open_menu: open a screen for a UI shot
+		var parts := what.substr(5).split(":")
+		var path := parts[0].split(".")
+		var obj: Object = cur
+		for j in path.size() - 1:
+			obj = obj.get(path[j])
+		obj.callv(path[path.size() - 1], Array(parts.slice(1)))
+		return
 	if cur == null or not ("heroes" in cur):
 		return
 	var i := 0

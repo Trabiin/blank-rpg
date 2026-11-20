@@ -108,3 +108,20 @@ small animals about 20 px, big people (Ottoline) about 33 px, bosses about twice
 and never taller than the buildings around them. To change a figure's size, resize its 5 drawn rotations with
 PixelLab's pixel-art `/resize` (it keeps outlines clean, unlike a plain downscale), import them as a new
 character with every direction given (`direction_images`, almost free), then animate that character.
+
+## UI (Phase 6)
+
+- **Fonts.** Body text is Jersey 10 (set as the project's custom theme font, so `ThemeDB.fallback_font` is it
+  everywhere); titles and headings use Jacquard 12 (`UiSkin.TITLE_FONT`). Both are pixel fonts under the OFL:
+  antialiasing, hinting and subpixel positioning are off in their import settings so they stay crisp.
+- **Frames.** `scripts/ui_skin.gd` (`UiSkin.panel(canvas, rect, kind, tint)`) draws 9-slice frames from
+  `assets/ui/`: `ledger` (dark ink-blue panel, brass corners: HUD plates, menus, dialogue box, banter),
+  `button` (leather and brass: ability slots, town buttons, name tags, tinted with the speaker's colour) and
+  `paper` (torn parchment, repeated so its edge stays ragged: signs; text on it uses `UiSkin.PAPER_INK`).
+  Clean frames stretch; only paper tiles. Keep text at least 14 px (the corner size) in from a ledger frame's edge.
+- **Icons.** `assets/icons/<id>.png`, 32 px, palette-snapped. The id is the data id (items, gear, abilities,
+  research, buildings, factions, resources), or `tech_<hero>`, `role_<role>`, `trait_<trait>`, `status_<kind>`.
+  `UiSkin.draw_icon()` returns false when an icon is missing, so new content without art still lays out.
+  Made with PixelLab Pro (generate-image-v2) at 32x32: one call gives 64 images, so a prompt listing 8 concepts
+  "A..H, one per image" returns 8 options for each ($0.08 for 8 icons, picked by eye).
+- **Less text on screen.** Control hints show only until two missions are cleared.
