@@ -42,6 +42,7 @@ BIOMES = {
                     ("O", 0.015, 0.45), ("Q", 0.004, 0.0)],
         "path_r": 1.2,
         "landmarks": [("Q", (20, 26)), ("Q", (44, 18)), ("O", (33, 33))],
+        "groves": [("F", 8, 7, 14), ("U", 3, 3, 5), ("N", 4, 4, 6)],
     },
     "saltreed": {
         "name": "Saltreed Marsh", "mood": "grade=0.82,0.88,0.96 mist=2.0 motes=0.55,0.6,0.5", "ground": "marsh", "seed": 23,
@@ -51,6 +52,7 @@ BIOMES = {
         "scatter": [("D", 0.11, 0.3), ("Y", 0.04, 0.5), ("M", 0.025, 0.3), ("F", 0.02, 0.6), ("N", 0.02, 0.4)],
         "path_r": 1.3, "patches": (7, 0.58),
         "landmarks": [("K", (24, 30)), ("K", (38, 28)), ("K", (56, 31))],
+        "groves": [("D", 6, 5, 9), ("F", 2, 6, 6), ("Y", 3, 4, 5)],
     },
     "oldmill": {
         "name": "Old Mill Crossing", "mood": "grade=0.92,0.92,0.95 mist=1.5 motes=1.0,0.95,0.8", "ground": "marsh", "seed": 37,
@@ -62,6 +64,7 @@ BIOMES = {
         "path_r": 1.6, "patches": (8, 0.66),
         "landmarks": [("W", (30, 24)), ("J", (36, 40)), ("X", (25, 26)), ("B", (34, 27)), ("E", (22, 35)),
                       ("E", (26, 36)), ("K", (44, 36))],
+        "groves": [("D", 4, 5, 8), ("F", 2, 6, 6), ("Z", 3, 4, 6)],
     },
     "lampwick": {
         "name": "Lampwick Hills", "mood": "grade=1.04,0.98,0.86 mist=0.5 motes=1.0,0.9,0.55", "ground": "hills", "seed": 41,
@@ -71,6 +74,7 @@ BIOMES = {
         "scatter": [("Z", 0.08, 0.3), ("P", 0.04, 0.45), ("C", 0.03, 0.55), ("F", 0.015, 0.6)],
         "path_r": 1.3, "patches": (6, 0.72),
         "landmarks": [("I", (40, 20)), ("I", (30, 38)), ("A", (22, 30)), ("A", (36, 30)), ("A", (46, 28))],
+        "groves": [("P", 3, 5, 7), ("C", 3, 4, 5), ("Z", 4, 4, 6)],
     },
     "tithe_road": {
         "name": "The Tithe Road", "mood": "grade=1.02,0.96,0.89 mist=0.7 motes=0.9,0.85,0.75", "ground": "town", "seed": 53,
@@ -82,8 +86,25 @@ BIOMES = {
         "path_r": 2.0,
         "landmarks": [("W", (32, 26)), ("V", (28, 28)), ("V", (40, 28)), ("G", (20, 29)), ("G", (46, 34)),
                       ("B", (44, 30)), ("H", (56, 27)), ("H", (38, 36)), ("A", (24, 34)), ("A", (52, 28))],
+        "groves": [("F", 3, 6, 7), ("Z", 4, 4, 6), ("P", 2, 4, 4)],
     },
 }
+
+
+TWIN_RADIUS = 3
+
+
+def variants(kind):
+    base = os.path.join(HERE, "..", "assets", "props", kind)
+    n = 1
+    while os.path.exists("%s_v%d.png" % (base, n)):
+        n += 1
+    return n
+
+
+def variant_of(kind, x, y):
+    seed = x * 31 + y  # same as scripts/prop.gd
+    return (seed * 7 + seed // 5) % variants(kind)
 
 
 def value_noise(seed, cell):
@@ -117,10 +138,10 @@ def build(bid, b):
                 if (x - cx) ** 2 + ((y - cy) / 0.85) ** 2 <= r * r:
                     g[y][x] = ':'
 
-    def road(a, c, r, wiggle=3.0):
+    def road(a, c, r, wiggle=4.5):
         # A wandering line: midpoints pushed sideways, then sampled densely.
         pts = [a]
-        n = max(2, int(math.dist(a, c) / 8))
+        n = max(2, int(math.dist(a, c) / 6))
         for i in range(1, n):
             t = i / n
             pts.append((a[0] + (c[0] - a[0]) * t + rnd.uniform(-wiggle, wiggle),
@@ -140,7 +161,7 @@ def build(bid, b):
 
     r = b["path_r"]
     road(START, WARD, r)
-    road(WARD, BLOT, r, 2.0)
+    road(WARD, BLOT, r, 3.0)
     for p in RESCUE:
         road(WARD if p[1] > 30 else (44, 28), p, r * 0.8)
     for s in SPAWNS:
@@ -149,9 +170,13 @@ def build(bid, b):
     if "patches" in b:  # open ground of the biome's own floor: bog in the marsh, scree on the hills
         cell, cut = b["patches"]
         pn = value_noise(b["seed"] * 7 + 1, cell)
+        fine = value_noise(b["seed"] * 7 + 2, cell / 2.5)
+        wx, wy = value_noise(b["seed"] * 7 + 3, cell * 1.3), value_noise(b["seed"] * 7 + 4, cell * 1.3)
         for y in range(H):
             for x in range(W):
-                if pn(x, y) > cut:
+                # Domain-warped, two octaves: lobed, wandering shapes instead of the square blobs of plain noise.
+                qx, qy = x + (wx(x, y) - 0.5) * cell * 1.6, y + (wy(x, y) - 0.5) * cell * 1.6
+                if pn(qx, qy) * 0.75 + fine(qx, qy) * 0.25 > cut * 0.75 + 0.18:
                     g[y][x] = ':'
     disc(START[0], START[1], 2.5)
     disc(BLOT[0], BLOT[1], 3.0)
@@ -169,6 +194,7 @@ def build(bid, b):
 
     props = b["props"]
     chars = {k: k for k in props}
+    placed = []
     assert not set(chars) & set("TtrRSobkfe@:0123456789"), "prop chars clash with the map legend"
 
     def place(key, x, y):
@@ -179,6 +205,13 @@ def build(bid, b):
             return False
         if cells & taken:
             return False
+        # No identical twin: the game picks a variant from the tile (scripts/prop.gd), so skip a spot where this
+        # prop would show the same variant as one of its kind within TWIN_RADIUS tiles (tools/audit_art.py).
+        v = variant_of(kind, x, y)
+        for (px, py, pk, pv) in placed:
+            if pk == kind and pv == v and abs(px - x) <= TWIN_RADIUS and abs(py - y) <= TWIN_RADIUS:
+                return False
+        placed.append((x, y, kind, v))
         taken.update(cells)
         g[y][x] = chars[key]
         return True
@@ -199,13 +232,28 @@ def build(bid, b):
                 h = SIZE.get(props[key], (2, 2))[1]
                 place(key, min(W - 2, x + rnd.randint(0, 1)), min(H - 1, y + h - 1 + rnd.randint(0, 1)))
 
-    # Scatter: each prop thinned by its own noise field so they clump.
+    # Groves: a few tight clusters of one prop round a centre, thinning out from the middle, so the map has
+    # places (a stand of trees, a reed bed, a rock field) and open ground between them.
+    for key, count, radius, n in b.get("groves", []):
+        for _ in range(count):
+            for _try in range(40):
+                cx, cy = rnd.randint(6, W - 7), rnd.randint(6, H - 7)
+                if (cx, cy) not in taken and cx < BLANK - 2:
+                    break
+            for _ in range(n * 3):
+                if not n:
+                    break
+                ang, dist = rnd.uniform(0, 6.283), abs(rnd.gauss(0, radius / 2))
+                if place(key, int(cx + math.cos(ang) * dist), int(cy + math.sin(ang) * dist * 0.8)):
+                    n -= 1
+
+    # Scatter: each prop thinned by its own noise field so it clumps, with little between the clumps.
     for key, dens, clump in b["scatter"]:
         noise = value_noise(b["seed"] * 31 + ord(key[0]), 9)
         for y in range(H):
             for x in range(W):
                 n = noise(x, y)
-                chance = dens * (1.0 - clump + clump * 3.0 * max(0.0, n - 0.45))
+                chance = dens * (0.6 * (1.0 - clump) + clump * 6.0 * max(0.0, n - 0.55) ** 1.2)
                 if x >= BLANK - 1:
                     chance *= 0.5  # the Blank's side is emptier
                 if rnd.random() < chance:

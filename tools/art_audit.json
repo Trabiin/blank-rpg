@@ -40,8 +40,10 @@
 		"reedling": ["creature"],
 		"moth": ["creature"]
 	},
+	"twins_ok": ["shrub"],
+	"_twins_ok": "Hedges are one shrub repeated in a row; Ojon accepted that for now (2026-11-20), so the twin check skips them.",
 	"props": {
-		"crates": 16, "barrels": 16, "grave": 20, "bench": 18, "sign": 22, "cart": 26, "banner": 34,
-		"lamppost": 46, "well": 40, "fountain": 36, "stall": 56, "bush": 28, "shrub": 18, "rock": 14, "boulder": 30
+		"crates": 22, "barrels": 16, "grave": 20, "bench": 18, "sign": 22, "cart": 26, "banner": 34,
+		"lamppost": 46, "well": 40, "fountain": 36, "stall": 56, "bush": 28, "shrub": 24, "rock": 14, "boulder": 30
 	}
 }

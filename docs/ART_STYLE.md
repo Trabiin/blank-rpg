@@ -149,6 +149,6 @@ the Merrow Three are separate sprites standing together.
 
 ## Prop scale (Phase 8)
 
-Props are sized against a 30 px person. Tallest allowed (px): crates and barrels 16, bench 18, shrub 18, grave
-20, sign 22, boulder 30, cart 26, banner 34, fountain 36, well 40, lamppost 46, stall 56. A door is at least
+Props are sized against a 30 px person. Tallest allowed (px): barrels 16, a stack of two crates 22, bench 18, grave
+20, sign 22, boulder 30, cart 26, banner 34, fountain 36, well 40, lamppost 46, stall 56. A hedge shrub may be 24 (it tiles into a wall; smaller leaves gaps). A door is at least
 22 px tall. A hedge or wall is never one sprite repeated: mix variants, or use a tile edge.

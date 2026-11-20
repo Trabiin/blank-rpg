@@ -24,6 +24,7 @@ SPEC = json.load(open(os.path.join(ROOT, "tools", "art_audit.json")))
 SPRITES = json.load(open(os.path.join(ROOT, "data", "sprites.json")))["sprites"]
 BUILTIN_PROPS = {"T": "bush", "t": "shrub", "r": "rock", "R": "rock_big", "S": "stump", "o": "pond", "b": "bones", "k": "skull"}
 TWIN_RADIUS = 3
+FLIPPED = {"bush", "shrub", "rock", "rock_big", "grave", "bones", "skull", "stump"}  # as scripts/prop.gd
 
 # The fixed screenshot set every step is compared on: name, then tools/shot.gd arguments.
 SHOTS = [
@@ -117,10 +118,13 @@ def check_maps():
                     kind = chars[ch]
                     seed = x * 31 + y
                     n = variants(kind)
-                    placed.append((x, y, kind, (seed * 7 + seed // 5) % n))
+                    flip = seed % 2 == 1 and kind in FLIPPED  # scripts/prop.gd mirrors these, a free variant
+                    placed.append((x, y, kind, (seed * 7 + seed // 5) % n, flip))
         twins = {}
         for i, a in enumerate(placed):
             for b in placed[i + 1:]:
+                if a[2] in SPEC.get("twins_ok", []):
+                    continue
                 if a[2:] == b[2:] and abs(a[0] - b[0]) <= TWIN_RADIUS and abs(a[1] - b[1]) <= TWIN_RADIUS:
                     twins[a[2]] = twins.get(a[2], 0) + 1
         if twins:

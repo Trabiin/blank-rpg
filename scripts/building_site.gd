@@ -147,20 +147,20 @@ func _draw_over() -> void:
 		_over.draw_rect(Rect2(-6, -15, 12, 13), Color("4a3222"))  # a door at the foot of the tower
 		_over.draw_rect(Rect2(-5, -14, 10, 12), Color("6a4628"))
 		_over.draw_circle(Vector2(2.5, -8), 0.8, Color("c9a46a"))
-	# Name board: building name and level, or the plot's future use.
+	# Name board: only while the player stands at the plot or it is being built (no always-on labels on the map,
+	# docs/ART_STYLE.md); the interaction prompt names it too.
 	var label: String = String(b.get("name", id)).to_upper()
 	if lv > 0:
 		label += " " + ROMAN[mini(lv, ROMAN.size() - 1)]
 	elif not job.is_empty():
 		label = "BUILDING: " + label
-	else:
-		label = "PLOT: " + label
-	var w := font.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1, 6).x + 8.0
 	var y := -PLOT.y * 0.5 if lv > 0 else -10.0
-	var r := Rect2(-w / 2.0, y - 7.0, w, 9.0)
-	_over.draw_rect(r, Color("3a2a1c") if lv > 0 else Color(0.23, 0.17, 0.11, 0.85))
-	_over.draw_rect(r, Color("ffd166") if highlight else Color("c9a46a"), false, 1.0)
-	_over.draw_string(font, Vector2(r.position.x + 4.0, y), label, HORIZONTAL_ALIGNMENT_LEFT, -1, 6, Color("f3e3c3"))
+	if highlight or not job.is_empty():
+		var w := font.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1, 6).x + 8.0
+		var r := Rect2(-w / 2.0, y - 7.0, w, 9.0)
+		_over.draw_rect(r, Color("3a2a1c"))
+		_over.draw_rect(r, Color("e8c65a") if highlight else Color("7d5836"), false, 1.0)
+		_over.draw_string(font, Vector2(r.position.x + 4.0, y), label, HORIZONTAL_ALIGNMENT_LEFT, -1, 6, Color("f3e3c3"))
 	if not job.is_empty():
 		var by := y - 12.0
 		_over.draw_rect(Rect2(-24, by, 48, 4), Color(0.1, 0.08, 0.12, 0.85))
@@ -171,15 +171,47 @@ func _draw_over() -> void:
 		_over.draw_string(font, Vector2(-tw / 2.0, by - 2), t, HORIZONTAL_ALIGNMENT_LEFT, -1, 6, Color("ffd166"))
 
 
-## Stakes and rope around an empty plot.
+## Stakes and rope around an empty plot: pegs with a lit side, rope sagging between them with its shadow on the
+## ground, a few marker rags, trodden earth at the corners and a sign board by the front.
 func _draw_plot() -> void:
-	var r := Rect2(-PLOT.x / 2.0 + 6, -PLOT.y + 16, PLOT.x - 12, PLOT.y - 20)
-	var rope := Color(0.85, 0.75, 0.55, 0.7)
-	var corners := [r.position, Vector2(r.end.x, r.position.y), r.end, Vector2(r.position.x, r.end.y)]
-	for i in 4:
-		draw_line(corners[i], corners[(i + 1) % 4], rope, 1.0)
-	for c in corners:
-		draw_rect(Rect2(c - Vector2(1, 5), Vector2(2, 6)), Color("5a3c26"))
+	var r := Rect2(-PLOT.x / 2.0 + 6, -PLOT.y + 18, PLOT.x - 12, PLOT.y - 22)
+	var rope := Color("8f8270")
+	var rope_hi := Color("b5a68a")
+	var shade := Color(0.07, 0.08, 0.12, 0.35)
+	var pts: Array[Vector2] = []
+	for i in 3:  # stakes every third of each side, corners included
+		pts.append(r.position + Vector2(r.size.x * i / 3.0, 0))
+	for i in 3:
+		pts.append(Vector2(r.end.x, r.position.y) + Vector2(0, r.size.y * i / 3.0))
+	for i in 3:
+		pts.append(r.end - Vector2(r.size.x * i / 3.0, 0))
+	for i in 3:
+		pts.append(Vector2(r.position.x, r.end.y) - Vector2(0, r.size.y * i / 3.0))
+	for p in pts:  # scuffed earth round each stake
+		draw_rect(Rect2((p + Vector2(-3, -1)).floor(), Vector2(6, 3)), Color(0.23, 0.16, 0.11, 0.55))
+	for i in pts.size():
+		var a: Vector2 = pts[i] + Vector2(0, -6)
+		var c: Vector2 = pts[(i + 1) % pts.size()] + Vector2(0, -6)
+		var sag := 2.0 if absf(a.y - c.y) < 1.0 else 0.5
+		var prev := a
+		for k in range(1, 9):
+			var t := k / 8.0
+			var q := a.lerp(c, t) + Vector2(0, sag * 4.0 * t * (1.0 - t))
+			draw_line((prev + Vector2(1, 7)).floor(), (q + Vector2(1, 7)).floor(), shade, 1.0)  # rope shadow
+			draw_line(prev.floor(), q.floor(), rope, 1.0)
+			prev = q
+		if i % 3 == 1:  # a marker rag halfway along
+			var m := a.lerp(c, 0.5) + Vector2(0, sag)
+			draw_rect(Rect2(m.floor(), Vector2(2, 3)), Color("85402f"))
+	for p in pts:
+		var base: Vector2 = p.floor()
+		draw_rect(Rect2(base + Vector2(-1, -8), Vector2(3, 9)), Color("12141f"))  # outline
+		draw_rect(Rect2(base + Vector2(0, -7), Vector2(1, 7)), Color("7d5836"))  # lit side
+		draw_rect(Rect2(base + Vector2(1, -7), Vector2(1, 7)), Color("5a3e28"))
+		draw_rect(Rect2(base + Vector2(0, -7), Vector2(2, 1)), rope_hi)  # lashing
+	var sign_tex: Texture2D = load("res://assets/props/sign.png") if ResourceLoader.exists("res://assets/props/sign.png") else null
+	if sign_tex:
+		draw_texture(sign_tex, Vector2(r.position.x + 6, r.end.y - sign_tex.get_height() + 2).floor())
 
 
 ## Wooden scaffolding with planks; covers the whole plot for a new building, one side for an upgrade.

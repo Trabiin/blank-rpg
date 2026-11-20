@@ -46,11 +46,12 @@ void fragment() {
 	float m = texture(TEXTURE, px * to_uv).r * 0.25 + inner / 8.0 * 0.35 + outer / 8.0 * 0.4;
 	m += (value_noise(px / wobble_scale) - 0.5) * wobble + (value_noise(px / 3.0) - 0.5) * 0.12;
 	// Footpaths (green): a tighter blur so a one-tile path stays narrow.
-	float mp = 0.25 * (texture(TEXTURE, (px + vec2(-4.0, -4.0)) * to_uv).g
-		+ texture(TEXTURE, (px + vec2(4.0, -4.0)) * to_uv).g
-		+ texture(TEXTURE, (px + vec2(-4.0, 4.0)) * to_uv).g
-		+ texture(TEXTURE, (px + vec2(4.0, 4.0)) * to_uv).g);
-	mp += (value_noise(px / 5.0) - 0.5) * 0.2;
+	float mp = texture(TEXTURE, px * to_uv).g * 0.3;
+	for (int i = 0; i < 8; i++) {  // a small ring: round path ends and bends instead of square ones
+		float a = float(i) * 0.785398 + 0.39;
+		mp += texture(TEXTURE, (px + vec2(cos(a), sin(a)) * 6.0) * to_uv).g * 0.0875;
+	}
+	mp += (value_noise(px / 7.0) - 0.5) * 0.28 + (value_noise(px / 2.5) - 0.5) * 0.1;
 	vec4 col = vec4(0.0);
 	if (m <= 0.52 && mp > 0.5) {
 		float n = value_noise(px / 3.0) + (hash(floor(px)) - 0.5) * 0.25;
