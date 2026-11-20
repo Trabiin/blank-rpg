@@ -83,6 +83,7 @@ var expeditions := []
 ## Written reports from squads that came back, newest first: {"day", "job", "title", "outcome", "lines", "read"}.
 var reports := []
 var job_ready := {}  # job id -> first day it can be taken again
+var mission_ready := {}  # "raid:<province>" / "salvage:<province>" -> first day it is offered again (issue #113)
 var job_data := {}  # id -> Dictionary from data/expeditions.json
 var pair_data := []
 ## Research: finished node ids, days of study done per node, the node being studied now ("" = none),
@@ -171,6 +172,7 @@ func reset() -> void:
 	expeditions = []
 	reports = []
 	job_ready = {}
+	mission_ready = {}
 	_load_research_data()
 	research_done = []
 	research_progress = {}
@@ -824,7 +826,7 @@ func job_blocker(jid: String) -> String:
 		if p.get("owner", "") != "erased":
 			return "only once %s is erased" % p.get("name", "?")
 	elif p.get("owner", "") == "erased":
-		return "%s has been erased" % p.get("name", "?")  # personal jobs too: lose their home, lose rank 5
+		return "%s has been erased" % p.get("name", "?")
 	if not expedition_running(jid).is_empty():
 		return "a squad is already out on it"
 	if int(job_ready.get(jid, 0)) > day:
@@ -941,9 +943,6 @@ func expedition_odds(jid: String, squad: Array) -> Dictionary:
 	for pk in bond_perks_with("all_odds"):
 		chance += int(pk["effect"]["all_odds"])
 		why.append(["%s (%s's bond), +%d%%" % [pk["name"], short_name(pk["id"]), int(pk["effect"]["all_odds"])], true])
-	var who: String = j.get("personal", "")
-	if who != "" and not who in squad:
-		why.append(["Personal: %s has to go" % short_name(who), false])
 	for pair in pair_data:
 		if pair["ids"][0] in squad and pair["ids"][1] in squad:
 			chance += int(pair["mod"])
@@ -973,7 +972,7 @@ func reward_text(jid: String) -> String:
 
 
 func send_expedition(jid: String, squad: Array) -> bool:
-	if job_blocker(jid) != "" or squad_rule(jid, squad) != "" or squad.size() < SQUAD_MIN or squad.size() > SQUAD_MAX:
+	if job_blocker(jid) != "" or squad.size() < SQUAD_MIN or squad.size() > SQUAD_MAX:
 		return false
 	for id in squad:
 		if squad_blocker(id) != "":
@@ -1058,11 +1057,6 @@ func _resolve_expedition(e: Dictionary) -> void:
 		for id in squad:
 			if has_bond(id):
 				bond_gain(id, int(bond_data["points"]["expedition"]), "", true)
-		var pid: String = j.get("personal", "")
-		if pid != "" and has_bond(pid):
-			bonds[pid]["personal_done"] = true
-			bond_gain(pid, 999, "", true)
-			lines.append("%s has something to tell Ash. (Bonds: H, or find them in Hollowmark.)" % short_name(pid))
 		var rid: String = j.get("recruit", "")
 		if rid != "" and not recruits.has(rid) and recruit_data.has(rid):
 			recruits[rid] = {"role": "idle", "target": "", "injured": 0}
@@ -1990,6 +1984,7 @@ func to_dict() -> Dictionary:
 		"blank_plans": blank_plans,
 		"buildings": buildings, "construction": construction, "lamps": lamps, "lamp_jobs": lamp_jobs,
 		"expeditions": expeditions, "reports": reports, "job_ready": job_ready,
+		"mission_ready": mission_ready,
 		"research_done": research_done, "research_progress": research_progress, "research_active": research_active,
 		"research_paid": research_paid,
 		"standing": standing, "pacts": pacts, "deal_ready": deal_ready, "intel_until": intel_until,
@@ -2069,6 +2064,10 @@ func from_dict(d: Dictionary) -> void:
 	var saved_jr: Dictionary = d.get("job_ready", {})
 	for jid in saved_jr:
 		job_ready[jid] = int(saved_jr[jid])
+	var saved_mr = d.get("mission_ready", {})
+	if typeof(saved_mr) == TYPE_DICTIONARY:
+		for k in saved_mr:
+			mission_ready[str(k)] = int(saved_mr[k])
 	for rid in d.get("research_done", []):
 		if research_data.has(rid) and not rid in research_done:
 			research_done.append(rid)
@@ -2248,21 +2247,18 @@ func bond_rank_name(rank: int) -> String:
 	return bond_data["rank_names"][clampi(rank, 0, BOND_MAX)]
 
 
+## A character's personal mission id (data/personal.json, issue #113), "" when they have none. It used to be
+## a Guildhall job; since #113 it is a short playable mission on the Command Table (PersonalMissions).
 func personal_job(id: String) -> String:
-	_load_expedition_data()
-	for jid in job_data:
-		if job_data[jid].get("personal", "") == id:
-			return jid
-	return ""
+	return PersonalMissions.id_for(id)
 
 
-## The province whose loss put this person's personal job out of reach ("" = it can still be done).
-## Erased land takes the job with it until a Reclaim mission brings the province back.
+## The province whose loss put this person's personal mission out of reach ("" = it can still be done).
+## Erased land takes the mission with it until a Reclaim mission brings the province back.
 func personal_lost(id: String) -> String:
-	var pj := personal_job(id)
-	if pj == "" or personal_done(id):
+	if personal_job(id) == "" or personal_done(id):
 		return ""
-	var p := territory().find(job(pj).get("province", ""))
+	var p := territory().find(PersonalMissions.def_for(id).get("province", ""))
 	return p.get("name", "?") if p.get("owner", "") == "erased" else ""
 
 
@@ -2270,20 +2266,9 @@ func personal_done(id: String) -> bool:
 	return bool(bonds.get(id, {}).get("personal_done", false))
 
 
-## A personal job only shows on the board once its person is at rank 4 and has not done it yet.
-func personal_open(jid: String) -> bool:
-	var who: String = job(jid).get("personal", "")
-	if who == "":
-		return true
-	return has_bond(who) and bond_rank(who) >= 4 and not personal_done(who)
-
-
-## Why this squad can't take this job ("" = it can).
-func squad_rule(jid: String, squad: Array) -> String:
-	var who: String = job(jid).get("personal", "")
-	if who != "" and not who in squad:
-		return "it's personal: %s has to go" % short_name(who)
-	return ""
+## Jobs on the Guildhall board are never personal any more (#113); kept so old call sites read the same.
+func personal_open(_jid: String) -> bool:
+	return true
 
 
 ## The rank scene waiting to be seen (1-5), or 0.
@@ -2313,12 +2298,12 @@ func bond_next_text(id: String) -> String:
 		return "Wants a word. Talk to them in Hollowmark (or %s here)." % ("tap them" if Prompts.touch() else "press " + Prompts.confirm())
 	var need := bond_threshold(rank + 1) - bond_points(id)
 	if rank == BOND_MAX - 1 and not personal_done(id):
-		var pj := personal_job(id)
 		if personal_lost(id) != "":
-			return "Rank 5 is out of reach: their personal job was in %s, and the Blank has erased it. Reclaim %s to finish their story." % [personal_lost(id), personal_lost(id)]
-		if not expedition_running(pj).is_empty():
-			return "Away on their personal job. Back in %s." % job_left_text(expedition_running(pj))
-		return "Rank 5 needs their personal job: \"%s\" on the Guildhall board%s. They have to go on it." % [job(pj).get("name", "?"), Prompts.tag("expeditions")]
+			return "Rank 5 is out of reach: their personal mission was in %s, and the Blank has erased it. Reclaim %s to finish their story." % [personal_lost(id), personal_lost(id)]
+		var pd := PersonalMissions.def_for(id)
+		var where: String = territory().find(pd.get("province", "")).get("name", "?")
+		var how := "they come along" if PersonalMissions.is_field(id) else "the party keeps them alive"
+		return "Rank 5 needs their personal mission: \"%s\" at %s on the Command Table (%s)." % [pd.get("name", "?"), where, how]
 	if need > 0:
 		return "%d more bond point%s to rank %d." % [need, "" if need == 1 else "s", rank + 1]
 	return ""
@@ -2437,7 +2422,7 @@ func finish_bond_scene(id: String, rank: int, choice := -1) -> Dictionary:
 	if not perk.is_empty():
 		msg += " Perk: %s, %s" % [perk["name"], perk["desc"]]
 	if rank == 4 and personal_job(id) != "":
-		msg += " Their personal job is on the Guildhall board."
+		msg += " Their personal mission is waiting at %s on the Command Table." % territory().find(PersonalMissions.def_for(id).get("province", "")).get("name", "?")
 	notice.emit(msg, false)
 	return perk
 

@@ -181,12 +181,19 @@ func test_quest_log_personal_factions_and_open_missions() -> void:
 	Empire.standing["concord"] = -60
 	var cq: Dictionary = Journal.faction_quests().filter(func(x): return x["id"] == "faction_concord")[0]
 	check(cq["next"].contains("Concord trouble"), "a hostile Concord warns about trouble")
-	# Open missions: a surge makes a timed Defense mission, first in the list, with its province.
+	# Open missions: a surge makes a timed Defense mission, with its province. Timed rows come first, soonest
+	# first (raids and salvage runs have countdowns too, #113).
 	Empire.surge = {"id": "meadow", "day": Empire.day + 2}
 	var open := Journal.open_quests()
-	check(not open.is_empty() and open[0]["id"] == "mission_defense_meadow", "the gathering surge comes first")
-	check_eq(int(open[0]["days"]), Empire.surge_days_left(), "with its countdown")
-	check_eq(open[0]["target"].get("province", ""), "meadow", "and its province")
+	var defense: Array = open.filter(func(x): return x["id"] == "mission_defense_meadow")
+	if check(defense.size() == 1, "the gathering surge is listed"):
+		check_eq(int(defense[0]["days"]), Empire.surge_days_left(), "with its countdown")
+		check_eq(defense[0]["target"].get("province", ""), "meadow", "and its province")
+	var days: Array = open.map(func(x): return int(x["days"]))
+	var timed: Array = days.filter(func(d): return d >= 0)
+	var sorted_timed := timed.duplicate()
+	sorted_timed.sort()
+	check(timed == sorted_timed and days.slice(0, timed.size()) == timed, "timed rows first, soonest first")
 	check(open.any(func(x): return x["id"] == "mission_reclaim_whitewater"), "erased Whitewater offers a Reclaim")
 	check(open.any(func(x): return x.get("type", "") == "patrol"), "patrols listed too")
 	check(open.all(func(x): return x["id"] != "mission_auditor_duel"), "story missions stay under Main story")

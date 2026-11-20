@@ -1,5 +1,5 @@
 {
-	"_comment": "The Inklands: regions, biomes and provinces (issue #53). Coordinates: pos and label are 0-1 on the world map (x east, y south); the Blank's wall runs down the east edge. regions: open (open at the start), chapter (the story chapter that opens it; locked regions show under fog with their hint), opens_when (optional Story conditions, see Story.meets; story beats can also open one with then: open_region:<id>), pressure (optional extra Fray a day on every open province in the region, listed in its panel), label (where the region name sits). biomes: maps = the mission map pool (maps/<id>.txt, built round the same open spots as frayed_meadow, see MissionTypes); an empty pool falls back to frayed_meadow and each chapter adds its region's maps. provinces: region, biome, weight > 1 grows a province. owner: you, free, erased or a faction id from data/factions.json. Output is per day. favors: the stat a governor here needs (7+ = good fit, 3 or less = poor fit); favors_why says why. claim: cost to plant your flag on an unclaimed province next to your land (it needs a governor to go with it).",
+	"_comment": "The Inklands: regions, biomes and provinces (issue #53). Coordinates: pos and label are 0-1 on the world map (x east, y south); the Blank's wall runs down the east edge. regions: open (open at the start), chapter (the story chapter that opens it; locked regions show under fog with their hint), opens_when (optional Story conditions, see Story.meets; story beats can also open one with then: open_region:<id>), pressure (optional extra Fray a day on every open province in the region, listed in its panel), label (where the region name sits). biomes: maps = the mission map pool (maps/<id>.txt, three layouts per biome made by tools/make_biomes.py; each map lists its objective spots in @spot lines and MissionTypes.vary picks among them, issue #113); an empty pool falls back to frayed_meadow and each chapter adds its region's maps. provinces: region, biome, weight > 1 grows a province. owner: you, free, erased or a faction id from data/factions.json. Output is per day. favors: the stat a governor here needs (7+ = good fit, 3 or less = poor fit); favors_why says why. claim: cost to plant your flag on an unclaimed province next to your land (it needs a governor to go with it).",
 	"regions": [
 		{
 			"id": "marches", "name": "The Hollow Marches", "chapter": 1, "open": true, "label": [0.56, 0.625],
@@ -29,14 +29,14 @@
 		}
 	],
 	"biomes": {
-		"town": {"name": "Market town", "maps": ["frayed_meadow"]},
-		"meadow": {"name": "Frayed meadow", "maps": ["frayed_meadow"]},
-		"woods": {"name": "Fungal woods", "maps": ["gutterwoods"]},
-		"farmland": {"name": "Farmland", "maps": ["oldmill"]},
-		"hills": {"name": "Ink hills", "maps": ["lampwick"]},
-		"marsh": {"name": "Whispering marsh", "maps": ["saltreed"]},
-		"river": {"name": "River crossing", "maps": ["saltreed"]},
-		"road": {"name": "Concord road", "maps": ["tithe_road"]},
+		"town": {"name": "Market town", "maps": ["frayed_meadow", "meadow_b", "meadow_c"]},
+		"meadow": {"name": "Frayed meadow", "maps": ["frayed_meadow", "meadow_b", "meadow_c"]},
+		"woods": {"name": "Fungal woods", "maps": ["gutterwoods", "gutterwoods_b", "gutterwoods_c"]},
+		"farmland": {"name": "Farmland", "maps": ["oldmill", "oldmill_b", "oldmill_c"]},
+		"hills": {"name": "Ink hills", "maps": ["lampwick", "lampwick_b", "lampwick_c"]},
+		"marsh": {"name": "Whispering marsh", "maps": ["saltreed", "saltreed_b", "saltreed_c"]},
+		"river": {"name": "River crossing", "maps": ["gallows", "gallows_b", "gallows_c"]},
+		"road": {"name": "Concord road", "maps": ["tithe_road", "tithe_road_b", "tithe_road_c"]},
 		"abbey": {"name": "Abbey grounds", "maps": []},
 		"lakeshore": {"name": "Lakeshore", "maps": []},
 		"mountain": {"name": "Mountain pass", "maps": []},

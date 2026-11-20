@@ -1,5 +1,5 @@
 {
-	"_comment": "Bonds with Ash for the core cast (issue #50, DESIGN.md 5.10). ranks: bond points needed for rank 1..5 (index 0 = rank 0). Points come from the first chat each day in Hollowmark (talk), each day spent in a role they like (liked_role) or dislike (disliked_role), expeditions that come home with a success (expedition), fighting beside Ash (mission, per kill_step kills) and the choices in rank scenes. Points never drop below the current rank, and stop at the next rank until its scene is seen. Rank 5 also needs their personal job (data/expeditions.json, personal: id) done; it unlocks at rank 4. likes / dislikes: role or role:target as Empire.recruits stores them. perks: rank -> {name, desc, effect}; effects are read in empire.gd (bond_perks_with / bond_perk_total). Effect keys: gilt, supplies, insight (a day), gilt_per_held (a day per province held), heal, research_pace, squad_odds, all_odds, surge_warning, job_speed (expeditions take this much less time), build_discount (off building and Wardlamp Gilt), standing_bonus (added to every faction standing gain), fray_home (less Hollowmark Fray a day), mission_hp, mission_damage, mission_revive, mission_guard (less damage taken), mission_power_rate (faster gauge). Scene lines: [speaker id, text] or [speaker id, text, expression] (assets/portraits/<id>_<expression>.png, falling back to <id>.png); speaker \"\" is narration. Ash never speaks: choices are what Ash does.",
+	"_comment": "Bonds with Ash for the core cast (issue #50, DESIGN.md 5.10). ranks: bond points needed for rank 1..5 (index 0 = rank 0). Points come from the first chat each day in Hollowmark (talk), each day spent in a role they like (liked_role) or dislike (disliked_role), expeditions that come home with a success (expedition), fighting beside Ash (mission, per kill_step kills) and the choices in rank scenes. Points never drop below the current rank, and stop at the next rank until its scene is seen. Rank 5 also needs their personal mission (data/personal.json, a short playable mission on the Command Table, issue #113) done; it unlocks at rank 4. likes / dislikes: role or role:target as Empire.recruits stores them. perks: rank -> {name, desc, effect}; effects are read in empire.gd (bond_perks_with / bond_perk_total). Effect keys: gilt, supplies, insight (a day), gilt_per_held (a day per province held), heal, research_pace, squad_odds, all_odds, surge_warning, job_speed (expeditions take this much less time), build_discount (off building and Wardlamp Gilt), standing_bonus (added to every faction standing gain), fray_home (less Hollowmark Fray a day), mission_hp, mission_damage, mission_revive, mission_guard (less damage taken), mission_power_rate (faster gauge). Scene lines: [speaker id, text] or [speaker id, text, expression] (assets/portraits/<id>_<expression>.png, falling back to <id>.png); speaker \"\" is narration. Ash never speaks: choices are what Ash does.",
 	"ranks": [0, 6, 16, 30, 46, 64],
 	"points": {"talk": 2, "liked_role": 2, "disliked_role": -1, "expedition": 2, "mission": 1, "kill_step": 8, "mission_cap": 4},
 	"rank_names": ["Stranger", "Acquaintance", "Familiar", "Trusted", "Close", "Bound"],
@@ -50,9 +50,9 @@
 					["bran", "I'm not asking for a favour. I'm asking for a squad and a couple of days. Billed to me."],
 					["", "He picks at the edge of the ink. For once he doesn't look at you while he talks."]
 				], "choice": [
-					{"label": "[Nod: go]", "bond": 3, "reply": [["bran", "Good. Board's at the Guildhall. It's marked personal, which I hate. Put me on it."]]},
-					{"label": "[Point at the Guildhall: take friends]", "bond": 2, "reply": [["bran", "Friends. Sure. Witnesses, more like. Brokers behave better with witnesses."]]}
-				], "end": [["", "A new job is on the Guildhall board: \"Buy Back the Paper\". Bran has to go on it."]]},
+					{"label": "[Nod: go]", "bond": 3, "reply": [["bran", "Good. Gallows Ferry, on the Command Table. It's marked personal, which I hate. You're coming."]]},
+					{"label": "[Point at the map: take friends]", "bond": 2, "reply": [["bran", "Friends. Sure. Witnesses, more like. Brokers behave better with witnesses."]]}
+				], "end": [["", "A personal mission is on the Command Table: \"Buy Back the Paper\", at Gallows Ferry. Bran is going, and Ash goes with him."]]},
 				{"rank": 5, "title": "Blank Clause", "lines": [
 					["bran", "Look."],
 					["", "The tattoo is still there, every clause. But where the holder's name was, the skin is clean."],
@@ -109,9 +109,9 @@
 					["gristle", "She voted me out the next spring. I've let that debt grow interest for eleven years."],
 					["gristle", "It's time to collect. Not coin. I want my name back on the tree. Lend me a squad."]
 				], "choice": [
-					{"label": "[Nod]", "bond": 3, "reply": [["gristle", "Good. It's on the Guildhall board. Bring the strong ones. Hester has a temper and a lot of nephews."]]},
+					{"label": "[Nod]", "bond": 3, "reply": [["gristle", "Good. Gutterwoods, when you're ready. Bring the strong ones. Hester has a temper and a lot of nephews."]]},
 					{"label": "[Mime: gently]", "bond": 2, "reply": [["gristle", "Gently. Yes. I'll ask very gently. With a very large bottle in the other hand."]]}
-				], "end": [["", "A new job is on the Guildhall board: \"Collect from Hester Vane\". Mother Gristle has to go on it."]]},
+				], "end": [["", "A personal mission is on the Command Table: \"Collect from Hester Vane\", in the Gutterwoods. Mother Gristle is going, and Ash goes with her."]]},
 				{"rank": 5, "title": "Paid in Full", "lines": [
 					["gristle", "My name's back on the tree. Carved deep, so the white has to work for it."],
 					["gristle", "Hester cried. I billed her for the tissue. We're even now. It's horrible. I've never been even with anyone."],
@@ -164,9 +164,9 @@
 					["ninefingers", "It's off Tithe Road. Two days through Concord toll posts with my face on a poster."],
 					["ninefingers", "I need to know. Even if it's white. Especially if it's white."]
 				], "choice": [
-					{"label": "[Nod]", "bond": 3, "reply": [["ninefingers", "Right. It's on the board. I'll go in a hood. A big one. Bring someone who talks to guards."]]},
+					{"label": "[Nod]", "bond": 3, "reply": [["ninefingers", "Right. Tithe Road. I'll go in a hood. A big one. Bring someone who talks to guards."]]},
 					{"label": "[Point at their poster, then shrug]", "bond": 2, "reply": [["ninefingers", "The likeness is terrible, anyway. They gave me ten fingers. Amateurs."]]}
-				], "end": [["", "A new job is on the Guildhall board: \"Find Hob's Wick\". Daro has to go on it."]]},
+				], "end": [["", "A personal mission is on the Command Table: \"Find Hob's Wick\", on the Tithe Road. Daro is going, and Ash goes with them."]]},
 				{"rank": 5, "title": "Roll of Honour", "lines": [
 					["ninefingers", "It's there. The whole village. The mill's turning. Kids. Goats. Bad beer."],
 					["ninefingers", "And in the chapel there's a plaque. \"Corporal Daro, fallen against the Blank.\" The Concord declared me dead so they wouldn't have to say I deserted."],
@@ -219,9 +219,9 @@
 					["quill", "If it went missing, or caught fire, or was very carefully corrected in my hand..."],
 					["quill", "I'd need to go myself. Nobody else can forge me."]
 				], "choice": [
-					{"label": "[Nod]", "bond": 3, "reply": [["quill", "It's on the Guildhall board. Bring someone with a crowbar. I'll bring the good pen."]]},
+					{"label": "[Nod]", "bond": 3, "reply": [["quill", "Old Mill Crossing, then. Bring someone with a crowbar. I'll bring the good pen. I don't fight, so you will."]]},
 					{"label": "[Mime striking a match]", "bond": 2, "reply": [["quill", "Tempting. But burning leaves a gap, and the Blank loves a gap. No. I'm going to fix it."]]}
-				], "end": [["", "A new job is on the Guildhall board: \"Correct the Original\". Quill has to go on it."]]},
+				], "end": [["", "A personal mission is on the Command Table: \"Correct the Original\", at Old Mill Crossing. Quill can't fight: the party goes along to keep them alive."]]},
 				{"rank": 5, "title": "Balanced", "lines": [
 					["quill", "Done. Thirty-one lines corrected. \"Written off\" became \"carried forward\". The Ledger sees them again."],
 					["quill", "I also added one entry. I hope you don't mind."],
@@ -276,9 +276,9 @@
 					["tobble", "I want it. Daft, I know. A board with a mug painted on it. But it's mine."],
 					["tobble", "Knees and all, I'm going. Send someone to carry me back."]
 				], "choice": [
-					{"label": "[Nod]", "bond": 3, "reply": [["tobble", "Good lad. Good... whatever you are. It's on the board. Pack a ladder."]]},
+					{"label": "[Nod]", "bond": 3, "reply": [["tobble", "Good lad. Good... whatever you are. The Meadow, by the white. I'll bring the ladder. You bring the swinging."]]},
 					{"label": "[Offer to carry him]", "bond": 2, "reply": [["tobble", "Cheek! I'll walk. I'll complain the whole way, but I'll walk."]]}
-				], "end": [["", "A new job is on the Guildhall board: \"Fetch the Last Drop's Sign\". Old Tobble has to go on it."]]},
+				], "end": [["", "A personal mission is on the Command Table: \"Fetch the Last Drop's Sign\", in the Frayed Meadow. Old Tobble can't fight: the party goes along to keep him alive."]]},
 				{"rank": 5, "title": "Last Orders", "lines": [
 					["", "The old sign hangs over the tavern door now: a mug, a crack, and THE LAST DROP in flaking gold."],
 					["tobble", "Looks right, doesn't it? Like it was always meant to be here."],
@@ -331,9 +331,9 @@
 					["abeyance", "There's an X. The page has never been that direct. It's usually so polite."],
 					["abeyance", "I think it wants to go home. Or it wants me to see something. I have to take it. Will you send people with me?"]
 				], "choice": [
-					{"label": "[Nod]", "bond": 3, "reply": [["abeyance", "Thank you. It's on the Guildhall board. I'll pack the notebook. And the page. Obviously the page."]]},
+					{"label": "[Nod]", "bond": 3, "reply": [["abeyance", "Thank you. The Lampwick Hills. I'll pack the notebook. And the page. Obviously the page. You'll have to do the fighting."]]},
 					{"label": "[Mime: careful]", "bond": 2, "reply": [["abeyance", "I'm always careful. It's the page that isn't."]]}
-				], "end": [["", "A new job is on the Guildhall board: \"Follow the Page\". Sister Abeyance has to go on it."]]},
+				], "end": [["", "A personal mission is on the Command Table: \"Follow the Page\", in the Lampwick Hills. Sister Abeyance can't fight: the party goes along to keep her alive."]]},
 				{"rank": 5, "title": "Not Yet", "lines": [
 					["abeyance", "The chapel was empty. Just a lectern, and on it, a book with every page torn out but one."],
 					["abeyance", "My page fit the gap exactly. It went in, and the book wrote one line, and then it was still."],
@@ -394,9 +394,9 @@
 					["ottoline", "Could be nothing. Could be the Blank doing an impression. It does that. Learns your voice. Learns the people you lost."],
 					["ottoline", "I've kept that door shut six years. I want to be the one who opens it. Or the one who checks it's still shut. Either way, I'm going.", "angry"]
 				], "choice": [
-					{"label": "[Nod]", "bond": 3, "reply": [["ottoline", "Good. It's on the Guildhall board. Bring people who don't scare easy, and someone to hold my coat."]]},
+					{"label": "[Nod]", "bond": 3, "reply": [["ottoline", "Good. Lantern Row, on Gallows Ferry. Bring people who don't scare easy, and someone to hold my coat."]]},
 					{"label": "[Point at yourself: I'm coming]", "bond": 2, "reply": [["ottoline", "No. You run the town. Send me with a squad and I'll send you a postcard. ...Fine. You can wave me off. Wave like you mean it.", "happy"]]}
-				], "end": [["", "A new job is on the Guildhall board: \"Answer the Knocking\". Big Ottoline has to go on it."]]},
+				], "end": [["", "A personal mission is on the Command Table: \"Answer the Knocking\", at Gallows Ferry. Big Ottoline is going, and Ash goes with her."]]},
 				{"rank": 5, "title": "Coat Check", "lines": [
 					["", "Ottoline comes in out of the weather, soaked to the skin, carrying six coats over her arm like sleeping children."],
 					["ottoline", "It was the door. Just the door, standing in the white with no building round it. My chalk marks still on the frame."],
@@ -459,9 +459,9 @@
 					["jessamy", "I've never wanted to be on anybody's books in my life. But I'd like to see noon again. Just once. I've forgotten what colour things are.", "sad"],
 					["jessamy", "Lend me a squad. A big one. Marrow scares easy, but he has friends with crossbows."]
 				], "choice": [
-					{"label": "[Nod]", "bond": 3, "reply": [["jessamy", "Lovely. It's on the board. We'll go by night, obviously, and knock at his window. He'll adore that.", "smug"]]},
+					{"label": "[Nod]", "bond": 3, "reply": [["jessamy", "Lovely. Tithe Road. We'll go by night, obviously, and knock at his window. He'll adore that.", "smug"]]},
 					{"label": "[Mime: frightened, not paid]", "bond": 2, "reply": [["jessamy", "Oh, I like you. Frightened it is. He took my money, after all. Only fair to take his sleep.", "happy"]]}
-				], "end": [["", "A new job is on the Guildhall board: \"Back on the Books\". Jessamy has to go on it."]]},
+				], "end": [["", "A personal mission is on the Command Table: \"Back on the Books\", on the Tithe Road. Jessamy is going, and Ash goes with her."]]},
 				{"rank": 5, "title": "Noon", "lines": [
 					["", "It is noon. The plaza is full of honest people doing honest things. In the middle of it, Jessamy lies flat on her back on the cobbles, eyes shut, perfectly solid."],
 					["jessamy", "Don't block it. Shift. You're in my sun."],
@@ -523,9 +523,9 @@
 					["odile", "She'll offer me my post back. She'll offer to pretend none of this happened. She is very good at making lines disappear."],
 					["odile", "I need to go. Not to give her anything. To settle up. Properly. Once."]
 				], "choice": [
-					{"label": "[Nod]", "bond": 3, "reply": [["odile", "Thank you. It's on the Guildhall board. I'll bring a spare pen. She always forgets hers, to see if I'll offer."]]},
+					{"label": "[Nod]", "bond": 3, "reply": [["odile", "Thank you. Old Mill Crossing. I'll bring a spare pen. She always forgets hers, to see if I'll offer."]]},
 					{"label": "[Hold out a hand: leave the ledger here]", "bond": 2, "reply": [["odile", "Yes. Good. Safer. She can't take what I haven't brought. You'd make a decent collector. That is not a compliment.", "smug"]]}
-				], "end": [["", "A new job is on the Guildhall board: \"Settle the Account\". Odile has to go on it."]]},
+				], "end": [["", "A personal mission is on the Command Table: \"Settle the Account\", at Old Mill Crossing. Odile is going, and Ash goes with her."]]},
 				{"rank": 5, "title": "Reconciled", "lines": [
 					["odile", "She came alone. No guards, no clerks. Older than I remembered. She'd brought her own pen this time."],
 					["odile", "We argued in numbers for three hours. Then I audited her, right there in the inn, on the back of the menu."],
@@ -587,9 +587,9 @@
 					["velvette", "He keeps the Office of Quiet's commissions in his cabin. Every name, every price, and my stage name at the bottom of each: \"the instrument\".", "angry"],
 					["velvette", "I'd like to give one last performance. One he didn't book."]
 				], "choice": [
-					{"label": "[Nod]", "bond": 3, "reply": [["velvette", "Lovely. It's on the board. I'll need a squad, a costume and a very quiet boat.", "smug"]]},
+					{"label": "[Nod]", "bond": 3, "reply": [["velvette", "Lovely. Saltreed Marsh. I'll need you, a costume and a very quiet boat.", "smug"]]},
 					{"label": "[Mime: don't kill him]", "bond": 2, "reply": [["velvette", "...You ask a lot. Fine. I'll leave him breathing. I'll leave him a great many other things too, mostly bruises."]]}
-				], "end": [["", "A new job is on the Guildhall board: \"The Last Performance\". Velvette has to go on it."]]},
+				], "end": [["", "A personal mission is on the Command Table: \"The Last Performance\", in Saltreed Marsh. Velvette is going, and Ash goes with her."]]},
 				{"rank": 5, "title": "Curtain Call", "lines": [
 					["velvette", "The Gilded Heron had a full house. I came on during the closing act. In costume, naturally. One has standards."],
 					["velvette", "I challenged Augustin with the whole Marsh watching. He'd never held a sword in his life. I let him keep his. Then I read the commissions aloud. Every name. Every price."],

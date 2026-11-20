@@ -11,6 +11,13 @@
 @sign1 WELCOME TO THE FRAYED MEADOW|pop. 212   pop. 40   pop. ?
 @sign2 HOLLOWMARK  ->  (east)|(east is gone)
 @sign3 STUMP CIRCLE|Please do not feed the silence
+# @spot lines: objective spots missions pick from (tools/make_biomes.py annotate).
+@spot start 12,31
+@spot ward 50,31
+@spot blot 64,30
+@spot rescue 60,9 60,50 59,22
+@spot cache 28,14 38,42 44,20 24,46 56,14 58,44 63,23 62,36
+@spot spawn 31,10 58,24 40,26 52,33 60,38 36,40 47,44
 ---
 ttt.ttt.TtttTttTttTtttTttT.t.tTttTttTttttTttttT.tT..TttTttTt.Ttttttt............
 T.tTtttttt.ttttttt.ttttt..tt.ttttttftt.ttt.tt.tttttttt.t..tttttt.tt.............

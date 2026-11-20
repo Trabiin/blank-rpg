@@ -294,20 +294,20 @@ speaks; choices are gestures). Points never drop below the current rank and stop
 is seen: the person gets a heart over their head in town and "wants a word". Each person has five rank scenes
 (replayable from the Bonds screen), perks at ranks 3 and 5 (mission HP/damage/revives/damage taken/gauge, healing,
 expedition odds and speed, surge warning, daily Gilt/Supplies/Insight, Gilt per province held, study pace, cheaper
-buildings, faction standing, Hollowmark Fray), and a **personal job** on the Guildhall board at rank 4 that they
-must go on; rank 5 needs it done. If the Blank erases the job's province, rank 5 is out of reach until a Reclaim
+buildings, faction standing, Hollowmark Fray), and a **personal mission** on the Command Table at rank 4
+(see 5.11); rank 5 needs it done. If the Blank erases the mission's province, rank 5 is out of reach until a Reclaim
 mission brings the province back (Ojon, 2026-11-20: losing someone's home should cost something).
 Scenes show the portraits (`assets/portraits/`) in a visual-novel layout; lines can ask for an expression, which
 shows once #107 draws it. Each bonded hero also has a first chat in town and walking banter with other heroes
 (`data/dialogue.json`).
 
 The four 2026-11-20 heroes' arcs: **Ottoline** shut the Crimson Encore's door on six people to keep the Blank off
-a hundred and six (personal job: answer the knocking at that door, on Gallows Ferry). **Jessamy** paid a notary to strike
-her out of the Ledger and has faded in daylight ever since (job: make him write her back in, Tithe Road).
-**Odile** found her own mother's countersignature on the order to collect Lowmere (job: settle the account at Old
-Mill). **Velvette** killed eleven Concord-chosen "volunteers" on stage (job: a last performance on her old
+a hundred and six (personal mission: answer the knocking at that door, on Gallows Ferry). **Jessamy** paid a notary to strike
+her out of the Ledger and has faded in daylight ever since (mission: make him write her back in, Tithe Road).
+**Odile** found her own mother's countersignature on the order to collect Lowmere (mission: settle the account at Old
+Mill). **Velvette** killed eleven Concord-chosen "volunteers" on stage (mission: a last performance on her old
 impresario's showboat in the Saltreed). Rivalries are still only the expedition pair modifiers (romance and
-rivalries: #116; playable personal missions: #113).
+rivalries: #116).
 
 The other ~30 recruits are lighter: a trait, a couple of lines, a reason to recruit them, and a quip in
 expedition reports.
@@ -323,8 +323,27 @@ expedition reports.
 | **Raid / Salvage** | Grab resources from a contested place | Map, factions |
 | **Personal** | A core character's story | Bond rank |
 
-Mission maps are hand-built text maps; non-story missions reuse a pool of maps with different spawns, objectives
-and Blank positions so the content stretches without feeling copy-pasted.
+**Built (issue #113, `scripts/mission_types.gd`, `data/mission_types.json`):** every province offers its types on
+the Command Table, each briefing showing type, threat (1 to 5 with a name), rewards and expected enemies.
+
+- **Raid** opens in a province a faction holds next to yours, for 3 days in every 5 (4-day cooldown after a run).
+  Break at least 3 of 5 caches (Concord tithe-stores, Guild cargo, Coven stores) before the timer runs out. Guards
+  stand watch; being seen or breaking boxes fills an alarm that, at full, calls reinforcements from the far edge.
+  Standing with the owner drops a little if it stayed quiet and a lot if it went loud, and their rival likes you
+  more. Friendly and Allied factions can't be raided. Cache loot tables are the hook for Forge materials (#112).
+- **Salvage** opens in your provinces at 35+ Fray: grab at least 3 of 5 piles of goods before the Blank's edge creeps
+  over them (faster at higher Fray). Piles near the edge are worth more.
+- **Personal** (`scripts/personal_missions.gd`, `data/personal.json`): one hand-built mission per bonded character,
+  offered at rank 4 in their home province, on a set-piece map from `tools/make_personal.py`. Field heroes are forced
+  into the party (it is their fight); core staff (Quill, Tobble, Abeyance) come as an escort who can't fight and has
+  to be kept alive (20 seconds to revive them if they drop). Each plays a script of steps (`scripts/mission_script.gd`:
+  talk, go to, clear with an optional named elite, hold a spot or protect something, have someone work a spot,
+  exit) with its own speakers, talks and portraits. Success opens the rank-5 scene and moves faction standing;
+  failure can be retried. Blocked when the character is away, injured or tied up in another role.
+
+Mission maps are text maps from `tools/make_biomes.py`: every biome has 3 layouts (a/b/c) with `@spot` lines for
+the start, wardstone, Blot, rescue, caches and spawns. Each visit picks a layout, a subset of the spawns, shuffled
+caches and a Blank edge moved a few tiles, so the same province plays differently each time.
 
 ## 6. Combat
 

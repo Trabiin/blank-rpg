@@ -235,3 +235,166 @@ func test_town_and_command_save_and_load() -> void:
 	if await wait_scene(COMMAND) != null:
 		check_eq(Empire.day, 8, "table save day")
 	check_eq(Saves.latest_slot(), "3", "Continue picks the newest")
+
+
+# ------------------------------------------------------------------ mission variety (issue #113)
+
+## The mission's objective once it has set itself up (it does on the first frame the world exists).
+func _inner(main: Node) -> MissionObjectives:
+	return main.objective.inner if main.objective._inner_ready else null
+
+
+func test_raid_mission() -> void:
+	_campaign()
+	Empire.day = 1
+	var p: Dictionary = Empire.territory().find("gallows")
+	check_eq(p.get("owner", ""), "guild", "Gallows Ferry is Guild land")
+	var m := MissionTypes.raid(p)
+	check_eq(str(m.get("blocker", "")), "", "raid can launch")
+	check(m["objective"]["caches"].size() >= 3, "caches laid out")
+	var standing_was: int = Empire.standing_of("guild")
+	Missions.launch(m)
+	var main := await wait_scene(MAIN)
+	if main == null:
+		return
+	await frames(10)
+	var inner := _inner(main)
+	if not check(inner != null and inner.caches.size() == m["objective"]["caches"].size(), "caches on the map"):
+		return
+	check(main.respawn_t > 1e8, "no Blank stream on a raid")
+	var gilt_before := int(main.found.get("gilt", 0))
+	for i in inner.need:
+		inner.caches[i].done = true
+		inner._open_cache(inner.caches[i])
+	check(int(main.found.get("gilt", 0)) > gilt_before, "a cache pays into what the party carries")
+	check(inner.alarm > 0.0, "prying caches open raises the alarm")
+	check(inner.exit_visible(), "exit shown once enough is taken")
+	var saved: Dictionary = main.snapshot()
+	check_eq(int(saved["objective"]["inner"]["taken"]), inner.need, "mid-mission save keeps the caches taken")
+	main._show_results("success")
+	await frames(3)
+	check(main.results_view.visible, "raid results")
+	main._on_results_confirmed()
+	await wait_scene(HUB)
+	check(Empire.standing_of("guild") < standing_was, "the Guild noticed")
+	check(MissionTypes.raid_open(Empire.territory().find("gallows")) < 0, "no second raid straight away")
+
+
+func test_raid_is_refused_on_friends() -> void:
+	_campaign()
+	Empire.standing["guild"] = 40
+	var m := MissionTypes.raid(Empire.territory().find("gallows"))
+	check(str(m.get("blocker", "")) != "", "no raiding a Friendly faction")
+
+
+func test_salvage_mission() -> void:
+	_campaign()
+	var p: Dictionary = Empire.territory().find("meadow")
+	p["fray"] = 50
+	var m := MissionTypes.salvage(p)
+	Missions.launch(m)
+	var main := await wait_scene(MAIN)
+	if main == null:
+		return
+	await frames(10)
+	var inner := _inner(main)
+	if not check(inner != null and inner.caches.size() >= 3, "piles on the map"):
+		return
+	var start_x: float = main.blank.base_x
+	check(inner.grace > 0.0, "the white waits long enough to reach the first pile")
+	check(main.objective.text().contains("moves in"), "the objective counts the wait down")
+	await frames(30)
+	check_eq(main.blank.base_x, start_x, "the white holds still during the grace")
+	inner.grace = 0.0
+	await frames(30)
+	check(main.blank.base_x < start_x, "then the white creeps toward the piles")
+	main._show_results("success")
+	await frames(3)
+	main._on_results_confirmed()
+	await wait_scene(HUB)
+	check(Empire.mission_ready.has("salvage:meadow"), "the meadow rests after a salvage")
+
+
+func test_type_missions_vary_their_layout() -> void:
+	_campaign()
+	var p: Dictionary = Empire.territory().find("meadow")
+	Empire.surge = {"id": "meadow", "day": Empire.day + 2}
+	var seen := {}
+	for d in 12:
+		Empire.day = 1 + d
+		var m := MissionTypes.defense(p)
+		seen[m["map"] + str(m["objective"]["ward"]) + str(m["layout"].get("blank", 0))] = true
+		check(int(m["layout"].get("blank", 99)) >= int(m["objective"]["ward"][0]) + MissionTypes.BLANK_GAP, "the white starts clear of the wardstone")
+	check(seen.size() >= 4, "twelve days give several different layouts (%d)" % seen.size())
+	Empire.day = 3
+	check_eq(MissionTypes.defense(p)["map"], MissionTypes.defense(p)["map"], "same day, same layout")
+
+
+func _bond_to(id: String, rank: int) -> void:
+	Empire.recruits[id] = Empire.recruits.get(id, {"role": "idle", "target": "", "injured": 0})
+	Empire.bonds[id] = {"points": Empire.bond_threshold(rank), "rank": rank, "talk_day": 0, "personal_done": false}
+
+
+func test_personal_mission_field_hero() -> void:
+	_campaign()
+	_bond_to("bran", 3)
+	check_eq(Missions.personal_state("bran"), "locked", "locked below rank 4")
+	_bond_to("bran", 4)
+	check_eq(Missions.personal_state("bran"), "offered", "offered at rank 4")
+	var offered := Missions.list_for_province("gallows").filter(func(m): return m.get("type", "") == "personal")
+	if not check(offered.size() == 1, "Gallows Ferry offers Bran's mission"):
+		return
+	Empire.assign("bran", "idle")
+	var m: Dictionary = offered[0]
+	check_eq(str(m.get("force", "")), "bran", "Bran is forced into the party")
+	Missions.launch(m)
+	var main := await wait_scene(MAIN)
+	if main == null:
+		return
+	check(main.heroes.any(func(h): return h.hero_id == "bran"), "Bran came along without being picked")
+	await frames(5)
+	var inner := _inner(main) as MissionScript
+	if not check(inner != null, "the script runs"):
+		return
+	check(main.dialogue_box.visible, "the opening talk plays")
+	main.dialogue_box._close()
+	await frames(3)
+	check_eq(str(inner.st.get("do", "")), "goto", "then the first goal")
+	main.leader.global_position = inner.spot("landing")
+	await frames(3)
+	check_eq(str(inner.st.get("do", "")), "clear", "reaching the landing moves on")
+	check(inner.elite != null, "Big Corrie turns up")
+	main._show_results("success")
+	await frames(3)
+	main._on_results_confirmed()
+	await wait_scene(HUB)
+	check(Empire.personal_done("bran"), "personal mission done")
+	check_eq(Empire.bond_next_scene("bran"), 5, "the rank 5 scene is waiting")
+	check_eq(Missions.personal_state("bran"), "done", "and it leaves the table")
+
+
+func test_personal_mission_escort() -> void:
+	_campaign()
+	_bond_to("quill", 4)
+	var m := Missions.personal_for("quill")
+	check_eq(str(m.get("escort", "")), "quill", "Quill comes as an escort")
+	check(not m.has("force"), "staff are not forced into the fighting party")
+	check_eq(Missions.find("personal_quill").get("who", ""), "quill", "Missions.find resolves personal ids")
+	Missions.launch(m)
+	var main := await wait_scene(MAIN)
+	if main == null:
+		return
+	await frames(5)
+	var inner := _inner(main) as MissionScript
+	if not check(inner != null and inner.escort != null, "Quill is on the field"):
+		return
+	check_eq(inner.escort.hero_id, "quill", "the escort is Quill")
+	main.dialogue_box._close()
+	await frames(2)
+	check(not main.heroes.has(inner.escort), "the escort is not a playable hero")
+	inner.escort.take_hit(999, inner.escort.global_position + Vector2(10, 0))
+	await frames(2)
+	check(inner.escort.dead, "Quill can go down")
+	inner.down_t = MissionScript.DOWN_LIMIT + 1.0
+	await frames(3)
+	check(main.objective.failed(), "staying down fails the mission")

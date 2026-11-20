@@ -1,15 +1,19 @@
 class_name MissionObjectives
 extends RefCounted
-## The objective kinds behind the Defense, Reclaim and Rescue missions (#51). Objective hands a
-## mission's "objective" dict here when its kind is one of KINDS, and forwards its hooks.
+## The objective kinds behind the Defense, Reclaim and Rescue missions (#51) and the Raid and Salvage
+## missions (#113). Objective hands a mission's "objective" dict here when its kind is one of KINDS,
+## and forwards its hooks.
 ##
 ## They are built from a few shared pieces, so a new type is mostly a new combination:
 ##   - a creeping Blank: the white wall moves west at "creep" px/s (kills can push it back),
 ##   - spawning: Nibblers on a timer, from the Blank's edge or around a point,
 ##   - a thing to protect (Wardstone), break (Blot) or find (a recruit waiting to be rescued),
+##   - caches to pry open (Cache): a faction's strongboxes, or piles of goods at the Blank's edge,
+##   - an alarm and a garrison clock (Raid): guards who see you raise it; full alarm calls reinforcements,
 ##   - an exit to walk back to, and a pointer at the screen edge to whatever matters next.
 
-const KINDS := ["defense", "reclaim", "rescue"]
+const KINDS := ["defense", "reclaim", "rescue", "raid", "salvage"]
+const GRACE_SPEED := 70.0  # px/s: a hero's walk with a little slack for fences and trees
 const EnemyScript := preload("res://scripts/enemy.gd")
 const BlotScript := preload("res://scripts/blot.gd")
 const WardScript := preload("res://scripts/wardstone.gd")
@@ -32,6 +36,15 @@ var blot: Blot
 var captive: Hero
 var exit_pos := Vector2.ZERO
 var pointer: Control
+# Raid / Salvage (#113)
+var caches: Array = []  # Cache nodes
+var taken := 0
+var alarm := 0.0  # 0-100; at 100 the alarm is raised for good
+var raised := false
+var reinforce_t := 0.0
+var need := 0
+var grace := 0.0  # salvage: seconds before the white starts to move (enough to reach the nearest pile)
+var restore := {}  # state from a mid-mission save, applied once the world exists
 
 
 static func handles(k: String) -> bool:
@@ -77,6 +90,38 @@ func setup(p_obj: Dictionary, p_main) -> void:
 			captive.set_physics_process(false)  # stuck where they are until Ash turns up
 			for i in int(obj.get("guards", 4)):
 				_spawn(captive.position + Vector2.RIGHT.rotated(TAU * i / 4.0 + 0.4) * 46.0)
+		"raid", "salvage":
+			need = int(obj.get("need", 3))
+			time_left = float(obj.get("seconds", 0.0))
+			var done_list: Array = restore.get("done", [])
+			var gone_list: Array = restore.get("gone", [])
+			var tiles: Array = obj.get("caches", [])
+			for i in tiles.size():
+				var c := Cache.new()
+				c.style = "crate" if kind == "raid" else "pile"
+				c.open_time = float(obj.get("open_time", 1.6))
+				c.position = _tile(tiles[i])
+				c.done = i in done_list
+				c.gone = i in gone_list
+				main.entities.add_child(c)
+				caches.append(c)
+				if kind == "raid" and not c.done:
+					for g in int(obj.get("per_cache", 2)):
+						for e in _spawn(c.position + Vector2(randf_range(-30, 30), randf_range(14, 26)) * (1 if g % 2 == 0 else -1)):
+							e.set_meta("post", c.position)
+			if kind == "salvage":  # time to walk to the nearest pile, plus a breath, before the white moves
+				var near := INF
+				for c in caches:
+					near = minf(near, exit_pos.distance_to((c as Cache).position))
+				grace = float(restore.get("grace", near / GRACE_SPEED + float(obj.get("grace", 6.0))))
+			taken = int(restore.get("taken", 0))
+			alarm = float(restore.get("alarm", 0.0))
+			raised = bool(restore.get("raised", false))
+			if restore.has("time_left"):
+				time_left = float(restore["time_left"])
+			if restore.has("blank_x"):
+				main.blank.base_x = float(restore["blank_x"])
+				Art.set_blank_x(main.blank.base_x)
 	pointer = Pointer.new()
 	pointer.obj = self
 	main.hud.get_parent().add_child(pointer)
@@ -87,7 +132,7 @@ func _tile(t: Array) -> Vector2:
 
 
 func on_kill() -> void:
-	if kind == "defense":
+	if kind == "defense" or kind == "salvage":
 		_move_blank(float(obj.get("push", 7.0)))  # every Nibbler dispersed gives back a little ground
 
 
@@ -129,6 +174,123 @@ func update(delta: float) -> void:
 					main.hud.say("%s: \"Took you long enough. Which way is out?\"" % captive.hero_name, 3.5)
 			elif main.leader and main.leader.global_position.distance_to(exit_pos) < EXIT_RANGE:
 				end_t = 1.6  # nothing to watch here: done right away
+		"raid":
+			_update_raid(delta)
+		"salvage":
+			_update_salvage(delta)
+
+
+# ---------------------------------------------------------------- Raid and Salvage (#113)
+
+func _workers() -> Array:
+	return main.heroes.filter(func(h): return not h.dead)
+
+
+func _open_cache(c: Cache) -> void:
+	taken += 1
+	var got := {}
+	var contents: Dictionary = obj.get("contents", {})
+	var mult := 1.0
+	if kind == "salvage":  # the nearer the white, the richer the pickings
+		var gap := maxf(main.blank.edge_x(c.position.y) - c.position.x, 0.0)
+		mult = 1.0 + float(obj.get("near_bonus", 1.0)) * (1.0 - clampf(gap / 320.0, 0.0, 1.0))
+	for k in contents:
+		var v = contents[k]
+		var n := randi_range(int(v[0]), int(v[1])) if v is Array else int(v)
+		n = int(round(n * mult))
+		if n > 0:
+			got[k] = n
+			main.found[k] = int(main.found.get(k, 0)) + n
+	main.found_flash = 1.5
+	var txt := Missions.res_text(got)
+	Fx.damage_number(main.entities, c.position + Vector2(0, -30), txt if txt != "" else "empty", Color("ffe7a3"))
+	if taken == need:
+		main.hud.say("That's enough. Get back to where you came in (or grab more first).", 3.5)
+		Audio.sfx("alert")
+	if kind == "raid":
+		_raise(float(obj.get("alarm_open", 14.0)))
+
+
+func _raise(amount: float) -> void:
+	if raised:
+		return
+	alarm = minf(alarm + amount, 100.0)
+	if alarm >= 100.0:
+		raised = true
+		time_left = minf(time_left, float(obj.get("alarm_cap", 45.0)))
+		reinforce_t = 1.5
+		main.hud.say("The alarm is up! The garrison is coming. Grab what you can and run.", 3.5)
+		Audio.sfx("alert")
+
+
+func _update_raid(delta: float) -> void:
+	time_left -= delta
+	for c in caches:
+		if (c as Cache).work(delta, _workers()):
+			_open_cache(c)
+	# Guards who have spotted the party raise the alarm; out of sight, it settles back down.
+	var seen := 0
+	for e in main.get_tree().get_nodes_in_group("enemies"):
+		if not e.dead and e.get("target") != null and is_instance_valid(e.target):
+			seen += 1
+	if seen > 0:
+		_raise(float(obj.get("alarm_seen", 9.0)) * delta * minf(seen, 3))
+	elif not raised:
+		alarm = maxf(alarm - float(obj.get("alarm_fall", 3.0)) * delta, 0.0)
+	if raised:
+		reinforce_t -= delta
+		if reinforce_t <= 0.0:
+			reinforce_t = float(obj.get("reinforce_every", 6.5))
+			if main.get_tree().get_nodes_in_group("enemies").size() < MAX_SPAWNED:
+				for e in _spawn(_far_spawn()):
+					e.target = main.leader  # they know where you are
+	if taken >= need and main.leader and main.leader.global_position.distance_to(exit_pos) < EXIT_RANGE:
+		end_t = 1.6
+		main.hud.say("Out, with %d cache%s. Nobody followed. Yet." % [taken, "" if taken == 1 else "s"], 3.0)
+	elif time_left <= 0.0:
+		time_left = 0.0
+		fail_why = "The garrison closed in. You dropped everything and ran."
+
+
+## A spawn point well away from the party (reinforcements come from somewhere you aren't).
+func _far_spawn() -> Vector2:
+	var best := Vector2(main.world.x * 0.7, main.world.y / 2.0)
+	var best_d := -1.0
+	for p in main.area.spawns:
+		var d: float = (p as Vector2).distance_to(main.leader.global_position) if main.leader else 0.0
+		if d > best_d and d < 520.0:
+			best_d = d
+			best = p
+	return best
+
+
+func _update_salvage(delta: float) -> void:
+	if grace > 0.0:
+		grace -= delta
+		if grace <= 0.0:
+			main.hud.say("The white starts to move.", 2.5)
+		return
+	_move_blank(-float(obj.get("creep", 4.0)) * delta)
+	_spawn_timer(delta, 5.0, func(): return _edge_point(main.leader.global_position.y if main.leader else main.world.y / 2.0, 140.0), false)
+	var left := 0
+	for c in caches:
+		var cc := c as Cache
+		if cc.done or cc.gone:
+			continue
+		if main.blank.edge_x(cc.position.y) <= cc.position.x + 6.0:
+			cc.swallow()
+			main.hud.say("The white swallowed a pile.", 2.0)
+			continue
+		if cc.work(delta, _workers()):
+			_open_cache(cc)
+			continue
+		left += 1
+	if taken >= need:
+		if main.leader and main.leader.global_position.distance_to(exit_pos) < EXIT_RANGE:
+			end_t = 1.6
+			main.hud.say("Out with %d pile%s. The white can have the rest." % [taken, "" if taken == 1 else "s"], 3.0)
+	elif taken + left < need:
+		fail_why = "The white took the rest before you could reach it."
 
 
 func _move_blank(dx: float) -> void:
@@ -187,6 +349,18 @@ func text() -> String:
 				var gap := maxf(main.blank.edge_x(captive.position.y) - captive.position.x, 0.0)
 				return "Find %s before the white does   (%d paces)" % [captive.hero_name, int(gap / 4.0)]
 			return "Bring %s back to where you came in" % captive.hero_name
+		"raid":
+			var clock := "%d:%02d" % [int(time_left) / 60, int(time_left) % 60]
+			var a := "ALARM" if raised else "alarm %d%%" % int(alarm)
+			if taken >= need:
+				return "Get out with it: %d cache%s   (%s, %s)" % [taken, "" if taken == 1 else "s", a, clock]
+			return "Take the caches: %d/%d   (%s, %s)" % [taken, need, a, clock]
+		"salvage":
+			if taken >= need:
+				return "Get back with it: %d pile%s   (or grab more)" % [taken, "" if taken == 1 else "s"]
+			if grace > 0.0:
+				return "Pull piles out of the white: %d/%d   (it moves in %ds)" % [taken, need, ceili(grace)]
+			return "Pull piles out of the white: %d/%d" % [taken, need]
 	return ""
 
 
@@ -201,12 +375,53 @@ func target_pos():
 			return blot.global_position
 		"rescue":
 			return captive.global_position if phase == 0 else exit_pos
+		"raid", "salvage":
+			if taken >= need:
+				return exit_pos
+			var best = null
+			var best_d := 1e9
+			for c in caches:
+				var cc := c as Cache
+				if cc.done or cc.gone or main.leader == null:
+					continue
+				var d := cc.global_position.distance_to(main.leader.global_position)
+				if d < best_d:
+					best_d = d
+					best = cc.global_position
+			return best
 	return null
 
 
-## Draws the exit ring in the world (rescue, once they are found). Called by Pointer each frame.
+## Draws the exit ring in the world (rescue once they are found, raid and salvage once enough is taken).
+## Called by Pointer each frame.
 func exit_visible() -> bool:
-	return kind == "rescue" and phase == 1 and end_t < 0.0
+	if end_t >= 0.0:
+		return false
+	return (kind == "rescue" and phase == 1) or (kind in ["raid", "salvage"] and taken >= need)
+
+
+## What the results screen and MissionTypes.apply need to know about how it went.
+func result_info() -> Dictionary:
+	var lost := 0
+	for c in caches:
+		lost += 1 if (c as Cache).gone else 0
+	return {"taken": taken, "alarm": raised, "lost": lost}
+
+
+## Mid-mission saves (#113): enough to put the caches, the alarm and the clock back as they were, so a reload
+## never refills a strongbox. Older kinds keep restarting from the top, as before.
+func save_state() -> Dictionary:
+	if not kind in ["raid", "salvage"]:
+		return {}
+	var done_list := []
+	var gone_list := []
+	for i in caches.size():
+		if (caches[i] as Cache).done:
+			done_list.append(i)
+		if (caches[i] as Cache).gone:
+			gone_list.append(i)
+	return {"done": done_list, "gone": gone_list, "taken": taken, "alarm": alarm, "raised": raised,
+		"time_left": time_left, "blank_x": main.blank.base_x, "grace": grace}
 
 
 ## A small HUD arrow at the screen edge pointing at the objective, plus the exit ring.

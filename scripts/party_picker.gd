@@ -126,6 +126,8 @@ func _toggle(id: String) -> void:
 		_say("%s hasn't joined yet." % Empire.recruit(id)["name"])
 	elif Empire.recruit(id).get("locked_party", false):
 		_say("Ash always leads.")
+	elif id == str(mission.get("force", "")):
+		_say("It's %s's fight: they're coming." % nm)  # personal missions (#113)
 	elif Empire.role_of(id) == "party":
 		Empire.assign(id, "idle")
 		_say("%s stays in Hollowmark." % nm)
@@ -138,7 +140,7 @@ func _toggle(id: String) -> void:
 
 
 func _set_out() -> void:
-	if mission_party().is_empty():
+	if mission_party(mission).is_empty():
 		_say("Nobody can go.")
 		return
 	visible = false
@@ -197,6 +199,8 @@ func _status(id: String) -> Array:
 		return ["Not found yet. " + where, Color(0.45, 0.44, 0.47)]
 	if Empire.recruit(id).get("locked_party", false):
 		return ["Leads the party", GOLD]
+	if id == str(mission.get("force", "")):
+		return ["Personal: it's their fight, they're coming", Color("f29bd0")]
 	if Empire.role_of(id) == "party":
 		return ["Coming along", Color("9fe07a")]
 	var b := blocker(id)
@@ -209,7 +213,7 @@ func _draw() -> void:
 	var vs := size
 	draw_rect(Rect2(Vector2.ZERO, vs), Color(0.05, 0.04, 0.07, 0.985))
 	_text(Vector2(LIST_X, 20), "Choose your party", 15, PAPER)
-	var party := mission_party()
+	var party := mission_party(mission)
 	_text(Vector2(LIST_X + 148, 19), "%s   %d/%d" % [mission.get("name", "Mission"), party.size(), Empire.PARTY_SIZE], 9, Color(0.75, 0.7, 0.55))
 
 	var ids := _ids()
@@ -305,7 +309,7 @@ func _draw() -> void:
 
 
 func _update_dolls() -> void:
-	var party := mission_party()
+	var party := mission_party(mission)
 	var x := DETAIL_X
 	var w := size.x - DETAIL_X - 8
 	var py := size.y - 76
@@ -391,8 +395,9 @@ static func blocker(id: String) -> String:
 			return Empire.role_label(id).to_lower()
 
 
-## Who actually goes out: Ash first, then the rest of the party who can fight today.
-static func mission_party() -> Array:
+## Who actually goes out: Ash first, then the rest of the party who can fight today. A personal mission
+## (#113) brings its hero along whatever the picks say: they take the last seat if the party is full.
+static func mission_party(m := {}) -> Array:
 	var out := []
 	for id in Empire.party_ids():
 		if blocker(id) == "" and Empire.recruit(id).get("tier", "") == "field":
@@ -402,6 +407,10 @@ static func mission_party() -> Array:
 				out.append(id)
 	if out.is_empty() and Empire.recruits.has("ash"):
 		out.append("ash")
+	var force := str(m.get("force", ""))
+	if force != "" and not force in out and blocker(force) == "":
+		out = out.slice(0, Empire.PARTY_SIZE - 1)
+		out.insert(mini(1, out.size()), force)
 	return out.slice(0, Empire.PARTY_SIZE)
 
 

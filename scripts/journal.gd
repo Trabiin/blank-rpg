@@ -326,7 +326,8 @@ static func personal_quests() -> Array:
 			var listed := _offered(pid, pj)
 			var why := str(listed.get("blocker", "")) if not listed.is_empty() else "not on the map right now"
 			row["state"] = "open" if why == "" else "blocked"
-			row["next"] = ("Play it from %s on the territory map, with %s in the party." % [row["where"], name]) if why == "" else "Can't start yet: %s." % why
+			var along := ("with %s in the party" if PersonalMissions.is_field(id) else "with %s along as an escort to keep alive") % name
+			row["next"] = ("Play it from %s on the territory map, %s." % [row["where"], along]) if why == "" else "Can't start yet: %s." % why
 			row["target"] = {"province": pid, "mission": pj}
 		elif not Empire.expedition_running(pj).is_empty():
 			row["next"] = "Under way. The squad is due back on day %d." % int(ceil(float(Empire.expedition_running(pj)["finish"])))

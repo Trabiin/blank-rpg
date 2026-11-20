@@ -24,11 +24,55 @@ static func all() -> Array:
 	return _data
 
 
+## A mission by id: data/missions.json first, then the personal missions (data/personal.json, #113).
 static func find(id: String) -> Dictionary:
 	for m in all():
 		if m["id"] == id:
 			return m
-	return {}
+	return PersonalMissions.mission(id)
+
+
+## A character's personal mission as the Command Table offers it ({} when they have none), issue #113.
+static func personal_for(who: String) -> Dictionary:
+	return PersonalMissions.build(who)
+
+
+## "locked" (bond rank under 4), "offered" (can launch), "blocked" (offered but something is in the way,
+## see its "blocker"), "lost" (its province is erased) or "done". "" when they have no personal mission.
+static func personal_state(who: String) -> String:
+	return PersonalMissions.state(who)
+
+
+## What kind of mission this is, for the briefing: "Story", "Boss", "Patrol", "Defense", "Raid"...
+static func type_name(m: Dictionary) -> String:
+	if m.has("type"):
+		return MissionTypes.TYPE_NAMES.get(m["type"], str(m["type"]).capitalize())
+	if m.get("objective", {}).get("kind", "") == "boss":
+		return "Boss"
+	return "Story" if m.get("story", false) else "Patrol"
+
+
+## How dangerous it is, 1 (light) to 5 (deadly): the mission's own "threat", else a guess from the land.
+static func threat(m: Dictionary) -> int:
+	if m.has("threat"):
+		return clampi(int(m["threat"]), 1, 5)
+	var p := Empire.territory().find(m.get("province", ""))
+	return clampi(1 + int(p.get("fray", 0)) / 30, 1, 5)
+
+
+## "3/5, Stiff" for the briefing.
+static func threat_text(m: Dictionary) -> String:
+	var n := threat(m)
+	var names: Array = MissionTypes.data().get("threat_names", [])
+	return "%d/5, %s" % [n, str(names[n]) if n < names.size() else ""]
+
+
+## The reward line for the briefing: a type's own description, else the fixed rewards.
+static func reward_text(m: Dictionary) -> String:
+	var fixed := res_text(m.get("rewards", {}))
+	if m.has("reward_text"):
+		return str(m["reward_text"]) + ((", plus " + fixed + " on success") if fixed != "" else "")
+	return fixed
 
 
 static func cleared(id: String) -> bool:
@@ -62,8 +106,17 @@ static func list_for_province(pid: String) -> Array:
 	var repeat := []
 	for m in all():
 		if m.get("province", "") == pid and offered(m):
-			(story if m.get("story", false) else repeat).append(m)
+			(story if m.get("story", false) else repeat).append(m if m.get("story", false) else _varied(m))
 	return story + MissionTypes.for_province(pid) + repeat
+
+
+## A repeatable mission (a patrol) laid out fresh from its province's map pool each day (#113), so the tenth
+## patrol does not play like the first. Story missions keep their hand-made maps.
+static func _varied(m: Dictionary) -> Dictionary:
+	var v := m.duplicate(true)
+	v.erase("map")
+	MissionTypes.vary(v, str(m.get("province", "")))
+	return v
 
 
 ## The mission being played, falling back to the right Meadow mission for New Game and for
@@ -122,6 +175,8 @@ static func settle(m: Dictionary, outcome: String, found: Dictionary, stats: Dic
 			pay[k] = int(pay.get(k, 0)) + int(r[k])
 		fray = int(m.get("fray", 0))
 	var p := Empire.territory().find(m.get("province", ""))
+	var md := m.duplicate(true)
+	md["info"] = stats.get("info", {})  # how it went (caches taken, the alarm), for the type's effects (#113)
 	return {
 		"outcome": outcome, "title": OUTCOME_TITLES.get(outcome, outcome),
 		"mission": m.get("id", ""), "name": m.get("name", "Mission"),
@@ -132,8 +187,8 @@ static func settle(m: Dictionary, outcome: String, found: Dictionary, stats: Dic
 		"kills": int(stats.get("kills", 0)), "time": float(stats.get("time", 0.0)),
 		"objective": stats.get("objective", ""),
 		"rewards": m.get("rewards", {}) if outcome == "success" else {},
-		"lines": _effect_lines(m, outcome, stats),  # mission-type effects, issue #51
-		"mission_dict": m,
+		"lines": _effect_lines(md, outcome, stats),  # mission-type effects, issue #51
+		"mission_dict": md,
 	}
 
 
