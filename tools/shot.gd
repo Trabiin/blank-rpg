@@ -47,6 +47,11 @@ func _process(_delta: float) -> bool:
 				if id != "wardlamp":
 					empire.buildings[id] = int(args["levels"])
 			empire.lamps["hollowmark"] = clampi(int(args["levels"]) - 1, 1, 2)
+		if args.has("build"):  # build=barracks:0.5: that building under construction, half done
+			var bp := str(args["build"]).split(":")
+			var now: float = empire.day + empire.day_t
+			var pr := float(bp[1]) if bp.size() > 1 else 0.5
+			empire.construction = {"id": bp[0], "start": now - pr, "finish": now - pr + 1.0}
 		var scene := str(args.get("scene", "mission"))
 		if scene == "mission":
 			var m: Dictionary = load("res://scripts/missions.gd").find(str(args.get("mission", "meadow_patrol"))).duplicate()

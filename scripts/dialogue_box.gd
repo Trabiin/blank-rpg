@@ -15,6 +15,8 @@ signal finished(id: String)
 const GOLD := Color("ffd166")
 const TEXT := Color("ece6da")
 const SOFT := Color(0.66, 0.64, 0.66)
+const INK := UiSkin.PAGE_INK
+const INK_SOFT := UiSkin.PAGE_INK_SOFT
 
 var id := ""
 var title := ""
@@ -167,25 +169,29 @@ func _draw() -> void:
 
 	if title != "":
 		draw_string(UiSkin.TITLE_FONT, Vector2(14, 20), title, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, SOFT)
-	UiSkin.panel(self, box, "ledger")
+	UiSkin.page(self, box)
 	var text: String = cur[1]
 	var shown := text.substr(0, int(_shown))
-	var ty := box.position.y + 20
+	var ty := box.position.y + 22
+	var tx := box.position.x + 30  # right of the ledger's red margin line
 	if speaker != "":
+		# The speaker's name, written in the heading face with a brushed underline in their colour.
 		var nm := Dialogue.display_name(speaker)
-		var nw := font.get_string_size(nm, HORIZONTAL_ALIGNMENT_LEFT, -1, 10).x
-		var tag := Rect2(box.position.x + 8, box.position.y - 9, nw + 14, 16)
-		if _slots[1] == speaker and _slots[0] != speaker:  # name tag on the speaker's side
-			tag.position.x = box.end.x - 8 - tag.size.x
 		var acc := Dialogue.accent(speaker)
-		UiSkin.panel(self, tag, "button", acc.lightened(0.25))  # the speaker's colour tints the leather tag
-		draw_string(font, tag.position + Vector2(7, 12), nm, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, acc.lightened(0.7))
-		ty += 4
-	draw_multiline_string(font, Vector2(box.position.x + 12, ty), shown, HORIZONTAL_ALIGNMENT_LEFT, box.size.x - 24, 11, -1,
-		TEXT if speaker != "" else SOFT)
-	if not _typing() and int(Time.get_ticks_msec() / 400) % 2 == 0:
-		var tip := box.end - Vector2(14, 10)
-		draw_colored_polygon(PackedVector2Array([tip + Vector2(-4, -4), tip + Vector2(4, -4), tip]), GOLD)
+		var nw := UiSkin.TITLE_FONT.get_string_size(nm, HORIZONTAL_ALIGNMENT_LEFT, -1, 14).x
+		var np := Vector2(tx, box.position.y + 18)
+		if _slots[1] == speaker and _slots[0] != speaker:  # name on the speaker's side
+			np.x = box.end.x - 20 - nw
+		UiSkin.brush(self, np + Vector2(-3, 3), nw + 8, acc.darkened(0.15))
+		draw_string(UiSkin.TITLE_FONT, np, nm, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, INK)
+		ty += 12
+	draw_multiline_string(font, Vector2(tx, ty), shown, HORIZONTAL_ALIGNMENT_LEFT, box.size.x - 52, 11, -1,
+		INK if speaker != "" else INK_SOFT)
+	if not _typing():
+		# A quill nib bobbing in the corner: there's more.
+		var tip := box.end - Vector2(22, 14 - sin(Time.get_ticks_msec() / 220.0) * 1.5)
+		draw_colored_polygon(PackedVector2Array([tip, tip + Vector2(-3, -7), tip + Vector2(0, -10), tip + Vector2(3, -7)]), INK)
+		draw_line(tip + Vector2(0, -2), tip + Vector2(0, -6), Color("d6cdba"), 1.0)
 	# Speed and skip, small, under the box (they are also on Tab and Esc).
 	var sp := "Text: %s" % Dialogue.speed_name()
 	var sw := font.get_string_size(sp, HORIZONTAL_ALIGNMENT_LEFT, -1, 7).x
@@ -196,3 +202,4 @@ func _draw() -> void:
 	var hint := Prompts.help([["ui_accept", "next"], ["swap", "text speed"], ["ui_cancel", "skip"]], "Tap: next")
 	draw_string(font, Vector2(vs.x - font.get_string_size(hint, HORIZONTAL_ALIGNMENT_LEFT, -1, 7).x - 14, vs.y - 2), hint,
 		HORIZONTAL_ALIGNMENT_LEFT, -1, 7, Color(0.5, 0.48, 0.52))
+

@@ -295,43 +295,44 @@ func _draw() -> void:
 	draw_string(font, Vector2(vs.x - hw - 12, 18), head, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, accent.lightened(0.2))
 
 	var box := Rect2(12, vs.y - 96, vs.x - 24, 86)
-	UiSkin.panel(self, box, "ledger")
+	UiSkin.page(self, box)
 	_choice_rects.clear()
+	var ink := UiSkin.PAGE_INK
 	match _stage:
 		"lines", "reply":
 			var cur := _current()
 			var speaker: String = cur[0]
 			var text: String = cur[1]
 			var shown := text.substr(0, int(_shown))
-			var tx := box.position.x + 12
-			var ty := box.position.y + 20
+			var tx := box.position.x + 30
+			var ty := box.position.y + 22
 			if speaker != "":
 				var nm := Empire.short_name(speaker)
-				var nw := font.get_string_size(nm, HORIZONTAL_ALIGNMENT_LEFT, -1, 10).x
-				draw_rect(Rect2(box.position.x + 8, box.position.y - 9, nw + 14, 16), Color(0.14, 0.11, 0.08))
-				draw_rect(Rect2(box.position.x + 8, box.position.y - 9, nw + 14, 16), GOLD, false, 1.0)
-				draw_string(font, Vector2(box.position.x + 15, box.position.y + 3), nm, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, GOLD)
-				ty += 4
-			draw_multiline_string(font, Vector2(tx, ty), shown, HORIZONTAL_ALIGNMENT_LEFT, box.size.x - 24, 11, -1,
-				TEXT if speaker != "" else SOFT)
-			if not _typing() and int(Time.get_ticks_msec() / 400) % 2 == 0:
-				var tip := box.end - Vector2(14, 10)
-				draw_colored_polygon(PackedVector2Array([tip + Vector2(-4, -4), tip + Vector2(4, -4), tip]), GOLD)
+				var nw := UiSkin.TITLE_FONT.get_string_size(nm, HORIZONTAL_ALIGNMENT_LEFT, -1, 14).x
+				var np := Vector2(tx, box.position.y + 18)
+				UiSkin.brush(self, np + Vector2(-3, 3), nw + 8, Dialogue.accent(speaker).darkened(0.15))
+				draw_string(UiSkin.TITLE_FONT, np, nm, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, ink)
+				ty += 12
+			draw_multiline_string(font, Vector2(tx, ty), shown, HORIZONTAL_ALIGNMENT_LEFT, box.size.x - 52, 11, -1,
+				ink if speaker != "" else UiSkin.PAGE_INK_SOFT)
+			if not _typing():
+				var tip := box.end - Vector2(22, 14 - sin(Time.get_ticks_msec() / 220.0) * 1.5)
+				draw_colored_polygon(PackedVector2Array([tip, tip + Vector2(-3, -7), tip + Vector2(0, -10), tip + Vector2(3, -7)]), ink)
 		"choice":
-			draw_string(font, box.position + Vector2(12, 14), "Ash...", HORIZONTAL_ALIGNMENT_LEFT, -1, 9, SOFT)
+			draw_string(font, box.position + Vector2(30, 14), "Ash...", HORIZONTAL_ALIGNMENT_LEFT, -1, 9, UiSkin.PAGE_INK_SOFT)
 			var opts: Array = sc.get("choice", [])
 			var y := box.position.y + 20
 			for i in opts.size():
-				var rr := Rect2(box.position.x + 10, y, box.size.x - 20, 17)
+				var rr := Rect2(box.position.x + 28, y, box.size.x - 60, 17)
 				_choice_rects.append(rr)
 				var on := i == _choice
-				draw_rect(rr, Color(0.17, 0.14, 0.09) if on else Color(0.1, 0.09, 0.12))
-				if on:
-					draw_rect(rr, GOLD, false, 1.0)
-				draw_string(font, rr.position + Vector2(10, 12), opts[i]["label"], HORIZONTAL_ALIGNMENT_LEFT, rr.size.x - 20, 10, GOLD if on else TEXT)
+				if on:  # an ink wash under the picked answer, with a nib pointing at it
+					draw_rect(rr, Color(0.35, 0.27, 0.19, 0.18))
+					draw_colored_polygon(PackedVector2Array([rr.position + Vector2(-8, 5), rr.position + Vector2(-3, 8.5), rr.position + Vector2(-8, 12)]), ink)
+				draw_string(font, rr.position + Vector2(8, 12), opts[i]["label"], HORIZONTAL_ALIGNMENT_LEFT, rr.size.x - 16, 10, ink if on else UiSkin.PAGE_INK_SOFT)
 				y += 20
 		"done":
-			draw_multiline_string(font, box.position + Vector2(12, 22), _outro, HORIZONTAL_ALIGNMENT_LEFT, box.size.x - 24, 10, -1, Color("9fd18b"))
+			draw_multiline_string(font, box.position + Vector2(30, 22), _outro, HORIZONTAL_ALIGNMENT_LEFT, box.size.x - 52, 10, -1, Color("3f6a32"))
 	var hint := Prompts.help([["ui_accept", "next"], ["ui_cancel", "skip"]], "Tap: next") if _stage != "choice" \
 		else Prompts.help([["updown", "choose"], ["ui_accept", "pick"]], "Tap an answer")
 	if _stage == "done":
