@@ -4,7 +4,8 @@ extends RefCounted
 ## glow, after `hold` seconds (data/techs.json) the tech is ready (flash + chime), and releasing fires it.
 ## Letting go before it is ready is an ordinary full-power swing, fired on release.
 ## A Hero keeps the state (charging, charge_t, charge_ready); this file holds the rules, the blast, the
-## glow and two tiny synthesized sounds (there is no audio pipeline yet; issue #20).
+## glow, the ground preview of the blast and two tiny synthesized sounds.
+## Allies under AI charge and fire the same techs; when and where they do is scripts/ally_techs.gd.
 
 const PATH := "res://data/techs.json"
 const TAP := 0.16  # held shorter than this: no glow at all, just a swing on release
@@ -80,23 +81,32 @@ static func control(h: Hero, delta: float) -> void:
 
 
 ## Every frame (from Hero._update_abilities): drops a charge the hero can no longer hold.
+## A player's charge ends when control moves away or the quick menu opens; an ally's (AllyTechs)
+## ends when the player takes control of that hero, so a hand-over never fires by itself.
 static func tick(h: Hero) -> void:
 	if not h.charging:
 		return
+	if h.dead or h.peaceful or h.dash_t > 0.0 or h.cast_t > 0.0 or h.controlled == h.ai_charging:
+		cancel(h)
+		return
 	var menu_open: bool = h.party != null and h.party.get("quick_open") == true
-	if h.dead or not h.controlled or h.peaceful or menu_open or h.dash_t > 0.0 or h.cast_t > 0.0:
+	if menu_open and not h.ai_charging:
 		cancel(h)
 
 
 static func cancel(h: Hero) -> void:
 	h.charging = false
+	h.ai_charging = false
+	h.ai_tech = {}
 	h.charge_t = 0.0
 	h.charge_ready = false
 
 
 ## The blast. Damage is the hero's full-power swing times the tech's mult.
-static func fire(h: Hero) -> void:
-	var t := for_hero(h.hero_id)
+## t: which tech (an entry like for_hero's); empty = the hero's own.
+static func fire(h: Hero, t: Dictionary = {}) -> void:
+	if t.is_empty():
+		t = for_hero(h.hero_id)
 	if t.is_empty() or h.dead:
 		return
 	var parent := h.get_parent()
@@ -163,6 +173,48 @@ static func fire(h: Hero) -> void:
 		h.ink = minf(h.ink + HIT_INK, h.max_ink)
 	if h.party:
 		h.party.shake(5.0 if hit_any else 2.5)
+
+
+## Where the charging tech will land, drawn flat on the ground under the hero (c = the hero's own
+## canvas, origin at its feet): the blast's ring or wedge in the tech colour, filling in as it charges
+## and solid once ready. For allies it is the tell that says "stand clear, this is about to go off".
+static func draw_area(h: Hero, c: Node2D) -> void:
+	if not h.charging or h.charge_t < TAP:
+		return
+	var t: Dictionary = h.ai_tech if h.ai_charging and not h.ai_tech.is_empty() else for_hero(h.hero_id)
+	if t.is_empty():
+		return
+	var col := Color(str(t.get("color", "ffe08a")))
+	var r := charge_ratio(h)
+	if h.facing.length() < 0.1:
+		return
+	var dir := h.facing.normalized()
+	var reach := float(t.get("reach", 30))
+	var half := deg_to_rad(float(t.get("arc", 90)))
+	var center := dir * (float(t.get("step", 0)) + float(t.get("offset", 0)))
+	var a_line := 0.25 + 0.5 * r
+	var a_fill := 0.06 + 0.1 * r
+	if h.charge_ready:
+		var pulse := 0.5 + 0.5 * sin(h.anim_t * 14.0)
+		a_line = 0.75 + 0.2 * pulse
+		a_fill = 0.16 + 0.06 * pulse
+	if half >= PI - 0.01:
+		c.draw_circle(center, reach * (0.35 + 0.65 * r), Color(col, a_fill))
+		c.draw_arc(center, reach, 0, TAU, 40, Color(col, a_line), 1.0)
+	else:
+		var a0 := dir.angle() - half
+		var a1 := dir.angle() + half
+		var pts := PackedVector2Array([center])
+		var fill_r := reach * (0.35 + 0.65 * r)
+		var n := clampi(int(rad_to_deg(half * 2.0) / 15.0), 1, 16)  # thin lines: few points, or the fan won't triangulate
+		for k in n + 1:
+			pts.append(center + Vector2.from_angle(lerpf(a0, a1, float(k) / n)) * fill_r)
+		c.draw_colored_polygon(pts, Color(col, a_fill))
+		var edge := PackedVector2Array([center])
+		for k in n + 1:
+			edge.append(center + Vector2.from_angle(lerpf(a0, a1, float(k) / n)) * reach)
+		edge.append(center)
+		c.draw_polyline(edge, Color(col, a_line), 1.0)
 
 
 ## The glow around a charging hero, drawn on its overlay (above the sprite).

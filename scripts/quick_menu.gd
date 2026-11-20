@@ -1,7 +1,7 @@
 class_name QuickMenu
 extends Control
 ## The quick menu (issue #6): one button opens it mid-fight and time slows to 10% instead of pausing.
-## Tabs: Items, Abilities, Party (take control, AI behaviour), Equip. A plain list, never a ring.
+## Tabs: Items, Abilities, Party (take control, AI behaviour, charged tech orders), Equip. A plain list, never a ring.
 ## Every action is two presses: pick a row, then pick from its short list (or it acts at once).
 ##
 ## Keyboard: C opens/closes, arrows/WASD move, left/right or Q/E change tab, J/Enter picks, X/Esc backs out.
@@ -97,6 +97,18 @@ func _style_desc(style: String) -> String:
 	return str(_hero_data.get("styles", {}).get(style, {}).get("desc", ""))
 
 
+## The Party tab's second line: the hero's charged tech and how it is used.
+func _tech_line(h: Hero) -> String:
+	var tech := Techs.for_hero(h.hero_id)
+	if tech.is_empty():
+		return _style_desc(h.ai_style)
+	var how := "hold Attack on a full gauge"
+	if not h.controlled:
+		var mode := AllyTechs.mode_of(h)
+		how = "Auto, " + str(AllyTechs.PRESET_RULE.get(AllyTechs.preset_of(h), "")) if mode == "auto" else str(AllyTechs.MODE_NAMES[mode])
+	return "Tech %s: %s, %s" % [tech.get("name", "?"), how, AllyTechs.state_text(h)]
+
+
 func _hd(h: Hero) -> Dictionary:
 	return _hero_data.get("heroes", {}).get(h.hero_id, {})
 
@@ -174,7 +186,7 @@ func _rebuild() -> void:
 				var hero: Hero = h
 				var state := "  (down)" if hero.dead else ("  (you)" if hero.controlled else "")
 				rows.append({"id": hero.hero_id, "label": hero.hero_name + state, "right": "AI: " + _style_name(hero.ai_style),
-					"detail": _style_desc(hero.ai_style), "enabled": true, "hero": hero})
+					"detail": _tech_line(hero), "enabled": true, "hero": hero})
 		"Equip":
 			for h in _heroes():
 				var hero: Hero = h
@@ -276,6 +288,14 @@ func _pick_row(i: int) -> void:
 				sub.append({"id": "ai:" + style, "label": "AI: " + _style_name(style),
 					"right": "current" if style == hero.ai_style else "", "enabled": true})
 			sub_sel = 0 if sub[0]["enabled"] else 1 + Hero.AI_STYLES.keys().find(hero.ai_style)
+			var tech := Techs.for_hero(hero.hero_id)
+			if not tech.is_empty():  # charged tech under AI (scripts/ally_techs.gd)
+				var why := AllyTechs.order_blocker(hero)
+				sub.append({"id": "tech_now", "label": "Unleash " + str(tech.get("name", "tech")),
+					"right": why if why != "" else AllyTechs.state_text(hero), "enabled": why == ""})
+				for m in AllyTechs.MODES:
+					sub.append({"id": "tech:" + m, "label": "Tech: " + str(AllyTechs.MODE_NAMES[m]),
+						"right": "current" if m == AllyTechs.mode_of(hero) else "", "enabled": true})
 
 
 ## Second press: the choice from the short list.
@@ -297,6 +317,18 @@ func _pick_sub(i: int) -> void:
 		var hero: Hero = r["hero"]
 		party.take_control(hero)
 		_say("You now control %s." % hero.hero_name)
+	elif id == "tech_now":
+		var hero: Hero = r["hero"]
+		AllyTechs.order(hero)
+		var tname := str(Techs.for_hero(hero.hero_id).get("name", "tech"))
+		Fx.damage_number(hero.get_parent(), hero.global_position + Vector2(0, -26), tname + "!", Techs.color_of(hero))
+		_say("%s will unleash %s at the best target." % [hero.hero_name, tname] if hero.power >= 1.0
+			else "%s will unleash %s once the gauge is full." % [hero.hero_name, tname])
+	elif id.begins_with("tech:"):
+		var hero: Hero = r["hero"]
+		var mode := id.substr(5)
+		AllyTechs.set_mode(hero, mode)
+		_say("%s's tech: %s." % [hero.hero_name, AllyTechs.MODE_NAMES[mode]])
 	elif id.begins_with("ai:"):
 		var hero: Hero = r["hero"]
 		var style := id.substr(3)
@@ -490,6 +522,10 @@ func _draw() -> void:
 			else Prompts.help([["leftright", "tabs"], ["ui_accept", "pick"], ["ui_cancel", "back"], ["quick_menu", "close"]])
 		if sub_sel >= 0 and sub_sel < sub.size() and str(sub[sub_sel]["id"]).begins_with("ai:"):
 			hint = _style_desc(str(sub[sub_sel]["id"]).substr(3))  # what the highlighted AI preset does (issue #9)
+		elif sub_sel >= 0 and sub_sel < sub.size() and str(sub[sub_sel]["id"]).begins_with("tech:"):
+			hint = str(AllyTechs.MODE_DESC.get(str(sub[sub_sel]["id"]).substr(5), ""))
+		elif sub_sel >= 0 and sub_sel < sub.size() and str(sub[sub_sel]["id"]) == "tech_now" and sel < rows.size() and rows[sel].has("hero"):
+			hint = str(Techs.for_hero((rows[sel]["hero"] as Hero).hero_id).get("desc", ""))
 		_str(font, Vector2(x0, fy), hint, 8, DIM)
 	_str_right(font, x1, fy, "time slowed", 8, Color(0.7, 0.8, 1.0, 0.6 + 0.3 * sin(_t * 3.0)))
 

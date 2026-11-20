@@ -94,6 +94,7 @@ func _ready() -> void:
 			look.get("outfit", "archer"), PartyPicker.look_colors(look))
 		PartyPicker.apply(h, ids[i])
 		h.ai_style = AllyAI.preset_id(str(Empire.ai_presets.get(ids[i], h.ai_style)))  # picked in the quick menu's Party tab
+		h.tech_mode = str(Empire.ai_techs.get(ids[i], "auto"))  # charged tech under AI: auto / on my call
 	# The Barracks sends the party out tougher; research sharpens and armours them.
 	boosts = Empire.mission_boosts()
 	Empire.mission_kills_bonded = 0

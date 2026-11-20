@@ -1,10 +1,10 @@
 {
 	"_comment": "Field heroes in combat (issue #10). Looks come from data/recruits.json; this file is how they fight. short: name on the HUD. hp, speed (px/s), damage (full-power swing), power_rate (gauge refill per second), reach (px), arc (degrees either side of facing). ai: how they behave when you are not controlling them (one of the presets in styles, logic in scripts/ally_ai.gd; the player can change it per hero in the quick menu Party tab). ink: Ink pool for abilities (refills 0.4 per second, +1 for every full-power hit that lands; data/abilities.json). abilities: up to 4, on keys 1-4 / LB RB LT RT / touch buttons. heal: a passive poultice that patches the most hurt ally in range every few seconds, controlled or not. trail: the weapon trail drawn in code over every swing (art pass): colour, and style arc (a sweep) or thrust (a straight jab).",
 	"styles": {
-		"aggressive": {"name": "Aggressive", "desc": "Charges in, swings before the gauge fills, spends Ink on damage."},
-		"balanced": {"name": "Balanced", "desc": "Waits for a full gauge, strikes, backs off while it refills."},
-		"distance": {"name": "Keep Distance", "desc": "Circles at range, darts in on a full gauge, dashes clear of crowds."},
-		"support": {"name": "Support", "desc": "Sticks to the leader, heals early, pulls enemies off the leader."}
+		"aggressive": {"name": "Aggressive", "desc": "Charges in, swings early, spends Ink and techs on anything in reach."},
+		"balanced": {"name": "Balanced", "desc": "Full-gauge strikes, backs off to refill, saves techs for crowds and elites."},
+		"distance": {"name": "Keep Distance", "desc": "Circles at range, darts in on a full gauge, dashes clear, techs from afar."},
+		"support": {"name": "Support", "desc": "Sticks to the leader, heals early, techs what crowds the leader."}
 	},
 	"heroes": {
 		"ash": {
