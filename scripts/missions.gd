@@ -45,7 +45,7 @@ static func offered(m: Dictionary) -> bool:
 	if m.has("needs") and not Story.meets(m["needs"]):  # story conditions (issue #18)
 		return false
 	var p := Empire.territory().find(m.get("province", ""))
-	return not p.is_empty() and p["owner"] != "erased"
+	return not p.is_empty() and p["owner"] != "erased" and Empire.province_open(p)
 
 
 ## The mission a province offers, or {} when there is none. Story missions come first.

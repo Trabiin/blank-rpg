@@ -74,7 +74,7 @@ func _show_save_notices() -> void:
 
 
 func _on_slot(id: String) -> void:
-	if id in ["command", "boss_test", "heroes_test"]:
+	if id in ["command", "boss_test", "heroes_test", "map_test"]:
 		_on_choice(id)
 	elif id == "back" or id == "cancel":
 		slots.visible = false
@@ -118,6 +118,14 @@ func _on_choice(id: String) -> void:
 			for rid in ["ottoline", "jessamy", "odile", "velvette"]:
 				Empire.recruits[rid] = {"role": "party" if rid in ["ottoline", "jessamy"] else "idle", "target": "", "injured": 0}
 			get_tree().change_scene_to_file(Saves.HUB_SCENE)
+		"map_test":  # the whole Inklands with every region open, as if the story were done (issue #53)
+			Saves.pending = {}
+			Empire.reset()
+			for r in Empire.territory().regions:
+				Empire.open_region(r["id"], true)
+			Empire.res["gilt"] = 900
+			Empire.res["supplies"] = 160
+			get_tree().change_scene_to_file(Saves.COMMAND_SCENE)
 		"options":
 			menu.visible = false
 			OptionsView.popup(self).closed.connect(func(): menu.visible = true)
@@ -129,6 +137,7 @@ func _on_choice(id: String) -> void:
 				{"id": "command", "label": "Hollowmark", "detail": "a fresh town and the Command Table"},
 				{"id": "boss_test", "label": "Boss: The Auditor", "detail": "fresh level 6 party, straight into the fight"},
 				{"id": "heroes_test", "label": "New heroes", "detail": "fresh town with Ottoline, Jessamy, Odile and Velvette already hired"},
+				{"id": "map_test", "label": "Whole map", "detail": "Command Table with every region open, and coin to claim land"},
 				{"id": "back", "label": "Back"}])
 			menu.visible = false
 			slots.visible = true

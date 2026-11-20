@@ -14,6 +14,7 @@ signal building_finished(id: String)  # a Hollowmark building was built or upgra
 signal expedition_returned(report: Dictionary)
 signal research_finished(id: String)
 signal bond_ready(id: String)  # someone has a rank scene waiting
+signal region_opened(id: String)  # the story opened a new region of the map (issue #53)
 
 ## The Blank. Fray per day from each source; see fray_sources().
 const FRAY_FIRST_ERASED_NEIGHBOR := 3
@@ -44,10 +45,14 @@ const FIT_BONUS := {"good": 0.5, "fair": 0.0, "poor": -0.25}
 const FIT_FRAY := {"good": -1, "fair": 0, "poor": 1}
 const STAT_NAMES := {"might": "Might", "craft": "Craft", "lore": "Lore", "charm": "Charm", "grit": "Grit"}
 const CLAIM_DEFAULT := {"gilt": 40, "supplies": 10}
+## Holding a wide realm costs: past HOLD_FREE provinces, each one you hold needs a garrison and its
+## roads kept up. Act 1 can never get past nine, so this only bites once the story opens new regions.
+const HOLD_FREE := 9
+const HOLD_UPKEEP := {"gilt": 1, "supplies": 1}
 
 const DAY_SECONDS := 240.0  # real seconds per in-game day at 1x
 const SPEEDS := [0, 1, 2, 4]  # index 0 = paused
-const MAP_CELLS := Vector2i(214, 166)  # resolution the territory is rasterised at
+const MAP_CELLS := Vector2i(450, 300)  # resolution the territory is rasterised at (the whole Inklands, issue #53)
 
 var day := 1
 var day_t := 0.0  # 0..1 through the current day
@@ -112,6 +117,7 @@ var last_mission := {}
 var progress := {}  # party XP, levels and gear (scripts/progress.gd, issue #15)
 var rng := RandomNumberGenerator.new()
 var _territory: Territory
+var regions_open := []  # region ids open on the map, in the order the story opened them (issue #53)
 
 
 ## Quick menu (issue #6): field items carried into missions (scripts/satchel.gd) and the AI
@@ -185,6 +191,7 @@ func reset() -> void:
 	rng.seed = 1234
 	if _territory != null:
 		_territory.reload_data()
+	regions_open = starting_regions()
 
 
 func tick(delta: float) -> void:
@@ -230,6 +237,10 @@ func ledger() -> Array:
 			var e := governor_effect(gov, p["id"])
 			lines.append({"label": "  Governor %s" % recruit(gov)["name"], "gilt": e["gilt"], "supplies": e["supplies"], "ink": e["ink"],
 				"note": "%s fit" % e["fit"].capitalize()})
+	var extra := held_count() - HOLD_FREE
+	if extra > 0:
+		lines.append({"label": "Garrisons and roads (%d past %d)" % [extra, HOLD_FREE], "gilt": -int(HOLD_UPKEEP["gilt"]) * extra,
+			"supplies": -int(HOLD_UPKEEP["supplies"]) * extra, "ink": 0, "note": ""})
 	var upkeep := UPKEEP_SUPPLIES * recruits.size()
 	lines.append({"label": "Upkeep (%d people)" % recruits.size(), "gilt": 0, "supplies": -upkeep, "ink": 0, "note": ""})
 	var qm := current_effect("command_table")
@@ -285,8 +296,8 @@ func fray_sources(p: Dictionary, gov := "-") -> Array:
 		owner = "you"
 	elif gov == "-":
 		gov = governor_of(p["id"])
-	if owner == "erased":
-		return out
+	if owner == "erased" or not province_open(p):
+		return out  # beyond the fog: the Blank's work there waits until the story arrives
 	var t := territory()
 	var erased := []
 	for n in t.neighbors[p["index"]]:
@@ -300,6 +311,9 @@ func fray_sources(p: Dictionary, gov := "-") -> Array:
 		out.append(["Surge damage (%d more days)" % int(p["scar"]), SCAR_FRAY])
 	if float(p["fray"]) > 50.0:
 		out.append(["Unravelling feeds itself", FRAY_MOMENTUM])
+	var press: Dictionary = t.region_of(p).get("pressure", {})
+	if int(press.get("per_day", 0)) != 0:
+		out.append([str(press.get("label", "The region frays")), int(press["per_day"])])
 	if owner == "you":
 		if gov == "":
 			out.append(["No governor posted", FRAY_UNGOVERNED])
@@ -339,16 +353,17 @@ func _advance_blank() -> void:
 	for p in t.provinces:
 		rates.append(fray_rate(p))  # all rates from the same morning, before anything falls
 	for p in t.provinces:
-		if p["owner"] == "erased":
+		if p["owner"] == "erased" or not province_open(p):
 			continue
 		p["fray"] = clampi(int(p["fray"]) + int(rates[p["index"]]), 0, 100)
 		if int(p.get("scar", 0)) > 0:
 			p["scar"] = int(p["scar"]) - 1
 	_update_surge()
 	for p in t.provinces:
-		if p["owner"] != "erased" and int(p["fray"]) >= 100:
+		if p["owner"] != "erased" and int(p["fray"]) >= 100 and province_open(p):
 			_erase(p)
 	BlankPlans.dawn()
+	check_regions()
 
 
 ## Story beats aim the Blank too: +per_day Fray on a province for the next `days` dawns, listed in
@@ -395,7 +410,7 @@ func _update_surge() -> void:
 		var pool := []
 		var weights := []
 		for p in t.provinces:
-			if p["owner"] == "erased":
+			if p["owner"] == "erased" or not province_open(p):
 				continue
 			var exposed := false
 			for n in t.neighbors[p["index"]]:
@@ -572,16 +587,18 @@ func borders_yours(pid: String) -> bool:
 ## Why a province can't be claimed right now ("" = it can, given a governor).
 func claim_blocker(pid: String) -> String:
 	var p := territory().find(pid)
+	if not province_open(p):
+		return region_lock_text(p)
 	match p.get("owner", ""):
 		"you":
 			return "already yours"
 		"erased":
-			return "Erased. Reclaim missions arrive with #51"
-		"concord", "coven", "guild":
-			var fa := faction(p["owner"])
-			if deal(p["owner"], "cede").is_empty():
-				return "%s land. They will never hand it over" % fa["short"]
-			return "%s land. Reach Allied standing and ask for it%s" % [fa["short"], Prompts.tag("diplomacy")]
+			return "Erased. Win its Reclaim mission and rewrite it first"
+	if p.get("owner", "") in faction_ids():
+		var fa := faction(p["owner"])
+		if deal(p["owner"], "cede").is_empty() or str(fa.get("province", "")) != pid:
+			return "%s land. They will never hand it over" % fa["short"]
+		return "%s land. Reach Allied standing and ask for it%s" % [fa["short"], Prompts.tag("diplomacy")]
 	if not borders_yours(pid):
 		return "Too far. Claim the land in between first"
 	var miss := _missing(claim_cost(pid))
@@ -1961,7 +1978,7 @@ func to_dict() -> Dictionary:
 	var ps := []
 	for p in territory().provinces:
 		ps.append({"id": p["id"], "owner": p["owner"], "fray": p["fray"], "scar": p.get("scar", 0)})
-	return {"day": day, "day_t": day_t, "speed": speed, "playtime": playtime, "provinces": ps,
+	return {"day": day, "day_t": day_t, "speed": speed, "playtime": playtime, "provinces": ps, "regions": regions_open,
 		"res": res, "hungry": hungry, "recruits": recruits, "surge": surge, "next_surge_day": next_surge_day,
 		"blank_plans": blank_plans,
 		"buildings": buildings, "construction": construction, "lamps": lamps, "lamp_jobs": lamp_jobs,
@@ -2091,6 +2108,75 @@ func from_dict(d: Dictionary) -> void:
 			p["owner"] = saved["owner"]
 			p["fray"] = saved["fray"]
 			p["scar"] = int(saved.get("scar", 0))
+	# Regions (issue #53). Saves from before regions existed only ever had the Act 1 map, so they
+	# keep the starting regions (scripts/migrations/20261120_regions.gd writes that down too).
+	var saved_regions = d.get("regions", null)
+	if typeof(saved_regions) == TYPE_ARRAY:
+		for rid in saved_regions:
+			if not territory().region(str(rid)).is_empty() and not str(rid) in regions_open:
+				regions_open.append(str(rid))
+	check_regions(true)
+
+
+# ---------------------------------------------------------------- regions (issue #53)
+
+## Regions open on a new campaign ("open": true in data/provinces.json).
+func starting_regions() -> Array:
+	var out := []
+	for r in territory().regions:
+		if r.get("open", false):
+			out.append(r["id"])
+	return out
+
+
+func region_open(rid: String) -> bool:
+	return rid in regions_open
+
+
+## Is this province on the open map? Provinces in locked regions sit under the fog: no Fray, no
+## missions, no claims, until the story opens their region.
+func province_open(p: Dictionary) -> bool:
+	return str(p.get("region", "")) in regions_open
+
+
+## Opens a region of the map. Story beats call this (then: open_region:<id>), and so do regions
+## whose opens_when conditions come true. Returns true if it was closed before.
+func open_region(rid: String, quiet := false) -> bool:
+	var r := territory().region(rid)
+	if r.is_empty() or rid in regions_open:
+		return false
+	regions_open.append(rid)
+	if not quiet:
+		notice.emit("The fog lifts over %s. New provinces on the map." % r["name"], false)
+	region_opened.emit(rid)
+	return true
+
+
+## Opens every region whose opens_when conditions now hold.
+func check_regions(quiet := false) -> void:
+	for r in territory().regions:
+		if not r["id"] in regions_open and r.has("opens_when") and Story.meets(r["opens_when"]):
+			open_region(r["id"], quiet)
+
+
+## The newest region the story has opened (the Blank's favourite frontier).
+func newest_region() -> String:
+	return regions_open[-1] if not regions_open.is_empty() else ""
+
+
+## Why a province in a locked region can't be touched yet.
+func region_lock_text(p: Dictionary) -> String:
+	var r := territory().region_of(p)
+	var ch := int(r.get("chapter", 0))
+	return "Beyond the fog. %s opens%s" % [r.get("name", "This region"), " in Chapter %d" % ch if ch > 0 else " later in the story"]
+
+
+func held_count() -> int:
+	var n := 0
+	for p in territory().provinces:
+		if p["owner"] == "you":
+			n += 1
+	return n
 
 
 # ---------------------------------------------------------------- bonds

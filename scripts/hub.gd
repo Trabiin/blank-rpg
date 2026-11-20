@@ -561,6 +561,9 @@ func _on_talk_finished(id: String) -> void:
 			leaving = true
 			Missions.launch(m)
 			return
+	for step in then.split(",", false):
+		if step.strip_edges().begins_with("open_region:"):  # a chapter opens its region of the map (issue #53)
+			Empire.open_region(step.strip_edges().substr(12))
 	var card: Array = b.get("card", [])
 	if card.size() >= 2:
 		chapter_card.show_card(card[0], card[1])

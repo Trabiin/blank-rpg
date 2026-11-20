@@ -75,3 +75,4 @@ fixture fails to upgrade, load into the campaign, save again and read back witho
 | Step | What it does |
 |---|---|
 | `20261120_save_format_v2` | Format 1 to 2. First-build saves get a campaign and scene, mission saves from before missions.json get the Meadow patrol, banter speaker names become recruit ids, `said_first_kill` / `said_low_power` become seen dialogue events, and the save is marked `pre-release`. |
+| `20261120_territory_regions` | Issue #53: saves from the nine-province map get `regions: ["marches"]` (the only region they could have). Their provinces keep owner, Fray and scars; the 15 new provinces start as `data/provinces.json` has them, under the fog. |

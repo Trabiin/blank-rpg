@@ -23,7 +23,8 @@ var t := 0.0
 
 
 func _ready() -> void:
-	cmd = get_parent()
+	if cmd == null:
+		cmd = get_parent()
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_remember()
@@ -79,7 +80,7 @@ func _process(delta: float) -> void:
 func _draw() -> void:
 	var map_rect: Rect2 = cmd._map_rect()
 	if fade_t > 0.0 and fade_tex != null:
-		draw_texture_rect(fade_tex, map_rect, false, Color(1, 1, 1, fade_t / FADE))
+		draw_texture_rect(fade_tex, cmd._world_rect(), false, Color(1, 1, 1, fade_t / FADE))
 	# Verity's plans: a chalk ring round the target, and what it is costing.
 	for pid in BlankPlans.targets():
 		var p: Dictionary = cmd.territory.find(pid)
@@ -126,7 +127,7 @@ func _draw() -> void:
 static func next_to_fall() -> Dictionary:
 	var best := {}
 	for p in Empire.territory().provinces:
-		if p["owner"] == "erased":
+		if p["owner"] == "erased" or not Empire.province_open(p):
 			continue
 		var rate := Empire.fray_rate(p)
 		if rate <= 0:

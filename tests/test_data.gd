@@ -216,6 +216,35 @@ func test_provinces_and_factions() -> void:
 		check(str(p["owner"]) in OWNERS or factions.has(p["owner"]), "%s: unknown owner %s" % [w, p["owner"]])
 		check(Empire.STAT_NAMES.has(p.get("favors", "")), "%s: favours unknown stat %s" % [w, p.get("favors")])
 		_res_keys(w + " output", p.get("output", {}))
+	# Regions and biomes (issue #53).
+	var pj: Dictionary = D["provinces.json"]
+	var regions := _ids(pj.get("regions", []))
+	_unique("provinces.json regions", pj.get("regions", []))
+	check(not regions.is_empty(), "provinces.json: no regions")
+	check(regions.values().any(func(r): return r.get("open", false)), "provinces.json: no region is open at the start")
+	var biomes: Dictionary = pj.get("biomes", {})
+	for rid in regions:
+		var r: Dictionary = regions[rid]
+		var w: String = "provinces.json region " + rid
+		check(str(r.get("name", "")) != "" and str(r.get("hint", "")) != "", "%s: needs a name and a hint" % w)
+		check(ps.any(func(p): return p.get("region", "") == rid), "%s: has no provinces" % w)
+		var lp: Array = r.get("label", [0.5, 0.5])
+		check(lp.size() == 2 and float(lp[0]) >= 0.0 and float(lp[0]) <= 1.0 and float(lp[1]) >= 0.0 and float(lp[1]) <= 1.0, "%s: label off the map" % w)
+		if r.has("opens_when"):
+			check(typeof(r["opens_when"]) == TYPE_DICTIONARY, "%s: opens_when must be Story conditions" % w)
+	for bid in biomes:
+		for m in biomes[bid].get("maps", []):
+			check(FileAccess.file_exists("res://maps/%s.txt" % m), "provinces.json biome %s: map %s missing" % [bid, m])
+	for p in ps:
+		var w: String = "provinces.json " + str(p["id"])
+		check(regions.has(p.get("region", "")), "%s: unknown region %s" % [w, p.get("region")])
+		check(biomes.has(p.get("biome", "")), "%s: unknown biome %s" % [w, p.get("biome")])
+		var pos: Array = p.get("pos", [])
+		check(pos.size() == 2 and float(pos[0]) > 0.0 and float(pos[0]) < 1.0 and float(pos[1]) > 0.0 and float(pos[1]) < 1.0, "%s: pos off the map" % w)
+	for b in D["story.json"].get("beats", []):
+		for step in str(b.get("then", "")).split(",", false):
+			if step.strip_edges().begins_with("open_region:"):
+				check(regions.has(step.strip_edges().substr(12)), "story.json beat %s: opens unknown region %s" % [b.get("talk", "?"), step])
 	for fid in factions:
 		var f: Dictionary = factions[fid]
 		var w: String = "factions.json " + fid
