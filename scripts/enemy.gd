@@ -104,6 +104,7 @@ func _physics_process(delta: float) -> void:
 					goal.nibble(DAMAGE)
 			target = _find_target(AGGRO)
 			if target:
+				EnemyKinds.notice(self)  # first sighting: its tip (scarecrows, sellswords) and its journal entry
 				_set_state(State.CHASE, 0.0)
 		State.CHASE:
 			if target == null or target.dead or target.global_position.distance_to(global_position) > LOSE:

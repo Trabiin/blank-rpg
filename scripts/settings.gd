@@ -30,6 +30,7 @@ const REMAPPABLE := [
 	["attack", "Attack / charge tech"], ["swap", "Swap hero"], ["quick_menu", "Quick menu"],
 	["ability_1", "Ability 1"], ["ability_2", "Ability 2"], ["ability_3", "Ability 3"], ["ability_4", "Ability 4"],
 	["alert_go", "Go to alert / goal"],  # only if that action exists (issue #22)
+	["journal", "Journal"],  # quest log and codex (issue #114)
 ]
 
 ## Scene effects (docs/ART_STYLE.md "Sitting in the world"), each a 0-100 slider on the options screen's

@@ -16,6 +16,7 @@ Reality is being eaten by a hungry Blank, and you are the one person it spat bac
 | Attack | J / Space / Z | A | ATTACK button |
 | Swap hero | Tab / Q | Y | SWAP button |
 | Pause menu | Esc / P | Start | Pause button (top right) |
+| Journal (quests, people, codex, history) | I | Pause menu > Journal; LB / RB switch tabs | Journal button on the Command Table, or the menu |
 
 Attacks use a power gauge: swinging before it refills still hits, but for less damage.
 
