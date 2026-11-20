@@ -147,9 +147,52 @@
 				"success": ["{squad} found the chapel exactly where the page said, though it was not there the first time they looked. Abeyance came out with a slip of paper and would not say what it said until she got home.", "The page led {squad} up a path that kept apologising for being steep. At the top: a chapel, a lectern, a book with one page missing. Not any more."],
 				"fail": ["The map changed halfway. {squad} followed it to a duck pond. The page seemed pleased with itself.", "{squad} found the chapel, but the door would not open. A voice inside said, very politely, \"not today\"."]
 			}
+		},
+		{
+			"id": "personal_ottoline", "name": "Answer the Knocking", "kind": "Personal", "province": "gallows", "personal": "ottoline",
+			"blurb": "On Gallows Ferry, where a tongue of white swallowed Lantern Row, the door of the Crimson Encore still stands, and something behind it knocks six times, then waits. Big Ottoline shut that door. She wants to be the one who opens it.",
+			"days": 2, "rations": 2, "stats": {"might": 1.0, "grit": 0.5}, "target": 18, "danger": 3, "cooldown": 2,
+			"reward": {"ink": [2, 4], "renown": 1}, "needs": {"blank": true},
+			"text": {
+				"success": ["Ottoline knocked back six times and opened the door. Behind it: six coats on six hooks. {squad} carried them home over their arms like sleeping children.", "{squad} kept the white off Ottoline's back while she stood at the door. She came out with an armful of coats and would not let anyone else carry them."],
+				"fail": ["The knocking stopped the moment {squad} reached Lantern Row. Ottoline stood at the edge of the white until dark, then walked home without a word.", "The white had moved the door. {squad} followed the knocking in circles for a day and a night. Ottoline carried home whoever forgot the way, one under each arm."]
+			}
+		},
+		{
+			"id": "personal_jessamy", "name": "Back on the Books", "kind": "Personal", "province": "tithe", "personal": "jessamy",
+			"blurb": "Notary Fennick Marrow struck Jessamy out of the Ledger for a fee, and she has been fading in daylight ever since. He still works a toll post on the Tithe Road. A pen that takes you out can put you back in.",
+			"days": 2, "rations": 2, "stats": {"charm": 1.0, "craft": 0.5}, "target": 18, "danger": 2, "cooldown": 2,
+			"reward": {"gilt": [10, 20]}, "standing": {"concord": -2}, "needs": {"concord": true},
+			"text": {
+				"success": ["{squad} knocked at Notary Marrow's window at midnight. By one he had written Jessamy back into the Ledger in his best hand, sweating onto the page.", "Marrow's crossbow friends were bought off with Jessamy's last crate. Marrow himself was not. He wrote her back in anyway, after a long, close look at {squad}."],
+				"fail": ["Marrow had fled the toll post. {squad} found his desk, his pen and a note: \"Not today, ghost.\" Jessamy kept the pen.", "The toll post was crawling with Concord clerks. {squad} spent the night in a ditch while Jessamy grew a little thinner with the dawn."]
+			}
+		},
+		{
+			"id": "personal_odile", "name": "Settle the Account", "kind": "Personal", "province": "oldmill", "personal": "odile",
+			"blurb": "Chief Assessor Marguerite Penhallow has written to her daughter: red ink, then black. She waits at Old Mill Crossing to discuss \"the return of Concord property\". Odile is going to settle up. Properly. Once.",
+			"days": 2, "rations": 2, "stats": {"charm": 1.0, "lore": 0.5}, "target": 18, "danger": 1, "cooldown": 2,
+			"reward": {"insight": [2, 4], "gilt": [10, 15]},
+			"text": {
+				"success": ["{squad} kept watch at the inn while Odile and her mother argued in numbers for three hours. Odile came out with a menu covered in sums and red eyes. \"The ink,\" she said.", "Chief Assessor Penhallow came alone. Odile audited her on the back of the bill. {squad} have never seen two people so polite and so furious."],
+				"fail": ["The Chief Assessor sent a clerk instead, with a form to sign. Odile corrected his grammar and left. She is drafting a reply in red, then black.", "Concord guards were waiting at the inn. {squad} got Odile out through the kitchen. She says her mother would never. She says it twice."]
+			}
+		},
+		{
+			"id": "personal_velvette", "name": "The Last Performance", "kind": "Personal", "province": "saltreed", "personal": "velvette",
+			"blurb": "Augustin Sallow chose the Crimson Encore's \"volunteers\" and counted the takings. Now he runs a showboat, the Gilded Heron, in the Saltreed Marsh, with the Office of Quiet's commissions in his cabin. Velvette has one last performance to give.",
+			"days": 2, "rations": 2, "stats": {"charm": 1.0, "might": 0.5}, "target": 19, "danger": 2, "cooldown": 2,
+			"reward": {"gilt": [15, 30], "renown": 1},
+			"text": {
+				"success": ["Velvette took the Gilded Heron's stage mid-act and duelled her old impresario in front of the whole Marsh. {squad} held the doors. Nobody died. Several people fainted, which she counts as a rave.", "{squad} rowed out to the showboat at dusk. Velvette came back with a book of commissions, a bouquet and the night's takings."],
+				"fail": ["The Gilded Heron weighed anchor the night before. {squad} watched it drift off into the reeds, music still playing. Velvette threw a shoe after it.", "Sallow knew she was coming. The stage was ringed with Concord men. {squad} dragged Velvette off it mid-bow, furious."]
+			}
 		}
 	],
 	"pairs": [
+		{"ids": ["ottoline", "velvette"], "mod": 5, "text": "Old Encore hands: Ottoline keeps the door, Velvette works the room"},
+		{"ids": ["jessamy", "velvette"], "mod": 5, "text": "Night owls: Jessamy and Velvette know every back door that's open after dark"},
+		{"ids": ["odile", "quill"], "mod": 5, "text": "Two sets of books: Odile and Quill argue about rounding, and miss nothing"},
 		{"ids": ["bran", "ninefingers"], "mod": 5, "text": "Old soldiers: Bran and Daro cover each other's blind side"},
 		{"ids": ["quill", "ninefingers"], "mod": 5, "text": "Two ex-Concord: they know where the forms are weakest"},
 		{"ids": ["pell", "abeyance"], "mod": 5, "text": "Pell and Abeyance both talk to the dead; the dead give directions"},

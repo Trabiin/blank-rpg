@@ -36,12 +36,15 @@ BIOMES = {
     "gutterwoods": {
         "name": "The Gutterwoods", "mood": "grade=0.80,0.93,0.86 mist=1.3 motes=0.75,0.95,0.6", "ground": "forest", "seed": 11,
         "sign": "GUTTERWOODS|Letters left here are delivered.|Eventually.",
-        "props": {"F": "fortree", "U": "fungus", "L": "log", "N": "fern", "O": "roots", "Q": "totem"},
+        "props": {"F": "fortree", "U": "fungus", "L": "log", "N": "fern", "O": "roots", "Q": "totem", "I": "inkspring"},
         "border": ["F"],
         "scatter": [("F", 0.10, 0.55), ("N", 0.05, 0.35), ("U", 0.03, 0.4), ("L", 0.015, 0.2),
                     ("O", 0.015, 0.45), ("Q", 0.004, 0.0)],
         "path_r": 1.2,
-        "landmarks": [("Q", (20, 26)), ("Q", (44, 18)), ("O", (33, 33))],
+        # Landmarks: a totem ring round an ink spring (north clearing), a fungus-ringed giant root, a log crossing.
+        "landmarks": [("I", (31, 14)), ("Q", (27, 13)), ("Q", (35, 13)), ("Q", (31, 10)), ("U", (28, 17)), ("U", (34, 17)),
+                      ("Q", (20, 26)), ("Q", (44, 18)), ("O", (33, 33)), ("U", (30, 34)), ("U", (36, 35)), ("U", (33, 36)),
+                      ("O", (55, 30)), ("L", (52, 32)), ("L", (58, 33)), ("N", (54, 34))],
         "groves": [("F", 8, 7, 14), ("U", 3, 3, 5), ("N", 4, 4, 6)],
     },
     "saltreed": {

@@ -1,5 +1,5 @@
 {
-	"_comment": "Bonds with Ash for the core cast (issue #50, DESIGN.md 5.10). ranks: bond points needed for rank 1..5 (index 0 = rank 0). Points come from the first chat each day in Hollowmark (talk), each day spent in a role they like (liked_role) or dislike (disliked_role), expeditions that come home with a success (expedition), fighting beside Ash (mission, per kill_step kills) and the choices in rank scenes. Points never drop below the current rank, and stop at the next rank until its scene is seen. Rank 5 also needs their personal job (data/expeditions.json, personal: id) done; it unlocks at rank 4. likes / dislikes: role or role:target as Empire.recruits stores them. perks: rank -> {name, desc, effect}; effects are read in empire.gd (bond_perk_total). Scene lines: [speaker id, text]; speaker \"\" is narration. Ash never speaks: choices are what Ash does.",
+	"_comment": "Bonds with Ash for the core cast (issue #50, DESIGN.md 5.10). ranks: bond points needed for rank 1..5 (index 0 = rank 0). Points come from the first chat each day in Hollowmark (talk), each day spent in a role they like (liked_role) or dislike (disliked_role), expeditions that come home with a success (expedition), fighting beside Ash (mission, per kill_step kills) and the choices in rank scenes. Points never drop below the current rank, and stop at the next rank until its scene is seen. Rank 5 also needs their personal job (data/expeditions.json, personal: id) done; it unlocks at rank 4. likes / dislikes: role or role:target as Empire.recruits stores them. perks: rank -> {name, desc, effect}; effects are read in empire.gd (bond_perks_with / bond_perk_total). Effect keys: gilt, supplies, insight (a day), gilt_per_held (a day per province held), heal, research_pace, squad_odds, all_odds, surge_warning, job_speed (expeditions take this much less time), build_discount (off building and Wardlamp Gilt), standing_bonus (added to every faction standing gain), fray_home (less Hollowmark Fray a day), mission_hp, mission_damage, mission_revive, mission_guard (less damage taken), mission_power_rate (faster gauge). Scene lines: [speaker id, text] or [speaker id, text, expression] (assets/portraits/<id>_<expression>.png, falling back to <id>.png); speaker \"\" is narration. Ash never speaks: choices are what Ash does.",
 	"ranks": [0, 6, 16, 30, 46, 64],
 	"points": {"talk": 2, "liked_role": 2, "disliked_role": -1, "expedition": 2, "mission": 1, "kill_step": 8, "mission_cap": 4},
 	"rank_names": ["Stranger", "Acquaintance", "Familiar", "Trusted", "Close", "Bound"],
@@ -343,6 +343,263 @@
 				], "choice": [
 					{"label": "[Fold it into your coat]", "bond": 3, "reply": [["abeyance", "Keep it close. And if it ever changes, tell me. Well. Show me."]]},
 					{"label": "[Take her hand]", "bond": 2, "reply": [["abeyance", "Oh. The voices have gone quiet. All of them. That's never happened. Stay a moment."]]}
+				]}
+			]
+		},
+		"ottoline": {
+			"color": "d9a13b",
+			"likes": ["party", "governor:hollowmark"], "likes_text": "fighting up front (party), or keeping Hollowmark's door (governing Hollowmark)",
+			"dislikes": ["envoy", "researcher"], "dislikes_text": "being polite to officials, and books",
+			"perks": {
+				"3": {"name": "House Rules", "desc": "The party takes 10% less damage on missions.", "effect": {"mission_guard": 0.1}},
+				"5": {"name": "Nobody Gets Through", "desc": "Hollowmark's Fray falls by 1 more each day.", "effect": {"fray_home": 1}}
+			},
+			"scenes": [
+				{"rank": 1, "title": "The List", "lines": [
+					["ottoline", "Stop. Name?"],
+					["", "She looks down at Ash from a long way up. She has a slate in one hand and a stub of chalk in the other."],
+					["ottoline", "Right. You haven't got one. That's a first. Everyone's got a name, even if it's a fake. Especially if it's a fake."],
+					["ottoline", "Thirty years Uncle Tobble's kept a list of who drinks here. I keep the list of who doesn't. It's shorter. It's got more teeth in it."],
+					["ottoline", "So. Which list are you on?", "smug"]
+				], "choice": [
+					{"label": "[Point at the first list]", "bond": 2, "reply": [["ottoline", "Bold. Fine. You're on it. In chalk. Chalk rubs off, so behave."]]},
+					{"label": "[Take the chalk and draw a little door]", "bond": 3, "reply": [["", "She studies the door for a long time."], ["ottoline", "...That's not a name. That's better than a name. Nobody gets through a door without me. You're in.", "happy"]]},
+					{"label": "[Try to walk past her]", "bond": 1, "reply": [["", "She doesn't move. She doesn't have to. Ash bounces off."], ["ottoline", "Second list. Try again tomorrow. Bring manners.", "smug"]]}
+				]},
+				{"rank": 2, "title": "Six Hundred Sequins", "lines": [
+					["", "Ottoline is sewing. Her hands are the size of shovels and the needle is the size of an eyelash. She does not miss a stitch."],
+					["ottoline", "Sequins. Velvette's old costume needed six hundred. Every one came off at least once a week, usually in a fight."],
+					["ottoline", "Rule of the Crimson Encore: if the audience can see you, you're part of the show. So the bouncers wore sequins too."],
+					["ottoline", "I was the biggest sparkle in the room. Glittering at drunks. Throwing them out in time with the band."],
+					["ottoline", "Don't laugh. I had a waltz for it. Three steps, a turn, out the door.", "happy"]
+				], "choice": [
+					{"label": "[Bow and offer a hand: show me]", "bond": 3, "reply": [["", "She takes the hand. Three steps. A turn. Somehow Ash is outside, the door is shut, and nothing hurts."], ["ottoline", "That's the waltz. Gentle as you like. Now you know how the magistrate felt. Well. He got the rough version.", "smug"]]},
+					{"label": "[Hold the thread for her]", "bond": 2, "reply": [["ottoline", "Steady hands. Good. Most people shake around me. I'm told it's the height."]]}
+				]},
+				{"rank": 3, "title": "Six Tickets", "lines": [
+					["ottoline", "Velvette will tell you about the night the Blank came down Lantern Row one day, if she hasn't. Her version's got a lot of swooning in it."],
+					["ottoline", "Here's mine. The white came up the street like milk boiling over. Everyone ran for the door. My door."],
+					["ottoline", "I got them out. Two at a time, three. I threw people. And I counted. A hundred and twelve in. A hundred and six out."],
+					["ottoline", "Then it was on the step, and I could hear the last six coming down from the balcony, laughing, they didn't know yet. And I shut the door.", "sad"],
+					["ottoline", "If I hadn't, it would have followed them out into the street. Into all of us. That's the sum. I've done it every night since."],
+					["", "She opens her fist. Six coat-check tickets, tied with a bit of red ribbon."]
+				], "choice": [
+					{"label": "[Stand beside her, the way she stands by a door]", "bond": 3, "reply": [["ottoline", "...Yeah. Like that. Nobody's ever kept the door for me. It's very boring, isn't it? Now you know.", "happy"]]},
+					{"label": "[Touch the tickets]", "bond": 2, "reply": [["ottoline", "Careful. They're still warm. Six years and they're still warm. Pell says that means something. I told Pell to shut up.", "sad"]]},
+					{"label": "[Nod: you saved a hundred and six]", "bond": 1, "reply": [["ottoline", "Everyone says that. Like it's a sum that comes out even. It doesn't. You can't subtract people.", "angry"]]}
+				], "end": [["ottoline", "Right. Nobody lays a finger on the party while I'm there. House rules. I'll be standing in front of you, so try not to get in my way."]]},
+				{"rank": 4, "title": "Knocking", "lines": [
+					["ottoline", "Pell came to see me. Says there's a sound at Lantern Row, on Gallows Ferry. Where the Encore stood, before the white took the street."],
+					["ottoline", "Knocking. From inside the white. Six knocks, then a wait, then six knocks."],
+					["ottoline", "Could be nothing. Could be the Blank doing an impression. It does that. Learns your voice. Learns the people you lost."],
+					["ottoline", "I've kept that door shut six years. I want to be the one who opens it. Or the one who checks it's still shut. Either way, I'm going.", "angry"]
+				], "choice": [
+					{"label": "[Nod]", "bond": 3, "reply": [["ottoline", "Good. It's on the Guildhall board. Bring people who don't scare easy, and someone to hold my coat."]]},
+					{"label": "[Point at yourself: I'm coming]", "bond": 2, "reply": [["ottoline", "No. You run the town. Send me with a squad and I'll send you a postcard. ...Fine. You can wave me off. Wave like you mean it.", "happy"]]}
+				], "end": [["", "A new job is on the Guildhall board: \"Answer the Knocking\". Big Ottoline has to go on it."]]},
+				{"rank": 5, "title": "Coat Check", "lines": [
+					["", "Ottoline comes in out of the weather, soaked to the skin, carrying six coats over her arm like sleeping children."],
+					["ottoline", "It was the door. Just the door, standing in the white with no building round it. My chalk marks still on the frame."],
+					["ottoline", "I knocked back. Six times. Then I opened it."],
+					["ottoline", "Nothing behind it but the cloakroom. Six coats on six hooks. No people. Just the coats, waiting to be collected.", "sad"],
+					["ottoline", "So I collected them. That's how it works, isn't it? You hand the ticket over, you get your coat, you go home. I've hung them on the old tree in the plaza."],
+					["ottoline", "Something knocked once more as I left. Just once. Could've been a draught. I've decided it was a thank you.", "happy"]
+				], "choice": [
+					{"label": "[Hand her a fresh stick of chalk]", "bond": 3, "reply": [["ottoline", "For the list? Go on, then. No. You go on it in proper ink. Chalk's for strangers.", "happy"]]},
+					{"label": "[Hold the door open for her]", "bond": 2, "reply": [["ottoline", "Ha! Look at you. Manners. I'll make a bouncer of you yet. Now shift, you're letting the draught in.", "smug"]]}
+				]}
+			]
+		},
+		"jessamy": {
+			"color": "4a6fa5",
+			"likes": ["expedition", "envoy:guild"], "likes_text": "running jobs on the roads (expeditions), and dealing with the Guild",
+			"dislikes": ["governor", "staff:command_table"], "dislikes_text": "desk work by daylight (governing, the Command Table)",
+			"perks": {
+				"3": {"name": "Night Freight", "desc": "+2 Supplies a day.", "effect": {"supplies": 2}},
+				"5": {"name": "Back Roads", "desc": "Expeditions take 20% less time.", "effect": {"job_speed": 0.2}}
+			},
+			"scenes": [
+				{"rank": 1, "title": "Contraband", "lines": [
+					["", "It is very late. Jessamy is sitting on the tavern roof with her boots dangling, eating somebody else's apple."],
+					["jessamy", "Oh, hello, handsome. Or pretty. It's dark, I'm generous, and you're a bit of a blur. Come up."],
+					["jessamy", "Do you know what you are, to a girl in my trade? The finest contraband in the Inklands."],
+					["jessamy", "No papers, no name, no line in the Ledger. Nobody can tax you, nobody can stop you at a toll. You're a crate with nothing written on it.", "smug"],
+					["jessamy", "I could move you anywhere. Very discreetly. For a price, which we'd discuss over something stronger than this apple."]
+				], "choice": [
+					{"label": "[Climb up and sit beside her]", "bond": 3, "reply": [["jessamy", "There. Now we're both breaking a by-law. Rooftop loitering, two counts. Don't tell the Concord, they'll fine us in fractions.", "happy"]]},
+					{"label": "[Hold out a hand for the apple]", "bond": 2, "reply": [["jessamy", "Cheeky. It's stolen, you know. That's why it tastes like that. Here, half. Now you're an accessory.", "smug"]]},
+					{"label": "[Stay on the ground]", "bond": 1, "reply": [["jessamy", "Suit yourself. The view's better from up here. Of you, mostly."]]}
+				]},
+				{"rank": 2, "title": "Don't Ask", "lines": [
+					["jessamy", "Six years I've run crates down the Tithe Road. Never once opened one. That's the whole art."],
+					["jessamy", "Some of them ticked. Some were warm. One hummed hymns all the way to Gallows Ferry, very quietly, in a man's voice."],
+					["jessamy", "People think not asking is cowardice. It isn't. It's manners. Everyone's allowed one box nobody looks in."],
+					["", "She says it lightly. Then she checks the sky over the rooftops, the way sailors check for weather. Still dark. She relaxes."],
+					["jessamy", "Go on, then. What's in your box?", "smug"]
+				], "choice": [
+					{"label": "[Open your empty hands]", "bond": 3, "reply": [["jessamy", "Nothing? That's the saddest thing I've ever seen. Or the most suspicious. I'll decide which once I know you better.", "happy"]]},
+					{"label": "[Point back at her: you first]", "bond": 2, "reply": [["jessamy", "Ha. No. Nice try. Mine's nailed shut. ...I'll tell you one day. Not today. Today I'm being charming."]]}
+				]},
+				{"rank": 3, "title": "Struck Off", "lines": [
+					["", "Dawn is close. Jessamy keeps glancing at the eastern rooftops, the way you'd watch a dog you don't trust."],
+					["jessamy", "All right. The box. Since you keep not asking, which is very unfair of you."],
+					["jessamy", "I owed money to the wrong people. So I paid a scribe on the Tithe Road to strike me out of the Ledger. No entry, no debt. Clever girl."],
+					["jessamy", "Turns out the Ledger isn't just who owes what. It's what holds you in the world. Take your line out and you start to thin.", "sad"],
+					["", "The first grey light touches her hand. Ash can see the roof tiles through her fingers."],
+					["jessamy", "Sunlight goes straight through me. A little more every year. I'm a smuggler because I'm only allowed to exist after dark."],
+					["jessamy", "That's why I like you, you know. You're the only other one. Except you're not fading. How do you do that?"]
+				], "choice": [
+					{"label": "[Stand between her and the sunrise]", "bond": 3, "reply": [["jessamy", "...Oh. Don't. You'll make me sentimental, and then I'll have to steal something to feel like myself again.", "happy"]]},
+					{"label": "[Take her hand in the light]", "bond": 2, "reply": [["jessamy", "Can you feel it? I can't, not really. Just the idea of a hand. Hold on anyway. It's nice to be held by someone nobody can write down either.", "sad"]]},
+					{"label": "[Shrug: you don't know]", "bond": 1, "reply": [["jessamy", "No. Course you don't. Neither of us read the instructions."]]}
+				], "end": [["jessamy", "I know every back road and every bent quartermaster between here and the sea. You'll have more Supplies than you know what to do with. Don't ask where from.", "smug"]]},
+				{"rank": 4, "title": "The Notary", "lines": [
+					["jessamy", "The scribe who struck me out. Notary Fennick Marrow. Still working a toll post on the Tithe Road, scratching people off for coin."],
+					["jessamy", "A pen that can take you out can put you back in. If he's paid enough. Or frightened enough."],
+					["jessamy", "I've never wanted to be on anybody's books in my life. But I'd like to see noon again. Just once. I've forgotten what colour things are.", "sad"],
+					["jessamy", "Lend me a squad. A big one. Marrow scares easy, but he has friends with crossbows."]
+				], "choice": [
+					{"label": "[Nod]", "bond": 3, "reply": [["jessamy", "Lovely. It's on the board. We'll go by night, obviously, and knock at his window. He'll adore that.", "smug"]]},
+					{"label": "[Mime: frightened, not paid]", "bond": 2, "reply": [["jessamy", "Oh, I like you. Frightened it is. He took my money, after all. Only fair to take his sleep.", "happy"]]}
+				], "end": [["", "A new job is on the Guildhall board: \"Back on the Books\". Jessamy has to go on it."]]},
+				{"rank": 5, "title": "Noon", "lines": [
+					["", "It is noon. The plaza is full of honest people doing honest things. In the middle of it, Jessamy lies flat on her back on the cobbles, eyes shut, perfectly solid."],
+					["jessamy", "Don't block it. Shift. You're in my sun."],
+					["jessamy", "Marrow wrote me back in. Took him an hour, his hand was shaking so badly. I stood over him and read every word."],
+					["jessamy", "When he asked for my occupation, I told him to put \"yes\". So that's me, officially. Jessamy Nightjar, occupation: yes.", "smug"],
+					["jessamy", "I'm sunburnt. It's horrible. I love it. Everything is so loud and yellow.", "happy"],
+					["jessamy", "I'll still work nights, mind. Habit. But now it's because I choose to."]
+				], "choice": [
+					{"label": "[Lie down on the cobbles next to her]", "bond": 3, "reply": [["jessamy", "There we are. Two layabouts in broad daylight. People are staring. Let them. I've waited six years to be stared at.", "happy"]]},
+					{"label": "[Give her your hat]", "bond": 2, "reply": [["jessamy", "Oh, a gentleman. Or a lady. Whatever you are, you're a sweetheart. I'm not wearing it. I'm keeping it.", "smug"]]}
+				]}
+			]
+		},
+		"odile": {
+			"color": "5f9a86",
+			"likes": ["governor", "staff:command_table"], "likes_text": "running a province (governor), or the books at the Command Table",
+			"dislikes": ["envoy:concord", "idle"], "dislikes_text": "dealing with the Concord, and idleness",
+			"perks": {
+				"3": {"name": "Fair Assessment", "desc": "+1 Gilt a day for every province you hold.", "effect": {"gilt_per_held": 1}},
+				"5": {"name": "Clean Books", "desc": "Buildings and Wardlamps cost 20% less Gilt.", "effect": {"build_discount": 0.2}}
+			},
+			"scenes": [
+				{"rank": 1, "title": "Opening Balance", "lines": [
+					["odile", "Sit down. This won't hurt. Much. I'm opening an account for you."],
+					["", "She has a fresh page ruled in red. At the top, in a strict and beautiful hand: ASH (provisional)."],
+					["odile", "Assets: one coat, one blade, an unreasonable amount of nerve. Liabilities: the Concord, the Blank, and roughly everyone."],
+					["odile", "The Concord can't tax you, because you don't exist. Professionally, I find that offensive. Personally, I find it rather wonderful.", "smug"],
+					["odile", "Is there anything you would like to declare?"]
+				], "choice": [
+					{"label": "[Declare the nerve]", "bond": 3, "reply": [["odile", "Noted. \"Nerve, considerable, undeclared until now.\" I'll value it later. It's going to ruin my totals.", "happy"]]},
+					{"label": "[Put a pebble on the desk]", "bond": 2, "reply": [["odile", "A pebble. Grey. Unremarkable. I'll enter it at one copper and you'll never see it again. That's taxation.", "smug"]]},
+					{"label": "[Shake your head]", "bond": 1, "reply": [["odile", "Nothing to declare. Everyone says that. Everyone is lying. It's fine. I'll find it."]]}
+				]},
+				{"rank": 2, "title": "A Tenth Is a Tenth", "lines": [
+					["odile", "People think tax collectors hate people. We don't. We love sums. People simply get between us and the sums."],
+					["odile", "I did the job well. Fairly. A tithe is a tenth, and a tenth is a tenth whether you're a duke or a donkey."],
+					["odile", "My mother taught me that. Chief Assessor Marguerite Penhallow. She checked my homework in red ink, then checked it again in black."],
+					["odile", "I thought the numbers were the point. I thought if the sums were fair, the world was.", "sad"],
+					["odile", "Quill finds that very sweet. Quill rounds up. I would like that on the record.", "angry"]
+				], "choice": [
+					{"label": "[Tap the page: still fair]", "bond": 3, "reply": [["odile", "Yes. Still fair. Even if nothing else is, the arithmetic is. That isn't nothing.", "happy"]]},
+					{"label": "[Mime rounding up]", "bond": 2, "reply": [["odile", "Don't you dare. One of you in this town is quite enough.", "angry"]]}
+				]},
+				{"rank": 3, "title": "Four Gilt", "lines": [
+					["odile", "The village they sent me to collect was Lowmere, on the Saltreed edge. \"Collect\" doesn't mean collect from."],
+					["odile", "It means the Concord weighs what a place is worth against what it costs to keep it in the Ledger. If it comes out short, the line is struck. The Blank does the rest."],
+					["odile", "I did the sums three times. Lowmere came out four Gilt short. Four. I had four Gilt in my purse."],
+					["odile", "I paid it. The office sent it back: \"Collectors may not hold an interest.\" The order went through. It was countersigned by my mother.", "angry"],
+					["", "She smooths the page flat with the side of her hand. Over and over, though it is already flat."],
+					["odile", "That's when I understood the numbers were never the point. They were the excuse. So I took the ledger and left."]
+				], "choice": [
+					{"label": "[Put four coins on the desk]", "bond": 3, "reply": [["odile", "...Don't. Oh, don't, that's... I'll have to enter that. Under something. I haven't got a column for it.", "sad"]]},
+					{"label": "[Sit with her]", "bond": 2, "reply": [["odile", "Thank you. I'm not crying. It's the red ink. It gets in your eyes.", "sad"]]},
+					{"label": "[Point at the stolen ledger: use it]", "bond": 2, "reply": [["odile", "Oh, I mean to. Every line in here is a place they meant to sell. I'm going to make every one of them very, very expensive.", "smug"]]}
+				], "end": [["odile", "Leave the provinces to me. Every one you hold will pay its fair share. To us, for a change."]]},
+				{"rank": 4, "title": "Settling Accounts", "lines": [
+					["odile", "A letter came. Red ink, then black. She always checks twice."],
+					["odile", "My mother is at Old Mill Crossing. She wishes to discuss \"the return of Concord property\". That means the ledger. I think it also means me."],
+					["odile", "She'll offer me my post back. She'll offer to pretend none of this happened. She is very good at making lines disappear."],
+					["odile", "I need to go. Not to give her anything. To settle up. Properly. Once."]
+				], "choice": [
+					{"label": "[Nod]", "bond": 3, "reply": [["odile", "Thank you. It's on the Guildhall board. I'll bring a spare pen. She always forgets hers, to see if I'll offer."]]},
+					{"label": "[Hold out a hand: leave the ledger here]", "bond": 2, "reply": [["odile", "Yes. Good. Safer. She can't take what I haven't brought. You'd make a decent collector. That is not a compliment.", "smug"]]}
+				], "end": [["", "A new job is on the Guildhall board: \"Settle the Account\". Odile has to go on it."]]},
+				{"rank": 5, "title": "Reconciled", "lines": [
+					["odile", "She came alone. No guards, no clerks. Older than I remembered. She'd brought her own pen this time."],
+					["odile", "We argued in numbers for three hours. Then I audited her, right there in the inn, on the back of the menu."],
+					["odile", "Every account balanced. All but one line, twenty-six years old. Ninety Gilt, quietly moved, to keep one village off the lists."],
+					["odile", "Penhallow Mere. Where I was born. Forty years of perfect books, and my mother's only crime was me.", "sad"],
+					["odile", "She didn't apologise. Penhallows don't. She said, \"Keep the ledger. Use it better than I did.\" Then she paid for the menu."],
+					["", "Odile turns Ash's account page around. Under Liabilities, everything is struck through. Under Assets there is one new line: ODILE."]
+				], "choice": [
+					{"label": "[Initial the page]", "bond": 3, "reply": [["odile", "Countersigned. Good. Now it's binding. You're stuck with me. That's how accounts work.", "happy"]]},
+					{"label": "[Bow]", "bond": 2, "reply": [["odile", "Get up. People will think I've fined you.", "smug"]]}
+				]}
+			]
+		},
+		"velvette": {
+			"color": "a03a6a",
+			"likes": ["envoy", "party"], "likes_text": "talking to factions (envoy), and an audience (the party)",
+			"dislikes": ["idle", "staff:inkworks"], "dislikes_text": "being ignored, and dirty work (the Inkworks)",
+			"perks": {
+				"3": {"name": "Pillow Talk", "desc": "Every standing gain with a faction is 1 bigger.", "effect": {"standing_bonus": 1}},
+				"5": {"name": "Encore", "desc": "The party's gauge fills 15% faster on missions.", "effect": {"mission_power_rate": 0.15}}
+			},
+			"scenes": [
+				{"rank": 1, "title": "A Secret for a Secret", "lines": [
+					["velvette", "Darling. Close the door. No, leave it open a crack. People should know we're in here together. It's good for my reputation.", "smug"],
+					["", "Her dressing table is a battlefield of powder and rouge, with a rapier laid across it like a hairbrush."],
+					["velvette", "House rules of the Crimson Encore: I tell you a secret, you tell me one. I've done business that way since I was sixteen."],
+					["velvette", "Mine: Bran sleeps with his contract arm under the pillow. He talks to it. Tenderly."],
+					["velvette", "Your turn. ...Oh. You've nothing to tell. You haven't got a past. That's either tragic or the most exciting thing I've ever seen.", "surprised"]
+				], "choice": [
+					{"label": "[Lean in as if to whisper, then say nothing]", "bond": 3, "reply": [["velvette", "Oh, you tease. You absolute professional. Silence is the most expensive secret there is. I'll put it on your tab.", "happy"]]},
+					{"label": "[Draw a small X in the powder on her mirror]", "bond": 2, "reply": [["velvette", "An X. A kiss, or a mark on a map? Don't tell me. I'll enjoy guessing.", "smug"]]},
+					{"label": "[Look at the rapier]", "bond": 1, "reply": [["velvette", "Don't touch the sword, darling. It's the only one in the room who isn't flirting with you."]]}
+				]},
+				{"rank": 2, "title": "The Closing Act", "lines": [
+					["velvette", "Every night at the Encore ended with the closing act. A real duel, live blades, against a volunteer from the audience."],
+					["velvette", "Rich men, mostly. Bored ones. They paid a fortune to cross swords with the star. Most went home with a scratch and a story."],
+					["velvette", "Some went home lighter. You'd be amazed what a man confesses with a rapier at his throat and four hundred people watching.", "smug"],
+					["velvette", "I wrote it all down. Who owed whom, who loved whom, who was skimming the Concord's tithe. Then I sold it back to them, one page at a time."],
+					["velvette", "Don't look at me like that. A secret is only dangerous while one person owns it. I'm a public service."]
+				], "choice": [
+					{"label": "[Applaud slowly]", "bond": 3, "reply": [["velvette", "Thank you, thank you. You may throw roses. Not literally, the thorns ruin the silk.", "happy"]]},
+					{"label": "[Hold out a hand: show me the book]", "bond": 2, "reply": [["velvette", "Ha! No. Nobody touches the book. Not even Ottoline. Especially not Ottoline, she'd use it to prop a door.", "smug"]]}
+				]},
+				{"rank": 3, "title": "Eleven Volunteers", "lines": [
+					["", "No powder tonight. Without it she looks younger, and very tired."],
+					["velvette", "Here's a secret I never sold, because nobody could afford it."],
+					["velvette", "Some of the volunteers weren't volunteers. The Concord's Office of Quiet paid the Encore to seat certain names in the front row. A judge. A printer. A poet who'd rhymed \"Concord\" with something unkind."],
+					["velvette", "I was told it was theatre. A little blood, a big bow. Then the first one didn't get up, and the house rose and cheered, and my impresario wept for joy at the takings.", "sad"],
+					["velvette", "Eleven. I knew by the third. I kept going, because the other choice was to be the next volunteer."],
+					["velvette", "When the Blank took Lantern Row I was almost grateful. Isn't that ugly? I've never said it out loud."]
+				], "choice": [
+					{"label": "[Stay. Don't look away]", "bond": 3, "reply": [["velvette", "...You didn't flinch. Everyone flinches, darling. Even me, in the mirror. Thank you.", "sad"]]},
+					{"label": "[Put a hand on her shoulder]", "bond": 2, "reply": [["velvette", "Careful. People who comfort me end up in my book. ...No. Not you. I'll leave you out."]]},
+					{"label": "[Step back]", "bond": 0, "reply": [["velvette", "Yes. The sensible reaction. I've always found sensible people terribly dull. Goodnight.", "angry"]]}
+				], "end": [["velvette", "Send me to your factions. I know where all their bodies are buried. In a few cases, because I buried them.", "smug"]]},
+				{"rank": 4, "title": "The Impresario", "lines": [
+					["velvette", "Augustin Sallow. My impresario. The man who chose the volunteers and counted the takings."],
+					["velvette", "He didn't go down with Lantern Row. Of course he didn't. He runs a showboat in the Saltreed Marsh now, the Gilded Heron. New star. Same closing act."],
+					["velvette", "He keeps the Office of Quiet's commissions in his cabin. Every name, every price, and my stage name at the bottom of each: \"the instrument\".", "angry"],
+					["velvette", "I'd like to give one last performance. One he didn't book."]
+				], "choice": [
+					{"label": "[Nod]", "bond": 3, "reply": [["velvette", "Lovely. It's on the board. I'll need a squad, a costume and a very quiet boat.", "smug"]]},
+					{"label": "[Mime: don't kill him]", "bond": 2, "reply": [["velvette", "...You ask a lot. Fine. I'll leave him breathing. I'll leave him a great many other things too, mostly bruises."]]}
+				], "end": [["", "A new job is on the Guildhall board: \"The Last Performance\". Velvette has to go on it."]]},
+				{"rank": 5, "title": "Curtain Call", "lines": [
+					["velvette", "The Gilded Heron had a full house. I came on during the closing act. In costume, naturally. One has standards."],
+					["velvette", "I challenged Augustin with the whole Marsh watching. He'd never held a sword in his life. I let him keep his. Then I read the commissions aloud. Every name. Every price."],
+					["velvette", "Eleven names, said slowly. And the audience didn't cheer. They took off their hats. Best show I ever gave.", "sad"],
+					["velvette", "Augustin is on his way to the Concord with the book pinned to his coat. Let's see how they reward a man who keeps receipts.", "smug"],
+					["velvette", "One more thing. House rules: a secret for a secret. I've owed you one since the first night."],
+					["", "She leans in and says it in Ash's ear: her real name. It is a very ordinary name. Nobody else will ever hear it."]
+				], "choice": [
+					{"label": "[Keep it]", "bond": 3, "reply": [["velvette", "Good. It's the only secret I've ever given away. Don't you dare sell it. ...Well. Not for less than it's worth.", "happy"]]},
+					{"label": "[Kiss her hand]", "bond": 2, "reply": [["velvette", "Oh, now you flirt. About time. I was starting to think you were just very polite furniture.", "smug"]]}
 				]}
 			]
 		}

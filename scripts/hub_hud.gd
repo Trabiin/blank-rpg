@@ -18,8 +18,11 @@ func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	font = ThemeDB.fallback_font
-	if Empire.missions_cleared.size() >= 2:  # the walk hint is for the first visits only
+	# The walk hint shows once per save; after that only on F1.
+	if Dialogue.is_seen("hint:hub"):
 		help_t = 0.0
+	else:
+		Dialogue.mark_seen("hint:hub")
 
 
 func say(text: String, duration := 3.5) -> void:
@@ -66,6 +69,9 @@ func menu_rect() -> Rect2:
 
 ## Taps and clicks on the two buttons. Touch does not emulate the mouse in this project.
 func _input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_F1:
+		help_t = 0.0 if help_t > 0.0 else 10.0
+		return
 	if hub == null or get_tree().paused or hub.roster_view.visible or hub.buildings_view.visible \
 			or hub.expedition_view.visible or hub.research_view.visible or hub.diplomacy_view.visible \
 			or hub.bonds_view.visible or hub.scene_view.visible or hub.newcomers_view.visible:
@@ -178,6 +184,7 @@ func _draw() -> void:
 		else:
 			_text(Vector2(vs.x - 236, 58), "Clock: 1-4   Menu: Esc", 8, Color(1, 1, 1, a4))
 			_text(Vector2(vs.x - 236, 69), "Roster R  Buildings B  Research T  Factions F  Bonds H", 8, Color(1, 1, 1, a4))
+			_text(Vector2(vs.x - 236, 80), "F1: show or hide this", 8, Color(1, 1, 1, a4))
 			_text(Vector2(vs.x - 236, 80), "Newcomers N", 8, Color(1, 1, 1, a4))
 
 

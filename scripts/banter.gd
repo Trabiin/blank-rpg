@@ -135,16 +135,14 @@ func _draw() -> void:
 	var tw := r.size.x - (49.0 if who != "" else 14.0)
 	var need := font.get_multiline_string_size(String(_cur[1]), HORIZONTAL_ALIGNMENT_LEFT, tw, 9).y
 	r.size.y = maxf(r.size.y, need + (22.0 if who != "" else 12.0))
-	UiSkin.panel(self, r, "ledger", Color(1, 1, 1, 0.92))
-	if who != "":  # the speaker's colour as a ribbon down the left edge
-		draw_rect(Rect2(r.position.x + 1, r.position.y + 4, 2, r.size.y - 8), Dialogue.accent(who))
+	UiSkin.page(self, r)  # the same torn ledger page as the dialogue box
 	var tx := r.position.x + 8
 	if who != "":
 		var face := Rect2(r.position + Vector2(5, 5), Vector2(30, 30))
 		Dialogue.draw_face(self, face, who, _cur[2])
 		tx = face.end.x + 7
 		draw_string(font, Vector2(tx, r.position.y + 13), Dialogue.display_name(who), HORIZONTAL_ALIGNMENT_LEFT, -1, 9,
-			Dialogue.accent(who).lightened(0.5))
+			Dialogue.accent(who).darkened(0.35))
 	var text := String(_cur[1]).substr(0, int(_shown))
 	draw_multiline_string(font, Vector2(tx, r.position.y + (25 if who != "" else 15)), text, HORIZONTAL_ALIGNMENT_LEFT,
-		r.end.x - tx - 6, 9, -1, TEXT if who != "" else Color(0.75, 0.73, 0.75))
+		r.end.x - tx - 6, 9, -1, UiSkin.PAGE_INK if who != "" else UiSkin.PAGE_INK_SOFT)

@@ -17,6 +17,11 @@ const MARGIN := {"ledger": 14, "paper": 9, "button": 6}
 const TILED := ["paper"]
 const TITLE_FONT := preload("res://assets/fonts/Jacquard12-Regular.ttf")
 const PAPER_INK := Color("2a2019")  # text colour on paper
+const PAGE_INK := Color("2a2019")  # dialogue text on the torn ledger page (UiSkin.page)
+const PAGE_INK_SOFT := Color("5a4a3c")  # narration on the page
+const PAGE_PAPER := Color("d9cfba")
+const PAGE_RULE := Color(0.42, 0.5, 0.62, 0.22)
+const PAGE_MARGIN := Color(0.62, 0.22, 0.18, 0.45)
 
 static var _boxes := {}
 
@@ -82,3 +87,66 @@ static func draw_icon(ci: CanvasItem, id: String, r: Rect2, tint := Color.WHITE)
 		return false
 	ci.draw_texture_rect(t, r, false, tint)
 	return true
+
+
+
+## The text sits on a torn-out ledger page: deckled edges, faint ruling, a red margin line, ink spatter, and the
+## right edge fraying into blank paper where the Blank has been at it.
+static func page(ci: CanvasItem, box: Rect2) -> void:
+	if box.size.x < 8.0 or box.size.y < 8.0:  # a control not laid out yet: nothing to draw
+		return
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 7
+	var top := PackedVector2Array()
+	var bottom := PackedVector2Array()
+	var x := box.position.x
+	while x <= box.end.x:
+		top.append(Vector2(x, box.position.y + rng.randf_range(-1.5, 1.5) + sin(x * 0.05) * 1.2))
+		bottom.append(Vector2(x, box.end.y + rng.randf_range(-2.5, 1.0)))
+		x += 4.0
+	var poly := PackedVector2Array()
+	poly.append_array(top)
+	var b := bottom.duplicate()
+	b.reverse()
+	poly.append_array(b)
+	# Shadow, then the page.
+	var sh := PackedVector2Array()
+	for p in poly:
+		sh.append(p + Vector2(3, 4))
+	ci.draw_colored_polygon(sh, Color(0, 0, 0, 0.45))
+	ci.draw_colored_polygon(poly, PAGE_PAPER)
+	# Paper grain: soft darker blotches.
+	for i in 70:
+		var gp := Vector2(rng.randf_range(box.position.x + 4, box.end.x - 4), rng.randf_range(box.position.y + 4, box.end.y - 4))
+		ci.draw_rect(Rect2(gp.floor(), Vector2(rng.randi_range(2, 6), 1)), Color(0.45, 0.36, 0.25, rng.randf_range(0.05, 0.12)))
+	# Ledger ruling and the red margin.
+	var ry := box.position.y + 14.0
+	while ry < box.end.y - 6.0:
+		ci.draw_line(Vector2(box.position.x + 6, ry), Vector2(box.end.x - 6, ry), PAGE_RULE, 1.0)
+		ry += 13.0
+	ci.draw_line(Vector2(box.position.x + 22, box.position.y + 2), Vector2(box.position.x + 22, box.end.y - 2), PAGE_MARGIN, 1.0)
+	# Torn edges inked darker.
+	ci.draw_polyline(top, Color(0.35, 0.27, 0.19, 0.7), 1.0)
+	ci.draw_polyline(bottom, Color(0.35, 0.27, 0.19, 0.7), 1.0)
+	# Ink spatter in two corners.
+	for c in [box.position + Vector2(10, box.size.y - 12), Vector2(box.end.x - 60, box.position.y + 8)]:
+		for i in 6:
+			var o := Vector2(rng.randf_range(-8, 8), rng.randf_range(-5, 5))
+			ci.draw_circle(c + o, rng.randf_range(0.6, 2.2), Color(PAGE_INK, 0.55))
+	# The right end frays into blank paper.
+	for i in 24:
+		var k := float(i) / 24.0
+		ci.draw_rect(Rect2(box.end.x - 24 + i, box.position.y + 2, 1, box.size.y - 4), Color(0.95, 0.945, 0.92, k * k * 0.85))
+	for i in 30:
+		var fy := rng.randf_range(box.position.y + 2, box.end.y - 2)
+		var fx := box.end.x - rng.randf() * rng.randf() * 34.0
+		ci.draw_rect(Rect2(Vector2(fx, fy).floor(), Vector2(rng.randi_range(1, 3), 1)), Color(0.95, 0.945, 0.92, 0.8))
+
+
+## A dry-brush ink stroke under a name.
+static func brush(ci: CanvasItem, at: Vector2, w: float, col: Color) -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = int(w)
+	for i in 3:
+		var y := at.y + i
+		ci.draw_line(Vector2(at.x + rng.randf_range(0, 3), y), Vector2(at.x + w - rng.randf_range(0, 6), y + rng.randf_range(-0.5, 0.5)), Color(col, 0.75 - i * 0.2), 1.0)
