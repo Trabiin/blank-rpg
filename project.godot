@@ -5,6 +5,7 @@ config_version=5
 
 config/name="Last Ink"
 config/description="Last Ink: action RPG prototype"
+config/version="0.9.0"
 run/main_scene="res://scenes/title.tscn"
 config/features=PackedStringArray("4.3", "GL Compatibility")
 
