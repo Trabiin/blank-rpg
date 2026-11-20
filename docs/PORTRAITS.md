@@ -18,7 +18,7 @@ To add one: save the raw image as `<id>-v2.png` (or `<id>_<expr>-v2.png`) in a f
 ## How the game uses them
 
 - Bond scenes (`scripts/scene_view.gd`): the character stands on the left, flipped to face Ash on the right. Whoever has the floor is lit; the other is dimmed and pushed back. A soft glow in the character's accent colour sits behind each. A line in `data/bonds.json` can carry a third entry, an expression: `["bran", "Read it again.", "smug"]`.
-- Characters with no portrait yet (Quill, Old Tobble, Sister Abeyance, Corporal Daro) keep the code-drawn bust.
+- Every recruit and the Auditor has a portrait (Phase 8). Anyone new without one keeps the code-drawn bust.
 - The dialogue system (#11) loads the same files by the same naming.
 
 ## Tool and terms
@@ -58,4 +58,15 @@ In the same chat as the locked neutral image, paste the same full prompt, replac
 
 ### Still to make for the MVP
 
-Quill Marrow, Old Tobble, Sister Abeyance, Corporal Daro (bond cast), The Auditor (boss), and any new Act 1 recruits that get dialogue.
+Done in Phase 8: Quill, Tobble, Pell, Abeyance, Hesper, Dunmore, Jessamy, Odile, Ottoline, Mr. Biscuits, the Merrow Three, Daro and the Auditor. Expressions (`<id>_<expr>.png`) are still to do.
+
+## API pipeline (Phase 8)
+
+`tools/openai_image.py OUT.png "prompt" --ref a.png --ref b.png --quality medium` calls gpt-image-2 directly (no
+ChatGPT chat needed). Give it the style block above + "Match the art style, line weight, face style and rendering of
+the two reference portraits exactly, but draw a new character:" + the character paragraph, with the raw Ash and Bran
+portraits (downscaled to 512x768) as references. That keeps new faces on-model with the cast. A 1024x1536 medium
+portrait costs about $0.054; every call is logged in `tools/art_spend.jsonl` with its token usage. The paragraphs used
+are in project files `last-ink/portraits/` next to the raw images.
+
+Corporal Daro is non-binary (they/them).
