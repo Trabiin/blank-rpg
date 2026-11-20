@@ -46,6 +46,17 @@ static func panel(ci: CanvasItem, r: Rect2, kind := "ledger", tint := Color.WHIT
 	ci.draw_style_box(sb, r.grow(2.0))
 
 
+## Full-screen views (Roster, Buildings, Research...): the game dimmed behind, one big ledger frame round the
+## whole screen and a brass rule under the header row, instead of a flat dark box.
+static func screen(ci: CanvasItem, vs: Vector2, header_h := 25.0) -> void:
+	ci.draw_rect(Rect2(Vector2.ZERO, vs), Color(0.04, 0.035, 0.06, 0.9))
+	# Pushed past the screen edge so the brass corners only peek in and never sit under the header text.
+	panel(ci, Rect2(Vector2(-7, -7), vs + Vector2(14, 14)), "ledger")
+	var y := floorf(header_h)
+	ci.draw_rect(Rect2(10, y, vs.x - 20, 1), Color("a07a4e"))
+	ci.draw_rect(Rect2(10, y + 1, vs.x - 20, 1), Color(0.07, 0.06, 0.1, 0.8))
+
+
 ## A gold highlight around a panel (the controlled hero, the chosen row).
 static func highlight(ci: CanvasItem, r: Rect2, col := Color("e8c65a")) -> void:
 	ci.draw_rect(r.grow(1.0), col, false, 1.0)

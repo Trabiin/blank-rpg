@@ -138,7 +138,7 @@ func _wrap(pos: Vector2, s: String, width: float, fsize: int, col: Color) -> flo
 
 func _draw() -> void:
 	var vs := size
-	draw_rect(Rect2(Vector2.ZERO, vs), Color(0.05, 0.04, 0.07, 0.985))
+	UiSkin.screen(self, vs)
 	var cr := _close_rect()
 	UiSkin.panel(self, cr, "button")
 	_text(cr.position + Vector2(9, 12), "Close", 9, Color(0.75, 0.72, 0.7))

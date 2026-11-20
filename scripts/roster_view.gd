@@ -154,7 +154,7 @@ func _wrap(pos: Vector2, s: String, width: float, fsize: int, col: Color) -> flo
 
 func _draw() -> void:
 	var vs := size
-	draw_rect(Rect2(Vector2.ZERO, vs), Color(0.05, 0.04, 0.07, 0.985))
+	UiSkin.screen(self, vs)
 	var ids := _ids()
 	var n := ids.size()
 	_text(Vector2(LIST_X, 20), "Roster", 15, Color("f3efe4"))

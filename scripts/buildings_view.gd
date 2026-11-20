@@ -333,7 +333,7 @@ func _row_status(row: Dictionary) -> Array:
 
 func _draw() -> void:
 	var vs := size
-	draw_rect(Rect2(Vector2.ZERO, vs), Color(0.05, 0.04, 0.07, 0.985))
+	UiSkin.screen(self, vs)
 	_text(Vector2(LIST_X, 20), "Buildings", 15, Color("f3efe4"))
 	# Resources, Insight included (it only lives here and in the ledger for now).
 	var x := LIST_X + 90
