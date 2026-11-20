@@ -218,6 +218,7 @@ static func apply(result: Dictionary) -> void:
 	Satchel.restock()  # Hollowmark's stores top the satchel back up (issue #6)
 	Empire.active_mission = {}
 	Empire.last_mission = result
+	Relationships.note_mission(PartyPicker.mission_party(m), str(result["outcome"]))  # fates for the epilogues (issue #116)
 
 
 ## Pays out, autosaves in Hollowmark and walks the party home.

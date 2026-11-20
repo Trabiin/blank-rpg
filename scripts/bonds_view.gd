@@ -86,7 +86,11 @@ func _scene_rows() -> Array:
 			state = "seen"
 		elif Empire.bond_next_scene(id) == r:
 			state = "ready"
-		out.append({"rank": r, "state": state, "title": sc.get("title", "")})
+		out.append({"rank": r, "state": state, "title": Empire.bond_scene(id, r).get("title", sc.get("title", ""))})
+		if r == 3 and Relationships.can_romance(id):  # the romance question sits between rank 3 and 4 (issue #116)
+			var m := Relationships.moment_scene(id)
+			var ms := "seen" if Relationships.romance_of(id) != "" else ("ready" if Empire.bond_next_scene(id) == Relationships.MOMENT else "locked")
+			out.append({"rank": Relationships.MOMENT, "state": ms, "title": m.get("title", ""), "num": "3+"})
 	return out
 
 
@@ -387,6 +391,21 @@ func _draw_details(vs: Vector2, id: String) -> void:
 				state += " (%s)" % why
 			col = GOLD
 		y += _wrap(Vector2(x, y + 9), "Personal mission, %s: %s." % [PersonalMissions.def_for(id).get("name", "?"), state], w, 8, col) + 1
+	# Romance, friends and rivals (issue #116)
+	var rs := Relationships.status_text(id)
+	if rs != "":
+		var rcol := HEART if Relationships.romance_of(id) == "partner" or Relationships.moment_ready(id) else (BAD if Relationships.romance_of(id) == "ex" else SOFT)
+		y += _wrap(Vector2(x, y + 9), rs, w, 8, rcol) + 1
+	var kin := {"friends": [], "rivals": [], "truce": []}
+	for pr in Relationships.pairs_of(id):
+		if Empire.recruits.has(pr[1]):
+			kin[pr[0]["kind"]].append(Empire.short_name(pr[1]))
+	var bits := []
+	for k in ["friends", "truce", "rivals"]:
+		if not kin[k].is_empty():
+			bits.append("%s: %s" % [{"friends": "Gets on with", "truce": "Made peace with", "rivals": "Can't stand"}[k], ", ".join(kin[k])])
+	if not bits.is_empty():
+		y += _wrap(Vector2(x, y + 9), ".  ".join(bits) + ".  (Posting them together matters: see Roster, Buildings, Expeditions, party.)", w, 8, Color("b9c4d8")) + 1
 	y += 8
 	# Scenes
 	_text(Vector2(x, y + 8), "Scenes", 9, Color(0.75, 0.72, 0.7))
@@ -404,12 +423,12 @@ func _draw_details(vs: Vector2, id: String) -> void:
 		var col := DIM
 		match row["state"]:
 			"seen":
-				label = "%d. %s" % [row["rank"], row["title"]]
+				label = "%s. %s" % [row.get("num", str(row["rank"])), row["title"]]
 				col = TEXT
 			"ready":
-				label = "%d. %s  (new: %s to play)" % [row["rank"], row["title"], Prompts.confirm()]
+				label = "%s. %s  (new: %s to play)" % [row.get("num", str(row["rank"])), row["title"], Prompts.confirm()]
 				col = HEART
 			_:
-				label = "%d. ???" % row["rank"]
+				label = "%s. ???" % row.get("num", str(row["rank"]))
 		_text(rr.position + Vector2(4, 9), label, 8, GOLD if on and row["state"] != "locked" else col, w - 8)
 		y += SCENE_ROW_H

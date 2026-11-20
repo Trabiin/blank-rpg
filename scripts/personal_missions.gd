@@ -115,6 +115,8 @@ static func apply(m: Dictionary, outcome: String, dry := false) -> Array:
 	var lines := []
 	var who: String = m.get("who", "")
 	var name := Empire.short_name(who)
+	if not dry:
+		Relationships.note_personal(who, outcome == "success")  # fates for the epilogues (issue #116)
 	if outcome == "success":
 		if not dry and Empire.has_bond(who):
 			Empire.bonds[who]["personal_done"] = true

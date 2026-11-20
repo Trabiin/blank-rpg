@@ -201,6 +201,7 @@ func _ready() -> void:
 			play_talk("meadow_intro")
 		else:
 			banter.event("mission_start", present())
+			banter.add(Relationships.banter_for(present()))  # friends and rivals sniping (issue #116)
 
 
 ## Who can speak right now: the party members still standing.

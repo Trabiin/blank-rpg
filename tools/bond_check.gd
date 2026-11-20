@@ -51,6 +51,8 @@ func _setup() -> void:
 		_check_data(id)
 		for r in range(1, 6):
 			queue.append([id, r])
+			if r == 3 and Relationships.can_romance(id):  # the romance question comes before rank 4 (issue #116)
+				queue.append([id, Relationships.MOMENT])
 
 
 func _check_data(id: String) -> void:
@@ -118,7 +120,10 @@ func _process(_delta: float) -> bool:
 					view._shown = 99999.0
 					view._advance()
 				_shot("%s_r%d_done" % [view.id, view.rank])
-				if empire.bond_rank(view.id) != view.rank:
+				if view.rank == Relationships.MOMENT:
+					if Relationships.romance_of(view.id) != "partner":
+						_fail("%s: saying yes did not start a romance" % view.id)
+				elif empire.bond_rank(view.id) != view.rank:
 					_fail("%s did not reach rank %d" % [view.id, view.rank])
 				view._close()
 		step += 1
@@ -128,7 +133,10 @@ func _process(_delta: float) -> bool:
 		var id: String = q[0]
 		var r: int = q[1]
 		empire.bonds[id] = empire.bonds.get(id, {"points": 0, "rank": r - 1, "talk_day": 0, "personal_done": false})
-		empire.bonds[id]["points"] = empire.bond_threshold(r)
+		if r == Relationships.MOMENT:
+			empire.bonds[id]["points"] = maxi(int(empire.bonds[id]["points"]), int(Relationships.data()["romance"]["moment_points"]))
+		else:
+			empire.bonds[id]["points"] = empire.bond_threshold(r)
 		if r == 5:
 			var st: String = PersonalMissions.state(id)
 			if st != "offered" and st != "blocked":

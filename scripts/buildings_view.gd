@@ -117,8 +117,9 @@ func _actions() -> Array:
 		var label := "%s %d:  %s" % [b["staff_title"], i + 1, Empire.recruit(who)["name"] if who != "" else "empty"]
 		if who != "":
 			label += "  (%s %d)" % [String(b["stat"]).capitalize(), int(Empire.recruit(who)["stats"][b["stat"]])]
+		var pairs := Relationships.notes_text(staff, "building")  # friends and rivals at work (issue #116)
 		out.append({"kind": "slot", "slot": i, "who": who, "label": label, "enabled": true, "note": "",
-			"preview": "Choose who works here. %s drives this building." % String(b["stat"]).capitalize()})
+			"preview": "Choose who works here. %s drives this building.%s" % [String(b["stat"]).capitalize(), ("\n" + pairs) if pairs != "" else ""]})
 	return out
 
 
@@ -147,9 +148,10 @@ func _picks() -> Array:
 		var with_me := without.duplicate()
 		with_me.append(rid)
 		var role := Empire.role_label(rid)
+		var pairs := Relationships.notes_text(with_me, "building")  # friends and rivals at work (issue #116)
 		out.append({"id": rid, "label": "%s  %s %d" % [r["name"], String(b["stat"]).capitalize(), int(r["stats"][b["stat"]])], "enabled": note == "", "note": note,
-			"role": role, "preview": "%s  (now: %s)%s" % [Empire.building_effect(id, lv, with_me)["text"], now_text,
-			"" if Empire.role_of(rid) == "idle" else ". Leaves their post: " + role]})
+			"role": role, "preview": "%s  (now: %s)%s%s" % [Empire.building_effect(id, lv, with_me)["text"], now_text,
+			"" if Empire.role_of(rid) == "idle" else ". Leaves their post: " + role, ("\n" + pairs) if pairs != "" else ""]})
 	return out
 
 

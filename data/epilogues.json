@@ -1,0 +1,105 @@
+{
+	"_comment": "Epilogues (issue #116): one short card per person at the ending (#32), read by scripts/epilogues.gd. cast: recruit id -> list of variants; the FIRST whose 'when' is met is used, and the last variant of each list must have no 'when' (the fallback; tests enforce it). People who never joined get no card; people lost on an expedition get their 'lost' variant. 'default' is used for anyone with no list of their own, so a new recruit always gets a card (add a list for them anyway: tests/test_relationships.gd lists who lacks one). {name} is the full name, {short} the short one. when keys (all must hold): romance ('partner' = with Ash at the end, 'ex' = it ended, 'friends' = Ash said no, 'none' = never asked), rank_min / rank_max (bond rank 0-5), personal ('done', 'open' = not done, 'lost' = not done and the Blank took the province), home ('held' / 'erased': their personal mission's province at the end), missions_min (missions fought with Ash), injuries_min (times hurt badly enough to be out of action), choice ({rank, pick}: which choice Ash made in that rank scene, 0 = first), lost (true = did not come back from an expedition), pair ({with, state}: state 'friends', 'rivals' or 'truce' with that person, who must have joined).",
+	"cast": {
+		"bran": [
+			{"when": {"rank_min": 5, "missions_min": 20}, "text": "Brannoc Coil never signed another contract. He trained the Hollowmark watch for no wage at all, which he complained about daily, and kept the forearm bare so the recruits could see the clean space where a name used to be. When they asked whose he was, he said, \"Mine. Mostly. Some of it's on loan to a friend.\""},
+			{"when": {"rank_min": 5}, "text": "With his contract held by nobody, Bran found out what he was worth on the open market, and turned every offer down. He is still in Hollowmark, in the good chair, sending Ash an invoice every year for one river-drowned pen. It has never been paid. It never will be. That is the point."},
+			{"when": {"pair": {"with": "gristle", "state": "truce"}}, "text": "Bran went back to selling his axe, honestly this time, with the terms read aloud. He still visits Mother Gristle every winter to settle up. She still overcharges him. He pays without a word, and they both pretend it's about the money."},
+			{"when": {"rank_min": 3}, "text": "When the work dried up, Bran sold his axe to a caravan company on the Tithe Road and told everyone he'd kept a clause for himself: if Ash ever sends word, he walks. They laughed. He meant it."},
+			{"text": "Brannoc Coil collected his last wage and left on the first barge out, still owned by a man he never met. Somewhere downriver, they say, the contract tightened one more time, at a better offer. He told the new client first. Then he left."}
+		],
+		"gristle": [
+			{"when": {"rank_min": 5, "choice": {"rank": 4, "pick": 1}}, "text": "Mother Gristle's name stayed on the Coven tree, carved deep. She took the elder's chair Hester Vane left empty and ran the Gutterwoods like a clinic: everybody seen, everybody billed. She never once collected from the poor. She just never told anyone that, either."},
+			{"when": {"rank_min": 5}, "text": "Mother Gristle went back to the Gutterwoods with her name on the tree and her ledger clean for the first time in forty years. It lasted a week. Then someone needed stitching, and she opened a new page, and wrote Ash's name at the top of it, just to keep her hand in."},
+			{"when": {"rank_min": 3}, "text": "Mother Gristle kept the Infirmary until the beds emptied, then sold it back to Hollowmark at a scandalous mark-up. She lives on the edge of the swamp now. People still come. She still bills them. She still saves them."},
+			{"text": "Mother Gristle left with her bottles and a sack of unpaid invoices. Hollowmark still owes her eleven Gilt, four coppers and one life. She says she'll be back to collect. Nobody doubts it."}
+		],
+		"ninefingers": [
+			{"when": {"romance": "partner"}, "text": "Corporal Daro stayed dead, officially, which made it very difficult to marry them. Ash managed it anyway, in the chapel at Hob's Wick, under their own memorial plaque. The goats attended. Forty villagers wept for a hero who stood at the altar, very much alive, and told them all to stop that at once."},
+			{"when": {"romance": "ex"}, "text": "Daro went back to Hob's Wick and took up the mill. They kept a seat at the long table for Ash, empty, every harvest. Nobody asked who it was for. Daro would only have said, \"A soldier I served with,\" and changed the subject to beer."},
+			{"when": {"rank_min": 5}, "text": "Corporal Daro, fallen against the Blank, still gets prayed for every week in Hob's Wick. They live two doors down from the chapel under another name and never correct anyone. Once a year a letter arrives from Hollowmark addressed to the plaque. They always answer it."},
+			{"when": {"personal": "lost"}, "text": "Daro never did find out if Hob's Wick survived. The road there went white before they could look. They drilled the Barracks recruits until there was no one left to drill, then walked off east one morning, alone, toward where the village used to be."},
+			{"when": {"rank_min": 3}, "text": "Daro took over the Barracks for good. They taught three hundred recruits how to watch a back, and one rule above all: if the order's wrong, tear it up. Nine fingers, every one of them pointed at you while they said it."},
+			{"text": "Daro left the way they joined the Concord: in the middle of the night, with a bag over one shoulder and a poster with ten fingers on it. Nobody saw where they went. Nobody looked very hard. They'd made sure of that."}
+		],
+		"quill": [
+			{"when": {"rank_min": 5, "pair": {"with": "odile", "state": "friends"}}, "text": "Quill and Odile Penhallow opened a counting-house in Hollowmark that keeps only honest books. It loses money every year. They argue about the rounding every night. Thirty-one names hang framed above the door, carried forward, and one more below them that won't stay in ink: ASH. Balanced."},
+			{"when": {"rank_min": 5}, "text": "Quill Marrow kept Hollowmark's books until the day he died, one true set, no beautiful ones. The thirty-one stayed carried forward. The last page of his last ledger is blank except for one line at the bottom, in his best hand: ASH. Balanced."},
+			{"when": {"rank_min": 3}, "text": "Quill went on cooking the books, for the town this time instead of the Concord. Every year the numbers came out in Hollowmark's favour, by a margin so small no auditor could ever find it. Many tried."},
+			{"text": "Quill Marrow went back to the Concord with both sets of books under his arm and asked for his old post. They gave it to him. Nobody knows which set he handed in. He has never said, and he looks very tired."}
+		],
+		"tobble": [
+			{"when": {"rank_min": 5}, "text": "Old Tobble never retired. The Last Drop's sign hangs over the tavern door in Hollowmark, cracked and gilt, and he pours under it every night, complaining about his knees. There is a stool at the end of the bar nobody else is allowed to sit on. The second drink on it is always free."},
+			{"when": {"pair": {"with": "quill", "state": "truce"}}, "text": "Tobble announced his retirement the week after it was all over, and has announced it every week since. Quill keeps a running tally on the tavern wall. It is the only tab in Hollowmark that has never been disputed."},
+			{"when": {"rank_min": 3}, "text": "Tobble finally retired. It lasted nine days. On the tenth he was back behind the bar, because, as he put it, somebody has to know where the good barrel is, and it isn't going to be one of you."},
+			{"text": "Old Tobble sold the tavern to a Guild man and retired to the Meadow, to a roof that wasn't there any more, by a sign he never went back for. He was found every evening by the edge of the white with two mugs, one full."}
+		],
+		"abeyance": [
+			{"when": {"rank_min": 5, "choice": {"rank": 5, "pick": 1}}, "text": "Sister Abeyance never went back to the Abbey. The voices stayed quiet as long as someone was holding her hand, so someone usually was. She kept the slip of paper in a locket, NOT YET, and checked it every morning. It never changed. She took that as a promise kept."},
+			{"when": {"rank_min": 5}, "text": "Sister Abeyance founded a small scriptorium in the Lampwick Hills, in the chapel where her page found its book. Its scribes copy nothing; they listen. Every novice is given a slip of paper on their first day. On it, in her famous serifs: NOT YET."},
+			{"when": {"personal": "lost"}, "text": "The page drew its map one more time, toward a chapel the Blank had already taken, then went blank and stayed that way. Sister Abeyance kept it anyway. She says the voices are quieter now. She doesn't say whether that frightens her."},
+			{"when": {"rank_min": 3}, "text": "Sister Abeyance stayed on in the Scriptorium long after there was anything left to research. She was found most nights asleep at her desk with the page under her cheek, and in the mornings there were always new lines on it. She never let anyone read them."},
+			{"text": "Sister Abeyance slipped away one night with her stolen page, the way she had left the Abbey. A rumour says she went back to them. Another says the Abbey went looking for her and found only polite voices. Both rumours are probably true."}
+		],
+		"ottoline": [
+			{"when": {"romance": "partner"}, "text": "Big Ottoline opened a new Crimson Encore on the Hollowmark plaza. No closing duel; the closing act is her throwing out the last drunk, to applause. Ash's name is painted at the top of the door frame in gold, where everyone can see it. Nobody has ever been stupid enough to ask about it twice."},
+			{"when": {"romance": "ex"}, "text": "Ottoline kept the door at Tobble's for twenty years. Every closing time she stacked the chairs alone, two at a time, then three. If Ash came in, she'd bar the door behind them without a word, so nobody could interrupt. Then she'd go and sit at the other end of the room."},
+			{"when": {"rank_min": 5}, "text": "Six coats still hang on the old tree in the plaza; Ottoline won't let anyone take them down. She keeps Hollowmark's gate now, and she has a list in chalk on the gatepost, as long as her arm. Strangers are on it in chalk. Ash is on it in ink."},
+			{"when": {"personal": "lost"}, "text": "The knocking on Lantern Row stopped when the Blank took Gallows Ferry. Ottoline never found out who it was. She still carries six coat-check tickets tied with red ribbon, and every night, at the door, she counts to six before she shuts it."},
+			{"when": {"rank_min": 3}, "text": "Ottoline went back to doors, any door that would pay. Taverns, banks, once a cathedral. She never lets anyone through who shouldn't be there, and never shuts one while anyone is still on the stairs."},
+			{"text": "Big Ottoline went off to keep a door in Gallows Ferry and was never short of work. They say she still stands in front of it at closing time a moment too long, listening, before she shuts it."}
+		],
+		"jessamy": [
+			{"when": {"romance": "partner"}, "text": "Jessamy Nightjar, occupation: yes, next of kin: Ash. She still runs freight, by day now, wearing an enormous hat she won't say where she got. She and Ash live above a warehouse full of crates nobody asks about. Every noon, without fail, she drags Ash out onto the roof to lie in the sun."},
+			{"when": {"romance": "ex"}, "text": "Jessamy went back to working nights, by choice this time. She is the best smuggler in the Inklands and charges Hollowmark exactly nothing, which annoys her more than she lets on. She sends Ash a pear every autumn. No note. You don't need a note with a pear."},
+			{"when": {"rank_min": 5}, "text": "Jessamy Nightjar is in the Ledger now, solid from noon to midnight, sunburnt every summer and delighted about it. She runs the best freight company on the Tithe Road and declares every crate. Honestly. Mostly. Her crates say \"occupation: yes\" on the side."},
+			{"when": {"personal": "lost"}, "text": "The Tithe Road went white before Jessamy could make the notary write her back in. She went on fading, a little more each year. The last anyone saw of her she was sitting on a Hollowmark roof at dawn, waiting for the light, smiling like she'd finally worked out how to steal it."},
+			{"when": {"rank_min": 3}, "text": "Jessamy kept smuggling, and kept fading, and kept laughing about it. She sends Hollowmark one crate a month, unlabelled. It is always exactly what the town is short of. Nobody has ever caught her delivering it."},
+			{"text": "Jessamy left the way she worked: after dark, without a word, with a crate nobody saw her take. A few years later there were stories on the coast about a smuggler you could see the sea through. She never came back to Hollowmark. It was too bright."}
+		],
+		"odile": [
+			{"when": {"romance": "partner"}, "text": "Odile Penhallow kept the Inklands' honest books and Ash's heart in the same ledger, in red ink, under Assets, jointly held. Her mother came to the wedding and audited the catering. It balanced. Marguerite Penhallow cried, briefly, which she then billed to herself."},
+			{"when": {"romance": "ex"}, "text": "Odile became the first Assessor of the free provinces and the fairest one anyone had ever met. In the back of her private ledger there is one line written off, never struck through. She has never explained it, and nobody who has seen her face has asked."},
+			{"when": {"rank_min": 5}, "text": "Odile Penhallow audited every Concord ledger she could get her hands on, and found every village they had meant to sell. Every one of them got very, very expensive. She signs her reports with a pen her mother gave her and initials one copy for Ash, every time."},
+			{"when": {"pair": {"with": "ninefingers", "state": "truce"}}, "text": "Odile and Daro finished their list. It had forty-one names on it. Odile assessed each one for back taxes; Daro delivered the bills, in person. Nobody on the list has ever been seen in the Inklands again. They are, technically, all paid up."},
+			{"when": {"rank_min": 3}, "text": "Odile went back to collecting. Taxes, this time, for the free provinces, a fair tenth and not a copper more. She once fined a governor for rounding up. People still talk about it in awe."},
+			{"text": "Odile Penhallow took the stolen ledger and left Hollowmark for her mother's house. Nobody knows what passed between them. The ledger was never seen again, and neither, in the Inklands, was a Penhallow collector."}
+		],
+		"velvette": [
+			{"when": {"romance": "partner"}, "text": "Velvette retired from the stage at the height of her fame and wrote her memoirs, which named everyone. Chapter nine is about a silent stagehand and is considered the most romantic thing ever printed in the Inklands. She will not say who it's about. Everyone knows. She calls Ash by a very ordinary name, when nobody's listening."},
+			{"when": {"romance": "ex"}, "text": "Velvette went back on the stage and played every lover in the repertoire, and in every one of them, for one beat in the third act, she looked up at the wings. Critics called it her finest touch. She said it was a draught, darling, and refused to discuss it."},
+			{"when": {"rank_min": 5, "choice": {"rank": 4, "pick": 1}}, "text": "Augustin Sallow lived, as Ash asked, and stood trial with his own receipts pinned to his coat. Velvette testified in costume. Afterwards she opened a theatre where the closing act is a reading of eleven names, every night, and the audience takes off its hats."},
+			{"when": {"rank_min": 5}, "text": "Velvette gave her last performance on the Gilded Heron and never gave another. She runs the best salon in the Inklands now, where every secret is still for sale, except one. Ash keeps that one. Nobody else will ever hear it."},
+			{"when": {"personal": "lost"}, "text": "The Saltreed went white with the Gilded Heron still on it, and Augustin Sallow with it, and his receipts. Velvette never got her last performance. She went back on stage anyway, and in the closing act she reads eleven names nobody else can check, and the audience doesn't know why it's crying."},
+			{"when": {"rank_min": 3}, "text": "Velvette went back to the stage, and to her little book of secrets, and was magnificent in both. Every faction in the Inklands is terrified of her. She's very proud of that."},
+			{"text": "Velvette took the first good offer: a new theatre, a new stage name, a new book of other people's secrets. Somewhere in it there's an entry about Hollowmark. It's short. She charges a great deal for it."}
+		],
+		"pell": [
+			{"when": {"lost": true}, "text": "Pell Undermoss went into the white and did not come back. Back in Hollowmark there was a grave ready for them, dug with care, the right length. Nobody has ever found out who dug it."},
+			{"when": {"pair": {"with": "abeyance", "state": "friends"}}, "text": "Pell and Sister Abeyance keep the Hollowmark graveyard together. Pell digs; Abeyance listens. The dead have a lot to say about the new arrangements. Most of it is complimentary."},
+			{"text": "Pell went on digging graves before anyone died. In the years after, fewer and fewer of them were needed. Pell found this professionally disappointing, and personally a great relief."}
+		],
+		"hesper": [
+			{"when": {"lost": true}, "text": "Hesper Quoin mapped the way out of the white before she went in. The others followed it home. She didn't. Her last map hangs in the Command room: every road correct, and one small figure, drawn at the edge, walking off the page."},
+			{"text": "Hesper Quoin drew the first true map of the Inklands after the Blank. It is a week out of date in the wrong direction, and is the most accurate map in the world."}
+		],
+		"dunmore": [
+			{"when": {"lost": true}, "text": "Dunmore Vell walked into the white with every debt he owed written on his skin. The Blank took the lot. Somewhere a great many creditors are still waiting at a great many gates."},
+			{"when": {"pair": {"with": "odile", "state": "truce"}}, "text": "Dunmore Vell paid off his last debt, the one on his left heel, five years after it was all over. Odile Penhallow stamped it PAID, in red. He has had the stamp tattooed over every single entry, and wears short sleeves now, in all weathers."},
+			{"text": "Dunmore Vell kept working the forge and paying his debts down, a forearm a year. He has started tattooing the paid ones with little flowers. He says he's nearly a garden."}
+		],
+		"biscuits": [
+			{"when": {"lost": true}, "text": "Mr. Biscuits went into the white barking and was not seen again. Sometimes, on still nights at the edge of the Blank, there is a sound like someone very far off saying \"walkies\". The Coven leaves a biscuit out, just in case."},
+			{"text": "Mr. Biscuits went back to the Coven with a medal on his collar and a reputation. Whether he is a dog that walks like a man or a man under a very old curse remains unsolved. He has stopped caring. He has a very good basket."}
+		],
+		"merrow": [
+			{"when": {"lost": true}, "text": "The Merrow Three went into the white singing, in three parts, and it held its breath for them. Then they were gone. Some nights in the margins you can still hear the harmony, a fourth part where there should be three."},
+			{"when": {"pair": {"with": "velvette", "state": "truce"}}, "text": "The Merrow Three and Velvette toured the free provinces with the Encore's old closing number, four voices, one spotlight. Pim got the high bit every night. Posy has started speaking to her again. Pet still doesn't need to."},
+			{"text": "The Merrow Three still share one voice, passed round like a hot coal. They sing in the margins wherever the white once was, and the land, slowly, remembers the tune."}
+		],
+		"default": [
+			{"when": {"lost": true}, "text": "{name} went into the white with the squad and did not come back. Their name is on the wall in Hollowmark, with the others. The white gave nothing back."},
+			{"text": "{name} stayed on in Hollowmark when it was over. Ask about the old days and {short} will tell you, at length, that they were there for all of it."}
+		]
+	}
+}

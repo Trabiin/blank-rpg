@@ -306,8 +306,29 @@ a hundred and six (personal mission: answer the knocking at that door, on Gallow
 her out of the Ledger and has faded in daylight ever since (mission: make him write her back in, Tithe Road).
 **Odile** found her own mother's countersignature on the order to collect Lowmere (mission: settle the account at Old
 Mill). **Velvette** killed eleven Concord-chosen "volunteers" on stage (mission: a last performance on her old
-impresario's showboat in the Saltreed). Rivalries are still only the expedition pair modifiers (romance and
-rivalries: #116).
+impresario's showboat in the Saltreed).
+
+**Romance, rivalries and epilogues (#116, `data/relationships.json`, `data/epilogues.json`, `scripts/relationships.gd`,
+`scripts/epilogues.gd`, `scripts/epilogue_view.gd`):**
+- **Romance.** Velvette, Jessamy, Odile, Daro and Big Ottoline can fall for Ash. After their rank 3 scene, once the bond
+  reaches 38 points, they want one more word: an evening scene (listed as "3+" on the Bonds screen) where Ash either
+  says yes (a romance) or stays a friend for good. Rank 4 waits for it. One romance at a time: saying yes to someone
+  else is labelled "(ends it with X)" first, costs the ex 6 bond points (never below their rank), they say their
+  piece next time Ash talks to them, and it can't be rekindled. While it lasts the partner's perk counts like a bond
+  perk (faster revives, +5% expeditions, +3 Gilt a day, 5% less damage, +10 max HP), their daily chats change, and
+  their rank 5 scene is a flirty variant. Never explicit: the camera leaves the room.
+- **Friends and rivals.** Sixteen pairs (8 friends, 8 rivals) among the roster. Posted together (the party, the same
+  building's staff, the same expedition) they change expedition odds (+/-5%), building output (+/-1), mission stats
+  (rivals show off: more damage, but take more), and each of their bonds by +/-1 a day. Rivals who work together
+  for 8-14 days make peace: a truce with its own, better effects, a notice and a journal entry. Pairs banter at the
+  start of missions and in expedition reports. Shown up front on the staff picker, the Roster's role list, the
+  expedition odds, the party picker and the Bonds screen.
+- **Fates.** Per person: missions fought (and won), times badly hurt, lost in the white (day and job), personal
+  mission tries and day done, and every choice Ash made in their scenes. The journal's People page lists them.
+- **Epilogues.** One card per person at the ending: the first variant in `data/epilogues.json` whose conditions
+  (romance, rank, personal mission, home province, missions, injuries, a scene choice, lost, a pair's state) hold.
+  Every recruit has a list and a `default` covers anyone added later. The ending (#32) plays them with
+  `EpilogueView.play(Epilogues.cards())`.
 
 The other ~30 recruits are lighter: a trait, a couple of lines, a reason to recruit them, and a quip in
 expedition reports.

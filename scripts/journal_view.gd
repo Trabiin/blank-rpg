@@ -30,8 +30,8 @@ const LINE := 13.0  # page text line height: matches the page's ruling
 const BODY := 10
 const SECTION_NAMES := {"story": "Main story", "personal": "Personal", "factions": "Factions", "open": "Open missions and threats"}
 const GROUP_NAMES := {"roster": "On the roster", "gate": "Waiting at the south gate", "lead": "Rumours", "figure": "Others met"}
-const HISTORY_FILTERS := ["", "mission", "expedition"]
-const FILTER_NAMES := {"": "everything", "mission": "missions only", "expedition": "expeditions only"}
+const HISTORY_FILTERS := ["", "mission", "expedition", "bond"]
+const FILTER_NAMES := {"": "everything", "mission": "missions only", "expedition": "expeditions only", "bond": "people only"}
 
 var tab := 0
 var sel := {}  # tab -> selected row index (rows that are headers are never selected)
@@ -563,7 +563,7 @@ func _blocks() -> Array:
 		"log":
 			b.append(["title", row["title"]])
 			var where: String = Empire.territory().find(str(row.get("province", ""))).get("name", "")
-			b.append(["sub", "%s%s  ·  %s" % [("Day %d" % int(row["day"])) if int(row["day"]) > 0 else "Before the journal",  ("  ·  " + where) if where != "" else "", "Expedition report" if row.get("entry_kind", "") == "expedition" else "Mission"], INK_SOFT])
+			b.append(["sub", "%s%s  ·  %s" % [("Day %d" % int(row["day"])) if int(row["day"]) > 0 else "Before the journal",  ("  ·  " + where) if where != "" else "", {"expedition": "Expedition report", "bond": "Between people"}.get(row.get("entry_kind", ""), "Mission")], INK_SOFT])
 			b.append(["gap"])
 			for l in row.get("lines", []):
 				b.append(["para", str(l), INK])
@@ -630,6 +630,9 @@ func _person_blocks(row: Dictionary) -> Array:
 		traits.append("%s (%s)" % [td.get("name", t), td.get("desc", "")] if td.has("desc") else td.get("name", t))
 	if not traits.is_empty():
 		b.append(["fact", "Traits", "; ".join(traits)])
+	if row["group"] == "roster":  # what has happened to them: romance, friends and rivals, scars (issue #116)
+		for ff in Relationships.fate_facts(id):
+			b.append(["fact", ff[0], ff[1]])
 	b.append(["gap"])
 	var stats: Dictionary = r.get("stats", {})
 	for k in Empire.STAT_NAMES:
