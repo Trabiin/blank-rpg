@@ -165,9 +165,21 @@ func _draw() -> void:
 	var y := vs.y * top
 	var bottom := vs.y - 8.0
 	if y + head + list_h > bottom:
-		y = maxf(float(title_size) + 4.0, bottom - head - list_h)
+		y = maxf(float(title_size) + (18.0 if title != "" else 4.0), bottom - head - list_h)  # room for the frame above the title
+	# A ledger panel behind the whole menu, sized to its widest line.
+	var pw := 120.0
 	if title != "":
-		_centered(font, y, title, title_size, Color("f3f1ea"))
+		pw = maxf(pw, UiSkin.TITLE_FONT.get_string_size(title, HORIZONTAL_ALIGNMENT_LEFT, -1, title_size + 6).x)
+	for line in subtitle.split("\n"):
+		pw = maxf(pw, font.get_string_size(line, HORIZONTAL_ALIGNMENT_LEFT, -1, 9).x)
+	for it in items:
+		pw = maxf(pw, font.get_string_size(str(it["label"]), HORIZONTAL_ALIGNMENT_LEFT, -1, 12).x + 30.0)
+		pw = maxf(pw, font.get_string_size(str(it.get("detail", "")), HORIZONTAL_ALIGNMENT_LEFT, -1, 8).x)
+	pw = minf(pw + 36.0, vs.x - 16.0)
+	var ptop := y - float(title_size) - 14.0 if title != "" else y - 18.0
+	UiSkin.panel(self, Rect2((vs.x - pw) / 2.0, maxf(ptop, 4.0), pw, minf(y + head + list_h - 4.0, bottom) - maxf(ptop, 4.0)), "ledger", Color(1, 1, 1, 0.94))
+	if title != "":
+		_centered(UiSkin.TITLE_FONT, y, title, title_size + 6, Color("f3e3c3"))
 		y += 20.0
 	if subtitle != "":
 		for line in subtitle.split("\n"):

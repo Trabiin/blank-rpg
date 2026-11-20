@@ -220,8 +220,7 @@ func _draw() -> void:
 	var vs := size
 	draw_rect(Rect2(Vector2.ZERO, vs), Color(0.05, 0.04, 0.07, 0.985))
 	var cr := _close_rect()
-	draw_rect(cr, Color(0.1, 0.09, 0.12))
-	draw_rect(cr, Color(0.3, 0.27, 0.33), false, 1.0)
+	UiSkin.panel(self, cr, "button")
 	_text(cr.position + Vector2(9, 12), "Back" if page == "envoy" else "Close", 9, Color(0.75, 0.72, 0.7))
 	_row_rects.clear()
 	if page == "envoy":
@@ -258,7 +257,10 @@ func _draw_list(vs: Vector2) -> void:
 			var v := Empire.standing_of(fid)
 			var tier := Empire.tier_of(fid)
 			draw_rect(Rect2(8, y, 3, HEAD_H - 6), FACTION_COLORS.get(fid, TEXT))
-			_text(Vector2(15, y + 9), fa["name"], 10, FACTION_COLORS.get(fid, TEXT))
+			var fx := 15.0
+			if UiSkin.draw_icon(self, fid, Rect2(14, y - 1, 12, 12)):
+				fx = 29.0
+			_text(Vector2(fx, y + 9), fa["name"], 10, FACTION_COLORS.get(fid, TEXT))
 			_text_r(Vector2(8 + LIST_W, y + 9), "%s %+d" % [Empire.tier_name(tier), v], 9, TIER_COLORS[tier])
 			var rate := Empire.standing_rate(fid)
 			_standing_bar(Rect2(15, y + 13, LIST_W - 70, 4), v)

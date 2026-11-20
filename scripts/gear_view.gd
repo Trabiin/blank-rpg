@@ -302,8 +302,7 @@ func _draw() -> void:
 	var vs := size
 	draw_rect(Rect2(Vector2.ZERO, vs), Color(0.05, 0.04, 0.07, 0.985))
 	var cr := _close_rect()
-	draw_rect(cr, Color(0.1, 0.09, 0.12))
-	draw_rect(cr, Color(0.3, 0.27, 0.33), false, 1.0)
+	UiSkin.panel(self, cr, "button")
 	_text(cr.position + Vector2(9, 12), "Close", 9, Color(0.75, 0.72, 0.7))
 	_text(Vector2(8, 20), "Party gear", 15, PAPER)
 	# Tabs
@@ -362,7 +361,7 @@ func _draw_equip(vs: Vector2) -> void:
 	var id := _hero_id()
 	var hd := PartyPicker.hero_data(id)
 	var left := Rect2(8, 62, 300, vs.y - 62 - 18)
-	draw_rect(left, Color(0.08, 0.07, 0.1))
+	UiSkin.panel(self, left, "ledger")
 	var y := left.position.y + 16
 	_text(Vector2(16, y), Empire.recruit(id).get("name", PartyPicker.short_of(id)), 12, PAPER, 200)
 	_text_r(Vector2(left.end.x - 8, y), "Level %d" % Progress.level(id), 10, GOLD)
@@ -413,12 +412,15 @@ func _draw_equip(vs: Vector2) -> void:
 		_slot_rects.append(r)
 		_box(r, i == slot_i)
 		draw_rect(Rect2(r.position, Vector2(3, r.size.y)), SLOT_COLORS[s])
-		_text(r.position + Vector2(8, 10), Progress.SLOT_NAMES[s].to_upper(), 7, SLOT_COLORS[s])
 		var iid := str(g.get(s, ""))
+		var ix := 8.0  # text starts after the item's icon, when it has one
+		if iid != "" and UiSkin.draw_icon(self, iid, Rect2(r.position + Vector2(7, 3), Vector2(20, 20))):
+			ix = 31.0
+		_text(r.position + Vector2(ix, 10), Progress.SLOT_NAMES[s].to_upper(), 7, SLOT_COLORS[s])
 		if iid == "":
 			_text(r.position + Vector2(8, 21), "(nothing)", 9, DIM)
 		else:
-			_text(r.position + Vector2(8, 21), Progress.item(iid)["name"], 9, GOLD if i == slot_i else TEXT, 120)
+			_text(r.position + Vector2(ix, 21), Progress.item(iid)["name"], 9, GOLD if i == slot_i else TEXT, 128 - ix)
 			_text(r.position + Vector2(130, 21), Progress.item_text(iid), 8, GOOD if Progress.item(iid).get("stats", {}).size() > 0 else DIM, r.size.x - 134)
 		var spare := Progress.options(id, s).size()
 		if spare > 0:
@@ -429,7 +431,7 @@ func _draw_equip(vs: Vector2) -> void:
 	var rx := 320.0
 	var rw := vs.x - rx - 8
 	var right := Rect2(rx, 62, rw, vs.y - 62 - 18)
-	draw_rect(right, Color(0.08, 0.07, 0.1))
+	UiSkin.panel(self, right, "ledger")
 	var ry := right.position.y + 16
 	if picking:
 		_text(Vector2(rx + 8, ry), "%s for %s" % [Progress.SLOT_NAMES[_slot()], PartyPicker.short_of(id)], 10, PAPER)
@@ -443,9 +445,10 @@ func _draw_equip(vs: Vector2) -> void:
 			if k == "":
 				_text(r.position + Vector2(6, 14), "Take it off" if str(g.get(_slot(), "")) != "" else "(leave empty)", 9, SOFT)
 			else:
-				_text(r.position + Vector2(6, 9), Progress.item(k)["name"], 9, GOLD if i == pick_i else TEXT)
+				var px := 26.0 if UiSkin.draw_icon(self, k, Rect2(r.position + Vector2(5, 3), Vector2(16, 16))) else 6.0
+				_text(r.position + Vector2(px, 9), Progress.item(k)["name"], 9, GOLD if i == pick_i else TEXT)
 				_text_r(r.position + Vector2(r.size.x - 6, 9), "x%d" % Progress.count(k), 8, SOFT)
-				_text(r.position + Vector2(6, 19), Progress.item_text(k), 7, GOOD)
+				_text(r.position + Vector2(px, 19), Progress.item_text(k), 7, GOOD)
 			ry += 24
 		if pick_i < ch.size() and ch[pick_i] != "":
 			_wrap(Vector2(rx + 8, ry + 10), Progress.item(ch[pick_i]).get("blurb", ""), rw - 16, 8, Color(0.78, 0.76, 0.74))
@@ -456,6 +459,7 @@ func _draw_equip(vs: Vector2) -> void:
 		if iid == "":
 			_text(Vector2(rx + 8, ry), "Nothing worn.", 9, DIM)
 		else:
+			UiSkin.draw_icon(self, iid, Rect2(rx + rw - 42, ry - 26, 32, 32))
 			_text(Vector2(rx + 8, ry), Progress.item(iid)["name"], 11, PAPER)
 			ry += 12
 			_text(Vector2(rx + 8, ry), Progress.item_text(iid), 8, GOOD, rw - 16)
@@ -512,7 +516,8 @@ func _draw_shop(vs: Vector2) -> void:
 		var why := Progress.shop_blocker(k) if kind == "buy" else ""
 		var locked := why.begins_with("needs")
 		var col := DIM if locked else (GOLD if on else TEXT)
-		_text(r.position + Vector2(6, 9), it["name"], 8, col, 110)
+		var nx := 20.0 if UiSkin.draw_icon(self, k, Rect2(r.position + Vector2(5, 0), Vector2(12, 12)), Color(1, 1, 1, 0.45) if locked else Color.WHITE) else 6.0
+		_text(r.position + Vector2(nx, 9), it["name"], 8, col, 116 - nx)
 		var owner := str(it.get("hero", ""))
 		_text(r.position + Vector2(118, 9), PartyPicker.short_of(owner) if owner != "" else "anyone", 7, DIM if locked else SOFT, 50)
 		_text(r.position + Vector2(170, 9), Progress.item_text(k), 7, DIM if locked else GOOD, 110)
@@ -535,7 +540,8 @@ func _draw_shop(vs: Vector2) -> void:
 	var rw := vs.x - rx - 8
 	draw_rect(Rect2(rx, 52, rw, vs.y - 52 - 18), Color(0.08, 0.07, 0.1))
 	var ry := 68.0
-	_text(Vector2(rx + 8, ry), it2["name"], 11, PAPER, rw - 16)
+	UiSkin.draw_icon(self, k2, Rect2(rx + rw - 42, 58, 32, 32))
+	_text(Vector2(rx + 8, ry), it2["name"], 11, PAPER, rw - 50)
 	ry += 12
 	var owner2 := str(it2.get("hero", ""))
 	_text(Vector2(rx + 8, ry), "%s, %s" % [Progress.SLOT_NAMES[it2["slot"]], ("for " + PartyPicker.short_of(owner2)) if owner2 != "" else "anyone can wear it"], 8, SLOT_COLORS.get(it2["slot"], TEXT))

@@ -166,9 +166,8 @@ func _draw() -> void:
 		Dialogue.draw_portrait(self, r, who, _exprs[side], 0.0 if talking else 0.55, side == 0)
 
 	if title != "":
-		draw_string(font, Vector2(14, 16), title, HORIZONTAL_ALIGNMENT_LEFT, -1, 9, SOFT)
-	draw_rect(box, Color(0.07, 0.06, 0.09, 0.96))
-	draw_rect(box, Color(0.45, 0.4, 0.3), false, 1.0)
+		draw_string(UiSkin.TITLE_FONT, Vector2(14, 20), title, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, SOFT)
+	UiSkin.panel(self, box, "ledger")
 	var text: String = cur[1]
 	var shown := text.substr(0, int(_shown))
 	var ty := box.position.y + 20
@@ -179,9 +178,8 @@ func _draw() -> void:
 		if _slots[1] == speaker and _slots[0] != speaker:  # name tag on the speaker's side
 			tag.position.x = box.end.x - 8 - tag.size.x
 		var acc := Dialogue.accent(speaker)
-		draw_rect(tag, acc.darkened(0.7))
-		draw_rect(tag, acc.lightened(0.35), false, 1.0)
-		draw_string(font, tag.position + Vector2(7, 12), nm, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, acc.lightened(0.55))
+		UiSkin.panel(self, tag, "button", acc.lightened(0.25))  # the speaker's colour tints the leather tag
+		draw_string(font, tag.position + Vector2(7, 12), nm, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, acc.lightened(0.7))
 		ty += 4
 	draw_multiline_string(font, Vector2(box.position.x + 12, ty), shown, HORIZONTAL_ALIGNMENT_LEFT, box.size.x - 24, 11, -1,
 		TEXT if speaker != "" else SOFT)

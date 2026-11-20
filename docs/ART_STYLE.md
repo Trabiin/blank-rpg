@@ -16,7 +16,7 @@ generation references in `docs/style/` (`ref_building.png`, `ref_props.png`, `re
 
 | Rule | Value |
 |---|---|
-| **Camera** | Top-down three-quarter, like SNES action RPGs. Buildings and props face the camera **straight on**: front wall parallel to the screen, roof seen from above, no side walls, never isometric or diagonal. Characters use PixelLab's `high top-down` (Ash is the reference). |
+| **Camera** | Top-down three-quarter, like SNES action RPGs. One camera for everything: high and tilted like `docs/style/target_town.png` (the scene the look was modelled on), vertical walls stay vertical, roofs seen from above. Buildings may face straight on or be turned slightly with the door to the south-east or south-west, so the town has a shape: the facade stays the main face and the side wall recedes steeply. Never a 45 degree corner view where both walls slope equally (that reads isometric). Props face straight on. Characters use PixelLab's `high top-down` (Ash is the reference). |
 | **Scale** | 16 px tiles. Heroes, NPCs and small enemies on a 32 px canvas (about 2 tiles tall). A 5x5-tile building plot holds an 80 x 80 sprite. |
 | **Light** | From the top left. Shadows fall to the bottom right. |
 | **Outline** | Ink black `#12141f` outer outline on characters, enemies and objects; inner edges use the darkest shade of the local colour. Ground tiles have no outline. |
@@ -108,3 +108,47 @@ small animals about 20 px, big people (Ottoline) about 33 px, bosses about twice
 and never taller than the buildings around them. To change a figure's size, resize its 5 drawn rotations with
 PixelLab's pixel-art `/resize` (it keeps outlines clean, unlike a plain downscale), import them as a new
 character with every direction given (`direction_images`, almost free), then animate that character.
+
+## UI (Phase 6)
+
+- **Fonts.** Body text is Jersey 10 (set as the project's custom theme font, so `ThemeDB.fallback_font` is it
+  everywhere); titles and headings use Jacquard 12 (`UiSkin.TITLE_FONT`). Both are pixel fonts under the OFL:
+  antialiasing, hinting and subpixel positioning are off in their import settings so they stay crisp.
+- **Frames.** `scripts/ui_skin.gd` (`UiSkin.panel(canvas, rect, kind, tint)`) draws 9-slice frames from
+  `assets/ui/`: `ledger` (dark ink-blue panel, brass corners: HUD plates, menus, dialogue box, banter),
+  `button` (leather and brass: ability slots, town buttons, name tags, tinted with the speaker's colour) and
+  `paper` (torn parchment, repeated so its edge stays ragged: signs; text on it uses `UiSkin.PAPER_INK`).
+  Clean frames stretch; only paper tiles. Keep text at least 14 px (the corner size) in from a ledger frame's edge.
+- **Icons.** `assets/icons/<id>.png`, 32 px, palette-snapped. The id is the data id (items, gear, abilities,
+  research, buildings, factions, resources), or `tech_<hero>`, `role_<role>`, `trait_<trait>`, `status_<kind>`.
+  `UiSkin.draw_icon()` returns false when an icon is missing, so new content without art still lays out.
+  Made with PixelLab Pro (generate-image-v2) at 32x32: one call gives 64 images, so a prompt listing 8 concepts
+  "A..H, one per image" returns 8 options for each ($0.08 for 8 icons, picked by eye).
+- **Less text on screen.** Control hints show only until two missions are cleared.
+
+## Proportions (Phase 8)
+
+One body plan for every person: the heroes' (Ash is the reference). Measured on the south-facing figure, in
+pixels at 1x. `tools/art_audit.json` holds the bands and each sprite's measured head; `tools/audit_art.py` flags
+anything outside them and redraws `lineup.png` (everyone on one ground line) and `heads.png` (heads at 8x
+with a pixel ruler).
+
+| Class | Height | Head (w x h, top of hair or hood to chin) | Notes |
+|---|---|---|---|
+| Adult | 28-31 | 9-12 x 9-11 | About 3 heads tall. Shoulders 16-20 wide |
+| Heavy | 28-31 | 9-12 x 9-11 | Wider (up to 28) but not taller: build is width, never a bigger head |
+| Elder | 26-30 | 9-12 x 9-11 | A stoop takes height, not head size |
+| Giant (Ottoline) | 32-36 | 10-13 x 10-12 | The only adult allowed past 31 |
+| Child | 19-23 | 8-10 x 7-9 | A child's head is nearly an adult's, on a much shorter body |
+| Animal | 14-22 | | |
+| Boss | 54-66 | | About 2x a hero |
+
+PixelLab fills the canvas whatever the prompt says, so sizes are fixed after generation (pixel-art /resize, then
+import with all directions given, then animate; see "Figure sizes"). One figure per sprite: groups such as
+the Merrow Three are separate sprites standing together.
+
+## Prop scale (Phase 8)
+
+Props are sized against a 30 px person. Tallest allowed (px): crates and barrels 16, bench 18, shrub 18, grave
+20, sign 22, boulder 30, cart 26, banner 34, fountain 36, well 40, lamppost 46, stall 56. A door is at least
+22 px tall. A hedge or wall is never one sprite repeated: mix variants, or use a tile edge.

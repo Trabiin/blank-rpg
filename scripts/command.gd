@@ -820,6 +820,8 @@ const RES_COLORS := {"gilt": Color("e8c66a"), "supplies": Color("b7c98a"), "ink"
 
 
 func _draw_res_icon(k: String, c: Vector2) -> void:
+	if UiSkin.draw_icon(self, k, Rect2(c - Vector2(6, 6), Vector2(12, 12))):  # art pass icon, else the code-drawn mark
+		return
 	var col: Color = RES_COLORS[k]
 	match k:
 		"gilt":  # a coin

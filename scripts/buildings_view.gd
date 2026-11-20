@@ -346,8 +346,7 @@ func _draw() -> void:
 		crew = "Builders: %s, %s left" % [Empire.building(Empire.construction["id"])["name"], Empire.job_left_text(Empire.construction)]
 	_text(Vector2(x + 6, 19), crew, 9, GOLD if not Empire.construction.is_empty() else Color(0.6, 0.58, 0.6))
 	var cr := _close_rect()
-	draw_rect(cr, Color(0.1, 0.09, 0.12))
-	draw_rect(cr, Color(0.3, 0.27, 0.33), false, 1.0)
+	UiSkin.panel(self, cr, "button")
 	_text(cr.position + Vector2(9, 12), "Close", 9, Color(0.75, 0.72, 0.7))
 
 	# Left list
@@ -369,9 +368,12 @@ func _draw() -> void:
 		if on:
 			draw_rect(r, GOLD if focus == 0 else Color(0.55, 0.48, 0.3), false, 1.0)
 		var name_s: String = Empire.building(row["id"])["name"] if row["kind"] == "building" else Empire.territory().find(row["id"])["name"]
-		_text(r.position + Vector2(8, 10), name_s, 9, GOLD if on else Color("ece6da"))
+		var tx := 8.0
+		if row["kind"] == "building" and UiSkin.draw_icon(self, row["id"], Rect2(r.position + Vector2(5, 3), Vector2(18, 18))):
+			tx = 27.0
+		_text(r.position + Vector2(tx, 10), name_s, 9, GOLD if on else Color("ece6da"))
 		var st := _row_status(row)
-		_text(r.position + Vector2(8, 19), st[0], 7, st[1])
+		_text(r.position + Vector2(tx, 19), st[0], 7, st[1])
 		if row["kind"] == "building" and Empire.construction.get("id", "") == row["id"]:
 			draw_rect(Rect2(r.position.x + 130, r.position.y + 6, 76, 4), Color(0.18, 0.16, 0.2))
 			draw_rect(Rect2(r.position.x + 130, r.position.y + 6, 76 * Empire.job_progress(Empire.construction), 4), GOLD)
@@ -397,6 +399,7 @@ func _draw() -> void:
 		var id: String = row["id"]
 		var b := Empire.building(id)
 		var lv := Empire.level_of(id)
+		UiSkin.draw_icon(self, id, Rect2(DETAIL_X + w - 34, dy - 14, 32, 32))
 		_text(Vector2(DETAIL_X, dy), b["name"], 15, Color("f3efe4"))
 		var lvl_s := "Not built" if lv == 0 else "Level %d of %d" % [lv, Empire.max_level(id)]
 		_text(Vector2(DETAIL_X + font.get_string_size(b["name"], HORIZONTAL_ALIGNMENT_LEFT, -1, 15).x + 10, dy), lvl_s, 9, Color(0.75, 0.72, 0.7))

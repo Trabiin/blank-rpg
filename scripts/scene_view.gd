@@ -295,8 +295,7 @@ func _draw() -> void:
 	draw_string(font, Vector2(vs.x - hw - 12, 18), head, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, accent.lightened(0.2))
 
 	var box := Rect2(12, vs.y - 96, vs.x - 24, 86)
-	draw_rect(box, Color(0.07, 0.06, 0.09, 0.97))
-	draw_rect(box, Color(0.45, 0.4, 0.3), false, 1.0)
+	UiSkin.panel(self, box, "ledger")
 	_choice_rects.clear()
 	match _stage:
 		"lines", "reply":
