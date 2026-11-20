@@ -22,7 +22,10 @@ const OWNER_COLORS := {
 	"coven": Color("4d6e66"), "guild": Color("8a5a4a"), "erased": Color("eeebe2"),
 }
 const SEA_COLOR := Color("15111b")
-const BORDER_COLOR := Color("1c1722")
+const SEA_PARCH := Color("8f8270")  # parchment map (docs/ART_STYLE.md palette)
+const SEA_INK := Color("5a3e28")
+const LAND_PARCH := Color("d6cdba")
+const BORDER_COLOR := Color("2a2019")
 const PAPER := Color("eeebe2")
 const GOLD := Color("ffd166")
 const RES_NAMES := {"gilt": "Gilt", "supplies": "Supplies", "ink": "Ink"}
@@ -363,6 +366,16 @@ func _province_screen_pos(p: Dictionary) -> Vector2:
 
 # ---------------------------------------------------------------- baking
 
+## Cells from a sea cell to the nearest land, up to 5 (for coast ripples on the parchment map).
+func _sea_dist(x: int, y: int) -> int:
+	for d in range(1, 6):
+		for o in [Vector2i(d, 0), Vector2i(-d, 0), Vector2i(0, d), Vector2i(0, -d)]:
+			var c := territory.cell(x + o.x, y + o.y)
+			if c >= 0 and c != territory.SEA:
+				return d
+	return 9
+
+
 func _bake() -> void:
 	var w := MAP_CELLS.x
 	var h := MAP_CELLS.y
@@ -403,7 +416,16 @@ func _bake() -> void:
 				col = PAPER
 				is_white = true
 			elif r == territory.SEA:
-				col = SEA_COLOR.lightened(0.04 if int(x + y * 0.5 + g * 6.0) % 9 == 0 else 0.0)
+				# Inked parchment (Phase 8 stand-in for a painted map): the sea is a darker wash with wave hatching,
+				# and a ring of ripple lines along each coast.
+				var coast := _sea_dist(x, y)
+				col = SEA_PARCH.darkened(0.06 * g)
+				if coast > 5 and int(y + sin(x * 0.3) * 1.5) % 10 == 0 and (x / 4 + y / 10) % 4 == 0:
+					col = SEA_INK  # short wave dashes out at sea
+				if coast == 2 and (x + y) % 2 == 0:
+					col = SEA_INK  # a dotted ripple along the shore
+			elif false:
+				pass
 			else:
 				var p: Dictionary = territory.provinces[r]
 				var fray: float = float(p["fray"]) / 100.0
@@ -413,7 +435,8 @@ func _bake() -> void:
 					col = PAPER.darkened(0.05 if g > 0.3 else 0.0)
 					is_white = true
 				else:
-					col = (OWNER_COLORS[p["owner"]] as Color).lightened(g * 0.08)
+					# A watercolour wash of the owner's colour over the parchment, mottled by the grain.
+					col = LAND_PARCH.lerp(OWNER_COLORS[p["owner"]], 0.62 + g * 0.12)
 					# Fray also drains colour from the whole province, like the field shader does.
 					var grey := col.get_luminance()
 					col = col.lerp(Color(grey, grey, grey), fray * 0.6)
@@ -743,6 +766,7 @@ func _draw() -> void:
 	var vs := size
 	draw_rect(Rect2(Vector2.ZERO, vs), Color("0e0b12"))
 	# Map
+	UiSkin.panel(self, _map_rect().grow(5.0), "ledger")  # brass-cornered frame round the parchment
 	draw_texture_rect(map_tex, _map_rect(), false)
 	_draw_roads()
 	_draw_static()
@@ -750,27 +774,23 @@ func _draw() -> void:
 	if hovered >= 0 and hovered != selected:
 		_draw_outline(hovered, Color(1, 1, 1, 0.55))
 	_draw_labels()
-	draw_rect(_map_rect(), Color(0.3, 0.27, 0.33), false, 1.0)
+	draw_rect(_map_rect(), Color("2a2019"), false, 1.0)
 	# Top bar
 	_text(MAP_ORIGIN + Vector2(6, 14), "THE INKLANDS", 10, Color(0.85, 0.82, 0.76, 0.8), 3)
 	_draw_resources()
 	_draw_clock()
 	var rb := _roster_button_rect()
-	draw_rect(rb, Color(0.1, 0.09, 0.12, 0.92))
-	draw_rect(rb, Color(0.45, 0.4, 0.48), false, 1.0)
+	UiSkin.panel(self, rb, "button")
 	_text_c(Vector2(rb.get_center().x, rb.position.y + 12), "Roster (%d)" % Empire.recruits.size() + _k("roster"), 9, Color(0.85, 0.82, 0.76))
 	var bb := _buildings_button_rect()
-	draw_rect(bb, Color(0.1, 0.09, 0.12, 0.92))
-	draw_rect(bb, Color(0.45, 0.4, 0.48), false, 1.0)
+	UiSkin.panel(self, bb, "button")
 	var busy := "" if Empire.construction.is_empty() else " *"
 	_text_c(Vector2(bb.get_center().x, bb.position.y + 12), "Buildings%s" % busy + _k("buildings"), 9, GOLD if busy != "" else Color(0.85, 0.82, 0.76))
 	var tb := _town_button_rect()
-	draw_rect(tb, Color(0.1, 0.09, 0.12, 0.92))
-	draw_rect(tb, Color(0.45, 0.4, 0.48), false, 1.0)
+	UiSkin.panel(self, tb, "button")
 	_text_c(Vector2(tb.get_center().x, tb.position.y + 12), "To town", 9, Color(0.85, 0.82, 0.76))
 	var eb := _expeditions_button_rect()
-	draw_rect(eb, Color(0.1, 0.09, 0.12, 0.92))
-	draw_rect(eb, Color(0.45, 0.4, 0.48), false, 1.0)
+	UiSkin.panel(self, eb, "button")
 	var unread := Empire.unread_reports()
 	var out := Empire.expeditions.size()
 	var etext := "Expeditions"
@@ -780,8 +800,7 @@ func _draw() -> void:
 		etext = "Squads out: %d" % out
 	_text_c(Vector2(eb.get_center().x, eb.position.y + 12), etext + _k("expeditions"), 9, GOLD if unread > 0 else Color(0.85, 0.82, 0.76))
 	var rsb := _research_button_rect()
-	draw_rect(rsb, Color(0.1, 0.09, 0.12, 0.92))
-	draw_rect(rsb, Color(0.45, 0.4, 0.48), false, 1.0)
+	UiSkin.panel(self, rsb, "button")
 	var rtext := "Research"
 	var rcol := Color(0.85, 0.82, 0.76)
 	if Empire.research_active != "":
@@ -790,8 +809,7 @@ func _draw() -> void:
 		rcol = Color(1, 0.55, 0.5) if stalled else Color("d7b8f0")
 	_text_c(Vector2(rsb.get_center().x, rsb.position.y + 12), rtext + _k("research"), 9, rcol)
 	var db := _diplomacy_button_rect()
-	draw_rect(db, Color(0.1, 0.09, 0.12, 0.92))
-	draw_rect(db, Color(0.45, 0.4, 0.48), false, 1.0)
+	UiSkin.panel(self, db, "button")
 	var dtext := "Diplomacy"
 	var dcol := Color(0.85, 0.82, 0.76)
 	if Empire.surge.get("id", "") != "" and Empire.surge.get("aid", "") == "" and Empire.territory().find(Empire.surge["id"]).get("owner", "") == "you" \
@@ -1008,8 +1026,7 @@ func _draw_panel() -> void:
 	var p: Dictionary = territory.provinces[selected]
 	var x := PANEL_X
 	var w := size.x - PANEL_X - 6
-	draw_rect(Rect2(x - 4, 22, w + 8, size.y - 26), Color(0.07, 0.06, 0.09))
-	draw_rect(Rect2(x - 4, 22, w + 8, size.y - 26), Color(0.3, 0.27, 0.33), false, 1.0)
+	UiSkin.panel(self, Rect2(x - 6, 20, w + 10, size.y - 22), "ledger")
 	var y := 42.0
 	_text(Vector2(x, y), p["name"], 15, Color("f3efe4"))
 	y += 15

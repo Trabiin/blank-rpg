@@ -29,11 +29,11 @@ func _ready() -> void:
 	if latest != "":
 		items.append({"id": "continue", "label": "Continue", "detail": Saves.describe(latest)})
 	items.append({"id": "new", "label": "New Game"})
-	items.append({"id": "command", "label": "Hollowmark (preview)", "detail": "the town and the Command Table"})
-	items.append({"id": "boss_test", "label": "Boss test: The Auditor", "detail": "fresh level 6 party, straight into the fight (temporary)"})
 	items.append({"id": "load", "label": "Load Game", "enabled": latest != "", "note": "(no saves yet)"})
 	items.append({"id": "options", "label": "Options", "detail": "speed, difficulty, sound, controls"})
 	items.append({"id": "credits", "label": "Credits"})
+	# Testing shortcuts live one level down, so the main menu reads like a finished game's.
+	items.append({"id": "tests", "label": "Test shortcuts", "detail": "jump straight to the town or the Auditor"})
 	menu.setup("", items)
 	menu.chosen.connect(_on_choice)
 
@@ -54,7 +54,9 @@ func _ready() -> void:
 
 
 func _on_slot(id: String) -> void:
-	if id == "back" or id == "cancel":
+	if id in ["command", "boss_test"]:
+		_on_choice(id)
+	elif id == "back" or id == "cancel":
 		slots.visible = false
 		menu.visible = true
 	else:
@@ -95,6 +97,13 @@ func _on_choice(id: String) -> void:
 		"credits":
 			menu.visible = false
 			credits.visible = true
+		"tests":
+			slots.setup("Test shortcuts", [
+				{"id": "command", "label": "Hollowmark", "detail": "a fresh town and the Command Table"},
+				{"id": "boss_test", "label": "Boss: The Auditor", "detail": "fresh level 6 party, straight into the fight"},
+				{"id": "back", "label": "Back"}])
+			menu.visible = false
+			slots.visible = true
 
 
 ## Builds the credits text from CREDITS.md so there is one source of truth.
@@ -143,20 +152,44 @@ func _draw() -> void:
 
 	# Logo
 	var font := ThemeDB.fallback_font
-	var logo := "LAST INK"
-	var fs := 46
-	var w := font.get_string_size(logo, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
-	var c := Vector2(vs.x * 0.5, vs.y * 0.22)
+	var logo_font: Font = UiSkin.TITLE_FONT  # the heading face, as on every screen title
+	var logo := "Last Ink"  # blackletter capitals are hard to read, so title case
+	var fs := 72
+	var w := logo_font.get_string_size(logo, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
+	var c := Vector2(vs.x * 0.5, vs.y * 0.24)
 	var base := Vector2(c.x - w / 2.0, c.y)
-	draw_string_outline(font, base + Vector2(2, 3), logo, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, 6, Color(0, 0, 0, 0.6))
-	draw_string(font, base, logo, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, Color("ece6da"))
-	# Ink drips bleeding off the letters.
+	draw_string(logo_font, base + Vector2(2, 3), logo, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, Color(0, 0, 0, 0.6))
+	draw_string(logo_font, base, logo, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, Color("ece6da"))
+	# Ink drips bleeding off the bottom of the letters (only where a letter is, not out in the air).
+	var ink_img := _logo_mask(logo_font, logo, fs, w)
 	for d in drips:
 		var dl: float = d[1] * (0.6 + 0.4 * sin(t * 0.8 + d[2]))
-		var dx: float = c.x + d[0]
-		draw_line(Vector2(dx, c.y + 2), Vector2(dx, c.y + 2 + dl), Color("ece6da"), 2.0)
-		draw_circle(Vector2(dx, c.y + 3 + dl), 1.6, Color("ece6da"))
+		var fx: float = (float(d[0]) + 110.0) / 220.0
+		var col_x := int(fx * (w - 4.0)) + 2
+		var foot: float = ink_img.get(col_x, -1.0)
+		if foot < 0:
+			continue
+		var dx: float = base.x + col_x
+		var top: float = base.y - foot
+		draw_rect(Rect2(dx - 1, top, 2, dl), Color("ece6da"))
+		draw_rect(Rect2(dx - 1.5, top + dl, 3, 2), Color("ece6da"))
 	var tag := "Reality is being eaten. You were spat back out."
 	var tw := font.get_string_size(tag, HORIZONTAL_ALIGNMENT_LEFT, -1, 10).x
 	draw_string(font, Vector2(c.x - tw / 2.0, c.y + 30), tag, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color(0.75, 0.72, 0.7))
-	draw_string(font, Vector2(8, vs.y - 8), "prototype build", HORIZONTAL_ALIGNMENT_LEFT, -1, 8, Color(0.45, 0.43, 0.48))
+
+
+var _mask_cache := {}
+
+
+## Pixel columns of the logo that sit under a letter (inside each glyph's advance, minus the side bearings), so
+## drips start at the foot of a letter instead of out in the air.
+func _logo_mask(f: Font, text: String, fs: int, _w: float) -> Dictionary:
+	if _mask_cache.is_empty():
+		var x := 0.0
+		for ch in text:
+			var adv := f.get_string_size(ch, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
+			if ch != " ":
+				for cx in range(int(x + adv * 0.2), int(x + adv * 0.8)):
+					_mask_cache[cx] = 1.0
+			x += adv
+	return _mask_cache

@@ -160,7 +160,7 @@ func _rate_text(r: int) -> String:
 func _draw() -> void:
 	var vs := size
 	var p := _province()
-	draw_rect(Rect2(Vector2.ZERO, vs), Color(0.05, 0.04, 0.07, 0.985))
+	UiSkin.screen(self, vs)
 	var claiming: bool = p["owner"] != "you"
 	_text(Vector2(8, 20), ("Claim " if claiming else "Govern ") + p["name"], 15, Color("f3efe4"))
 	var cr := _close_rect()
