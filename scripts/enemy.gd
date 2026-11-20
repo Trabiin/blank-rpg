@@ -31,6 +31,13 @@ var xp := 3  # shared by the party when it falls (issue #15)
 ## Hold the Line (abilities.gd): for taunt_t seconds this enemy goes for taunter and nobody else.
 var taunter: Hero = null
 var taunt_t := 0.0
+## Bosses shrug off stuns and can always find a hero, even one who has slipped out of sight (Lamps Out).
+var boss := false
+## Stuns (Last Orders, Chucking Out) and Audit marks run on the clock, so every subclass's own state
+## machine honours them without extra bookkeeping (see stun(), mark(), _set_state, _adjust_damage).
+var stun_until := 0
+var mark_until := 0
+var mark_mult := 1.0
 
 ## Art pass sprite set (scripts/sprite_set.gd) by id; subclasses with their own drawing set "" before super._ready().
 var art_id := "nibbler"
@@ -65,6 +72,9 @@ func _ready() -> void:
 	overlay = Node2D.new()
 	add_child(overlay)
 	overlay.draw.connect(_draw_overlay)
+	var marks := StatusMarks.new()  # stun stars and Audit seal, above whatever the subclass draws
+	marks.enemy = self
+	add_child(marks)
 
 
 func _physics_process(delta: float) -> void:
@@ -132,8 +142,48 @@ func _physics_process(delta: float) -> void:
 
 
 func _set_state(s: int, t: float) -> void:
+	var left := stun_left()
+	if left > 0.0:  # a stunned enemy stays stunned whatever its own logic asks for
+		s = State.STAGGER
+		t = maxf(t, left)
 	state = s
 	state_t = t
+
+
+static func _now() -> int:
+	return Time.get_ticks_msec()
+
+
+func stun_left() -> float:
+	return maxf(float(stun_until - _now()) / 1000.0, 0.0)
+
+
+func marked() -> bool:
+	return mark_until > _now()
+
+
+## Seeing stars for t seconds: no chasing, no lunges. Bosses only flinch.
+func stun(t: float) -> void:
+	if dead or t <= 0.0:
+		return
+	if boss:
+		t = minf(t, 0.25)
+	stun_until = maxi(stun_until, _now() + int(t * 1000.0))
+	_set_state(State.STAGGER, t)
+
+
+## Audit: takes mult times damage from everything for t seconds.
+func mark(t: float, mult: float) -> void:
+	if dead:
+		return
+	mark_until = maxi(mark_until, _now() + int(t * 1000.0))
+	mark_mult = maxf(mult, 1.0)
+
+
+func _adjust_damage(amount: int) -> int:
+	if marked():
+		return roundi(amount * mark_mult)
+	return amount
 
 
 ## Drop everything and go for this hero for a while.
@@ -152,7 +202,7 @@ func _find_target(dist: float) -> Hero:
 	var best_d := dist
 	for h in get_tree().get_nodes_in_group("heroes"):
 		var hero := h as Hero
-		if hero == null or hero.dead:
+		if hero == null or hero.dead or (hero.hidden() and not boss):
 			continue
 		var d := hero.global_position.distance_to(global_position)
 		if d < best_d:

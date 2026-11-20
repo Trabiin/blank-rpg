@@ -80,6 +80,15 @@ var dash_speed := 0.0
 var dash_ability := {}
 var dash_hit: Array = []
 var ai_ability_t := 0.0
+## Lamps Out (Jessamy): out of sight while vanish_t > 0, moving faster; the next swing that lands is a crit.
+var vanish_t := 0.0
+var vanish_speed := 1.0
+var crit_next := 1.0
+## Big Ottoline: this fraction of knockback still moves her (1 = normal, data/heroes.json "poise").
+var poise := 1.0
+## Riposte (Velvette): while parry_t > 0 the next hit is turned aside and answered (abilities.gd kind "parry").
+var parry_t := 0.0
+var parry_ability := {}
 
 # Charged tech (issue #8; rules, blast and glow live in scripts/techs.gd).
 var charging := false
@@ -145,7 +154,7 @@ func _physics_process(delta: float) -> void:
 
 	if dir.length() > 0.1 and swing_t <= 0.0:
 		facing = dir.normalized()
-	var spd := move_speed * (0.3 if swing_t > 0.0 or cast_t > 0.0 else (Techs.CHARGE_SPEED if charging else 1.0))
+	var spd := (vanish_speed if vanish_t > 0.0 else 1.0) * move_speed * (0.3 if swing_t > 0.0 or cast_t > 0.0 else (Techs.CHARGE_SPEED if charging else 1.0))
 	velocity = dir * spd + knockback
 	knockback = knockback.move_toward(Vector2.ZERO, 900.0 * delta)
 	move_and_slide()
@@ -169,7 +178,7 @@ func try_attack() -> void:
 
 
 func _apply_hit() -> void:
-	var dmg := maxi(1, roundi(base_damage * swing_power))
+	var dmg := maxi(1, roundi(base_damage * swing_power * crit_next))
 	var hit_any := false
 	for e in get_tree().get_nodes_in_group("enemies"):
 		var enemy := e as Enemy
@@ -179,6 +188,10 @@ func _apply_hit() -> void:
 		if to.length() <= reach + enemy.radius and absf(facing.angle_to(to)) <= arc:
 			if enemy.take_hit(dmg, global_position, 120.0 + 160.0 * swing_power):
 				hit_any = true
+	if hit_any and crit_next > 1.0:
+		Fx.damage_number(get_parent(), global_position + Vector2(0, -30), "Ambush!", Color("c9b8ff"))
+		crit_next = 1.0
+		vanish_t = 0.0  # striking gives her away
 	if hit_any and swing_power >= 1.0:
 		ink = minf(ink + Abilities.HIT_GAIN, max_ink)  # a full-power hit that lands writes a little Ink
 	if hit_any and party:
@@ -200,6 +213,24 @@ func _adjust_damage(amount: int) -> int:
 	if guard > 0.0:  # armor (issue #15)
 		amount = maxi(1, roundi(amount * (1.0 - guard)))
 	return amount
+
+
+func take_hit(amount: int, from: Vector2, force := 160.0) -> bool:
+	if parry_t > 0.0 and not dead and amount > 0:
+		Abilities.riposte(self, from)
+		return true
+	return super.take_hit(amount, from, force * poise)
+
+
+## Out of sight for t seconds (enemies' _find_target skips hidden heroes; bosses still see).
+func vanish(t: float, speed_mult: float, crit: float) -> void:
+	vanish_t = t
+	vanish_speed = speed_mult
+	crit_next = maxf(crit_next, crit)
+
+
+func hidden() -> bool:
+	return vanish_t > 0.0 and not dead
 
 
 func set_abilities(ids: Array, ink_pool: float) -> void:
@@ -230,6 +261,11 @@ func _update_abilities(delta: float) -> void:
 	tech_flash_t = maxf(tech_flash_t - delta, 0.0)
 	Techs.tick(self)
 	guard_t = maxf(guard_t - delta, 0.0)
+	parry_t = maxf(parry_t - delta, 0.0)
+	if vanish_t > 0.0:
+		vanish_t -= delta
+		if vanish_t <= 0.0:
+			Fx.burst(get_parent(), global_position + Vector2(0, -8), [Color("2a2438"), Color("4a4060")], 10, 40.0)
 	if shield_t > 0.0:
 		shield_t -= delta
 		if shield_t <= 0.0:
@@ -249,6 +285,9 @@ func _on_death() -> void:
 	Techs.cancel(self)
 	shield_hp = 0
 	guard_t = 0.0
+	vanish_t = 0.0
+	crit_next = 1.0
+	parry_t = 0.0
 
 
 func revive() -> void:
@@ -375,7 +414,7 @@ func _update_frame() -> void:
 		return
 	_refresh_art()
 	var blink := invuln_t > 0.0 and not dead and int(invuln_t * 20.0) % 2 == 0
-	modulate.a = 0.45 if blink else 1.0
+	modulate.a = 0.3 if vanish_t > 0.0 else (0.45 if blink else 1.0)  # Lamps Out: a shadow of herself
 	if art != null:
 		_update_art()
 		return
@@ -459,6 +498,9 @@ func _draw_overlay() -> void:
 		return
 	if shield_hp > 0:
 		overlay.draw_arc(Vector2(0, -7), 11.0, 0, TAU, 24, Color("9fd8ff", 0.45 + 0.2 * sin(anim_t * 6.0)), 1.0)
+	if parry_t > 0.0:  # Riposte: a crimson guard arc in front of her, ready to turn a blow
+		var fa := facing.angle()
+		overlay.draw_arc(Vector2(0, -7), 12.0, fa - 1.0, fa + 1.0, 12, Color("e0405a", 0.9), 1.5)
 	if guard_t > 0.0:
 		overlay.draw_arc(Vector2(0, -7), 12.5, PI * 0.15, PI * 0.85, 12, Color("f2a65a", 0.7), 1.5)
 	if cast_t > 0.0:

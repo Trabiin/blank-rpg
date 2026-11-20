@@ -1,5 +1,5 @@
 {
-	"_comment": "Charged techs (issue #8). With a full power gauge, hold Attack for about a second: the hero glows, chimes when ready, and releasing fires the tech. Letting go early is a normal full-power swing. Keyed by hero id (data/heroes.json). mult: damage as a multiple of the hero's full-power swing, so levels, gear and research carry over. reach: radius in px. arc: degrees either side of facing (180 = all round). offset: the blast is centred this many px in front of the hero (0 = on the hero). knock: knockback force. heal: optional HP patched onto every ally inside the blast. step: px the hero lunges forward as it fires. color: glow and blast colour.",
+	"_comment": "Charged techs (issue #8). With a full power gauge, hold Attack for about a second: the hero glows, chimes when ready, and releasing fires the tech. Letting go early is a normal full-power swing. Keyed by hero id (data/heroes.json). mult: damage as a multiple of the hero's full-power swing, so levels, gear and research carry over. reach: radius in px. arc: degrees either side of facing (180 = all round). offset: the blast is centred this many px in front of the hero (0 = on the hero). knock: knockback force. heal: optional HP patched onto every ally inside the blast. step: px the hero lunges forward as it fires. color: glow and blast colour. Optional: stun (seconds every enemy hit is stunned), mark (seconds every enemy hit is Audited, mark_mult), vanish (seconds the hero slips out of sight after firing), execute (enemies at or below this fraction of their max HP take double).",
 	"hold": 1.0,
 	"techs": {
 		"ash": {
@@ -17,6 +17,22 @@
 		"ninefingers": {
 			"name": "Skewer", "mult": 3.0, "reach": 62, "arc": 12, "offset": 0, "knock": 280, "step": 14, "color": "f2d36b",
 			"desc": "Daro lunges the full length of the pike. A very long, very narrow line that hits hardest of all. Aim it."
+		},
+		"ottoline": {
+			"name": "Through the Door", "mult": 3.0, "reach": 34, "arc": 55, "offset": 4, "knock": 560, "step": 18, "stun": 1.2, "color": "f07ab8",
+			"desc": "Ottoline throws her whole weight into one punch. Whatever it hits leaves at speed and lands stunned. She charges for the door."
+		},
+		"jessamy": {
+			"name": "Cut and Run", "mult": 2.2, "reach": 32, "arc": 180, "offset": -24, "knock": 200, "step": 52, "vanish": 1.5, "color": "c9b8ff",
+			"desc": "Jessamy darts straight through the crowd, cutting everything she passes, and is gone before they turn round."
+		},
+		"odile": {
+			"name": "Final Demand", "mult": 2.8, "reach": 30, "arc": 180, "offset": 52, "knock": 300, "step": 0, "mark": 6, "mark_mult": 1.5, "color": "e8c45a",
+			"desc": "A great brass seal slams down a good way in front of her. Anything it doesn't flatten is Audited for 6 s."
+		},
+		"velvette": {
+			"name": "Coup de Grace", "mult": 3.2, "reach": 46, "arc": 10, "offset": 0, "knock": 260, "step": 16, "execute": 0.35, "color": "e0405a",
+			"desc": "One perfect thrust down a very narrow line. Anything already below a third of its health takes double. Curtain."
 		}
 	}
 }

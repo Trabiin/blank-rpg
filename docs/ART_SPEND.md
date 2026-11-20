@@ -17,6 +17,7 @@ Claude stops and asks before going on if credit is about to run out or a phase r
 | 6. UI and icons | ~$2 to $4 | **$1.07** (PixelLab) | Panel and button frames, 2 Pro calls ($0.25, 3 kept and palette-cleaned). 80 icons from 10 Pro calls at 32x32 ($0.82, ~$0.082 each): one call returns 64 images, so 8 concepts x 8 options; picked by eye, palette-snapped. Fonts (Jersey 10, Jacquard 12) are free under the OFL |
 | 7. Portraits and painted art (OpenAI) | ~$6 to $12 | | |
 | 8. Polish sweep | ~$2 to $4 | | |
+| Field heroes (Ottoline, Jessamy, Odile, Velvette) | ~$1.00 | **$1.05** (PixelLab) | Combat sets for three existing recruits, 24 to 25 directions each ($0.20 to $0.25, ~$0.0088 per direction), Velvette base x2 ($0.053, first came out small-headed) and her full set incl. idle (30 directions, $0.28). Ledger: `tools/art_spend_field_heroes.jsonl`. PixelLab credit left: $2.19 (2026-11-20) |
 | **Total so far** | ~$29 to $54 for phases 0 to 6 | **$14.04** | Topped up $10 on 2026-11-19; PixelLab credit left: $5.64 |
 
 ## Why Phase 1 came in far under

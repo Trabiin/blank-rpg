@@ -214,17 +214,19 @@ func _draw() -> void:
 
 	var ids := _ids()
 	_row_rects.clear()
+	# Rows shrink to fit once the roster outgrows the screen (eight field heroes since 2026-11-20).
+	var rh := minf(ROW_H, (vs.y - 32.0 - 30.0) / maxf(ids.size(), 1.0))
 	for i in ids.size():
 		var id: String = ids[i]
 		var r := Empire.recruit(id)
-		var row := Rect2(LIST_X, 32 + i * ROW_H, LIST_W, ROW_H - 4)
+		var row := Rect2(LIST_X, 32 + i * rh, LIST_W, rh - 3)
 		_row_rects.append(row)
 		var on := i == sel
 		var joined := Empire.recruits.has(id)
 		draw_rect(row, Color(0.16, 0.13, 0.09) if on else Color(0.09, 0.08, 0.11))
 		if on:
 			draw_rect(row, GOLD, false, 1.0)
-		var box := Rect2(row.position + Vector2(8, 11), Vector2(12, 12))
+		var box := Rect2(row.position + Vector2(8, row.size.y / 2.0 - 6.0), Vector2(12, 12))
 		var picked := id in party
 		draw_rect(box, Color(0.05, 0.04, 0.07))
 		draw_rect(box, GOLD if picked else Color(0.35, 0.32, 0.38), false, 1.0)
@@ -237,7 +239,7 @@ func _draw() -> void:
 		var st := _status(id)
 		draw_string(font, row.position + Vector2(28, 28), st[0], HORIZONTAL_ALIGNMENT_LEFT, LIST_W - 34, 8, st[1])
 
-	var gy := 32 + ids.size() * ROW_H + 4
+	var gy := 32 + ids.size() * rh + 3
 	_go_rect = Rect2(LIST_X, gy, 150, 22)
 	var go_on := sel == ids.size()
 	draw_rect(_go_rect, Color(0.26, 0.2, 0.08) if go_on else Color(0.16, 0.13, 0.08))
@@ -271,7 +273,15 @@ func _draw() -> void:
 		y += 6
 		_text(Vector2(x, y + 8), "As an ally: " + str(style.get("name", "?")), 9, Color("8fa7e8"))
 		y += _wrap(Vector2(x, y + 19), str(style.get("desc", "")), w, 8, Color(0.68, 0.66, 0.68)) + 14
-		_wrap(Vector2(x, y + 9), str(hd.get("special", "")), w, 8, Color("cfe0b0"))
+		y += _wrap(Vector2(x, y + 9), str(hd.get("special", "")), w, 8, Color("cfe0b0")) + 8
+		var kit := []
+		for a in Abilities.for_ids(hd.get("abilities", [])):
+			kit.append(str(a.get("name", "")))
+		var tech := Techs.for_hero(id)
+		var kit_line := "Abilities: " + ", ".join(kit)
+		if not tech.is_empty():
+			kit_line += "   Tech: " + str(tech.get("name", ""))
+		_wrap(Vector2(x, y + 9), kit_line, w, 8, Color(0.78, 0.74, 0.86))
 	else:
 		_text(Vector2(x, 46), "Ready?", 13, PAPER)
 		_wrap(Vector2(x, 62), "The clock stops while you are out. Whoever stays home keeps working their post.", w, 8, Color(0.68, 0.66, 0.68))
@@ -419,5 +429,6 @@ static func apply(h: Hero, id: String) -> void:
 		h.heal_every = float(heal.get("every", 6.0))
 		h.heal_amount = int(heal.get("amount", 6))
 		h.heal_range = float(heal.get("range", 80))
+	h.poise = float(hd.get("poise", 1.0))
 	h.set_abilities(hd.get("abilities", []), float(hd.get("ink", 12)))  # issue #7
 	Progress.apply_to(h)  # levels and gear (issue #15)

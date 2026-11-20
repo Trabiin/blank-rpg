@@ -492,7 +492,7 @@ The roster has three tiers:
 
 | Tier | Count | Who | Depth |
 |---|---|---|---|
-| **Field heroes** | ~12 (4 in MVP) | Can join the party on missions; also can take any other role | Core: bonds, personal missions, banter |
+| **Field heroes** | ~12 (8 in MVP) | Can join the party on missions; also can take any other role | Core: bonds, personal missions, banter |
 | **Core staff** | ~8 (3 to 4 in MVP) | Non-fighters who matter: the quartermaster, the head scribe, the tavern keeper... | Core: bonds, scenes, personal missions done by the party |
 | **Recruits** | ~30 (6 to 8 in MVP) | Everyone else: specialists, oddballs, defectors | Light: trait, quips, one recruitment hook |
 
@@ -509,8 +509,18 @@ The roster has three tiers:
 | **Hex & Tally** | Mercenary con artists | Knuckles, Black Ink | Trickster / debuffer | Velvet Causeway (optional) | A grifter and her talking shadow, who signs the contracts she does not want to honor |
 | **Ilse of the Mirror** | Glamorous, unsettling | Spear, Blue + White Ink | Lancer / counter | Unfinished Coast | A reflection whose original was erased. Vain, gorgeous, and the only hero besides Ash who can touch White Ink |
 
-Four more field heroes are still to be designed for the full game (to reach about 12), plus the core staff and the
-recruit pool. Prototype implements **Ash** (player) and **Bran** (AI ally).
+**Added 2026-11-20 (Ojon: more women in the playable party).** Four Hollowmark field heroes fill the four open slots,
+so the 12 are complete. They join through the empire layer rather than the story chapters:
+
+| Hero | Flavor | Weapon | Role | How they join | Kit (data/heroes.json, abilities.json, techs.json) |
+|---|---|---|---|---|---|
+| **Big Ottoline** | Cabaret bouncer, Tobble's niece | Brass knuckles | Bruiser / crowd control | Tobble bond rank 2 | Most HP, takes 35% knockback. Chucking Out (charge that hurls and stuns), Last Orders (slam: stun all around 2 s). Tech: Through the Door |
+| **Jessamy Nightjar** | Smuggler, flirt | Hook-knives | Skirmisher / ranged | Guild standing Friendly | Fastest, quickest gauge, fragile. Knife Fan (3 thrown knives), Lamps Out (vanish 3 s, next hit x2). Tech: Cut and Run |
+| **Odile Penhallow** | Ex-Concord tax collector | Iron-bound ledger | Controller / sustain | 3 Renown | Biggest Ink pool. Levy (drain around her, heals the party), Audit (+50% damage taken, 6 s). Tech: Final Demand (lands at range, Audits survivors) |
+| **Velvette** | Cabaret duelist, secret-broker (separate from Lysandre) | Rapier | Precision duelist / counter | 5 Renown | Riposte (parry window: cancel the next hit and counter with a stun), Fleche (long lunge). Tech: Coup de Grace (double damage below 35% HP) |
+
+Field roster after this: Gristle, Ottoline, Jessamy, Odile, Velvette (women), Ash, Bran (men), Daro (non-binary).
+Still to come: the core staff and the recruit pool. Prototype implements **Ash** (player) and **Bran** (AI ally).
 
 ### Core staff (first ideas, MVP picks marked)
 
