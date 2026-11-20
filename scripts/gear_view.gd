@@ -43,6 +43,8 @@ var _slot_rects: Array = []
 var _pick_rects: Array = []
 var _shop_rects: Array = []
 var _tab_rects := {}
+var _tree: SkillTreeView = null  # the skill tree screen (issue #25) while it is open over this one
+var _tree_closed := -1
 
 
 func _ready() -> void:
@@ -108,6 +110,8 @@ func _process(delta: float) -> void:
 		return
 	flash_t = maxf(flash_t - delta, 0.0)
 	queue_redraw()
+	if _tree != null or Engine.get_process_frames() == _tree_closed:
+		return  # the skill tree has the controls (and the Esc that closed it is not ours)
 	if Engine.get_process_frames() == opened_frame or _ids.is_empty():
 		return
 	var up := Input.is_action_just_pressed("move_up") or Input.is_action_just_pressed("ui_up")
@@ -173,12 +177,33 @@ func _process(delta: float) -> void:
 
 
 func _set_tab(t: String) -> void:
+	if t == "tree":
+		_open_tree()
+		return
 	tab = t
 	picking = false
 
 
 func _tabs() -> Array:
-	return ["equip", "skills", "shop"] if _shop_open() else ["equip", "skills"]
+	return ["equip", "skills", "tree", "shop"] if _shop_open() else ["equip", "skills", "tree"]
+
+
+## The Tree tab opens the skill tree screen (issue #25) on the hero picked here; closing it comes back.
+func _open_tree() -> void:
+	if _tree != null or _ids.is_empty():
+		return
+	picking = false
+	_tree = SkillTreeView.new()
+	add_child(_tree)
+	_tree.party = party
+	_tree.open(where, _hero_id())
+	_tree.closed.connect(func():
+		var back := _tree.hero_id()
+		_tree.queue_free()
+		_tree = null
+		_tree_closed = Engine.get_process_frames()
+		if back in _ids:
+			hero_i = _ids.find(back))
 
 
 ## Skills tab: Enter on a known tech makes it the one this hero always charges; on the picked one,
@@ -270,6 +295,8 @@ func _shop_pick(i: int) -> void:
 
 
 func _gui_input(event: InputEvent) -> void:
+	if _tree != null:
+		return
 	if Prompts.tapped(event):
 		var p: Vector2 = event.position
 		if _close_rect().has_point(p):
@@ -364,7 +391,7 @@ func _draw() -> void:
 	_tab_rects.clear()
 	var tx := 100.0
 	for t in _tabs():
-		var label: String = {"equip": "Equip", "skills": "Skills"}.get(t, Progress.data().get("shop_name", "Shop"))
+		var label: String = {"equip": "Equip", "skills": "Skills", "tree": _tree_label()}.get(t, Progress.data().get("shop_name", "Shop"))
 		var w := font.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1, 9).x + 14
 		var r := Rect2(tx, 8, w, 15)
 		_tab_rects[t] = r
@@ -399,6 +426,12 @@ func _draw() -> void:
 		var fw := font.get_string_size(flash, HORIZONTAL_ALIGNMENT_LEFT, -1, 9).x
 		draw_rect(Rect2(vs.x - fw - 18, vs.y - 21, fw + 12, 15), Color(0.1, 0.08, 0.06, 0.95 * a))
 		_text(Vector2(vs.x - fw - 12, vs.y - 10), flash, 9, Color(1, 0.9, 0.7, a))
+
+
+## "Tree", or "Tree (2)" when that many heroes have a node they could learn right now.
+func _tree_label() -> String:
+	var n := SkillTree.unspent_ids().filter(func(id): return id in _ids).size()
+	return "Tree (%d)" % n if n > 0 else "Tree"
 
 
 func _draw_equip(vs: Vector2) -> void:

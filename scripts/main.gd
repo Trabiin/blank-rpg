@@ -281,6 +281,7 @@ func touch_active() -> bool:
 
 func _on_enemy_died(_e: Actor) -> void:
 	kills += 1
+	TreePerks.enemy_died(_e)  # poison kills pay the poisoner's skill tree rewards (issue #25)
 	Journal.defeated(Journal.kind_of(_e))  # the codex learns its weakness (issue #114)
 	Empire.bond_fought(kills, heroes.map(func(h): return (h as Hero).hero_id))  # fighting beside Ash builds bonds
 	banter.event("first_kill", present())
@@ -322,7 +323,7 @@ func _award_xp(amount: int) -> Array:
 			levels_gained[hero.hero_id] = up["level"]
 			Fx.damage_number(entities, hero.global_position + Vector2(0, -26), "LEVEL %d" % up["level"], Color("ffd166"))
 			Fx.burst(entities, hero.global_position + Vector2(0, -10), [Color("ffd166"), Color.WHITE], 18, 60.0)
-			hud.say("%s reached level %d: %s" % [hero.hero_name, up["level"], Progress.gains_text(up["gains"])], 3.5)
+			hud.say("%s reached level %d: %s, +1 Skill Point (skill tree in the quick menu)" % [hero.hero_name, up["level"], Progress.gains_text(up["gains"])], 3.5)
 	return ups
 
 
@@ -721,7 +722,7 @@ func _update_revive(delta: float) -> void:
 		if not hero.dead:
 			continue
 		if not enemies_near and hero.global_position.distance_to(leader.global_position) < 28.0:
-			hero.revive_progress += delta * float(boosts["revive"])
+			hero.revive_progress += delta * float(boosts["revive"]) * TreePerks.revive_mult(hero, heroes)  # + skill trees (#25)
 			if hero.revive_progress >= Hero.REVIVE_TIME:
 				hero.revive()
 				hud.say("%s is back on their feet." % hero.hero_name, 2.5)

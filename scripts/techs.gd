@@ -359,7 +359,7 @@ static func pulse(h: Hero, t: Dictionary, b: Dictionary, state: Dictionary) -> v
 			Fx.damage_number(parent, enemy.global_position + Vector2(0, -26), "Finish!", col.lightened(0.4))
 		var before := enemy.hp
 		# A pull (negative knock) drags towards the blast's centre; a push throws away from it.
-		if enemy.take_hit(dealt, center - dir * 4.0, knock):
+		if TreePerks.strike(h, enemy, dealt, center - dir * 4.0, knock, {}, "tech"):  # + skill tree (#25)
 			hit_any = true
 			dealt_total += before - enemy.hp
 			enemy.stun(float(p.get("stun", 0)))
@@ -421,6 +421,8 @@ static func _throw(h: Hero, t: Dictionary, k: Dictionary, dir: Vector2) -> void:
 		b.range_left = float(k.get("range", 120))
 		b.pierce = bool(k.get("pierce", false))
 		b.color = Color(str(t.get("color", "d8d2c4")))
+		b.hero = h  # skill tree perks (issue #25)
+		b.source = "tech"
 		h.get_parent().add_child(b)
 		b.global_position = h.global_position + Vector2(0, -8) + b.dir * 6.0
 

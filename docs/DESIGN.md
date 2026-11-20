@@ -383,6 +383,18 @@ Party progression (per fighter), on top of the empire's own progression (buildin
    unlocking a charged tech per level for weapons, and stronger spell tiers for Inks.
 3. **Per-hero skill trees.** Each hero has a small tree (about 10 nodes, two branches) bought with Skill Points from levels.
    Branches reflect personality (e.g. Bran: *Bodyguard* vs *Turncoat*).
+   **As built (issue #25, `data/skill_trees.json`, `scripts/skill_tree.gd`, passives in `scripts/tree_perks.gd`):**
+   every field hero has a root and two branches of five (11 nodes): Ash Author / Editor, Bran Bodyguard / Turncoat,
+   Gristle Matron / Poisoner, Daro Corporal / Deserter, Ottoline Doorkeeper / Brawler, Jessamy Nightjar / Smuggler,
+   Odile Assessor / Collector, Velvette Duelist / Star. One Skill Point per level past 1 (19 at level 20); nodes cost
+   1-3 and are bought in order; the last node of each branch is a capstone and a hero holds only one, so a
+   max-level hero finishes one branch and most of the other. Step 4 needs bond rank Familiar, the capstone Trusted
+   (Ash, who has no bond: 2 bonds at Familiar, then 3 at Trusted). Nodes add stats, change abilities (riders such as
+   poison, leech, marks, taunts, Ink gifts, self-shields; wider, longer, quicker), add passives (bodyguard, evade,
+   last stand, thorns, auras, kill rewards including Gilt into the loot, damage against the wounded / marked /
+   stunned / unhurt, swing stuns, revive speed) and change who the ally AI goes for (wounded, marked, whatever is on
+   the leader). Screen: Gear screen Tree tab (K) and the quick menu's Tree tab mid-fight (pauses); unlearning the
+   whole tree costs 30 + 10 Gilt per point, at home only. The four later heroes get their trees in their chapters.
 
 Weapon types: sword, axe, spear, rapier, crossbow, whip, knuckles, staff.
 Ink colors (magic): **Red** (fire), **Blue** (frost), **Gold** (light, healing), **Green** (growth, poison),
