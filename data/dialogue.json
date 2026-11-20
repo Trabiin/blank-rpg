@@ -4,7 +4,6 @@
 		"verity": {"name": "Verity Hale", "color": "e8e2d0", "colors": {"skin": "f1d9c6", "cloth": "ece6d6", "trim": "c9a54a", "hair": "d9d2c0"}},
 		"ilse": {"name": "Ilse", "color": "4f7f8f", "colors": {"skin": "d8c2b0", "cloth": "33505c", "trim": "9fc0c8", "hair": "1f2a30"}},
 		"velvette": {"name": "Velvette", "color": "a03a6a", "colors": {"skin": "e8c0a8", "cloth": "5a1f3c", "trim": "e0b04a", "hair": "2a1420"}},
-		"townsfolk": {"name": "Townsfolk", "color": "8f8578", "colors": {"skin": "d9a07a", "cloth": "6a5a48", "trim": "a89a80", "hair": "4a3a2a"}},
 		"auditor": {"name": "The Auditor", "color": "26222c", "colors": {"skin": "e6dccd", "cloth": "26222c", "trim": "efe6cf", "hair": "15101a"}}
 	},
 	"talks": {

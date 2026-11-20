@@ -109,11 +109,21 @@ func _tech_line(h: Hero) -> String:
 	return "Tech %s: %s, %s" % [tech.get("name", "?"), how, AllyTechs.state_text(h)]
 
 
+## What the hero wears, slot by slot, for the Equip tab: "Weapon: Notched Axe  ·  Armor: none  ·  Trinket: none".
+func _gear_line(h: Hero) -> String:
+	var worn := Progress.gear(h.hero_id)
+	var parts := []
+	for slot in Progress.SLOTS:
+		var item_id := str(worn.get(slot, ""))
+		parts.append("%s: %s" % [Progress.SLOT_NAMES[slot], Progress.item(item_id).get("name", item_id) if item_id != "" else "none"])
+	return "  ·  ".join(parts)
+
+
 func _hd(h: Hero) -> Dictionary:
 	return _hero_data.get("heroes", {}).get(h.hero_id, {})
 
 
-## Hotkeyed Ink abilities (issue #7) are read by duck typing, so this menu works before and after they exist.
+## The hero's hotkeyed Ink abilities (issue #7, scripts/abilities.gd).
 func _abilities_of(h: Hero) -> Array:
 	if not ("abilities" in h) or typeof(h.get("abilities")) != TYPE_ARRAY:
 		return []
@@ -174,8 +184,8 @@ func _rebuild() -> void:
 			for h in _heroes():
 				var hero: Hero = h
 				var list := _abilities_of(hero)
-				if list.is_empty():
-					rows.append({"id": hero.hero_id, "label": hero.hero_name, "right": "Ink abilities: soon",
+				if list.is_empty():  # a hero with no Ink abilities in data/heroes.json fights with Attack and their tech
+					rows.append({"id": hero.hero_id, "label": hero.hero_name, "right": "No Ink abilities",
 						"detail": str(_hd(hero).get("special", "")), "enabled": true, "info": true})
 				else:
 					var ink := "Ink %d/%d" % [int(hero.get("ink")), int(hero.get("max_ink"))]
@@ -190,11 +200,9 @@ func _rebuild() -> void:
 		"Equip":
 			for h in _heroes():
 				var hero: Hero = h
-				var hd := _hd(hero)
-				rows.append({"id": hero.hero_id, "label": "%s: %s" % [hero.hero_name, hd.get("weapon", "fists")],
+				rows.append({"id": hero.hero_id, "label": "%s  Lv %d" % [hero.hero_name, Progress.level(hero.hero_id)],
 					"right": "DMG %d  Reach %d" % [hero.base_damage, int(hero.reach)],
-					"detail": "HP %d/%d   gauge %.2f/s   Armour and trinkets: not yet" % [hero.hp, hero.max_hp, hero.power_rate],
-					"enabled": true, "info": true})
+					"detail": _gear_line(hero), "enabled": true, "info": true})
 		"Options":  # issue #14: a summary here, the full screen one press away
 			rows.append({"id": "speed", "label": "Battle speed", "right": Settings.battle_speed_name(),
 				"detail": "Pick to open Options", "enabled": true})
@@ -246,7 +254,7 @@ func _pick_row(i: int) -> void:
 		_open_options()
 		return
 	if r.get("info", false) or (TABS[tab] == "Abilities" and not r.has("hero")):
-		_say("Hotkeyed Ink abilities arrive in a later update." if TABS[tab] == "Abilities" else "Gear arrives with levels and loot in a later update.")
+		_say("%s has no Ink abilities: Attack, and the charged tech on a full gauge." % r.get("label", "") if TABS[tab] == "Abilities" else "The gear screen can't open right now.")
 		return
 	match TABS[tab]:
 		"Items":

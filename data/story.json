@@ -5,7 +5,7 @@
 		"governor": {"name": "Governor Thale", "color": "c9a54a", "colors": {"skin": "e8c8b0", "cloth": "6a2a2a", "trim": "e0c060", "hair": "c8c0b0"}},
 		"warden": {"name": "Concord Warden", "color": "7a8aa0", "colors": {"skin": "d0a888", "cloth": "3a4658", "trim": "a0a8b8", "hair": "2a2a2a"}},
 		"captain": {"name": "Tithe-Captain Morrow", "color": "a04a3a", "colors": {"skin": "c89878", "cloth": "5a2a22", "trim": "d0b070", "hair": "3a2a1a"}},
-		"letter": {"name": "A letter", "color": "e8e2d0", "colors": {"skin": "f1d9c6", "cloth": "ece6d6", "trim": "c9a54a", "hair": "d9d2c0"}}
+		"letter": {"name": "A letter", "stage": "letter", "color": "e8e2d0", "colors": {"skin": "f1d9c6", "cloth": "ece6d6", "trim": "6a3a8a", "hair": "d9d2c0"}}
 	},
 	"talks": {
 		"ch1_arrest": {"title": "Chapter 1  ·  No Such Person", "lines": [
@@ -97,8 +97,8 @@
 			"card": ["New story mission: The Concord Answers", "Meet the tithe column at Old Mill Crossing (territory map)."]},
 		{"talk": "act1_concord_after", "when": {"cleared": ["act1_concord"]},
 			"card": ["New story mission: The Auditor", "Stop him on the Tithe Road before he strikes out Hollowmark."]},
-		{"talk": "act1_end", "when": {"cleared": ["auditor_duel"]}, "then": "act1_end",
-			"card": ["End of Act 1", "Thank you for playing the Last Ink MVP. Hollowmark is still yours to run: keep holding the line."]}
+		{"talk": "act1_end", "when": {"cleared": ["auditor_duel"]},
+			"card": ["Act 1 complete: The Unregistered Town", "Verity Hale has made her offer. Until she makes her move, the Marches are yours to hold. New goals are under Story in the pause menu."]}
 	],
 	"goals": [
 		{"text": "Escape the tax office", "hint": "Chapter 1", "done": {"cleared": ["ch1_breakout"]}, "show": {"active": true}},
@@ -106,6 +106,9 @@
 		{"text": "Find the hedge-witch in the Gutterwoods", "hint": "Rescue job (E) or Rescue mission on the map", "done": {"joined": ["gristle"]}, "show": {"seen": ["act1_rumours"]}},
 		{"text": "Free the deserter on Tithe Road", "hint": "Rescue job (E) or Rescue mission on the map", "done": {"joined": ["ninefingers"]}, "show": {"seen": ["act1_rumours"]}},
 		{"text": "The Concord Answers: break the tithe column", "hint": "story mission at Old Mill Crossing", "done": {"cleared": ["act1_concord"]}, "show": {"seen": ["act1_writ"]}},
-		{"text": "The Auditor: stop him on the Tithe Road", "hint": "story mission at Tithe Road", "done": {"cleared": ["auditor_duel"]}, "show": {"seen": ["act1_concord_after"]}}
+		{"text": "The Auditor: stop him on the Tithe Road", "hint": "story mission at Tithe Road", "done": {"cleared": ["auditor_duel"]}, "show": {"seen": ["act1_concord_after"]}},
+		{"text": "Take Whitewater back from the Blank", "hint": "Reclaim mission on the territory map, then claim it with a governor", "done": {"owns": ["whitewater"]}, "show": {"seen": ["act1_end"]}},
+		{"text": "Hold six provinces", "hint": "claim free neighbours from the Command Table", "done": {"held": 6}, "show": {"seen": ["act1_end"]}},
+		{"text": "Win a seventh province by treaty", "hint": "a faction that likes you enough will cede land (Diplomacy, F)", "done": {"held": 7}, "show": {"seen": ["act1_end"]}}
 	]
 }

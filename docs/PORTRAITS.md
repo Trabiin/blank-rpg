@@ -6,7 +6,7 @@ Large visual-novel portraits shown in dialogue and bond scenes (issue #12).
 
 | File | What |
 |---|---|
-| `assets/portraits/<id>.png` | Game portrait, 512x768, transparent background. `<id>` is the recruit id (`ash`, `bran`, `gristle`) or a story id (`verity`, `ilse`, `velvette`, later `auditor`). |
+| `assets/portraits/<id>.png` | Game portrait, 512x768, transparent background. `<id>` is the recruit id (`ash`, `bran`, `gristle`) or a speaker id from `data/dialogue.json` / `data/story.json` (`verity`, `auditor`, `clerk`, `governor`, `warden`, `captain`). |
 | `assets/portraits/<id>_<expr>.png` | Optional expression: `happy`, `angry`, `sad`, `surprised`, `smug`. Code falls back to `<id>.png` when one is missing. |
 | `tools/cut_portraits.py` | Turns raw generator output into game portraits: cuts out the flat grey background (and grey pockets between hair strands, axe handles and so on), feathers the edge, scales to 512x768. |
 
@@ -18,7 +18,7 @@ To add one: save the raw image as `<id>-v2.png` (or `<id>_<expr>-v2.png`) in a f
 ## How the game uses them
 
 - Bond scenes (`scripts/scene_view.gd`): the character stands on the left, flipped to face Ash on the right. Whoever has the floor is lit; the other is dimmed and pushed back. A soft glow in the character's accent colour sits behind each. A line in `data/bonds.json` can carry a third entry, an expression: `["bran", "Read it again.", "smug"]`.
-- Every recruit and the Auditor has a portrait (Phase 8). Anyone new without one keeps the code-drawn bust.
+- Every speaker has a portrait: `tests/test_data.gd` fails the build when one is missing, so the code-drawn safety-net bust never ships. The one exception is a letter read aloud (`"stage": "letter"` on the speaker), which stands on stage as a sealed sheet of paper.
 - The dialogue system (#11) loads the same files by the same naming.
 
 ## Tool and terms
@@ -56,9 +56,9 @@ In the same chat as the locked neutral image, paste the same full prompt, replac
 - surprised: eyes wide, mouth slightly open
 - smug: half-lidded eyes, crooked smile
 
-### Still to make for the MVP
+### Status
 
-Done in Phase 8: Quill, Tobble, Pell, Abeyance, Hesper, Dunmore, Jessamy, Odile, Ottoline, Mr. Biscuits, the Merrow Three, Daro and the Auditor. Expressions (`<id>_<expr>.png`) are still to do.
+Every recruit and story speaker has a neutral portrait (Phase 8, plus Clerk Pettigrew, Governor Thale, the Concord Warden and Tithe-Captain Morrow for issue #111). Expressions (`<id>_<expr>.png`) are issue #107.
 
 ## API pipeline (Phase 8)
 

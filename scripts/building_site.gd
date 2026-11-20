@@ -3,19 +3,23 @@ extends StaticBody2D
 ## builders work, and the finished building (with a name board and its level) once built.
 ## Origin = the bottom-centre of the 5x5-tile plot.
 ##
-## Built looks are art pass sprites, res://assets/buildings/<look>_<level>.png, with a few code-drawn
-## touches (smoke, candlelight). LOOKS keeps the collision box and the old CC0 look as a fallback.
+## Built looks are art pass sprites, res://assets/buildings/<look>_<level>.png (one per level; the
+## art paths are checked by tests/test_data.gd, so every building and level has one).
 
 const PLOT := Vector2(80, 80)
-## look -> list of sprites [source rect in the overworld sheet, offset of its bottom-centre
-## from the plot's bottom-centre], plus the collision box (width, depth) when built.
+## look -> collision box (width, depth) when built.
 const LOOKS := {
-	"barracks": {"parts": [[Rect2(176, 0, 80, 80), Vector2(4, 0)], [Rect2(80, 432, 32, 32), Vector2(-30, 2)]], "box": Vector2(72, 40)},
-	"infirmary": {"parts": [[Rect2(96, 0, 80, 80), Vector2(0, 0)]], "box": Vector2(72, 40), "tint": Color(0.92, 0.95, 1.0)},
-	"inkworks": {"parts": [[Rect2(0, 336, 48, 112), Vector2(-8, 0)]], "box": Vector2(72, 36), "tint": Color(0.72, 0.76, 0.92)},
-	"scriptorium": {"parts": [[Rect2(48, 352, 48, 80), Vector2(0, 0)]], "box": Vector2(72, 36)},
-	"guildhall": {"parts": [[Rect2(64, 496, 64, 56), Vector2(0, 0)], [Rect2(80, 432, 32, 32), Vector2(-26, 2)]], "box": Vector2(72, 36), "tint": Color(1.0, 0.95, 0.85)},
+	"barracks": {"box": Vector2(72, 40)},
+	"infirmary": {"box": Vector2(72, 40)},
+	"inkworks": {"box": Vector2(72, 36)},
+	"scriptorium": {"box": Vector2(72, 36)},
+	"guildhall": {"box": Vector2(72, 36)},
 }
+
+
+## The art pass sprite for this look at this level.
+static func art_path(look_id: String, lv: int) -> String:
+	return "res://assets/buildings/%s_%d.png" % [look_id, clampi(lv, 1, 3)]
 const ROMAN := ["", "I", "II", "III", "IV"]
 
 var id := ""
@@ -23,9 +27,7 @@ var look := ""
 var _built_level := -1
 var _box: CollisionShape2D
 var _sprites: Array = []
-var _extras: Array = []
 var highlight := false
-var _has_art := false  # art pass sprite in use: skip the code-drawn flag, door and candle
 ## Chimney tops on the art pass sprites (offset from the plot's bottom-centre, per level), for the smoke.
 const SMOKE := {}  # e.g. "inkworks_3": Vector2(x, y); empty: the current sprites draw their own chimney smoke
 var _over: Node2D  # code-drawn parts above the sprites: plate, scaffolding, smoke
@@ -56,20 +58,18 @@ func refresh() -> void:
 	if lv == _built_level:
 		return
 	_built_level = lv
-	for s in _sprites + _extras:
+	for s in _sprites:
 		s.queue_free()
 	_sprites.clear()
-	_extras.clear()
 	if _box:
 		_box.queue_free()
 		_box = null
 	if lv <= 0 or not LOOKS.has(look):
 		return
 	var spec: Dictionary = LOOKS[look]
-	var art_path := "res://assets/buildings/%s_%d.png" % [look, mini(lv, 3)]  # art pass: one sprite per level
-	_has_art = ResourceLoader.exists(art_path)
-	if _has_art:
-		var spr := _sprite(load(art_path), Vector2.ZERO, Color.WHITE)
+	var path := art_path(look, lv)
+	if ResourceLoader.exists(path):
+		var spr := _sprite(load(path), Vector2.ZERO, Color.WHITE)
 		spr.material = Art.art_world_material()
 		_sprites.append(spr)
 		var sh := Node2D.new()  # cast shadow, under the building
@@ -81,26 +81,15 @@ func refresh() -> void:
 		_sprites.append(sh)
 		_sprites.append(Art.add_cast_shadow(self, spr.texture, 3.0))
 	else:
-		_old_parts(spec, lv)
+		push_error("building art missing: %s" % path)
 	var rect := RectangleShape2D.new()
 	rect.size = spec["box"]
 	_box = CollisionShape2D.new()
 	_box.shape = rect
 	_box.position = Vector2(0, -rect.size.y / 2.0)
 	add_child(_box)
-	if _has_art:
+	if not _sprites.is_empty():
 		_sprites.append(Art.add_occluder(self, Vector2(rect.size.x * 0.9, rect.size.y * 0.5)))
-
-
-## The CC0 placeholder look, kept for any building without art pass sprites.
-func _old_parts(spec: Dictionary, lv: int) -> void:
-	for part in spec["parts"]:
-		_sprites.append(_sprite(Art.region(part[0]), part[1], spec.get("tint", Color.WHITE)))
-	# Upgrades show: crates at level 2, barrels too at level 3.
-	if lv >= 2 and ResourceLoader.exists("res://assets/props/crates.png"):
-		_extras.append(_sprite(load("res://assets/props/crates.png"), Vector2(30, 4), Color.WHITE))
-	if lv >= 3 and ResourceLoader.exists("res://assets/props/barrels.png"):
-		_extras.append(_sprite(load("res://assets/props/barrels.png"), Vector2(-34, 8), Color.WHITE))
 
 
 func _sprite(tex: Texture2D, off: Vector2, tint: Color) -> Sprite2D:
@@ -185,20 +174,8 @@ func _draw_over() -> void:
 	var font := ThemeDB.fallback_font
 	if not job.is_empty():
 		_draw_scaffold(lv == 0)
-	if look == "inkworks" and lv > 0 and (not _has_art or SMOKE.has("%s_%d" % [look, lv])):
-		_draw_smoke(SMOKE.get("%s_%d" % [look, lv], Vector2(-6, -112)))
-	if look == "infirmary" and lv > 0 and not _has_art:
-		# A white flag with a red mark by the door.
-		_over.draw_line(Vector2(26, -2), Vector2(26, -26), Color("4a3222"), 1.0)
-		_over.draw_rect(Rect2(27, -26, 9, 7), Color("f3efe4"))
-		_over.draw_rect(Rect2(30.5, -25, 2, 5), Color("c0392b"))
-		_over.draw_rect(Rect2(29, -23.5, 5, 2), Color("c0392b"))
-	if look == "scriptorium" and lv > 0 and not _has_art:
-		var flick := 0.6 + 0.4 * sin(Time.get_ticks_msec() * 0.009 + 1.3)
-		_over.draw_rect(Rect2(-3, -30, 5, 6), Color(1.0, 0.82, 0.4, flick))
-		_over.draw_rect(Rect2(-6, -15, 12, 13), Color("4a3222"))  # a door at the foot of the tower
-		_over.draw_rect(Rect2(-5, -14, 10, 12), Color("6a4628"))
-		_over.draw_circle(Vector2(2.5, -8), 0.8, Color("c9a46a"))
+	if look == "inkworks" and lv > 0 and SMOKE.has("%s_%d" % [look, lv]):
+		_draw_smoke(SMOKE["%s_%d" % [look, lv]])
 	# Name board: only while the player stands at the plot or it is being built (no always-on labels on the map,
 	# docs/ART_STYLE.md); the interaction prompt names it too.
 	var label: String = String(b.get("name", id)).to_upper()

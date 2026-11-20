@@ -8,7 +8,7 @@ extends Control
 ## Esc: skip the rest of the conversation.
 ##
 ## play("talk_id") plays a conversation from data/dialogue.json; play_lines([...]) plays any lines.
-## Portraits come from Dialogue.portrait (assets/portraits/), with a drawn bust as placeholder.
+## Portraits come from Dialogue.portrait (assets/portraits/); a letter read aloud stands as a sheet of paper.
 
 signal finished(id: String)
 
@@ -165,7 +165,7 @@ func _draw() -> void:
 		var r: Rect2 = rects[side]
 		if not talking:
 			r = r.grow_individual(-8, -12, -8, 0)
-		if Dialogue.portrait(who, _exprs[side]) == null:  # placeholder busts get a soft card behind them
+		if Dialogue.portrait(who, _exprs[side]) == null and not Dialogue.is_letter(who):  # safety-net busts get a soft card
 			var card := Rect2(r.position + Vector2(0, r.size.y * 0.12), Vector2(r.size.x, r.size.y * 0.88))
 			draw_rect(card, Color(Dialogue.accent(who).darkened(0.75), 0.85 if talking else 0.5))
 		Dialogue.draw_portrait(self, r, who, _exprs[side], 0.0 if talking else 0.55, side == 0)

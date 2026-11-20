@@ -361,6 +361,8 @@ func _conditions(w: String, c: Dictionary, missions: Dictionary, talks: Dictiona
 		check(talks.has(tid), "%s: talk %s missing" % [w, tid])
 	for rid in c.get("joined", []):
 		check(recruits.has(rid), "%s: recruit %s missing" % [w, rid])
+	for pid in c.get("owns", []):
+		check(_provinces().has(pid), "%s: province %s missing" % [w, pid])
 
 
 func test_sprite_sets_have_their_frames() -> void:
@@ -378,3 +380,72 @@ func test_maps_load() -> void:
 		if f.ends_with(".txt"):
 			var text := FileAccess.get_file_as_string("res://maps/" + f)
 			check(text.strip_edges() != "", "maps/%s is empty" % f)
+
+
+# ------------------------------------------------------------------ finished art and text (issue #111)
+
+## Everyone who can speak has a portrait, so the code-drawn safety-net bust never shows. Letters read
+## aloud ("stage": "letter") stand on stage as a sheet of paper instead.
+func test_every_speaker_has_a_portrait() -> void:
+	var speakers := {}
+	speakers.merge(D["dialogue.json"]["speakers"])
+	speakers.merge(D["story.json"]["speakers"])
+	for id in _recruits():
+		speakers[id] = {}
+	for id in speakers:
+		if str(speakers[id].get("stage", "")) == "letter":
+			continue
+		check(_res("res://assets/portraits/%s.png" % id), "speaker %s: no portrait assets/portraits/%s.png" % [id, id])
+
+
+## Every building has an art pass sprite for every level, and the Command Table has its sprite.
+func test_every_building_level_has_art() -> void:
+	var looks: Dictionary = load("res://scripts/building_site.gd").get_script_constant_map()["LOOKS"]
+	for b in D["buildings.json"]["buildings"]:
+		var look := str(b.get("look", ""))
+		if look == "table":
+			check(_res("res://assets/props/command_table.png"), "buildings.json %s: no assets/props/command_table.png" % b["id"])
+			continue
+		check(looks.has(look), "buildings.json %s: look %s has no collision box in building_site.gd" % [b["id"], look])
+		for lv in range(1, b.get("levels", []).size() + 1):
+			var p := "res://assets/buildings/%s_%d.png" % [look, lv]
+			check(_res(p), "buildings.json %s: level %d has no art %s" % [b["id"], lv, p])
+
+
+const UNFINISHED := "(?i)\\bMVP\\b|placeholder|later update|coming soon|not implemented|lorem ipsum|\\bTODO\\b|\\bTBD\\b"
+
+
+func _scan_text(where: String, v, re: RegEx) -> void:
+	match typeof(v):
+		TYPE_STRING:
+			var m := re.search(v)
+			check(m == null, "%s: unfinished text '%s' in \"%s\"" % [where, m.get_string() if m else "", v.left(80)])
+		TYPE_ARRAY:
+			for i in v.size():
+				_scan_text(where, v[i], re)
+		TYPE_DICTIONARY:
+			for k in v:
+				if not str(k).begins_with("_"):  # _comment keys are notes for us, not for players
+					_scan_text("%s.%s" % [where, k], v[k], re)
+
+
+## No player-facing text says placeholder, MVP, "later update" and the like: in data/ (all values but
+## _comment notes) and in string literals in scripts/ (comments are notes for us and are skipped).
+func test_no_unfinished_text() -> void:
+	var re := RegEx.create_from_string(UNFINISHED)
+	for f in D:
+		_scan_text(f, D[f], re)
+	var lit := RegEx.create_from_string("\"(?:[^\"\\\\]|\\\\.)*\"")
+	for f in DirAccess.get_files_at("res://scripts/"):
+		if not f.ends_with(".gd"):
+			continue
+		var n := 0
+		for line in FileAccess.get_file_as_string("res://scripts/" + f).split("\n"):
+			n += 1
+			var code := line.strip_edges()
+			if code.begins_with("#"):
+				continue
+			for m in lit.search_all(line):
+				var s := m.get_string()
+				var bad := re.search(s)
+				check(bad == null, "scripts/%s:%d: unfinished text '%s' in %s" % [f, n, bad.get_string() if bad else "", s.left(80)])
