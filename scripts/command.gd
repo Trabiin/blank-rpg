@@ -2,14 +2,19 @@ extends Control
 ## The Command Table: the territory map of the Inklands, a panel for the selected province,
 ## and the day clock (which only runs while this scene is open and unpaused).
 ##
-## The map is rasterised from Territory at half resolution and shown at 2x, so it reads as
-## pixel art. Owner colours, borders, the Blank's whitening (Fray) and roads are all baked or
-## drawn in code. Keyboard, gamepad, mouse and touch all select provinces.
+## The map is the painted Inklands (assets/ui/map_painted.jpg) with the provinces rasterised from
+## Territory over it as translucent washes: owner colours, borders, the Blank's whitening (Fray)
+## and the fog over regions the story has not opened yet (issue #53). Roads and labels are drawn
+## in code. The map pans and zooms (wheel, drag, pinch, + and -, the right stick, the buttons in
+## its corner) and follows the selection. Keyboard, gamepad, mouse and touch all select provinces.
 
 const TITLE_SCENE := "res://scenes/title.tscn"
-const CELL := 2  # screen pixels per map cell
 const MAP_ORIGIN := Vector2(4, 22)
+const MAP_VIEW := Vector2(428, 332)  # the map's window on screen; the world inside pans and zooms
 const MAP_CELLS := Empire.MAP_CELLS
+const ZOOM_MAX := 3.2  # screen pixels per map cell, fully zoomed in
+const ZOOM_READ := 1.5  # below this the map shows region names over province names
+const FOG := Color("cfc6b4")
 const AUTOSAVE_EVERY := 60.0
 const PANEL_X := 440.0
 
@@ -74,6 +79,21 @@ const NewcomersView := preload("res://scripts/newcomers_view.gd")
 var newcomers_view
 var party_picker  # party_picker.gd: who goes on the mission
 var autosave_t := AUTOSAVE_EVERY
+var fog_tex: ImageTexture  # mist over the regions the story has not opened (issue #53)
+var _cv: CanvasItem = self  # what the draw helpers draw on: this, the clipped map canvas or the overlay
+var map_clip: Control  # clips everything drawn on the map to its window
+var map_canvas: Control
+var overlay: Control  # buttons, legend, panel and toasts, drawn over the map
+# Camera: `cam` is the map cell at the centre of the window, `zoom` screen pixels per cell.
+var zoom := 2.0
+var cam := Vector2.ZERO
+var zoom_to := 2.0
+var cam_to := Vector2.ZERO
+var drag_from := Vector2.INF  # where a mouse or one-finger drag started (screen)
+var drag_cam := Vector2.ZERO
+var dragged := false  # moved far enough to count as a pan, not a tap
+var touches := {}  # touch index -> position, for pinch zoom
+var pinch_d := 0.0
 
 
 func _ready() -> void:
@@ -89,8 +109,41 @@ func _ready() -> void:
 	Empire.ledger_settled.connect(_on_ledger_settled)
 	Empire.notice.connect(_on_notice)
 	Empire.hollowmark_lost.connect(_on_hollowmark_lost)
-	add_child(preload("res://scripts/blank_watch.gd").new())  # the Blank's creep, made visible (issue #33)
-	add_child(_alert_tray())  # alerts with "go there", map markers and the pinned story goal (issue #22)
+	Empire.region_opened.connect(_on_region_opened)
+	# The map: a clipped window. Inside it, a full-screen layer, so everything drawn there uses
+	# screen coordinates and anything outside the window is cut off.
+	map_clip = Control.new()
+	map_clip.clip_contents = true
+	map_clip.position = MAP_ORIGIN
+	map_clip.size = MAP_VIEW
+	map_clip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(map_clip)
+	var inner := Control.new()
+	inner.position = -MAP_ORIGIN
+	inner.size = Vector2(1280, 720)
+	inner.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	map_clip.add_child(inner)
+	var paint_canvas := Control.new()  # the painting and the fog, smoothly filtered
+	paint_canvas.set_anchors_preset(Control.PRESET_FULL_RECT)
+	paint_canvas.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	paint_canvas.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	inner.add_child(paint_canvas)
+	paint_canvas.draw.connect(_draw_paint.bind(paint_canvas))
+	map_canvas = Control.new()  # washes, borders, roads and labels, crisp pixels
+	map_canvas.set_anchors_preset(Control.PRESET_FULL_RECT)
+	map_canvas.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	inner.add_child(map_canvas)
+	map_canvas.draw.connect(_draw_map.bind(map_canvas))
+	var watch := preload("res://scripts/blank_watch.gd").new()  # the Blank's creep, made visible (issue #33)
+	watch.cmd = self
+	inner.add_child(watch)
+	inner.add_child(_alert_tray())  # alerts with "go there", map markers and the pinned story goal (issue #22)
+	overlay = Control.new()
+	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(overlay)
+	overlay.draw.connect(_draw_overlay.bind(overlay))
+	frame_regions(Empire.regions_open, true)
 
 	var roster_layer := CanvasLayer.new()
 	roster_layer.layer = 4
@@ -166,6 +219,12 @@ func _on_day_passed(d: int) -> void:
 	toast_t = 3.5 if toast2 == "" else 5.0
 
 
+## The story opened a region: lift its fog and fly the camera over to it.
+func _on_region_opened(rid: String) -> void:
+	_bake()
+	frame_regions([rid])
+
+
 func _on_notice(_text: String, _warning: bool) -> void:
 	pass  # notices now live in Alerts and show in the alert tray (issue #22)
 
@@ -176,7 +235,7 @@ func _alert_tray() -> Control:
 	var tray := preload("res://scripts/alert_tray.gd").new()
 	tray.host = self
 	tray.on_map = true
-	tray.origin = MAP_ORIGIN + Vector2(4, MAP_CELLS.y * CELL - 16)  # stacks up from just above the legend
+	tray.origin = MAP_ORIGIN + Vector2(4, MAP_VIEW.y - 16)  # stacks up from just above the legend
 	tray.grow_up = true
 	tray.width = 270.0
 	return tray
@@ -199,6 +258,7 @@ func alert_go(target: Dictionary) -> void:
 		if p.is_empty():
 			return
 		selected = p["index"]
+		_follow(selected, true)
 		var mid: String = target.get("mission", "")
 		if mid != "":
 			for m in Missions.list_for_province(p["id"]):
@@ -357,12 +417,101 @@ func _notification(what: int) -> void:
 			autosave()
 
 
+## The map's window on screen.
 func _map_rect() -> Rect2:
-	return Rect2(MAP_ORIGIN, Vector2(MAP_CELLS * CELL))
+	return Rect2(MAP_ORIGIN, MAP_VIEW)
+
+
+## Where the whole world lands on screen at the current pan and zoom.
+func _world_rect() -> Rect2:
+	return Rect2(_cell_to_screen(Vector2.ZERO), Vector2(MAP_CELLS) * zoom)
+
+
+func _cell_to_screen(c: Vector2) -> Vector2:
+	return MAP_ORIGIN + MAP_VIEW / 2.0 + (c - cam) * zoom
+
+
+func _screen_to_cell(pos: Vector2) -> Vector2:
+	return (pos - MAP_ORIGIN - MAP_VIEW / 2.0) / zoom + cam
 
 
 func _province_screen_pos(p: Dictionary) -> Vector2:
-	return MAP_ORIGIN + (p["center"] as Vector2) * Vector2(MAP_CELLS * CELL)
+	return _cell_to_screen((p["center"] as Vector2) * Vector2(MAP_CELLS))
+
+
+# ---------------------------------------------------------------- camera (issue #53)
+
+## Zoomed all the way out, the whole Inklands fits the window.
+func zoom_min() -> float:
+	return minf(MAP_VIEW.x / MAP_CELLS.x, MAP_VIEW.y / MAP_CELLS.y)
+
+
+## Keeps the camera over the world: no panning off into nothing. A world smaller than the window
+## (zoomed out) sits in its middle.
+func _clamp_cam(c: Vector2, z: float) -> Vector2:
+	var half := MAP_VIEW / 2.0 / z
+	var out := c
+	for a in 2:
+		if half[a] * 2.0 >= MAP_CELLS[a]:
+			out[a] = MAP_CELLS[a] / 2.0
+		else:
+			out[a] = clampf(c[a], half[a], MAP_CELLS[a] - half[a])
+	return out
+
+
+## Fits the camera round the given regions (all of them when the list is empty).
+func frame_regions(ids: Array, instant := false) -> void:
+	var box := Rect2()
+	for r in territory.regions:
+		if ids.is_empty() or r["id"] in ids:
+			box = r["frame"] if box.size == Vector2.ZERO else box.merge(r["frame"])
+	if box.size == Vector2.ZERO:
+		box = Rect2(Vector2.ZERO, Vector2(MAP_CELLS))
+	zoom_to = clampf(minf(MAP_VIEW.x / box.size.x, MAP_VIEW.y / box.size.y), zoom_min(), 2.2)
+	cam_to = _clamp_cam(box.get_center(), zoom_to)
+	if instant:
+		zoom = zoom_to
+		cam = cam_to
+
+
+## Zooms by `f`, keeping the map point under `at` (screen) where it is.
+func zoom_by(f: float, at := Vector2.INF) -> void:
+	if at == Vector2.INF:
+		at = MAP_ORIGIN + MAP_VIEW / 2.0
+	var anchor := _screen_to_cell(at)
+	var nz := clampf(zoom_to * f, zoom_min(), ZOOM_MAX)
+	# Solve for the camera that keeps `anchor` under `at` at the new zoom.
+	cam_to = _clamp_cam(anchor - (at - MAP_ORIGIN - MAP_VIEW / 2.0) / nz, nz)
+	zoom_to = nz
+	if at != MAP_ORIGIN + MAP_VIEW / 2.0:
+		zoom = zoom_to  # wheel and pinch zoom track the pointer exactly
+		cam = cam_to
+
+
+## Pans so a province is well inside the window (keyboard, gamepad and "go there" selection).
+func _follow(i: int, centre := false) -> void:
+	if i < 0:
+		return
+	var pos := _province_screen_pos(territory.provinces[i])
+	var inner := _map_rect().grow(-48.0)
+	if centre or not inner.has_point(pos):
+		cam_to = _clamp_cam((territory.provinces[i]["center"] as Vector2) * Vector2(MAP_CELLS), zoom_to)
+
+
+func _process_camera(delta: float) -> void:
+	var k := 1.0 - exp(-delta * 9.0)
+	zoom = lerpf(zoom, zoom_to, k)
+	cam = cam.lerp(cam_to, k)
+	if absf(zoom - zoom_to) < 0.002:
+		zoom = zoom_to
+	if cam.distance_to(cam_to) < 0.05:
+		cam = cam_to
+	cam = _clamp_cam(cam, zoom)
+
+
+## The zoom buttons in the map's top-left corner: in, out, whole map.
+func _zoom_button_rect(i: int) -> Rect2:
+	return Rect2(MAP_ORIGIN + Vector2(6 + i * 19, 20), Vector2(17, 15))
 
 
 # ---------------------------------------------------------------- baking
@@ -377,10 +526,14 @@ func _sea_dist(x: int, y: int) -> int:
 	return 9
 
 
-func _bake() -> void:
+var _cells := {}  # per-cell values that never change, worked out by the first bake (see _bake_static)
+
+
+## Noise and borders per map cell. The grid never changes, so this runs once per scene and keeps the
+## daily re-bake cheap (it runs at every dawn).
+func _bake_static() -> void:
 	var w := MAP_CELLS.x
 	var h := MAP_CELLS.y
-	var img := Image.create(w, h, false, Image.FORMAT_RGBA8)
 	var grain := FastNoiseLite.new()
 	grain.seed = 3
 	grain.frequency = 0.09
@@ -388,7 +541,10 @@ func _bake() -> void:
 	patch.seed = 11
 	patch.frequency = 0.06
 	patch.fractal_octaves = 2
-	# Bounding boxes, so Fray can whiten each province from its eastern (Blank-facing) side.
+	var mist := FastNoiseLite.new()
+	mist.seed = 23
+	mist.frequency = 0.03
+	mist.fractal_octaves = 4
 	var minx := []
 	var maxx := []
 	for p in territory.provinces:
@@ -400,67 +556,158 @@ func _bake() -> void:
 			if r >= 0:
 				minx[r] = minf(minx[r], x)
 				maxx[r] = maxf(maxx[r], x)
+	var g := PackedFloat32Array()
+	var n := PackedFloat32Array()
+	var m := PackedFloat32Array()
+	var east := PackedFloat32Array()
+	var flags := PackedByteArray()  # 1 = province border, 2 = region border, 4 = the Blank's wall
+	g.resize(w * h)
+	n.resize(w * h)
+	m.resize(w * h)
+	east.resize(w * h)
+	flags.resize(w * h)
+	for y in h:
+		# The Blank itself: a wobbling wall of paper down the far east edge, over land and sea.
+		var edge := Territory.wall_x(y, h)
+		for x in w:
+			var i := y * w + x
+			var r := territory.cell(x, y)
+			g[i] = grain.get_noise_2d(x, y)
+			var f := 4 if float(x) / w > edge else 0
+			if r >= 0:
+				n[i] = (patch.get_noise_2d(x, y) + 1.0) * 0.5
+				# Clouds of mist: mostly thin, thick in drifts, so the painting peeks through the fog.
+				m[i] = clampf((mist.get_noise_2d(x, y) + 0.35) * 1.4, 0.0, 1.0)
+				east[i] = (x - float(minx[r])) / maxf(float(maxx[r]) - float(minx[r]), 1.0)
+				if _is_border(x, y, r):
+					f |= 1
+				if _is_region_border(x, y, r):
+					f |= 2
+			flags[i] = f
+	_cells = {"g": g, "n": n, "m": m, "east": east, "flags": flags}
+
+
+func _bake() -> void:
+	if _cells.is_empty():
+		_bake_static()
+	var w := MAP_CELLS.x
+	var h := MAP_CELLS.y
+	var g: PackedFloat32Array = _cells["g"]
+	var nz: PackedFloat32Array = _cells["n"]
+	var mz: PackedFloat32Array = _cells["m"]
+	var east: PackedFloat32Array = _cells["east"]
+	var flags: PackedByteArray = _cells["flags"]
+	var px := PackedByteArray()
+	px.resize(w * h * 4)
+	var fog := PackedByteArray()
+	fog.resize(w * h * 4)
+	# What each province looks like today.
+	var open := []
+	var wash := []
+	var fray := []
+	var erased := []
+	for p in territory.provinces:
+		open.append(Empire.province_open(p))
+		wash.append(owner_color(p["owner"]))
+		fray.append(float(p["fray"]) / 100.0)
+		erased.append(p["owner"] == "erased")
 	outlines = []
 	for p in territory.provinces:
 		outlines.append(PackedVector2Array())
 	var white := PackedByteArray()
 	white.resize(w * h)
+	var border := Color(BORDER_COLOR, 0.8) if painted_tex else BORDER_COLOR
 	for y in h:
 		for x in w:
+			var i := y * w + x
 			var r := territory.cell(x, y)
-			var g := grain.get_noise_2d(x, y)
-			var col: Color
+			var f := flags[i]
+			var col := Color(0, 0, 0, 0)
 			var is_white := false
-			# The Blank itself: a wobbling wall of paper down the far east edge, over land and sea.
-			var edge := 0.94 + sin(y * 0.11) * 0.012 + sin(y * 0.031 + 1.0) * 0.02
-			if float(x) / w > edge:
+			if f & 4:
 				col = PAPER
 				is_white = true
 			elif r == territory.SEA:
-				# Inked parchment (Phase 8 stand-in for a painted map): the sea is a darker wash with wave hatching,
-				# and a ring of ripple lines along each coast.
-				# The painted map shows through at sea; without it, fall back to the inked parchment.
-				if painted_tex:
-					col = Color(0, 0, 0, 0)
-				else:
+				if not painted_tex:  # no painting: the inked parchment sea
 					var coast := _sea_dist(x, y)
-					col = SEA_PARCH.darkened(0.06 * g)
+					col = SEA_PARCH.darkened(0.06 * g[i])
 					if coast > 5 and int(y + sin(x * 0.3) * 1.5) % 10 == 0 and (x / 4 + y / 10) % 4 == 0:
 						col = SEA_INK  # short wave dashes out at sea
 					if coast == 2 and (x + y) % 2 == 0:
 						col = SEA_INK  # a dotted ripple along the shore
-			elif false:
-				pass
+			elif not open[r]:
+				# Beyond the fog: no wash, the painting shows through the drifting mist layer.
+				var m := mz[i]
+				var fc := FOG.lightened(0.1 * m)
+				var o := i * 4
+				fog[o] = int(fc.r8)
+				fog[o + 1] = int(fc.g8)
+				fog[o + 2] = int(fc.b8)
+				fog[o + 3] = int(255.0 * (0.3 + 0.62 * m))
+				if f & 2:
+					col = Color(BORDER_COLOR, 0.55)
+				if f & 1:
+					outlines[r].append(Vector2(x, y))  # fogged provinces still highlight when picked
 			else:
-				var p: Dictionary = territory.provinces[r]
-				var fray: float = float(p["fray"]) / 100.0
-				var east := (x - float(minx[r])) / maxf(float(maxx[r]) - float(minx[r]), 1.0)
-				var n := (patch.get_noise_2d(x, y) + 1.0) * 0.5
-				if p["owner"] == "erased" or fray >= 1.0 or fray > (1.0 - east) * 0.75 + n * 0.45:
-					col = PAPER.darkened(0.05 if g > 0.3 else 0.0)
+				var fr: float = fray[r]
+				var gg := g[i]
+				if erased[r] or fr >= 1.0 or fr > (1.0 - east[i]) * 0.75 + nz[i] * 0.45:
+					col = PAPER.darkened(0.05 if gg > 0.3 else 0.0)
 					is_white = true
 				else:
-					# A watercolour wash of the owner's colour over the parchment, mottled by the grain.
-					col = LAND_PARCH.lerp(OWNER_COLORS[p["owner"]], 0.62 + g * 0.12)
-					# Fray also drains colour from the whole province, like the field shader does.
-					var grey := col.get_luminance()
-					col = col.lerp(Color(grey, grey, grey), fray * 0.6)
+					var oc: Color = wash[r]
 					if painted_tex:
 						# A translucent wash of the owner's colour over the painting; unclaimed land stays bare.
-						col = OWNER_COLORS[p["owner"]].lerp(Color(grey, grey, grey), fray * 0.6)
-						col.a = 0.1 if p["owner"] == "free" else 0.34 + g * 0.06
-				if _is_border(x, y, r):
-					col = Color(BORDER_COLOR, 0.8) if painted_tex else BORDER_COLOR
+						var lum := LAND_PARCH.lerp(oc, 0.62 + gg * 0.12).get_luminance()
+						col = oc.lerp(Color(lum, lum, lum), fr * 0.6)
+						col.a = 0.1 if territory.provinces[r]["owner"] == "free" else 0.34 + gg * 0.06
+					else:
+						# A watercolour wash of the owner's colour over the parchment, mottled by the grain;
+						# Fray drains colour from the whole province, like the field shader does.
+						col = LAND_PARCH.lerp(oc, 0.62 + gg * 0.12)
+						var grey := col.get_luminance()
+						col = col.lerp(Color(grey, grey, grey), fr * 0.6)
+				if f & 1:
+					col = border
 					is_white = false
 					outlines[r].append(Vector2(x, y))
-			img.set_pixel(x, y, col)
-			white[y * w + x] = 1 if is_white else 0
+			var o2 := i * 4
+			px[o2] = int(col.r8)
+			px[o2 + 1] = int(col.g8)
+			px[o2 + 2] = int(col.b8)
+			px[o2 + 3] = int(col.a8)
+			white[i] = 1 if is_white else 0
 	blank_edge = PackedVector2Array()
 	for y in range(1, h - 1):
 		for x in range(1, w - 1):
 			if white[y * w + x] == 1 and (white[y * w + x - 1] == 0 or white[y * w + x + 1] == 0 or white[(y - 1) * w + x] == 0 or white[(y + 1) * w + x] == 0):
 				blank_edge.append(Vector2(x, y))
-	map_tex = ImageTexture.create_from_image(img)
+	map_tex = ImageTexture.create_from_image(Image.create_from_data(w, h, false, Image.FORMAT_RGBA8, px))
+	fog_tex = ImageTexture.create_from_image(Image.create_from_data(w, h, false, Image.FORMAT_RGBA8, fog))
+
+
+## Under the fog only the outline of the region shows, not its provinces.
+func _is_region_border(x: int, y: int, r: int) -> bool:
+	var rid: String = territory.provinces[r]["region"]
+	for o in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+		var c := territory.cell(x + o.x, y + o.y)
+		if c >= 0 and territory.provinces[c]["region"] != rid:
+			return true
+	return false
+
+
+## The wash colour for an owner: yours, unclaimed, erased, or the faction's own colour.
+func owner_color(owner: String) -> Color:
+	if OWNER_COLORS.has(owner):
+		return OWNER_COLORS[owner]
+	var c = Empire.faction(owner).get("color", "")
+	return Color(str(c)) if str(c) != "" else Color("7a6a8a")
+
+
+func owner_name(owner: String) -> String:
+	if OWNER_NAMES.has(owner):
+		return OWNER_NAMES[owner]
+	return str(Empire.faction(owner).get("name", owner.capitalize()))
 
 
 func _is_border(x: int, y: int, r: int) -> bool:
@@ -485,7 +732,11 @@ func _process(delta: float) -> void:
 	if autosave_t <= 0.0:
 		autosave_t = AUTOSAVE_EVERY
 		autosave()
+	_process_camera(delta)
 	queue_redraw()
+	for c in map_canvas.get_parent().get_children():
+		(c as CanvasItem).queue_redraw()
+	overlay.queue_redraw()
 	var frame := Engine.get_process_frames()
 	if frame == menu_closed_frame or roster_view.visible or frame == roster_view.closed_frame \
 			or buildings_view.visible or frame == buildings_view.closed_frame \
@@ -534,6 +785,16 @@ func _process(delta: float) -> void:
 		Empire.set_speed(Empire.speed + 1)
 	if Input.is_action_just_pressed("ledger"):
 		show_ledger = not show_ledger
+	if Input.is_action_just_pressed("map_zoom_in"):
+		zoom_by(1.4)
+	elif Input.is_action_just_pressed("map_zoom_out"):
+		zoom_by(1.0 / 1.4)
+	elif Input.is_action_just_pressed("map_zoom_toggle"):
+		_toggle_fit()
+	var pan := Input.get_vector("map_pan_left", "map_pan_right", "map_pan_up", "map_pan_down")
+	if pan != Vector2.ZERO:
+		cam_to = _clamp_cam(cam_to + pan * delta * 260.0 / zoom, zoom_to)
+		cam = _clamp_cam(cam.lerp(cam_to, 0.5), zoom)
 	var dir := Vector2.ZERO
 	if Input.is_action_just_pressed("move_left") or Input.is_action_just_pressed("ui_left"):
 		dir = Vector2.LEFT
@@ -545,6 +806,7 @@ func _process(delta: float) -> void:
 		dir = Vector2.DOWN
 	if dir != Vector2.ZERO:
 		_step(dir)
+		_follow(selected)
 	if Input.is_action_just_pressed("ui_accept"):
 		_activate(selected)
 	elif Input.is_action_just_pressed("ui_cancel") or Input.is_action_just_pressed("pause"):
@@ -552,12 +814,24 @@ func _process(delta: float) -> void:
 
 
 ## Moves the selection to the best province in a direction: close, and roughly that way.
+## Fogged regions count as one stop each (their middle province), so the stick does not wander
+## through provinces nobody can use yet.
 func _step(dir: Vector2) -> void:
 	var from: Vector2 = territory.provinces[selected]["center"]
 	var best := -1
 	var best_score := 1e9
+	var stops := {}
+	for r in territory.regions:
+		if Empire.region_open(r["id"]):
+			continue
+		var mid: Vector2 = (r["bounds"] as Rect2).get_center() / Vector2(MAP_CELLS)
+		var near := -1
+		for i in r["provinces"]:
+			if near < 0 or (territory.provinces[i]["center"] as Vector2).distance_to(mid) < (territory.provinces[near]["center"] as Vector2).distance_to(mid):
+				near = i
+		stops[near] = true
 	for p in territory.provinces:
-		if p["index"] == selected:
+		if p["index"] == selected or not (Empire.province_open(p) or stops.has(p["index"])):
 			continue
 		var d: Vector2 = (p["center"] as Vector2) - from
 		var cosang := d.normalized().dot(dir)
@@ -575,42 +849,150 @@ func _gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:
 		hovered = _province_at(event.position)
 		ledger_hover = _res_rect().has_point(event.position)
-	elif Prompts.tapped(event):
-		var i := _province_at(event.position)
-		if i >= 0:
-			if i == selected:
-				_activate(i)  # second tap on the selected province plays its mission
-			selected = i
-		elif _governor_button_rect().has_point(event.position) and _can_govern(selected):
-			_open_governor()
-		elif _play_rect().has_point(event.position):
-			_activate(selected)
-		elif _roster_button_rect().has_point(event.position):
-			roster_view.open()
-		elif _buildings_button_rect().has_point(event.position):
-			buildings_view.open()
-		elif _expeditions_button_rect().has_point(event.position):
-			expedition_view.open()
-		elif _research_button_rect().has_point(event.position):
-			research_view.open()
-		elif _diplomacy_button_rect().has_point(event.position):
-			diplomacy_view.open()
-		elif _town_button_rect().has_point(event.position):
-			_leave(Saves.HUB_SCENE)
-		elif _res_rect().has_point(event.position):
-			show_ledger = not show_ledger
-		elif _menu_button_rect().has_point(event.position):
-			_open_menu()
+		if drag_from != Vector2.INF:
+			_drag_to(event.position)
+		return
+	if event is InputEventMouseButton:
+		var pos: Vector2 = event.position
+		if event.pressed and event.button_index in [MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN]:
+			if _map_rect().has_point(pos):
+				zoom_by(1.15 if event.button_index == MOUSE_BUTTON_WHEEL_UP else 1.0 / 1.15, pos)
+				accept_event()
+			return
+		if event.button_index in [MOUSE_BUTTON_MIDDLE, MOUSE_BUTTON_RIGHT]:
+			if event.pressed and _map_rect().has_point(pos):
+				_drag_start(pos)
+				dragged = true  # these buttons only ever pan
+			elif not event.pressed:
+				drag_from = Vector2.INF
+			return
+		if event.button_index == MOUSE_BUTTON_LEFT and not event.pressed:
+			_release(pos)
+			return
+	if event is InputEventScreenDrag:
+		touches[event.index] = event.position
+		if touches.size() >= 2:
+			var ks := touches.keys()
+			var a: Vector2 = touches[ks[0]]
+			var b: Vector2 = touches[ks[1]]
+			var d := a.distance_to(b)
+			if pinch_d > 0.0:
+				zoom_by(d / pinch_d, (a + b) / 2.0)
+			pinch_d = d
+		elif drag_from != Vector2.INF:
+			_drag_to(event.position)
+		return
+	if event is InputEventScreenTouch:
+		if event.pressed:
+			touches[event.index] = event.position
+			if touches.size() >= 2:  # a second finger: pinch, and the first finger's tap is off
+				var ks := touches.keys()
+				pinch_d = (touches[ks[0]] as Vector2).distance_to(touches[ks[1]])
+				dragged = true
+				return
 		else:
-			for sp in Empire.SPEEDS.size():
-				if _speed_rect(sp).has_point(event.position):
-					Empire.set_speed(sp)
+			touches.erase(event.index)
+			pinch_d = 0.0
+			if touches.is_empty():
+				_release(event.position)
+			return
+	if not Prompts.tapped(event):
+		return
+	var tp: Vector2 = event.position
+	var zb := _zoom_button_at(tp)
+	if zb >= 0:
+		match zb:
+			0: zoom_by(1.4)
+			1: zoom_by(1.0 / 1.4)
+			2: _toggle_fit()
+		return
+	if _map_rect().has_point(tp) and not _over_map_buttons(tp):
+		_drag_start(tp)  # the tap happens on release, unless the pointer moved: then it was a pan
+		return
+	if _governor_button_rect().has_point(tp) and _can_govern(selected):
+		_open_governor()
+	elif _play_rect().has_point(tp):
+		_activate(selected)
+	elif _roster_button_rect().has_point(tp):
+		roster_view.open()
+	elif _buildings_button_rect().has_point(tp):
+		buildings_view.open()
+	elif _expeditions_button_rect().has_point(tp):
+		expedition_view.open()
+	elif _research_button_rect().has_point(tp):
+		research_view.open()
+	elif _diplomacy_button_rect().has_point(tp):
+		diplomacy_view.open()
+	elif _town_button_rect().has_point(tp):
+		_leave(Saves.HUB_SCENE)
+	elif _res_rect().has_point(tp):
+		show_ledger = not show_ledger
+	elif _menu_button_rect().has_point(tp):
+		_open_menu()
+	else:
+		for sp in Empire.SPEEDS.size():
+			if _speed_rect(sp).has_point(tp):
+				Empire.set_speed(sp)
+
+
+## The screen buttons that sit over the map's top edge.
+func _over_map_buttons(pos: Vector2) -> bool:
+	for r in [_roster_button_rect(), _buildings_button_rect(), _town_button_rect(), _expeditions_button_rect(),
+			_research_button_rect(), _diplomacy_button_rect()]:
+		if (r as Rect2).has_point(pos):
+			return true
+	return false
+
+
+func _zoom_button_at(pos: Vector2) -> int:
+	for i in 3:
+		if _zoom_button_rect(i).has_point(pos):
+			return i
+	return -1
+
+
+## Whole map <-> the open regions.
+func _toggle_fit() -> void:
+	if zoom_to <= zoom_min() + 0.05:
+		frame_regions(Empire.regions_open)
+	else:
+		zoom_to = zoom_min()
+		cam_to = _clamp_cam(Vector2(MAP_CELLS) / 2.0, zoom_to)
+
+
+func _drag_start(pos: Vector2) -> void:
+	drag_from = pos
+	drag_cam = cam
+	dragged = false
+
+
+func _drag_to(pos: Vector2) -> void:
+	if not dragged and pos.distance_to(drag_from) > 5.0:
+		dragged = true
+	if dragged:
+		cam = _clamp_cam(drag_cam - (pos - drag_from) / zoom, zoom)
+		cam_to = cam
+
+
+## Pointer up on the map: a tap selects (a second tap on the selected province plays its mission).
+func _release(pos: Vector2) -> void:
+	if drag_from == Vector2.INF:
+		return
+	var tap := not dragged
+	drag_from = Vector2.INF
+	if not tap:
+		return
+	var i := _province_at(pos)
+	if i >= 0:
+		if i == selected:
+			_activate(i)
+		selected = i
 
 
 func _province_at(pos: Vector2) -> int:
 	if not _map_rect().has_point(pos):
 		return -1
-	var c := ((pos - MAP_ORIGIN) / CELL).floor()
+	var c := _screen_to_cell(pos).floor()
 	return territory.cell(int(c.x), int(c.y))
 
 
@@ -619,6 +1001,8 @@ func _mission(i: int) -> Dictionary:
 
 
 func _activate(i: int) -> void:
+	if not Empire.province_open(territory.provinces[i]):
+		return
 	var m := _mission(i)
 	if not m.is_empty():
 		_open_brief(m)
@@ -699,7 +1083,7 @@ func _open_governor() -> void:
 
 ## The governor screen opens for your provinces and for unclaimed ones (to claim them).
 func _can_govern(i: int) -> bool:
-	return territory.provinces[i]["owner"] in ["you", "free"]
+	return territory.provinces[i]["owner"] in ["you", "free"] and Empire.province_open(territory.provinces[i])
 
 
 var _gov_button_y := -100.0  # set while drawing the panel
@@ -710,7 +1094,7 @@ func _governor_button_rect() -> Rect2:
 
 
 func _roster_button_rect() -> Rect2:
-	return Rect2(Vector2(MAP_ORIGIN.x + MAP_CELLS.x * CELL - 74, MAP_ORIGIN.y + 4), Vector2(70, 16))
+	return Rect2(Vector2(MAP_ORIGIN.x + MAP_VIEW.x - 74, MAP_ORIGIN.y + 4), Vector2(70, 16))
 
 
 func _buildings_button_rect() -> Rect2:
@@ -756,8 +1140,8 @@ func _play_rect() -> Rect2:
 
 func _text(pos: Vector2, s: String, fsize: int, col: Color, outline := 0) -> void:
 	if outline > 0:
-		draw_string_outline(font, pos, s, HORIZONTAL_ALIGNMENT_LEFT, -1, fsize, outline, Color(0, 0, 0, 0.85 * col.a))
-	draw_string(font, pos, s, HORIZONTAL_ALIGNMENT_LEFT, -1, fsize, col)
+		_cv.draw_string_outline(font, pos, s, HORIZONTAL_ALIGNMENT_LEFT, -1, fsize, outline, Color(0, 0, 0, 0.85 * col.a))
+	_cv.draw_string(font, pos, s, HORIZONTAL_ALIGNMENT_LEFT, -1, fsize, col)
 
 
 func _text_c(center: Vector2, s: String, fsize: int, col: Color, outline := 0) -> void:
@@ -772,36 +1156,59 @@ func _k(action: String) -> String:
 
 
 func _draw() -> void:
-	var vs := size
-	draw_rect(Rect2(Vector2.ZERO, vs), Color("0e0b12"))
-	# Map
+	_cv = self
+	draw_rect(Rect2(Vector2.ZERO, size), Color("0e0b12"))
 	UiSkin.panel(self, _map_rect().grow(5.0), "ledger")  # brass-cornered frame round the parchment
+	draw_rect(_map_rect(), SEA_PARCH.darkened(0.12))  # open sea past the edge of the world
+
+
+## The painting and the fog over locked regions (smooth filtering).
+func _draw_paint(c: CanvasItem) -> void:
+	var wr := _world_rect()
 	if painted_tex:
-		draw_texture_rect(painted_tex, _map_rect(), false)
-	draw_texture_rect(map_tex, _map_rect(), false)
+		c.draw_texture_rect(painted_tex, wr, false)
+	if fog_tex:
+		# Two layers of the same mist, drifting against each other, so the fog billows.
+		var drift := Vector2(sin(t * 0.13), cos(t * 0.09)) * 2.5 * zoom
+		c.draw_texture_rect(fog_tex, Rect2(wr.position + drift, wr.size), false, Color(1, 1, 1, 0.75))
+		c.draw_texture_rect(fog_tex, Rect2(wr.position - drift * 0.7 + Vector2(0, zoom), wr.size), false, Color(1, 1, 1, 0.55))
+
+
+## Everything else on the map (crisp pixels), clipped to the map's window.
+func _draw_map(c: CanvasItem) -> void:
+	_cv = c
+	_cv.draw_texture_rect(map_tex, _world_rect(), false)
 	_draw_roads()
 	_draw_static()
 	_draw_outline(selected, GOLD)
 	if hovered >= 0 and hovered != selected:
 		_draw_outline(hovered, Color(1, 1, 1, 0.55))
 	_draw_labels()
-	draw_rect(_map_rect(), Color("2a2019"), false, 1.0)
+	_draw_region_names()
+	_cv = self
+
+
+## Buttons, legend, the province panel and toasts, over the map.
+func _draw_overlay(c: CanvasItem) -> void:
+	_cv = c
+	_cv.draw_rect(_map_rect(), Color("2a2019"), false, 1.0)
+	_draw_zoom_buttons()
 	# Top bar
 	_text(MAP_ORIGIN + Vector2(6, 14), "THE INKLANDS", 10, Color(0.85, 0.82, 0.76, 0.8), 3)
 	_draw_resources()
 	_draw_clock()
 	var rb := _roster_button_rect()
-	UiSkin.panel(self, rb, "button")
+	UiSkin.panel(_cv, rb, "button")
 	_text_c(Vector2(rb.get_center().x, rb.position.y + 12), "Roster (%d)" % Empire.recruits.size() + _k("roster"), 9, Color(0.85, 0.82, 0.76))
 	var bb := _buildings_button_rect()
-	UiSkin.panel(self, bb, "button")
+	UiSkin.panel(_cv, bb, "button")
 	var busy := "" if Empire.construction.is_empty() else " *"
 	_text_c(Vector2(bb.get_center().x, bb.position.y + 12), "Buildings%s" % busy + _k("buildings"), 9, GOLD if busy != "" else Color(0.85, 0.82, 0.76))
 	var tb := _town_button_rect()
-	UiSkin.panel(self, tb, "button")
+	UiSkin.panel(_cv, tb, "button")
 	_text_c(Vector2(tb.get_center().x, tb.position.y + 12), "To town", 9, Color(0.85, 0.82, 0.76))
 	var eb := _expeditions_button_rect()
-	UiSkin.panel(self, eb, "button")
+	UiSkin.panel(_cv, eb, "button")
 	var unread := Empire.unread_reports()
 	var out := Empire.expeditions.size()
 	var etext := "Expeditions"
@@ -811,7 +1218,7 @@ func _draw() -> void:
 		etext = "Squads out: %d" % out
 	_text_c(Vector2(eb.get_center().x, eb.position.y + 12), etext + _k("expeditions"), 9, GOLD if unread > 0 else Color(0.85, 0.82, 0.76))
 	var rsb := _research_button_rect()
-	UiSkin.panel(self, rsb, "button")
+	UiSkin.panel(_cv, rsb, "button")
 	var rtext := "Research"
 	var rcol := Color(0.85, 0.82, 0.76)
 	if Empire.research_active != "":
@@ -820,7 +1227,7 @@ func _draw() -> void:
 		rcol = Color(1, 0.55, 0.5) if stalled else Color("d7b8f0")
 	_text_c(Vector2(rsb.get_center().x, rsb.position.y + 12), rtext + _k("research"), 9, rcol)
 	var db := _diplomacy_button_rect()
-	UiSkin.panel(self, db, "button")
+	UiSkin.panel(_cv, db, "button")
 	var dtext := "Diplomacy"
 	var dcol := Color(0.85, 0.82, 0.76)
 	if Empire.surge.get("id", "") != "" and Empire.surge.get("aid", "") == "" and Empire.territory().find(Empire.surge["id"]).get("owner", "") == "you" \
@@ -838,7 +1245,28 @@ func _draw() -> void:
 	if show_ledger or ledger_hover:
 		_draw_ledger()
 	if Empire.SPEEDS[Empire.speed] == 0:
-		_text_c(Vector2(_map_rect().get_center().x, MAP_ORIGIN.y + MAP_CELLS.y * CELL - 24), "TIME PAUSED", 11, Color(1, 1, 1, 0.55 + 0.25 * sin(t * 3.0)), 4)
+		_text_c(Vector2(_map_rect().get_center().x, MAP_ORIGIN.y + MAP_VIEW.y - 24), "TIME PAUSED", 11, Color(1, 1, 1, 0.55 + 0.25 * sin(t * 3.0)), 4)
+	_cv = self
+
+
+func _draw_zoom_buttons() -> void:
+	var labels := ["+", "-", "All" if zoom_to > zoom_min() + 0.05 else "Back"]
+	for i in 3:
+		var r := _zoom_button_rect(i)
+		if i == 2:
+			r.size.x = 30
+		UiSkin.panel(_cv, r, "button")
+		_text_c(Vector2(r.get_center().x, r.position.y + 11), labels[i], 9, Color(0.85, 0.82, 0.76))
+	# How to move the map, for the first moments on the table and whenever the pointer is on the buttons.
+	var near := Rect2(_zoom_button_rect(0).position, Vector2(70, 15)).grow(4.0).has_point(get_local_mouse_position())
+	var a := 1.0 if near else clampf((9.0 - t) / 2.0, 0.0, 1.0)
+	if a > 0.0:
+		var hint := "Wheel or + / - to zoom, drag to pan"
+		if Prompts.touch():
+			hint = "Pinch to zoom, drag to pan"
+		elif Prompts.pad():
+			hint = "Right stick pans, LT zooms"
+		_text(_zoom_button_rect(0).position + Vector2(0, 25), hint, 7, Color(0.9, 0.87, 0.8, 0.85 * a), 3)
 
 
 func _res_rect() -> Rect2:
@@ -849,21 +1277,21 @@ const RES_COLORS := {"gilt": Color("e8c66a"), "supplies": Color("b7c98a"), "ink"
 
 
 func _draw_res_icon(k: String, c: Vector2) -> void:
-	if UiSkin.draw_icon(self, k, Rect2(c - Vector2(6, 6), Vector2(12, 12))):  # art pass icon, else the code-drawn mark
+	if UiSkin.draw_icon(_cv, k, Rect2(c - Vector2(6, 6), Vector2(12, 12))):  # art pass icon, else the code-drawn mark
 		return
 	var col: Color = RES_COLORS[k]
 	match k:
 		"gilt":  # a coin
-			draw_circle(c, 4.0, col)
-			draw_circle(c, 2.0, col.darkened(0.35))
+			_cv.draw_circle(c, 4.0, col)
+			_cv.draw_circle(c, 2.0, col.darkened(0.35))
 		"supplies":  # a sack
-			draw_rect(Rect2(c + Vector2(-3, -2), Vector2(6, 6)), col)
-			draw_rect(Rect2(c + Vector2(-1.5, -4), Vector2(3, 2)), col.darkened(0.3))
+			_cv.draw_rect(Rect2(c + Vector2(-3, -2), Vector2(6, 6)), col)
+			_cv.draw_rect(Rect2(c + Vector2(-1.5, -4), Vector2(3, 2)), col.darkened(0.3))
 		"ink":  # a drop
-			draw_circle(c + Vector2(0, 1), 3.0, col)
-			draw_colored_polygon(PackedVector2Array([c + Vector2(-2.6, 0), c + Vector2(2.6, 0), c + Vector2(0, -5)]), col)
+			_cv.draw_circle(c + Vector2(0, 1), 3.0, col)
+			_cv.draw_colored_polygon(PackedVector2Array([c + Vector2(-2.6, 0), c + Vector2(2.6, 0), c + Vector2(0, -5)]), col)
 		"renown":  # a star-ish diamond
-			draw_colored_polygon(PackedVector2Array([c + Vector2(0, -5), c + Vector2(4, 0), c + Vector2(0, 5), c + Vector2(-4, 0)]), col)
+			_cv.draw_colored_polygon(PackedVector2Array([c + Vector2(0, -5), c + Vector2(4, 0), c + Vector2(0, 5), c + Vector2(-4, 0)]), col)
 
 
 func _draw_resources() -> void:
@@ -891,8 +1319,8 @@ func _draw_resources() -> void:
 func _draw_ledger() -> void:
 	var lines := Empire.ledger()
 	var r := Rect2(Vector2(6, 22), Vector2(300, 54 + 13 * lines.size()))
-	draw_rect(r, Color(0.06, 0.05, 0.08, 0.95))
-	draw_rect(r, Color(0.45, 0.4, 0.48), false, 1.0)
+	_cv.draw_rect(r, Color(0.06, 0.05, 0.08, 0.95))
+	_cv.draw_rect(r, Color(0.45, 0.4, 0.48), false, 1.0)
 	var y := r.position.y + 14
 	_text(Vector2(r.position.x + 8, y), "Daily ledger", 10, Color("f3efe4"))
 	_text(Vector2(r.position.x + 150, y), "Gilt", 8, RES_COLORS["gilt"])
@@ -910,7 +1338,7 @@ func _draw_ledger() -> void:
 			if v != 0:
 				_text(Vector2(r.position.x + cx[i], y), ("+%d" if v > 0 else "%d") % v, 9, Color("9fd18b") if v > 0 else Color("ff8a7a"))
 		y += 13
-	draw_line(Vector2(r.position.x + 8, y - 8), Vector2(r.end.x - 8, y - 8), Color(0.3, 0.27, 0.33))
+	_cv.draw_line(Vector2(r.position.x + 8, y - 8), Vector2(r.end.x - 8, y - 8), Color(0.3, 0.27, 0.33))
 	var net := Empire.daily_net()
 	_text(Vector2(r.position.x + 8, y + 3), "Each dawn", 9, Color("f3efe4"))
 	var cx2 := [150, 182, 226]
@@ -926,29 +1354,30 @@ func _draw_clock() -> void:
 	var x := 236.0
 	var night := Empire.day_t < 0.25 or Empire.day_t > 0.83
 	if night:
-		draw_circle(Vector2(x, 10), 4.0, Color("d8d4e8"))
-		draw_circle(Vector2(x + 2, 9), 3.5, Color("0e0b12"))
+		_cv.draw_circle(Vector2(x, 10), 4.0, Color("d8d4e8"))
+		_cv.draw_circle(Vector2(x + 2, 9), 3.5, Color("0e0b12"))
 	else:
-		draw_circle(Vector2(x, 10), 4.0, GOLD)
+		_cv.draw_circle(Vector2(x, 10), 4.0, GOLD)
 	_text(Vector2(x + 9, 15), "Day %d" % Empire.day, 11, Color("ece6da"))
 	_text(Vector2(x + 58, 15), Empire.clock_text(), 9, Color(0.75, 0.72, 0.7))
-	draw_rect(Rect2(x + 92, 8, 100, 4), Color(0.18, 0.16, 0.2))
-	draw_rect(Rect2(x + 92, 8, 100 * Empire.day_t, 4), Color(0.75, 0.72, 0.68))
+	_cv.draw_rect(Rect2(x + 92, 8, 100, 4), Color(0.18, 0.16, 0.2))
+	_cv.draw_rect(Rect2(x + 92, 8, 100 * Empire.day_t, 4), Color(0.75, 0.72, 0.68))
 	for i in Empire.SPEEDS.size():
 		var r := _speed_rect(i)
 		var on := i == Empire.speed
-		draw_rect(r, Color(0.22, 0.17, 0.08) if on else Color(0.1, 0.09, 0.12))
-		draw_rect(r, GOLD if on else Color(0.3, 0.27, 0.33), false, 1.0)
+		_cv.draw_rect(r, Color(0.22, 0.17, 0.08) if on else Color(0.1, 0.09, 0.12))
+		_cv.draw_rect(r, GOLD if on else Color(0.3, 0.27, 0.33), false, 1.0)
 		var label := "II" if i == 0 else "%dx" % Empire.SPEEDS[i]
 		_text_c(Vector2(r.get_center().x, r.position.y + 11), label, 9, GOLD if on else Color(0.75, 0.72, 0.7))
 	var mr := _menu_button_rect()
-	draw_rect(mr, Color(0.1, 0.09, 0.12))
-	draw_rect(mr, Color(0.3, 0.27, 0.33), false, 1.0)
+	_cv.draw_rect(mr, Color(0.1, 0.09, 0.12))
+	_cv.draw_rect(mr, Color(0.3, 0.27, 0.33), false, 1.0)
 	_text_c(Vector2(mr.get_center().x, mr.position.y + 11), "Menu", 9, Color(0.75, 0.72, 0.7))
 
 
 func _draw_roads() -> void:
 	var drawn := {}
+	var view := _map_rect().grow(30.0)
 	for p in territory.provinces:
 		var a: int = p["index"]
 		for b in territory.neighbors[a]:
@@ -957,15 +1386,19 @@ func _draw_roads() -> void:
 				continue
 			drawn[key] = true
 			var q: Dictionary = territory.provinces[b]
+			if not (Empire.province_open(p) and Empire.province_open(q)):
+				continue  # no roads drawn into the fog
 			var p1 := _province_screen_pos(p)
 			var p2 := _province_screen_pos(q)
+			if not (view.has_point(p1) or view.has_point(p2)):
+				continue
 			var lost: bool = p["owner"] == "erased" or q["owner"] == "erased"
 			var col := Color(0.12, 0.1, 0.14, 0.35 if lost else 0.75)
 			# Dashed road.
 			var n := int(p1.distance_to(p2) / 6.0)
 			for i in n:
 				if i % 2 == 0:
-					draw_line(p1.lerp(p2, float(i) / n), p1.lerp(p2, float(i + 1) / n), col, 1.5)
+					_cv.draw_line(p1.lerp(p2, float(i) / n), p1.lerp(p2, float(i + 1) / n), col, 1.5)
 
 
 func _draw_static() -> void:
@@ -973,38 +1406,60 @@ func _draw_static() -> void:
 		return
 	var rng := RandomNumberGenerator.new()
 	rng.seed = int(t * 10.0)
-	for i in 90:
+	var view := _map_rect()
+	var dots := int(90.0 * clampf(zoom / 2.0, 0.6, 1.6))
+	for i in dots:
 		var c: Vector2 = blank_edge[rng.randi() % blank_edge.size()]
-		var pos := MAP_ORIGIN + c * CELL + Vector2(rng.randf_range(-3, 3), rng.randf_range(-3, 3))
+		var pos := _cell_to_screen(c) + Vector2(rng.randf_range(-3, 3), rng.randf_range(-3, 3))
+		if not view.has_point(pos):
+			continue
 		var col := Color(0.06, 0.05, 0.07, 0.75) if rng.randf() < 0.5 else Color(0.98, 0.97, 0.94, 0.9)
-		draw_rect(Rect2(pos, Vector2(2, 2)), col)
+		_cv.draw_rect(Rect2(pos, Vector2(2, 2)), col)
 
 
 func _draw_outline(i: int, col: Color) -> void:
 	var pulse := 0.75 + 0.25 * sin(t * 4.0) if col == GOLD else 1.0
 	var c := Color(col, col.a * pulse)
+	var sz := Vector2(ceilf(zoom), ceilf(zoom))
 	for cell in outlines[i]:
-		draw_rect(Rect2(MAP_ORIGIN + cell * CELL, Vector2(CELL, CELL)), c)
+		_cv.draw_rect(Rect2(_cell_to_screen(cell).floor(), sz), c)
 
 
 func _draw_labels() -> void:
+	var view := _map_rect().grow(40.0)
+	var fsize := 9 if zoom >= ZOOM_READ else 8
+	# Zoomed right out over a big realm, region names take over: provinces keep their dot, and only
+	# the picked, hovered and busy ones keep their names.
+	var overview := _overview()
 	for p in territory.provinces:
+		if not Empire.province_open(p):
+			continue  # the fog shows the region's name instead
 		var pos := _province_screen_pos(p)
+		if not view.has_point(pos):
+			continue
+		if overview and p["index"] != selected and p["index"] != hovered and Empire.surge.get("id", "") != p["id"] \
+				and MissionTypes.for_province(p["id"]).filter(func(m): return m["type"] != "defense").is_empty():
+			_cv.draw_circle(pos + Vector2(0, -9), 2.0, Color("15111b"))
+			continue
 		var col := Color("f3efe4")
 		if p["owner"] == "erased":
 			col = Color(0.35, 0.34, 0.36)
-		if p["owner"] == "you":
+		if p["id"] == "hollowmark" and p["owner"] == "you":
 			# A little ink-black tower for the capital.
-			draw_rect(Rect2(pos + Vector2(-3, -15), Vector2(6, 8)), Color("15111b"))
-			draw_colored_polygon(PackedVector2Array([pos + Vector2(-4, -15), pos + Vector2(4, -15), pos + Vector2(0, -20)]), Color("15111b"))
-			draw_rect(Rect2(pos + Vector2(-1, -12), Vector2(2, 3)), GOLD)
+			_cv.draw_rect(Rect2(pos + Vector2(-3, -15), Vector2(6, 8)), Color("15111b"))
+			_cv.draw_colored_polygon(PackedVector2Array([pos + Vector2(-4, -15), pos + Vector2(4, -15), pos + Vector2(0, -20)]), Color("15111b"))
+			_cv.draw_rect(Rect2(pos + Vector2(-1, -12), Vector2(2, 3)), GOLD)
+		elif p["owner"] == "you":
+			# Your flag on the rest of your land.
+			_cv.draw_line(pos + Vector2(-1, -6), pos + Vector2(-1, -16), Color("15111b"), 1.0)
+			_cv.draw_colored_polygon(PackedVector2Array([pos + Vector2(-1, -16), pos + Vector2(5, -14), pos + Vector2(-1, -12)]), owner_color("you").lightened(0.2))
 		else:
-			draw_circle(pos + Vector2(0, -9), 2.0, Color("15111b"))
-		_text_c(pos + Vector2(0, 2), p["name"], 9, col, 0 if p["owner"] == "erased" else 4)
+			_cv.draw_circle(pos + Vector2(0, -9), 2.0, Color("15111b"))
+		_text_c(pos + Vector2(0, 2), p["name"], fsize, col, 0 if p["owner"] == "erased" else 4)
 		if Empire.surge.get("id", "") == p["id"]:
 			# A gathering surge: a pulsing red ring and a countdown.
 			var pulse := 0.5 + 0.5 * sin(t * 5.0)
-			draw_arc(pos + Vector2(0, -6), 14.0 + pulse * 3.0, 0, TAU, 32, Color(1, 0.35, 0.3, 0.5 + 0.4 * pulse), 2.0)
+			_cv.draw_arc(pos + Vector2(0, -6), 14.0 + pulse * 3.0, 0, TAU, 32, Color(1, 0.35, 0.3, 0.5 + 0.4 * pulse), 2.0)
 			var dl := Empire.surge_days_left()
 			_text_c(pos + Vector2(0, 13), "Surge %s" % ("today" if dl <= 0 else "in %d day%s" % [dl, "" if dl == 1 else "s"]), 8, Color(1, 0.55, 0.5), 3)
 		# Reclaim and Rescue missions on offer (Defense already shows as the surge ring).
@@ -1017,17 +1472,80 @@ func _draw_labels() -> void:
 			var tcol: Color = MissionTypes.TYPE_COLORS[tm["type"]]
 			if tm["blocker"] != "":
 				tcol = tcol.darkened(0.45)
-			draw_circle(pos + Vector2(-font.get_string_size(MissionTypes.TYPE_NAMES[tm["type"]], HORIZONTAL_ALIGNMENT_LEFT, -1, 8).x / 2.0 - 5, ty - 3), 2.0 + (0.6 * sin(t * 4.0) if tm["blocker"] == "" else 0.0), tcol)
+			_cv.draw_circle(pos + Vector2(-font.get_string_size(MissionTypes.TYPE_NAMES[tm["type"]], HORIZONTAL_ALIGNMENT_LEFT, -1, 8).x / 2.0 - 5, ty - 3), 2.0 + (0.6 * sin(t * 4.0) if tm["blocker"] == "" else 0.0), tcol)
 			_text_c(pos + Vector2(0, ty), MissionTypes.TYPE_NAMES[tm["type"]], 8, tcol, 3)
 			ty += 10.0
 
 
+## True when zoomed out far over a realm of several open regions: region names over province names.
+func _overview() -> bool:
+	return zoom < 1.25 and Empire.regions_open.size() >= 2
+
+
+## Region names: big over the fog of a locked region, with the chapter that opens it; over open
+## regions only in the overview (see _overview()).
+func _draw_region_names() -> void:
+	for r in territory.regions:
+		var open := Empire.region_open(r["id"])
+		if open and not _overview():
+			continue  # zoomed in, the province names say enough
+		var lp: Array = r.get("label", [])
+		var at: Vector2 = Vector2(lp[0], lp[1]) * Vector2(MAP_CELLS) if lp.size() == 2 else (r["bounds"] as Rect2).get_center()
+		var pos := _cell_to_screen(at)
+		var big := 13 if zoom >= 1.2 else 11
+		# Keep the name out from under the screen buttons along the map's top edge: lower it when the
+		# region reaches further down than they do, or leave it out.
+		var half := font.get_string_size(str(r["name"]).to_upper(), HORIZONTAL_ALIGNMENT_LEFT, -1, big).x / 2.0
+		var clear_y := MAP_ORIGIN.y + 76.0
+		var bottom := _cell_to_screen((r["bounds"] as Rect2).end).y
+		if pos.y < clear_y and pos.x + half > MAP_ORIGIN.x + 128.0:
+			if bottom < clear_y + 20.0:
+				continue  # only a sliver of it shows up there: the fog speaks for itself
+			pos.y = clear_y
+		if not _map_rect().grow(60.0).has_point(pos):
+			continue
+		if open:
+			_text_c(pos, str(r["name"]).to_upper(), big, Color(0.98, 0.95, 0.86, 0.85), 4)
+			continue
+		_text_c(pos, str(r["name"]).to_upper(), big, Color("f6f1e4"), 5)
+		var ch := int(r.get("chapter", 0))
+		var sub := ("Chapter %d" % ch) if ch > 0 else "Later in the story"
+		_text_c(pos + Vector2(0, 12), sub + "  ·  beyond the fog", 8, Color(0.25, 0.2, 0.16, 0.95), 0)
+
+
+## A province under the fog: what the region is, what is rumoured there, and when the story opens it.
+func _draw_region_panel(r: Dictionary, x: float, w: float) -> void:
+	var y := 42.0
+	_text(Vector2(x, y), str(r.get("name", "Uncharted")), 15, Color("f3efe4"))
+	y += 15
+	_cv.draw_rect(Rect2(x, y - 7, 7, 7), FOG)
+	_text(Vector2(x + 11, y), "Beyond the fog", 9, Color(0.8, 0.78, 0.74))
+	y += 20
+	_text(Vector2(x, y), str(r.get("mood", "")), 9, Color("e8d9a8"))
+	y += 16
+	var hint: String = r.get("hint", "")
+	_cv.draw_multiline_string(font, Vector2(x, y), hint, HORIZONTAL_ALIGNMENT_LEFT, w, 9, -1, Color(0.85, 0.83, 0.78))
+	y += 13 * ceilf(font.get_string_size(hint, HORIZONTAL_ALIGNMENT_LEFT, -1, 9).x / w) + 10
+	var n: int = (r.get("provinces", []) as Array).size()
+	_text(Vector2(x, y), "Provinces", 9, Color(0.7, 0.68, 0.7))
+	_text(Vector2(x + 60, y), "%d, uncharted" % n, 9, Color(0.85, 0.83, 0.78))
+	y += 13
+	var ch := int(r.get("chapter", 0))
+	_text(Vector2(x, y), "Opens", 9, Color(0.7, 0.68, 0.7))
+	_text(Vector2(x + 60, y), ("with Chapter %d of the story" % ch) if ch > 0 else "later in the story", 9, Color(0.85, 0.83, 0.78))
+	y += 18
+	_cv.draw_multiline_string(font, Vector2(x, y), "Nobody you could send has been past the fog. The Blank's work there waits until the story takes you in, and so does yours.",
+		HORIZONTAL_ALIGNMENT_LEFT, w, 9, -1, Color(0.62, 0.6, 0.62))
+	var pr := _play_rect()
+	_text_c(Vector2(pr.get_center().x, pr.position.y + 16), "No missions past the fog", 8, Color(0.45, 0.44, 0.47))
+
+
 func _draw_legend() -> void:
 	var x := MAP_ORIGIN.x + 4
-	var y := MAP_ORIGIN.y + MAP_CELLS.y * CELL - 8
+	var y := MAP_ORIGIN.y + MAP_VIEW.y - 8
 	for k in ["you", "free", "concord", "coven", "guild"]:
-		draw_rect(Rect2(x, y - 6, 6, 6), OWNER_COLORS[k])
-		draw_rect(Rect2(x, y - 6, 6, 6), BORDER_COLOR, false, 1.0)
+		_cv.draw_rect(Rect2(x, y - 6, 6, 6), owner_color(k))
+		_cv.draw_rect(Rect2(x, y - 6, 6, 6), BORDER_COLOR, false, 1.0)
 		var label: String = {"you": "Yours", "free": "Unclaimed", "concord": "Concord", "coven": "Coven", "guild": "Guild"}[k]
 		_text(Vector2(x + 9, y), label, 8, Color(0.85, 0.83, 0.78), 3)
 		x += 13 + font.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1, 8).x + 6
@@ -1037,13 +1555,19 @@ func _draw_panel() -> void:
 	var p: Dictionary = territory.provinces[selected]
 	var x := PANEL_X
 	var w := size.x - PANEL_X - 6
-	UiSkin.panel(self, Rect2(x - 6, 20, w + 10, size.y - 22), "ledger")
+	UiSkin.panel(_cv, Rect2(x - 6, 20, w + 10, size.y - 22), "ledger")
+	if not Empire.province_open(p):
+		_draw_region_panel(territory.region_of(p), x, w)
+		return
 	var y := 42.0
 	_text(Vector2(x, y), p["name"], 15, Color("f3efe4"))
-	y += 15
+	y += 11
+	var reg := territory.region_of(p)
+	_text(Vector2(x, y), "%s  ·  %s" % [reg.get("name", ""), territory.biomes.get(p.get("biome", ""), {}).get("name", "")], 8, Color(0.62, 0.6, 0.62))
+	y += 13
 	var owner: String = p["owner"]
-	draw_rect(Rect2(x, y - 7, 7, 7), OWNER_COLORS[owner])
-	_text(Vector2(x + 11, y), OWNER_NAMES[owner], 9, Color(0.8, 0.78, 0.74))
+	_cv.draw_rect(Rect2(x, y - 7, 7, 7), owner_color(owner))
+	_text(Vector2(x + 11, y), owner_name(owner), 9, Color(0.8, 0.78, 0.74))
 	if owner in Empire.faction_ids():
 		var tier := Empire.tier_of(owner)
 		_text(Vector2(x + 11, y + 11), "Standing: %s %+d   Diplomacy%s" % [Empire.tier_name(tier), Empire.standing_of(owner), Prompts.tag("diplomacy")], 8,
@@ -1057,8 +1581,8 @@ func _draw_panel() -> void:
 	_text(Vector2(x, y), "Fray", 9, Color(0.7, 0.68, 0.7))
 	_text(Vector2(x + 30, y), "%d / 100   %s" % [fray, state], 9, Color("f3efe4") if fray < 60 else Color("ff9b8a"))
 	y += 5
-	draw_rect(Rect2(x, y, w, 5), Color(0.15, 0.13, 0.17))
-	draw_rect(Rect2(x, y, w * fray / 100.0, 5), Color(0.85, 0.84, 0.8).lerp(PAPER, fray / 100.0))
+	_cv.draw_rect(Rect2(x, y, w, 5), Color(0.15, 0.13, 0.17))
+	_cv.draw_rect(Rect2(x, y, w * fray / 100.0, 5), Color(0.85, 0.84, 0.8).lerp(PAPER, fray / 100.0))
 	y += 16
 	if owner != "erased":
 		var rate := Empire.fray_rate(p)
@@ -1115,8 +1639,8 @@ func _draw_panel() -> void:
 		var gb := _governor_button_rect()
 		gb.position.y += 13  # sits beside the "Wants" line, under the name
 		_gov_button_y += 13
-		draw_rect(gb, Color(0.22, 0.17, 0.08))
-		draw_rect(gb, GOLD, false, 1.0)
+		_cv.draw_rect(gb, Color(0.22, 0.17, 0.08))
+		_cv.draw_rect(gb, GOLD, false, 1.0)
 		var label := ("Claim" if owner == "free" else ("Change" if gov != "" else "Post one")) + "  G"
 		_text_c(Vector2(gb.get_center().x, gb.position.y + 10), label, 8, GOLD)
 	y += 13
@@ -1125,14 +1649,20 @@ func _draw_panel() -> void:
 	_text(Vector2(x + 52, y), ", ".join(sites) if not sites.is_empty() else "none left", 9, Color(0.85, 0.83, 0.78))
 	y += 13
 	var nb := []
+	var fogged := {}
 	for b in territory.neighbors[selected]:
-		nb.append(territory.provinces[b]["name"])
+		var q: Dictionary = territory.provinces[b]
+		if Empire.province_open(q):
+			nb.append(q["name"])
+		elif not fogged.has(q["region"]):
+			fogged[q["region"]] = true
+			nb.append("the fog over %s" % territory.region_of(q).get("name", "?"))
 	_text(Vector2(x, y), "Borders", 9, Color(0.7, 0.68, 0.7))
-	draw_multiline_string(font, Vector2(x + 52, y), ", ".join(nb), HORIZONTAL_ALIGNMENT_LEFT, w - 52, 9, -1, Color(0.85, 0.83, 0.78))
+	_cv.draw_multiline_string(font, Vector2(x + 52, y), ", ".join(nb), HORIZONTAL_ALIGNMENT_LEFT, w - 52, 9, -1, Color(0.85, 0.83, 0.78))
 	y += 13 * ceilf(font.get_string_size(", ".join(nb), HORIZONTAL_ALIGNMENT_LEFT, -1, 9).x / (w - 52)) + 8
 
 	# Flavour
-	draw_multiline_string(font, Vector2(x, y), p["blurb"], HORIZONTAL_ALIGNMENT_LEFT, w, 9, -1, Color(0.62, 0.6, 0.62))
+	_cv.draw_multiline_string(font, Vector2(x, y), p["blurb"], HORIZONTAL_ALIGNMENT_LEFT, w, 9, -1, Color(0.62, 0.6, 0.62))
 
 	# Mission button
 	var m := _mission(selected)
@@ -1140,8 +1670,8 @@ func _draw_panel() -> void:
 	if not m.is_empty():
 		var more := Missions.list_for_province(p["id"]).size() - 1
 		var blocked: bool = str(m.get("blocker", "")) != ""
-		draw_rect(r, Color(0.22, 0.17, 0.08) if not blocked else Color(0.12, 0.11, 0.13))
-		draw_rect(r, GOLD if not blocked else Color(0.45, 0.42, 0.4), false, 1.0)
+		_cv.draw_rect(r, Color(0.22, 0.17, 0.08) if not blocked else Color(0.12, 0.11, 0.13))
+		_cv.draw_rect(r, GOLD if not blocked else Color(0.45, 0.42, 0.4), false, 1.0)
 		var label: String = m["name"] if m.has("type") else "Play: " + m["name"]
 		_text_c(Vector2(r.get_center().x, r.position.y + 12), label + ("  (+%d more)" % more if more > 0 else ""), 9, GOLD if not blocked else Color(0.7, 0.67, 0.62))
 		var sub := ("Tap again" if Prompts.touch() else Prompts.key("ui_accept")) if not blocked else "Locked: " + str(m["blocker"])

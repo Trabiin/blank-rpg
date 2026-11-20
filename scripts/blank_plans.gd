@@ -155,17 +155,23 @@ static func _gap() -> int:
 
 
 ## Resolves a plan's target rule to a province id ("" = nowhere sensible right now).
+## Only provinces on the open map count: Verity has no reason to aim past the fog (issue #53).
 static func pick_target(rule: String) -> String:
 	var t := Empire.territory()
+	var open := t.provinces.filter(func(p): return Empire.province_open(p))
 	match rule:
 		"concord_frayest":
-			var c := _frayest(t.provinces.filter(func(p): return p["owner"] == "concord"))
+			var c := _frayest(open.filter(func(p): return p["owner"] == "concord"))
 			return c if c != "" else pick_target("exposed_frayest")
 		"yours_frayest":
-			var y := _frayest(t.provinces.filter(func(p): return p["owner"] == "you" and p["id"] != "hollowmark"))
+			var y := _frayest(open.filter(func(p): return p["owner"] == "you" and p["id"] != "hollowmark"))
 			return y if y != "" else pick_target("hollowmark")
+		"frontier_frayest":  # the newest region the story opened: Verity tests every new border
+			var rid := Empire.newest_region()
+			var f := _frayest(open.filter(func(p): return p["region"] == rid))
+			return f if f != "" else pick_target("exposed_frayest")
 		"exposed_frayest":
-			return _frayest(t.provinces.filter(func(p):
+			return _frayest(open.filter(func(p):
 				if p["owner"] == "erased":
 					return false
 				if p.get("at_edge", false):
@@ -176,7 +182,7 @@ static func pick_target(rule: String) -> String:
 				return false))
 		_:
 			var p := t.find(rule)
-			return rule if not p.is_empty() and p["owner"] != "erased" else ""
+			return rule if not p.is_empty() and p["owner"] != "erased" and Empire.province_open(p) else ""
 
 
 static func _frayest(list: Array) -> String:

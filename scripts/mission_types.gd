@@ -11,15 +11,8 @@ extends RefCounted
 ## the empire, applied by apply() when the results screen settles the mission.
 
 const MAP := "res://maps/frayed_meadow.txt"
-## Each Act 1 biome has its own map (tools/make_biomes.py), built round the same open spots as the meadow.
-const BIOME_MAPS := {
-	"gutterwoods": "res://maps/gutterwoods.txt",
-	"saltreed": "res://maps/saltreed.txt",
-	"gallows": "res://maps/saltreed.txt",
-	"oldmill": "res://maps/oldmill.txt",
-	"lampwick": "res://maps/lampwick.txt",
-	"tithe": "res://maps/tithe_road.txt",
-}
+## Each province's biome has a pool of maps (data/provinces.json "biomes", issue #53), all built round
+## the same open spots as the meadow (tools/make_biomes.py), so any of them fits these mission types.
 const RECLAIM_INK := 3
 const RECLAIM_FRAY := 60  # what a rewritten province starts at: thin, but standing
 const DEFENSE_FRAY := -5  # the line you held stays a little firmer
@@ -32,15 +25,20 @@ const BLOT_AT := [64, 30]
 const RESCUE_SPOTS := [[60, 9], [60, 50], [59, 22]]
 
 
+## The map for a province's type missions: one from its biome's pool, the same all day (so the
+## briefing and the launch agree), a different one on other days when the pool has more than one.
 static func map_for(pid: String) -> String:
-	return BIOME_MAPS.get(pid, MAP)
+	var pool := Empire.territory().map_pool(pid).filter(func(m): return ResourceLoader.exists(m) or FileAccess.file_exists(m))
+	if pool.is_empty():
+		return MAP
+	return pool[absi(hash(pid + str(Empire.day))) % pool.size()]
 
 
 ## Every type-mission on offer for a province right now, each with a "blocker"
 ## ("" = it can be launched). Defense first: it has a deadline.
 static func for_province(pid: String) -> Array:
 	var p := Empire.territory().find(pid)
-	if p.is_empty():
+	if p.is_empty() or not Empire.province_open(p):
 		return []
 	var out := []
 	if Empire.surge.get("id", "") == pid and p["owner"] != "erased":
