@@ -11,6 +11,7 @@ var subtitle := ""
 var items: Array = []  # each: {"id", "label", "enabled", "note" (beside, when disabled), "detail" (line below)}
 var selected := 0
 var dim := 0.7
+var panel_alpha := 0.94  # the title screen lowers it so the key art shows through
 var title_size := 22
 var top := 0.34  # fraction of screen height where the title (or first item) starts
 var _rects: Array = []
@@ -177,7 +178,7 @@ func _draw() -> void:
 		pw = maxf(pw, font.get_string_size(str(it.get("detail", "")), HORIZONTAL_ALIGNMENT_LEFT, -1, 8).x)
 	pw = minf(pw + 36.0, vs.x - 16.0)
 	var ptop := y - float(title_size) - 14.0 if title != "" else y - 18.0
-	UiSkin.panel(self, Rect2((vs.x - pw) / 2.0, maxf(ptop, 4.0), pw, minf(y + head + list_h - 4.0, bottom) - maxf(ptop, 4.0)), "ledger", Color(1, 1, 1, 0.94))
+	UiSkin.panel(self, Rect2((vs.x - pw) / 2.0, maxf(ptop, 4.0), pw, minf(y + head + list_h - 4.0, bottom) - maxf(ptop, 4.0)), "ledger", Color(1, 1, 1, panel_alpha))
 	if title != "":
 		_centered(UiSkin.TITLE_FONT, y, title, title_size + 6, Color("f3e3c3"))
 		y += 20.0

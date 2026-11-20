@@ -109,11 +109,11 @@
 		},
 		{
 			"id": "personal_ninefingers", "name": "Find Hob's Wick", "kind": "Personal", "province": "tithe", "personal": "ninefingers",
-			"blurb": "The village Daro refused to strike out lies off the Tithe Road, past toll posts with Daro's face on the posters. He needs to know if it is still there.",
+			"blurb": "The village Daro refused to strike out lies off the Tithe Road, past toll posts with Daro's face on the posters. They need to know if it is still there.",
 			"days": 2, "rations": 2, "stats": {"grit": 1.0, "charm": 0.5}, "target": 18, "danger": 2, "cooldown": 2,
 			"reward": {"renown": 1}, "needs": {"concord": true},
 			"text": {
-				"success": ["Hob's Wick is still there: mill turning, goats loose, beer bad. In the chapel, a plaque mourns \"Corporal Daro, fallen against the Blank\". Daro did not correct anybody.", "{squad} found the village by the smell of the mill. Daro stood in the square for a long time. Then he bought everyone a round."],
+				"success": ["Hob's Wick is still there: mill turning, goats loose, beer bad. In the chapel, a plaque mourns \"Corporal Daro, fallen against the Blank\". Daro did not correct anybody.", "{squad} found the village by the smell of the mill. Daro stood in the square for a long time. Then they bought everyone a round."],
 				"fail": ["A toll post recognised the hood. {squad} spent the trip filling in forms explaining the hood.", "Fog on the Tithe Road. {squad} walked in circles around a village they could hear but not find. Daro says that is worse than white."]
 			}
 		},

@@ -32,6 +32,7 @@ const RES_NAMES := {"gilt": "Gilt", "supplies": "Supplies", "ink": "Ink"}
 
 var territory: Territory
 var map_tex: ImageTexture
+var painted_tex: Texture2D = load("res://assets/ui/map_painted.jpg")  # painted island under the washes (Phase 8)
 var selected := 0
 var hovered := -1
 var outlines: Array = []  # per province: PackedVector2Array of border cells
@@ -418,12 +419,16 @@ func _bake() -> void:
 			elif r == territory.SEA:
 				# Inked parchment (Phase 8 stand-in for a painted map): the sea is a darker wash with wave hatching,
 				# and a ring of ripple lines along each coast.
-				var coast := _sea_dist(x, y)
-				col = SEA_PARCH.darkened(0.06 * g)
-				if coast > 5 and int(y + sin(x * 0.3) * 1.5) % 10 == 0 and (x / 4 + y / 10) % 4 == 0:
-					col = SEA_INK  # short wave dashes out at sea
-				if coast == 2 and (x + y) % 2 == 0:
-					col = SEA_INK  # a dotted ripple along the shore
+				# The painted map shows through at sea; without it, fall back to the inked parchment.
+				if painted_tex:
+					col = Color(0, 0, 0, 0)
+				else:
+					var coast := _sea_dist(x, y)
+					col = SEA_PARCH.darkened(0.06 * g)
+					if coast > 5 and int(y + sin(x * 0.3) * 1.5) % 10 == 0 and (x / 4 + y / 10) % 4 == 0:
+						col = SEA_INK  # short wave dashes out at sea
+					if coast == 2 and (x + y) % 2 == 0:
+						col = SEA_INK  # a dotted ripple along the shore
 			elif false:
 				pass
 			else:
@@ -440,8 +445,12 @@ func _bake() -> void:
 					# Fray also drains colour from the whole province, like the field shader does.
 					var grey := col.get_luminance()
 					col = col.lerp(Color(grey, grey, grey), fray * 0.6)
+					if painted_tex:
+						# A translucent wash of the owner's colour over the painting; unclaimed land stays bare.
+						col = OWNER_COLORS[p["owner"]].lerp(Color(grey, grey, grey), fray * 0.6)
+						col.a = 0.1 if p["owner"] == "free" else 0.34 + g * 0.06
 				if _is_border(x, y, r):
-					col = BORDER_COLOR
+					col = Color(BORDER_COLOR, 0.8) if painted_tex else BORDER_COLOR
 					is_white = false
 					outlines[r].append(Vector2(x, y))
 			img.set_pixel(x, y, col)
@@ -767,6 +776,8 @@ func _draw() -> void:
 	draw_rect(Rect2(Vector2.ZERO, vs), Color("0e0b12"))
 	# Map
 	UiSkin.panel(self, _map_rect().grow(5.0), "ledger")  # brass-cornered frame round the parchment
+	if painted_tex:
+		draw_texture_rect(painted_tex, _map_rect(), false)
 	draw_texture_rect(map_tex, _map_rect(), false)
 	_draw_roads()
 	_draw_static()
