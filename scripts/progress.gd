@@ -3,7 +3,8 @@ class_name Progress
 ## the shared bag of spare gear, gear drops and the Hollowmark shop. Numbers live in data/gear.json.
 ##
 ## State is saved with the campaign in Empire.progress:
-##   {"heroes": {id: {"xp": int, "level": int, "gear": {"weapon": id, "armor": id, "trinket": id}}},
+##   {"heroes": {id: {"xp": int, "level": int, "gear": {"weapon": id, "armor": id, "trinket": id},
+##                    "weapon": {...}, "inks": {...}, "tech": id}},   (skill levels: scripts/skills.gd)
 ##    "bag": {item_id: count}}
 ## Base fighting stats come from data/heroes.json; stats() adds levels and gear on top.
 
@@ -71,6 +72,7 @@ static func from_save(d) -> Dictionary:
 			if iid != "" and item(iid).get("slot", "") == s:
 				gear[s] = iid
 		out["heroes"][id] = {"xp": maxi(int(h.get("xp", 0)), 0), "level": clampi(int(h.get("level", 1)), 1, max_level()), "gear": gear}
+		Skills.clean_into(h, out["heroes"][id])  # weapon and Ink skill levels (issue #24)
 	return out
 
 
@@ -194,13 +196,18 @@ static func gains_text(gains: Dictionary) -> String:
 	return ", ".join(parts)
 
 
-## XP a day for benched field heroes while the Barracks stands (called at dawn).
+## XP a day for benched field heroes while the Barracks stands (called at dawn), plus weapon drill
+## (issue #24, scripts/skills.gd).
 static func dawn() -> void:
 	var lvl := Empire.level_of("barracks")
 	if lvl <= 0:
 		return
 	var bench := field_ids().filter(func(id): return Empire.role_of(id) != "party")
 	award(bench, int(data().get("barracks_xp", 6)) * lvl)
+	for up in Skills.drill_bench():
+		var t := Skills.tech_at(up["id"], up["level"])
+		Empire.notice.emit("Barracks drill: %s's %s skill reached %d and learned %s." % [
+			PartyPicker.short_of(up["id"]), Skills.weapon_name(up["id"]), up["level"], t.get("name", "a new tech")], false)
 
 
 static func barracks_xp() -> int:

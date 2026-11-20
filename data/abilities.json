@@ -1,101 +1,524 @@
 {
-	"_comment": "Hotkeyed abilities (issue #7). Heroes list theirs in data/heroes.json under abilities (up to 4, keys 1-4). short: label on the touch button. cost: Ink spent. cooldown: seconds before it can be used again. kind picks the code in scripts/abilities.gd: heal (patch everyone in radius, optional shield that soaks damage), arc (wide weapon swing: damage, reach, arc = degrees either side of facing, knock), dash (rush forward distance px, hitting everything on the way), taunt (pull enemies in radius onto the user for time s and cut the user's damage taken by guard), bolt (throw count blades spread degrees apart: damage, speed, range px, pierce), vanish (out of sight for time s: nearby enemies in radius lose track, speed multiplier, next landed swing deals crit times damage), drain (damage enemies in radius, then heal allies within heal_radius by heal_ratio of the damage taken, up to heal_cap each), mark (enemies in radius take mult times damage for time s), parry (for time s the next hit taken is cancelled and the nearest enemy to its source within reach takes damage, is stunned, and refund Ink comes back). arc and dash can also stun (seconds; bosses only flinch). ai: when an ally uses it on its own. windup = an enemy within 'range' is winding up an attack on the user; self_hurt = the user is below 'below' HP with an enemy within 'range'; hurt = someone in radius below 'below' HP; crowd = at least 'count' enemies within 'range' of the user; target = its target is within 'range'; threat = at least 'count' enemies within 'range' of the leader. Issue #9 adds player-set presets on top.",
+	"_comment": "Hotkeyed abilities (issue #7). Heroes list theirs in data/heroes.json under abilities (up to 4, keys 1-4). short: label on the touch button. cost: Ink spent. cooldown: seconds before it can be used again. kind picks the code in scripts/abilities.gd: heal (patch everyone in radius, optional shield that soaks damage), arc (wide weapon swing: damage, reach, arc = degrees either side of facing, knock), dash (rush forward distance px, hitting everything on the way), taunt (pull enemies in radius onto the user for time s and cut the user's damage taken by guard), bolt (throw count blades spread degrees apart: damage, speed, range px, pierce), vanish (out of sight for time s: nearby enemies in radius lose track, speed multiplier, next landed swing deals crit times damage), drain (damage enemies in radius, then heal allies within heal_radius by heal_ratio of the damage taken, up to heal_cap each), mark (enemies in radius take mult times damage for time s), parry (for time s the next hit taken is cancelled and the nearest enemy to its source within reach takes damage, is stunned, and refund Ink comes back). arc and dash can also stun (seconds; bosses only flinch). ai: when an ally uses it on its own. windup = an enemy within 'range' is winding up an attack on the user; self_hurt = the user is below 'below' HP with an enemy within 'range'; hurt = someone in radius below 'below' HP; crowd = at least 'count' enemies within 'range' of the user; target = its target is within 'range'; threat = at least 'count' enemies within 'range' of the leader. Issue #9 adds player-set presets on top. Ink colours (issue #24): ink names the ability's colour (inks: red, blue, gold, green, black). Each hero has a skill level 1-5 in every colour, raised by spending Ink on that colour's abilities (ink_skill.xp = Ink to spend from level L to L+1). tiers: at colour level 2 and 4 the ability takes these values instead of its own. cooldown_cut: from colour level 3 and 5 that colour's cooldowns are this much shorter. desc is a template: {key} shows the current value; {guard_pct}, {heal_pct}, {mult_pct}, {stun_text}, {shield_text} and {pierce_text} are filled in by scripts/abilities.gd.",
 	"abilities": {
 		"rewrite": {
-			"name": "Rewrite", "short": "Rewrite", "kind": "heal", "cost": 5, "cooldown": 8, "color": "9fd8ff",
-			"heal": 10, "shield": 8, "shield_time": 6, "radius": 56,
-			"desc": "Ash writes the party a little less hurt: heals everyone nearby for 10 and adds an 8-point shield for 6 s.",
-			"ai": {"when": "hurt", "below": 0.55}
+			"name": "Rewrite",
+			"short": "Rewrite",
+			"kind": "heal",
+			"cost": 5,
+			"cooldown": 8,
+			"color": "9fd8ff",
+			"heal": 10,
+			"shield": 8,
+			"shield_time": 6,
+			"radius": 56,
+			"desc": "Ash writes the party a little less hurt: heals everyone nearby for {heal} and adds a {shield}-point shield for {shield_time} s.",
+			"ai": {
+				"when": "hurt",
+				"below": 0.55
+			},
+			"ink": "green",
+			"tiers": {
+				"2": {
+					"heal": 14,
+					"shield": 10,
+					"radius": 64
+				},
+				"4": {
+					"heal": 18,
+					"shield": 14,
+					"shield_time": 8,
+					"radius": 72
+				}
+			}
 		},
 		"strikethrough": {
-			"name": "Strikethrough", "short": "Strike", "kind": "dash", "cost": 3, "cooldown": 4, "color": "c9d6ff",
-			"damage": 12, "distance": 70, "knock": 180,
-			"desc": "A quick line through the page: dash forward and cut everything in the way. Gets you out of trouble, too.",
-			"ai": {"when": "target", "range": 70}
+			"name": "Strikethrough",
+			"short": "Strike",
+			"kind": "dash",
+			"cost": 3,
+			"cooldown": 4,
+			"color": "c9d6ff",
+			"damage": 12,
+			"distance": 70,
+			"knock": 180,
+			"desc": "A quick line through the page: dash forward and cut everything in the way for {damage}.{stun_text} Gets you out of trouble, too.",
+			"ai": {
+				"when": "target",
+				"range": 70
+			},
+			"ink": "black",
+			"tiers": {
+				"2": {
+					"damage": 16,
+					"distance": 80
+				},
+				"4": {
+					"damage": 22,
+					"distance": 90,
+					"stun": 0.6
+				}
+			}
 		},
 		"cleave": {
-			"name": "Cleave", "short": "Cleave", "kind": "arc", "cost": 4, "cooldown": 5, "color": "e0504a",
-			"damage": 18, "reach": 32, "arc": 110, "knock": 280,
-			"desc": "Red Ink up the arm, then a huge axe arc in front of Bran that hurls Nibblers back.",
-			"ai": {"when": "crowd", "count": 2, "range": 34}
+			"name": "Cleave",
+			"short": "Cleave",
+			"kind": "arc",
+			"cost": 4,
+			"cooldown": 5,
+			"color": "e0504a",
+			"damage": 18,
+			"reach": 32,
+			"arc": 110,
+			"knock": 280,
+			"desc": "Red Ink up the arm, then a huge axe arc in front of Bran: {damage} damage, and it hurls Nibblers back.{stun_text}",
+			"ai": {
+				"when": "crowd",
+				"count": 2,
+				"range": 34
+			},
+			"ink": "red",
+			"tiers": {
+				"2": {
+					"damage": 22,
+					"reach": 36
+				},
+				"4": {
+					"damage": 28,
+					"reach": 40,
+					"arc": 130,
+					"stun": 0.5
+				}
+			}
 		},
 		"hold_the_line": {
-			"name": "Hold the Line", "short": "Hold", "kind": "taunt", "cost": 5, "cooldown": 12, "color": "f2a65a",
-			"radius": 110, "time": 5, "guard": 0.5,
-			"desc": "Clause four. Every Nibbler nearby goes for Bran instead, and he takes half damage for 5 s.",
-			"ai": {"when": "threat", "count": 2, "range": 60}
+			"name": "Hold the Line",
+			"short": "Hold",
+			"kind": "taunt",
+			"cost": 5,
+			"cooldown": 12,
+			"color": "f2a65a",
+			"radius": 110,
+			"time": 5,
+			"guard": 0.5,
+			"desc": "Clause four. Every Nibbler nearby goes for Bran instead, and he takes {guard_pct}% less damage for {time} s.",
+			"ai": {
+				"when": "threat",
+				"count": 2,
+				"range": 60
+			},
+			"ink": "blue",
+			"tiers": {
+				"2": {
+					"time": 6,
+					"guard": 0.6
+				},
+				"4": {
+					"time": 7,
+					"guard": 0.7,
+					"radius": 130
+				}
+			}
 		},
 		"poultice_toss": {
-			"name": "Poultice Toss", "short": "Poultice", "kind": "heal", "cost": 6, "cooldown": 10, "color": "9fbf6a",
-			"heal": 16, "radius": 72,
-			"desc": "A fistful of something warm and green for everyone nearby: heals 16. Do not ask what is in it.",
-			"ai": {"when": "hurt", "below": 0.6}
+			"name": "Poultice Toss",
+			"short": "Poultice",
+			"kind": "heal",
+			"cost": 6,
+			"cooldown": 10,
+			"color": "9fbf6a",
+			"heal": 16,
+			"radius": 72,
+			"desc": "A fistful of something warm and green for everyone nearby: heals {heal}.{shield_text} Do not ask what is in it.",
+			"ai": {
+				"when": "hurt",
+				"below": 0.6
+			},
+			"ink": "green",
+			"tiers": {
+				"2": {
+					"heal": 20,
+					"radius": 80
+				},
+				"4": {
+					"heal": 26,
+					"radius": 90,
+					"shield": 6,
+					"shield_time": 5
+				}
+			}
 		},
 		"scald": {
-			"name": "Scald", "short": "Scald", "kind": "arc", "cost": 4, "cooldown": 6, "color": "e6c35c",
-			"damage": 11, "reach": 30, "arc": 180, "knock": 220,
-			"desc": "Hot broth in a full circle. Shoves everything off her.",
-			"ai": {"when": "crowd", "count": 2, "range": 28}
+			"name": "Scald",
+			"short": "Scald",
+			"kind": "arc",
+			"cost": 4,
+			"cooldown": 6,
+			"color": "e6c35c",
+			"damage": 11,
+			"reach": 30,
+			"arc": 180,
+			"knock": 220,
+			"desc": "Hot broth in a full circle: {damage} damage, and it shoves everything off her.{stun_text}",
+			"ai": {
+				"when": "crowd",
+				"count": 2,
+				"range": 28
+			},
+			"ink": "red",
+			"tiers": {
+				"2": {
+					"damage": 14,
+					"reach": 34
+				},
+				"4": {
+					"damage": 18,
+					"reach": 38,
+					"stun": 0.6
+				}
+			}
 		},
 		"long_thrust": {
-			"name": "Long Thrust", "short": "Thrust", "kind": "dash", "cost": 3, "cooldown": 4, "color": "b8c4d9",
-			"damage": 16, "distance": 90, "knock": 200,
-			"desc": "Pike first, Daro second: a long lunge that skewers a line of enemies.",
-			"ai": {"when": "target", "range": 90}
+			"name": "Long Thrust",
+			"short": "Thrust",
+			"kind": "dash",
+			"cost": 3,
+			"cooldown": 4,
+			"color": "b8c4d9",
+			"damage": 16,
+			"distance": 90,
+			"knock": 200,
+			"desc": "Pike first, Daro second: a long lunge that skewers a line of enemies for {damage}.{stun_text}",
+			"ai": {
+				"when": "target",
+				"range": 90
+			},
+			"ink": "red",
+			"tiers": {
+				"2": {
+					"damage": 20,
+					"distance": 100
+				},
+				"4": {
+					"damage": 26,
+					"distance": 110,
+					"stun": 0.5
+				}
+			}
 		},
 		"pike_sweep": {
-			"name": "Pike Sweep", "short": "Sweep", "kind": "arc", "cost": 4, "cooldown": 6, "color": "8fb3d9",
-			"damage": 13, "reach": 34, "arc": 90, "knock": 240,
-			"desc": "The shaft, not the point: a wide sweep that clears room.",
-			"ai": {"when": "crowd", "count": 2, "range": 34}
+			"name": "Pike Sweep",
+			"short": "Sweep",
+			"kind": "arc",
+			"cost": 4,
+			"cooldown": 6,
+			"color": "8fb3d9",
+			"damage": 13,
+			"reach": 34,
+			"arc": 90,
+			"knock": 240,
+			"desc": "The shaft, not the point: a wide sweep for {damage} that clears room.{stun_text}",
+			"ai": {
+				"when": "crowd",
+				"count": 2,
+				"range": 34
+			},
+			"ink": "blue",
+			"tiers": {
+				"2": {
+					"damage": 16,
+					"reach": 38
+				},
+				"4": {
+					"damage": 20,
+					"reach": 42,
+					"arc": 110,
+					"stun": 0.6
+				}
+			}
 		},
 		"chucking_out": {
-			"name": "Chucking Out", "short": "Chuck", "kind": "dash", "cost": 4, "cooldown": 6, "color": "f07ab8",
-			"damage": 16, "distance": 56, "knock": 460, "stun": 0.8,
-			"desc": "Shoulder first through whatever is in the way. Everything she hits goes flying and sees stars.",
-			"ai": {"when": "target", "range": 60}
+			"name": "Chucking Out",
+			"short": "Chuck",
+			"kind": "dash",
+			"cost": 4,
+			"cooldown": 6,
+			"color": "f07ab8",
+			"damage": 16,
+			"distance": 56,
+			"knock": 460,
+			"stun": 0.8,
+			"desc": "Shoulder first through whatever is in the way: {damage} damage, and everything she hits goes flying and sees stars for {stun} s.",
+			"ai": {
+				"when": "target",
+				"range": 60
+			},
+			"ink": "red",
+			"tiers": {
+				"2": {
+					"damage": 20,
+					"stun": 1.0
+				},
+				"4": {
+					"damage": 25,
+					"distance": 66,
+					"stun": 1.3
+				}
+			}
 		},
 		"last_orders": {
-			"name": "Last Orders", "short": "Orders", "kind": "arc", "cost": 6, "cooldown": 11, "color": "e0569b",
-			"damage": 12, "reach": 42, "arc": 180, "knock": 140, "stun": 2.0,
-			"desc": "Both fists into the floor. Everything around her is stunned for 2 s. Time, gentlemen.",
-			"ai": {"when": "crowd", "count": 2, "range": 40}
+			"name": "Last Orders",
+			"short": "Orders",
+			"kind": "arc",
+			"cost": 6,
+			"cooldown": 11,
+			"color": "e0569b",
+			"damage": 12,
+			"reach": 42,
+			"arc": 180,
+			"knock": 140,
+			"stun": 2.0,
+			"desc": "Both fists into the floor. Everything around her takes {damage} and is stunned for {stun} s. Time, gentlemen.",
+			"ai": {
+				"when": "crowd",
+				"count": 2,
+				"range": 40
+			},
+			"ink": "blue",
+			"tiers": {
+				"2": {
+					"damage": 15,
+					"stun": 2.4
+				},
+				"4": {
+					"damage": 18,
+					"reach": 50,
+					"stun": 3.0
+				}
+			}
 		},
 		"knife_fan": {
-			"name": "Knife Fan", "short": "Knives", "kind": "bolt", "cost": 3, "cooldown": 3, "color": "d8d2c4",
-			"count": 3, "spread": 14, "damage": 9, "speed": 250, "range": 150, "knock": 110,
-			"desc": "Three knives in a fan, from a long way off. Nobody saw where they came from.",
-			"ai": {"when": "target", "range": 140}
+			"name": "Knife Fan",
+			"short": "Knives",
+			"kind": "bolt",
+			"cost": 3,
+			"cooldown": 3,
+			"color": "d8d2c4",
+			"count": 3,
+			"spread": 14,
+			"damage": 9,
+			"speed": 250,
+			"range": 150,
+			"knock": 110,
+			"desc": "{count} knives in a fan, {damage} each, from a long way off.{pierce_text} Nobody saw where they came from.",
+			"ai": {
+				"when": "target",
+				"range": 140
+			},
+			"ink": "black",
+			"tiers": {
+				"2": {
+					"count": 4,
+					"damage": 10
+				},
+				"4": {
+					"count": 5,
+					"damage": 12,
+					"pierce": true
+				}
+			}
 		},
 		"lamps_out": {
-			"name": "Lamps Out", "short": "Vanish", "kind": "vanish", "cost": 5, "cooldown": 14, "color": "8a7fb0",
-			"time": 3.0, "speed": 1.4, "crit": 2.0, "radius": 130,
-			"desc": "Smoke and a wink. For 3 s enemies lose her, she moves faster, and her next hit does double damage.",
-			"ai": {"when": "self_hurt", "below": 0.5, "range": 40}
+			"name": "Lamps Out",
+			"short": "Vanish",
+			"kind": "vanish",
+			"cost": 5,
+			"cooldown": 14,
+			"color": "8a7fb0",
+			"time": 3.0,
+			"speed": 1.4,
+			"crit": 2.0,
+			"radius": 130,
+			"desc": "Smoke and a wink. For {time} s enemies lose her, she moves faster, and her next hit does {crit}x damage.",
+			"ai": {
+				"when": "self_hurt",
+				"below": 0.5,
+				"range": 40
+			},
+			"ink": "black",
+			"tiers": {
+				"2": {
+					"time": 3.5,
+					"crit": 2.3
+				},
+				"4": {
+					"time": 4.0,
+					"crit": 2.6,
+					"speed": 1.6
+				}
+			}
 		},
 		"levy": {
-			"name": "Levy", "short": "Levy", "kind": "drain", "cost": 5, "cooldown": 9, "color": "e8c45a",
-			"damage": 8, "radius": 66, "knock": 60, "heal_ratio": 0.6, "heal_radius": 90, "heal_cap": 14,
-			"desc": "Everything nearby pays 8. The party nearby gets most of it back as health.",
-			"ai": {"when": "crowd", "count": 2, "range": 60}
+			"name": "Levy",
+			"short": "Levy",
+			"kind": "drain",
+			"cost": 5,
+			"cooldown": 9,
+			"color": "e8c45a",
+			"damage": 8,
+			"radius": 66,
+			"knock": 60,
+			"heal_ratio": 0.6,
+			"heal_radius": 90,
+			"heal_cap": 14,
+			"desc": "Everything nearby pays {damage}. The party nearby gets {heal_pct}% of it back as health.",
+			"ai": {
+				"when": "crowd",
+				"count": 2,
+				"range": 60
+			},
+			"ink": "gold",
+			"tiers": {
+				"2": {
+					"damage": 10,
+					"heal_cap": 16
+				},
+				"4": {
+					"damage": 13,
+					"radius": 76,
+					"heal_ratio": 0.8,
+					"heal_cap": 20
+				}
+			}
 		},
 		"audit": {
-			"name": "Audit", "short": "Audit", "kind": "mark", "cost": 4, "cooldown": 12, "color": "7fb0e0",
-			"radius": 84, "time": 6, "mult": 1.5,
-			"desc": "Odile opens the ledger on everything nearby. For 6 s they take 50% more damage from everyone.",
-			"ai": {"when": "crowd", "count": 2, "range": 70}
+			"name": "Audit",
+			"short": "Audit",
+			"kind": "mark",
+			"cost": 4,
+			"cooldown": 12,
+			"color": "7fb0e0",
+			"radius": 84,
+			"time": 6,
+			"mult": 1.5,
+			"desc": "Odile opens the ledger on everything nearby. For {time} s they take {mult_pct}% more damage from everyone.",
+			"ai": {
+				"when": "crowd",
+				"count": 2,
+				"range": 70
+			},
+			"ink": "gold",
+			"tiers": {
+				"2": {
+					"time": 7,
+					"mult": 1.6
+				},
+				"4": {
+					"time": 8,
+					"mult": 1.75,
+					"radius": 96
+				}
+			}
 		},
 		"riposte": {
-			"name": "Riposte", "short": "Riposte", "kind": "parry", "cost": 2, "cooldown": 3, "color": "e0405a",
-			"time": 0.8, "damage": 22, "stun": 1.2, "reach": 70, "knock": 220, "refund": 2,
-			"desc": "En garde for a heartbeat. The next blow is turned aside and answered: 22 damage and a stun. A clean parry refunds the Ink.",
-			"ai": {"when": "windup", "range": 40}
+			"name": "Riposte",
+			"short": "Riposte",
+			"kind": "parry",
+			"cost": 2,
+			"cooldown": 3,
+			"color": "e0405a",
+			"time": 0.8,
+			"damage": 22,
+			"stun": 1.2,
+			"reach": 70,
+			"knock": 220,
+			"refund": 2,
+			"desc": "En garde for a heartbeat. The next blow is turned aside and answered: {damage} damage and a {stun} s stun. A clean parry refunds {refund} Ink.",
+			"ai": {
+				"when": "windup",
+				"range": 40
+			},
+			"ink": "blue",
+			"tiers": {
+				"2": {
+					"damage": 28,
+					"time": 0.9
+				},
+				"4": {
+					"damage": 36,
+					"stun": 1.6,
+					"refund": 3,
+					"time": 1.0
+				}
+			}
 		},
 		"fleche": {
-			"name": "Fleche", "short": "Fleche", "kind": "dash", "cost": 4, "cooldown": 5, "color": "ff6a7a",
-			"damage": 20, "distance": 84, "knock": 160,
-			"desc": "A running lunge, point first. Hits hard and carries her through the line.",
-			"ai": {"when": "target", "range": 84}
+			"name": "Fleche",
+			"short": "Fleche",
+			"kind": "dash",
+			"cost": 4,
+			"cooldown": 5,
+			"color": "ff6a7a",
+			"damage": 20,
+			"distance": 84,
+			"knock": 160,
+			"desc": "A running lunge, point first: {damage} damage, and it carries her through the line.{stun_text}",
+			"ai": {
+				"when": "target",
+				"range": 84
+			},
+			"ink": "red",
+			"tiers": {
+				"2": {
+					"damage": 25,
+					"distance": 92
+				},
+				"4": {
+					"damage": 32,
+					"distance": 100,
+					"stun": 0.6
+				}
+			}
+		}
+	},
+	"inks": {
+		"red": {
+			"name": "Red",
+			"color": "e0504a",
+			"desc": "Force. Blows, lunges and blasts that hurt."
+		},
+		"blue": {
+			"name": "Blue",
+			"color": "6a9ae8",
+			"desc": "Order. Guards, parries, stuns and holding the line."
+		},
+		"gold": {
+			"name": "Gold",
+			"color": "e8c45a",
+			"desc": "Debt. Levies, audits and making enemies pay."
+		},
+		"green": {
+			"name": "Green",
+			"color": "8fd06a",
+			"desc": "Mending. Heals, shields and broth."
+		},
+		"black": {
+			"name": "Black",
+			"color": "8a7fb0",
+			"desc": "Erasure. Shadows, knives and lines struck through."
+		}
+	},
+	"ink_skill": {
+		"xp": [
+			30,
+			70,
+			120,
+			190
+		],
+		"max": 5,
+		"cooldown_cut": {
+			"3": 0.15,
+			"5": 0.3
 		}
 	}
 }

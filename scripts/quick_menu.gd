@@ -1,7 +1,8 @@
 class_name QuickMenu
 extends Control
 ## The quick menu (issue #6): one button opens it mid-fight and time slows to 10% instead of pausing.
-## Tabs: Items, Abilities, Party (take control, AI behaviour, charged tech orders), Equip. A plain list, never a ring.
+## Tabs: Items, Abilities, Techs (which charged tech, orders to allies), Party (take control, AI behaviour), Equip.
+## A plain list, never a ring.
 ## Every action is two presses: pick a row, then pick from its short list (or it acts at once).
 ##
 ## Keyboard: C opens/closes, arrows/WASD move, left/right or Q/E change tab, J/Enter picks, X/Esc backs out.
@@ -11,7 +12,7 @@ extends Control
 
 signal closed
 
-const TABS := ["Items", "Abilities", "Party", "Equip", "Options"]
+const TABS := ["Items", "Abilities", "Techs", "Party", "Equip", "Options"]
 const SLOW := 0.1
 const W := 420.0
 const ROW_H := 30.0
@@ -97,16 +98,21 @@ func _style_desc(style: String) -> String:
 	return str(_hero_data.get("styles", {}).get(style, {}).get("desc", ""))
 
 
-## The Party tab's second line: the hero's charged tech and how it is used.
+## The Techs tab's second line: which tech the hero charges and how it is used (issues #8, #24).
 func _tech_line(h: Hero) -> String:
-	var tech := Techs.for_hero(h.hero_id)
-	if tech.is_empty():
-		return _style_desc(h.ai_style)
-	var how := "hold Attack on a full gauge"
-	if not h.controlled:
-		var mode := AllyTechs.mode_of(h)
-		how = "Auto, " + str(AllyTechs.PRESET_RULE.get(AllyTechs.preset_of(h), "")) if mode == "auto" else str(AllyTechs.MODE_NAMES[mode])
-	return "Tech %s: %s, %s" % [tech.get("name", "?"), how, AllyTechs.state_text(h)]
+	var known := Skills.known_techs(h.hero_id)
+	if known.is_empty():
+		return "No charged techs"
+	var picked := Skills.picked_tech(h.hero_id)
+	if h.controlled:
+		var held := ("Always %s" % picked.get("name", "?")) if not picked.is_empty() else \
+			("%s, hold longer for %d more" % [known[0].get("name", "?"), known.size() - 1] if known.size() > 1 else str(known[0].get("name", "?")))
+		return "%s  (hold Attack on a full gauge)" % held
+	var what := ("Always %s" % picked.get("name", "?")) if not picked.is_empty() else \
+		("Picks from %d techs" % known.size() if known.size() > 1 else str(known[0].get("name", "?")))
+	var mode := AllyTechs.mode_of(h)
+	var how := ("Auto, " + str(AllyTechs.PRESET_RULE.get(AllyTechs.preset_of(h), ""))) if mode == "auto" else str(AllyTechs.MODE_NAMES[mode])
+	return "%s  (%s, %s)" % [what, how, AllyTechs.state_text(h)]
 
 
 func _hd(h: Hero) -> Dictionary:
@@ -181,12 +187,20 @@ func _rebuild() -> void:
 					var ink := "Ink %d/%d" % [int(hero.get("ink")), int(hero.get("max_ink"))]
 					rows.append({"id": hero.hero_id, "label": hero.hero_name + ("  (down)" if hero.dead else ""), "right": ink,
 						"detail": ", ".join(list.map(func(a): return str(a.get("name", "?")))), "enabled": not hero.dead, "hero": hero})
+		"Techs":  # issue #24: weapon skill level, which tech, and orders for allies
+			for h in _heroes():
+				var hero: Hero = h
+				var state := "  (down)" if hero.dead else ("  (you)" if hero.controlled else "")
+				rows.append({"id": hero.hero_id, "label": "%s%s" % [hero.hero_name, state],
+					"right": "%s Lv %d  %d/%d techs" % [Skills.weapon_name(hero.hero_id), Skills.weapon_level(hero.hero_id),
+						Skills.known_techs(hero.hero_id).size(), Skills.all_techs(hero.hero_id).size()],
+					"detail": _tech_line(hero), "enabled": true, "hero": hero})
 		"Party":
 			for h in _heroes():
 				var hero: Hero = h
 				var state := "  (down)" if hero.dead else ("  (you)" if hero.controlled else "")
 				rows.append({"id": hero.hero_id, "label": hero.hero_name + state, "right": "AI: " + _style_name(hero.ai_style),
-					"detail": _tech_line(hero), "enabled": true, "hero": hero})
+					"detail": _style_desc(hero.ai_style), "enabled": true, "hero": hero})
 		"Equip":
 			for h in _heroes():
 				var hero: Hero = h
@@ -288,14 +302,36 @@ func _pick_row(i: int) -> void:
 				sub.append({"id": "ai:" + style, "label": "AI: " + _style_name(style),
 					"right": "current" if style == hero.ai_style else "", "enabled": true})
 			sub_sel = 0 if sub[0]["enabled"] else 1 + Hero.AI_STYLES.keys().find(hero.ai_style)
-			var tech := Techs.for_hero(hero.hero_id)
-			if not tech.is_empty():  # charged tech under AI (scripts/ally_techs.gd)
-				var why := AllyTechs.order_blocker(hero)
-				sub.append({"id": "tech_now", "label": "Unleash " + str(tech.get("name", "tech")),
-					"right": why if why != "" else AllyTechs.state_text(hero), "enabled": why == ""})
-				for m in AllyTechs.MODES:
-					sub.append({"id": "tech:" + m, "label": "Tech: " + str(AllyTechs.MODE_NAMES[m]),
-						"right": "current" if m == AllyTechs.mode_of(hero) else "", "enabled": true})
+		"Techs":
+			_tech_sub(r["hero"])
+
+
+## The Techs tab's short list for one hero: choose by hold length or always one tech (known ones;
+## the rest show the weapon level that teaches them), then orders for an ally (scripts/ally_techs.gd).
+func _tech_sub(hero: Hero) -> void:
+	sub_title = "%s: %s Lv %d" % [hero.hero_name, Skills.weapon_name(hero.hero_id), Skills.weapon_level(hero.hero_id)]
+	sub = []
+	var picked := Skills.pick(hero.hero_id)
+	var known := Skills.known_techs(hero.hero_id).size()
+	sub.append({"id": "pick:", "label": "By hold length", "right": "current" if picked == "" else "", "enabled": known > 0})
+	for t in Skills.all_techs(hero.hero_id):
+		var lvl := int(t.get("level", 1))
+		var ok := lvl <= known
+		sub.append({"id": "pick:" + str(t["id"]), "label": str(t.get("name", "?")),
+			"right": ("current" if picked == t["id"] else "%.1f s" % Techs.charge_time(t)) if ok else "Lv %d" % lvl, "enabled": ok,
+			"desc": str(t.get("desc", ""))})
+	sub_sel = 0
+	for i in sub.size():
+		if sub[i]["id"] == "pick:" + picked:
+			sub_sel = i
+	if known > 0:
+		var why := AllyTechs.order_blocker(hero)
+		var next := Techs.charge_options(hero)
+		var tname := str(next.back().get("name", "tech")) if not picked.is_empty() or next.size() == 1 else "best tech"
+		sub.append({"id": "tech_now", "label": "Unleash " + tname, "right": why if why != "" else AllyTechs.state_text(hero), "enabled": why == ""})
+		for m in AllyTechs.MODES:
+			sub.append({"id": "tech:" + m, "label": "On its own: " + str(AllyTechs.MODE_NAMES[m]),
+				"right": "current" if m == AllyTechs.mode_of(hero) else "", "enabled": true})
 
 
 ## Second press: the choice from the short list.
@@ -317,10 +353,19 @@ func _pick_sub(i: int) -> void:
 		var hero: Hero = r["hero"]
 		party.take_control(hero)
 		_say("You now control %s." % hero.hero_name)
+	elif id.begins_with("pick:"):
+		var hero: Hero = r["hero"]
+		var tid := id.substr(5)
+		Skills.set_pick(hero.hero_id, tid)
+		if hero.charging and not hero.ai_charging:
+			Techs.cancel(hero)
+		var t := Techs.find(tid)
+		_say(("%s will charge %s every time (%.1f s)." % [hero.hero_name, t.get("name", "?"), Techs.charge_time(t)]) if tid != ""
+			else "%s: hold Attack longer to reach stronger techs." % hero.hero_name)
 	elif id == "tech_now":
 		var hero: Hero = r["hero"]
 		AllyTechs.order(hero)
-		var tname := str(Techs.for_hero(hero.hero_id).get("name", "tech"))
+		var tname := str(Techs.current(hero).get("name", "tech")) if not Skills.picked_tech(hero.hero_id).is_empty() else "the best tech it knows"
 		Fx.damage_number(hero.get_parent(), hero.global_position + Vector2(0, -26), tname + "!", Techs.color_of(hero))
 		_say("%s will unleash %s at the best target." % [hero.hero_name, tname] if hero.power >= 1.0
 			else "%s will unleash %s once the gauge is full." % [hero.hero_name, tname])
@@ -524,8 +569,12 @@ func _draw() -> void:
 			hint = _style_desc(str(sub[sub_sel]["id"]).substr(3))  # what the highlighted AI preset does (issue #9)
 		elif sub_sel >= 0 and sub_sel < sub.size() and str(sub[sub_sel]["id"]).begins_with("tech:"):
 			hint = str(AllyTechs.MODE_DESC.get(str(sub[sub_sel]["id"]).substr(5), ""))
-		elif sub_sel >= 0 and sub_sel < sub.size() and str(sub[sub_sel]["id"]) == "tech_now" and sel < rows.size() and rows[sel].has("hero"):
-			hint = str(Techs.for_hero((rows[sel]["hero"] as Hero).hero_id).get("desc", ""))
+		elif sub_sel >= 0 and sub_sel < sub.size() and str(sub[sub_sel]["id"]) == "tech_now":
+			hint = "Charges as soon as the gauge allows and fires at the best target in reach."
+		elif sub_sel >= 0 and sub_sel < sub.size() and str(sub[sub_sel]["id"]) == "pick:":
+			hint = "Hold Attack on a full gauge: each tech it knows is ready a little later than the last."
+		elif sub_sel >= 0 and sub_sel < sub.size() and str(sub[sub_sel]["id"]).begins_with("pick:"):
+			hint = "Charges only this tech, ready after %.1f s of holding." % Techs.charge_time(Techs.find(str(sub[sub_sel]["id"]).substr(5)))
 		_str(font, Vector2(x0, fy), hint, 8, DIM)
 	_str_right(font, x1, fy, "time slowed", 8, Color(0.7, 0.8, 1.0, 0.6 + 0.3 * sin(_t * 3.0)))
 
@@ -533,7 +582,10 @@ func _draw() -> void:
 	_sub_rects.clear()
 	if sub.size() > 0:
 		var sw := 170.0
-		var sh := 26.0 + sub.size() * 18.0
+		# A tech's description sits under the list while it is highlighted (Techs tab).
+		var desc := str(sub[sub_sel].get("desc", "")) if sub_sel >= 0 and sub_sel < sub.size() else ""
+		var desc_h := font.get_multiline_string_size(desc, HORIZONTAL_ALIGNMENT_LEFT, sw - 20.0, 8).y + 8.0 if desc != "" else 0.0
+		var sh := 26.0 + sub.size() * 18.0 + desc_h
 		var anchor: Rect2 = _row_rects[sel] if sel < _row_rects.size() else _panel
 		var sx := minf(_panel.end.x - sw - 8.0, vs.x - sw - 6.0)
 		var sy := clampf(anchor.position.y, 6.0, vs.y - sh - 6.0)
@@ -554,3 +606,5 @@ func _draw() -> void:
 			if i == sub_sel:
 				_marker(sx + 10, yy)
 			yy += 18.0
+		if desc != "":
+			draw_multiline_string(font, Vector2(sx + 10, yy - 4), desc, HORIZONTAL_ALIGNMENT_LEFT, sw - 20.0, 8, -1, Color(0.78, 0.76, 0.72))

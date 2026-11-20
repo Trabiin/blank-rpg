@@ -95,6 +95,10 @@ var charging := false
 var charge_t := 0.0
 var charge_ready := false
 var tech_flash_t := 0.0
+## Weapon skill levels (#24): the hero knows several techs. Holding Attack longer reaches the next one;
+## charge_stage is the last one reached (0 = none yet). tech_flash_color tints the release flash.
+var charge_stage := 0
+var tech_flash_color := Color.WHITE
 ## Allies charge techs too (scripts/ally_techs.gd): ai_charging marks a charge the AI started.
 var ai_charging := false
 var tech_mode := "auto"  # "auto" (the preset decides) or "call" (only when ordered from the quick menu)
@@ -207,6 +211,8 @@ func _apply_hit() -> void:
 		vanish_t = 0.0  # striking gives her away
 	if hit_any and swing_power >= 1.0:
 		ink = minf(ink + Abilities.HIT_GAIN, max_ink)  # a full-power hit that lands writes a little Ink
+	if hit_any:
+		gain_skill("weapon", "", Skills.swing_points(swing_power))  # weapon skill grows with use (issue #24)
 	if hit_any and party:
 		party.shake(1.5 + 2.0 * swing_power)
 
@@ -250,8 +256,28 @@ func hidden() -> bool:
 	return vanish_t > 0.0 and not dead
 
 
+## Weapon and Ink skill points (issue #24, scripts/skills.gd). kind "weapon" or "ink" (color = the
+## ability's Ink colour). Only counts on missions; the scene hears about level-ups through skill_up().
+func gain_skill(kind: String, color: String, pts: int) -> void:
+	if pts <= 0 or peaceful or party == null or not party.has_method("skill_up"):
+		return
+	var ups: Array = Skills.add_weapon(hero_id, pts) if kind == "weapon" else Skills.add_ink(hero_id, color, pts)
+	for lvl in ups:
+		if kind == "ink":
+			refresh_abilities()
+		party.skill_up(self, kind, color, int(lvl))
+
+
+## Re-reads the abilities at the hero's current Ink levels (a tier change mid-mission), keeping cooldowns.
+func refresh_abilities() -> void:
+	var ids := abilities.map(func(a): return str(a.get("id", "")))
+	var fresh := Abilities.for_ids(ids, hero_id)
+	if fresh.size() == abilities.size():
+		abilities = fresh
+
+
 func set_abilities(ids: Array, ink_pool: float) -> void:
-	abilities = Abilities.for_ids(ids)
+	abilities = Abilities.for_ids(ids, hero_id)
 	cooldowns = []
 	cooldowns.resize(abilities.size())
 	cooldowns.fill(0.0)

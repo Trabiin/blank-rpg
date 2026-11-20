@@ -128,9 +128,13 @@ func _draw() -> void:
 		# power gauge
 		draw_rect(Rect2(x + 5, y + 21, 102, 2), Color(0, 0, 0, 0.6))
 		draw_rect(Rect2(x + 5, y + 21, 102.0 * hero.power, 2), pcol)
-		if hero.charging and hero.charge_t >= Techs.TAP:  # charged tech filling (issue #8)
+		if hero.charging and hero.charge_t >= Techs.TAP:  # charged tech filling (issues #8, #24)
 			var tcol := Techs.color_of(hero)
-			draw_rect(Rect2(x + 5, y + 20, 102.0 * Techs.charge_ratio(hero), 4), tcol.lightened(0.6) if hero.charge_ready else Color(tcol, 0.8))
+			draw_rect(Rect2(x + 5, y + 20, 102.0 * Techs.fill(hero), 4), tcol.lightened(0.6) if hero.charge_ready else Color(tcol, 0.8))
+			for st in Techs.stages(hero):  # a notch for every tech this hold can reach, lit once reached
+				var sx := x + 5 + 102.0 * float(st[0])
+				var lit: bool = hero.charge_t >= Techs.charge_time(st[1])
+				draw_rect(Rect2(sx - 1, y + 19, 2, 6), Color(str(st[1].get("color", "ffffff"))).lightened(0.4) if lit else Color(0, 0, 0, 0.7))
 			if hero.charge_ready:
 				UiSkin.draw_icon(self, "tech_" + hero.hero_id, Rect2(x + 99, y + 2, 10, 10))
 				_text(Vector2(x + 80, y + 10), "TECH", 9, tcol.lightened(0.3), false)

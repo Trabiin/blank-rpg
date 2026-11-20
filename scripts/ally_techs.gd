@@ -25,7 +25,10 @@ extends RefCounted
 ## Safety rules: abilities are checked first (a heal always beats a blast), Support won't plant its feet
 ## while the leader is badly hurt unless its tech heals, Keep Distance won't while it is hurt itself, and
 ## a hit before the tech is ready breaks an ally's charge (it keeps its gauge and tries again shortly).
-## Several techs per hero (#24): techs_of() lists them and pick() scores every one; the rest is per tech.
+## Several techs per hero (#24): techs_of() lists the ones it knows at its weapon skill level (or only the
+## one picked in the quick menu's Techs tab), and pick() scores every one, weighing what each would hit
+## against how long it takes to charge; the rest is per tech. Multi-hit, chained, spread and delayed
+## techs are scored blast by blast (Techs.blasts), knives by what is in their range.
 
 const MODES := ["auto", "call"]
 const MODE_NAMES := {"auto": "Auto", "call": "On my call"}
@@ -74,10 +77,9 @@ static func set_mode(h: Hero, mode: String) -> void:
 		_give_up(h, RETRY)  # stand down a charge that is already under way
 
 
-## Every tech this hero can fire under AI. One per hero today; weapon skill levels (#24) add more.
+## Every tech this hero can fire under AI: the one picked for it, or all it knows (weapon skill, #24).
 static func techs_of(h: Hero) -> Array:
-	var t := Techs.for_hero(h.hero_id)
-	return [] if t.is_empty() else [t]
+	return Techs.charge_options(h)
 
 
 ## The best tech and aim right now: {"tech", "dir", "score", "focus"}; score 0 if nothing is worth it.
@@ -85,7 +87,8 @@ static func pick(h: Hero, preset: String, leader: Hero, slack: float) -> Diction
 	var out := {"tech": {}, "dir": h.facing.normalized(), "score": 0.0, "focus": null, "spot": h.global_position}
 	for t in techs_of(h):
 		var aim := best_aim(h, t, preset, leader, slack, true)
-		var worth: float = aim["score"] - (_start_need(h, preset, t) - 1.0)  # rank by how far past its bar
+		# Rank by how far past its bar, per second of charging: a bigger tech has to be worth the wait.
+		var worth: float = (aim["score"] - (_start_need(h, preset, t) - 1.0)) / sqrt(Techs.charge_time(t))
 		if aim["score"] > 0.0 and (out["tech"].is_empty() or worth > float(out.get("worth", -INF))):
 			out = aim.duplicate()
 			out["tech"] = t
@@ -247,10 +250,10 @@ static func _charge(h: Hero, leader: Hero, preset: String, delta: float) -> Vect
 		_give_up(h, 0.8)
 		return Vector2.ZERO
 	h.charge_t += delta
-	if not h.charge_ready and h.charge_t >= Techs.hold_time():
+	if not h.charge_ready and h.charge_t >= Techs.charge_time(t):
 		h.charge_ready = true
-		Fx.burst(h.get_parent(), h.global_position + Vector2(0, -10), [Techs.color_of(h), Color.WHITE], 18, 60.0)
-		Techs.play(h, "ready")
+		h.charge_stage = 1
+		Techs.reached(h, int(t.get("level", 1)))  # flash and a chime as high as the tech
 	# Where to stand and face (may still walk a little), and what it would hit from right here.
 	var plan := best_aim(h, t, preset, leader, 0.0 if h.charge_ready else 8.0, true)
 	if plan["focus"] != null:
@@ -298,9 +301,12 @@ static func _approach(h: Hero, leader: Hero, preset: String) -> Vector2:
 
 
 ## How far from its target a hero stands to land this tech: on the blast's centre for ring techs,
-## a bit inside the reach for arcs and lines.
+## a bit inside the reach for arcs and lines, the middle of a chain, inside the knives' range.
 static func standoff(t: Dictionary) -> float:
-	var ahead := float(t.get("step", 0)) + float(t.get("offset", 0))
+	var k: Dictionary = t.get("knives", {})
+	if float(t.get("mult", 1)) <= 0.0 and not k.is_empty():
+		return float(k.get("range", 120)) * 0.4
+	var ahead := float(t.get("step", 0)) + float(t.get("offset", 0)) + float(t.get("chain_gap", 0)) * (maxi(1, int(t.get("chain", 1))) - 1) * 0.5
 	var reach := float(t.get("reach", 30))
 	if float(t.get("arc", 90)) >= 179.0:
 		return maxf(ahead, reach * 0.4)
@@ -309,7 +315,11 @@ static func standoff(t: Dictionary) -> float:
 
 ## Furthest point the blast reaches in front of the hero.
 static func _span(t: Dictionary) -> float:
-	return float(t.get("step", 0)) + float(t.get("offset", 0)) + float(t.get("reach", 30))
+	var k: Dictionary = t.get("knives", {})
+	var knives := float(k.get("range", 0)) if not k.is_empty() else 0.0
+	var chain := float(t.get("chain_gap", 0)) * (maxi(1, int(t.get("chain", 1))) - 1)
+	var blast := float(t.get("step", 0)) + float(t.get("offset", 0)) + float(t.get("reach", 30)) + chain if float(t.get("mult", 1)) > 0.0 else 0.0
+	return maxf(blast, knives)
 
 
 ## Stops charging to get out of a lunge or slam aimed at this ally (Aggressive stands and takes it).
@@ -365,37 +375,49 @@ static func best_aim(h: Hero, t: Dictionary, preset: String, leader: Hero, slack
 	return out
 
 
-## What firing along dir from origin would be worth: {"score", "focus"}.
+## What firing along dir from origin (where the hero stands before its lunge) would be worth:
+## {"score", "focus"}. Every blast the tech makes counts (Techs.blasts): an enemy caught by several
+## takes all of their damage. Knives count what is in their range; heals what allies would get back.
 static func score(h: Hero, t: Dictionary, origin: Vector2, dir: Vector2, preset: String, leader: Hero, near: Array, slack := 0.0) -> Dictionary:
-	var reach := float(t.get("reach", 30)) + slack
-	var half := deg_to_rad(float(t.get("arc", 90)))
-	var center := origin + dir * (float(t.get("step", 0)) + float(t.get("offset", 0)))
-	var dmg := maxi(1, roundi(h.base_damage * float(t.get("mult", 2.0))))
+	var bl := Techs.blasts(t, origin + dir * float(t.get("step", 0)), dir)
+	var flags := t.duplicate()  # stun, mark, execute: from the tech or its last hit
+	for key in t.get("last", {}):
+		flags[key] = t["last"][key]
 	var total := 0.0
 	var focus: Enemy = null
 	var focus_v := 0.0
+	var k: Dictionary = t.get("knives", {})
 	for e in near:
 		var enemy: Enemy = e
-		var to := _predict(enemy) - center
-		if to.length() > reach + enemy.radius:
+		var at := _predict(enemy)
+		var taken := 0.0
+		var from := origin
+		for b in bl:
+			var grown: Dictionary = b.duplicate()
+			grown["reach"] = float(b["reach"]) + slack
+			if Techs.inside(grown, at, enemy.radius):
+				taken += roundi(h.base_damage * float((b["p"] as Dictionary).get("mult", 2.0)))
+				from = (b["at"] as Vector2) - (b["dir"] as Vector2) * 4.0
+		if not k.is_empty() and at.distance_to(origin) <= float(k.get("range", 120)) + slack:
+			taken += roundi(h.base_damage * float(k.get("mult", 1.0))) * 0.6  # not every blade finds it
+		if taken <= 0.0:
 			continue
-		if half < PI - 0.01 and to.length() > 4.0 and absf(dir.angle_to(to)) > half:
-			continue
-		var v := _worth(enemy, t, dmg, center - dir * 4.0)
+		var v := _worth(enemy, flags, int(taken), from)
 		if preset == "support" and leader:
 			v *= 1.4 if enemy.global_position.distance_to(leader.global_position) < 80.0 else 0.4
 		total += v
 		if v > focus_v:
 			focus_v = v
 			focus = enemy
-	if int(t.get("heal", 0)) > 0:
-		var heal := float(t["heal"])
+	if int(t.get("heal", 0)) > 0 and not bl.is_empty():
+		var heal := float(t["heal"]) * maxi(1, int(t.get("hits", 1)))
+		var b0: Dictionary = bl[0]
 		for o in h.get_tree().get_nodes_in_group("heroes"):
 			var other := o as Hero
 			if other == null or other.dead or other.party != h.party:
 				continue
-			var at := origin if other == h else other.global_position
-			if at.distance_to(center) > reach + 8.0:
+			var at2 := origin if other == h else other.global_position
+			if at2.distance_to(b0["at"]) > float(b0["reach"]) + slack + 8.0:
 				continue
 			var gain := minf(heal, float(other.max_hp - other.hp)) / heal
 			total += gain * (1.2 if preset == "support" else 0.7)

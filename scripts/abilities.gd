@@ -23,6 +23,10 @@ static func _load() -> Dictionary:
 	return _data
 
 
+static func data() -> Dictionary:
+	return _load()
+
+
 static func get_def(id: String) -> Dictionary:
 	var d: Dictionary = _load().get("abilities", {}).get(id, {})
 	if d.is_empty():
@@ -33,13 +37,68 @@ static func get_def(id: String) -> Dictionary:
 
 
 ## The ability dictionaries a hero brings, from its list of ids (unknown ids are skipped).
-static func for_ids(ids: Array) -> Array:
+## With hero_id, each one is on the tier that hero's skill in its Ink colour has reached (issue #24).
+static func for_ids(ids: Array, hero_id := "") -> Array:
 	var out := []
 	for id in ids:
 		var d := get_def(str(id))
 		if not d.is_empty() and out.size() < MAX_SLOTS:
-			out.append(d)
+			out.append(at_level(d, Skills.ink_level(hero_id, str(d.get("ink", "")))) if hero_id != "" else d)
 	return out
+
+
+## The ability as it is at this Ink colour level: tier values from level 2 and 4, shorter cooldowns
+## from 3 and 5. "tier" (1-3) and "ink_level" are written in for menus.
+static func at_level(base: Dictionary, lvl: int) -> Dictionary:
+	var a := base.duplicate(true)
+	var tiers: Dictionary = base.get("tiers", {})
+	var tier := 1
+	for need in [2, 4]:
+		if lvl >= need and tiers.has(str(need)):
+			var t: Dictionary = tiers[str(need)]
+			for k in t:
+				a[k] = t[k]
+			tier += 1
+	a["tier"] = tier
+	a["ink_level"] = lvl
+	a["cooldown"] = snappedf(float(base.get("cooldown", 1.0)) * (1.0 - Skills.cooldown_cut(lvl)), 0.1)
+	return a
+
+
+## The ability's description with its current numbers filled in (descs are templates, data/abilities.json).
+static func desc_of(a: Dictionary) -> String:
+	var v := {}
+	for k in a:
+		var x = a[k]
+		if typeof(x) == TYPE_FLOAT and is_equal_approx(x, roundf(x)):
+			x = int(x)
+		v[k] = x
+	v["guard_pct"] = int(round(float(a.get("guard", 0)) * 100.0))
+	v["heal_pct"] = int(round(float(a.get("heal_ratio", 0)) * 100.0))
+	v["mult_pct"] = int(round((float(a.get("mult", 1)) - 1.0) * 100.0))
+	v["stun_text"] = (" Stuns for %s s." % _num(a["stun"])) if float(a.get("stun", 0)) > 0.0 else ""
+	v["shield_text"] = (" Adds a %d-point shield for %s s." % [int(a["shield"]), _num(a.get("shield_time", 5))]) if int(a.get("shield", 0)) > 0 else ""
+	v["pierce_text"] = " They go straight through." if bool(a.get("pierce", false)) else ""
+	return str(a.get("desc", "")).format(v)
+
+
+static func _num(x) -> String:
+	var f := float(x)
+	return str(int(f)) if is_equal_approx(f, roundf(f)) else str(snappedf(f, 0.1))
+
+
+## What the next tier adds, for menus: "at Red 2: damage 22, reach 36" ("" at the top).
+static func next_tier_text(a: Dictionary) -> String:
+	var lvl := int(a.get("ink_level", 1))
+	var tiers: Dictionary = a.get("tiers", {})
+	for need in [2, 4]:
+		if lvl < need and tiers.has(str(need)):
+			var parts := []
+			for k in tiers[str(need)]:
+				var x = tiers[str(need)][k]
+				parts.append(k.replace("_", " ") if typeof(x) == TYPE_BOOL else "%s %s" % [k.replace("_", " "), _num(x)])
+			return "at %s %d: %s" % [Skills.ink_name(str(a.get("ink", ""))), need, ", ".join(parts)]
+	return ""
 
 
 static func color_of(a: Dictionary) -> Color:
@@ -67,6 +126,7 @@ static func use(h: Hero, i: int) -> bool:
 		return false
 	var a: Dictionary = h.abilities[i]
 	h.ink -= float(a.get("cost", 0))
+	h.gain_skill("ink", str(a.get("ink", "")), int(a.get("cost", 0)))  # spending a colour trains it (issue #24)
 	h.cooldowns[i] = float(a.get("cooldown", 1.0))
 	h.cast_t = Hero.SWING_TIME
 	h.cast_color = color_of(a)
