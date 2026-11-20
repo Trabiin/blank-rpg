@@ -61,9 +61,9 @@ func _speakers() -> Dictionary:
 	return s
 
 
-func _res_keys(where: String, d: Dictionary) -> void:
+func _res_keys(where: String, d: Dictionary, mats := false) -> void:  # mats: materials (#112) allowed too
 	for k in d:
-		check(Empire.RES_NAMES.has(k), "%s: unknown resource '%s'" % [where, k])
+		check(Empire.RES_NAMES.has(k) or (mats and Armory.is_mat(k)), "%s: unknown resource '%s'" % [where, k])
 
 
 func _lines(where: String, lines: Array) -> void:
@@ -337,12 +337,12 @@ func test_mission_types() -> void:
 		check(factions.has(fid), "%s: not a faction" % w)
 		for k in fc.get("guards", {}):
 			check(kinds.has(k), "%s: unknown guard %s" % [w, k])
-		_res_keys(w + " cache", fc.get("cache", {}))
+		_res_keys(w + " cache", fc.get("cache", {}), true)
 		for r in fc.get("rival", {}):
 			check(factions.has(r), "%s: rival %s is not a faction" % [w, r])
 		check(str(fc.get("brief", "")).count("%d") == 2, "%s: brief needs two %%d (need, caches)" % w)
 	_res_keys("mission_types.json raid rewards", mt["raid"].get("rewards", {}))
-	_res_keys("mission_types.json salvage pile", mt["salvage"].get("pile", {}))
+	_res_keys("mission_types.json salvage pile", mt["salvage"].get("pile", {}), true)
 	_res_keys("mission_types.json salvage rewards", mt["salvage"].get("rewards", {}))
 	check(int(mt["raid"]["need"]) <= int(mt["raid"]["caches"]), "raid: needs more caches than there are")
 	check(int(mt["salvage"]["need"]) <= int(mt["salvage"]["caches"]), "salvage: needs more piles than there are")
