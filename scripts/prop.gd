@@ -66,7 +66,7 @@ func _ready() -> void:
 	spr.centered = true
 	# Bottom of the sprite sits a few pixels below the origin, so Y-sorting feels right.
 	spr.offset = Vector2(0, -spr.texture.get_height() / 2.0 + 3.0)
-	spr.flip_h = seed_v % 2 == 1 and kind in ["bush", "shrub", "rock", "rock_big", "grave"]
+	spr.flip_h = seed_v % 2 == 1 and kind in ["bush", "shrub", "rock", "rock_big", "grave", "bones", "skull", "stump"]
 	spr.material = Art.art_world_material() if has_art else Art.world_material()
 	if has_art and not kind in FLAT:
 		var sh := Node2D.new()  # cast shadow, under the sprite
