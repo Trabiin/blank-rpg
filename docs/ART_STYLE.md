@@ -16,7 +16,7 @@ generation references in `docs/style/` (`ref_building.png`, `ref_props.png`, `re
 
 | Rule | Value |
 |---|---|
-| **Camera** | Top-down three-quarter, like SNES action RPGs. Buildings and props face the camera **straight on**: front wall parallel to the screen, roof seen from above, no side walls, never isometric or diagonal. Characters use PixelLab's `high top-down` (Ash is the reference). |
+| **Camera** | Top-down three-quarter, like SNES action RPGs. One camera for everything: high and tilted like `docs/style/target_town.png` (the scene the look was modelled on), vertical walls stay vertical, roofs seen from above. Buildings may face straight on or be turned slightly with the door to the south-east or south-west, so the town has a shape: the facade stays the main face and the side wall recedes steeply. Never a 45 degree corner view where both walls slope equally (that reads isometric). Props face straight on. Characters use PixelLab's `high top-down` (Ash is the reference). |
 | **Scale** | 16 px tiles. Heroes, NPCs and small enemies on a 32 px canvas (about 2 tiles tall). A 5x5-tile building plot holds an 80 x 80 sprite. |
 | **Light** | From the top left. Shadows fall to the bottom right. |
 | **Outline** | Ink black `#12141f` outer outline on characters, enemies and objects; inner edges use the darkest shade of the local colour. Ground tiles have no outline. |
