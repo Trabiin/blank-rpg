@@ -277,10 +277,10 @@ func _draw() -> void:
 		var kit := []
 		for a in Abilities.for_ids(hd.get("abilities", [])):
 			kit.append(str(a.get("name", "")))
-		var tech := Techs.for_hero(id)
+		var known := Skills.known_techs(id)
 		var kit_line := "Abilities: " + ", ".join(kit)
-		if not tech.is_empty():
-			kit_line += "   Tech: " + str(tech.get("name", ""))
+		if not known.is_empty():  # weapon skill (issue #24): the techs learned so far
+			kit_line += "   Techs (%s Lv %d): %s" % [Skills.weapon_name(id), Skills.weapon_level(id), ", ".join(known.map(func(t): return str(t.get("name", ""))))]
 		_wrap(Vector2(x, y + 9), kit_line, w, 8, Color(0.78, 0.74, 0.86))
 	else:
 		_text(Vector2(x, 46), "Ready?", 13, PAPER)

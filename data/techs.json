@@ -1,38 +1,956 @@
 {
-	"_comment": "Charged techs (issue #8). With a full power gauge, hold Attack for about a second: the hero glows, chimes when ready, and releasing fires the tech. Letting go early is a normal full-power swing. Keyed by hero id (data/heroes.json). mult: damage as a multiple of the hero's full-power swing, so levels, gear and research carry over. reach: radius in px. arc: degrees either side of facing (180 = all round). offset: the blast is centred this many px in front of the hero (0 = on the hero). knock: knockback force. heal: optional HP patched onto every ally inside the blast. step: px the hero lunges forward as it fires. color: glow and blast colour. Optional: stun (seconds every enemy hit is stunned), mark (seconds every enemy hit is Audited, mark_mult), vanish (seconds the hero slips out of sight after firing), execute (enemies at or below this fraction of their max HP take double).",
-	"hold": 1.0,
+	"_comment": "Charged techs (issues #8, #24). Every field hero has five, one per weapon skill level (level 1 knows the first; each level up to 5 teaches the next, data/gear.json \"skills\"). With a full power gauge, hold Attack: the first tech is ready after stage_hold[0] seconds, the next one the hero knows after stage_hold[1], and so on; releasing fires the last one reached. A tech picked in the quick menu's Techs tab charges on its own instead (ready after its own stage time). Keyed by hero id (data/heroes.json), a list in level order. Every tech: id (unique), name, desc, color (glow, blast and preview), fx (how the blast looks, drawn in scripts/tech_fx.gd: burst, slash, sweep, line, beam, seal, shock, spiral, pillar, shards, splash, stars, coins, petals), sound (synthesized in scripts/techs.gd: tone Hz, sweep Hz over the clip, noise 0-1, len s, ring 0-1 bell overtone, thump 0-1 low boom). Blast: mult = damage as a multiple of the hero's full-power swing (0 = no blast, e.g. only knives), reach px radius, arc degrees either side of facing (180 = all round), offset px in front of the hero where the blast is centred, knock = knockback (negative pulls enemies in), step = px the hero lunges first (untouchable while it does). Optional: hits + every (that many blasts, every s apart; last = overrides for the final one), chain + chain_gap + chain_delay (extra blasts marching forward), delay (s before it goes off; its area is marked on the ground meanwhile), spread (degrees: one blast per angle), knives {count, arc total degrees, speed, range, mult, pierce}, stun s, mark s + mark_mult (Audited), execute (enemies at or below this share of max HP take double), taunt s (enemies hit go for the hero), guard + guard_time (hero takes that much less damage), vanish s + crit (out of sight; next landed swing x crit), heal / shield + shield_time (allies inside the blast), ink (Ink to every ally within 120 px), leech + leech_cap (that share of damage dealt heals allies within 90 px, each up to cap).",
+	"stage_hold": [
+		1.0,
+		1.4,
+		1.8,
+		2.2,
+		2.6
+	],
 	"techs": {
-		"ash": {
-			"name": "Full Stop", "mult": 2.4, "reach": 26, "arc": 180, "offset": 22, "knock": 300, "step": 10, "color": "9fd8ff",
-			"desc": "Ash jabs the quill-knife into the page and the full stop bursts: a blast just in front that hits everything around it."
-		},
-		"bran": {
-			"name": "Breach of Contract", "mult": 2.6, "reach": 40, "arc": 80, "offset": 0, "knock": 360, "step": 8, "color": "e0504a",
-			"desc": "Bran stops negotiating. A huge, slow cleaver arc in front of him that sends Nibblers flying."
-		},
-		"gristle": {
-			"name": "Stir the Pot", "mult": 2.0, "reach": 34, "arc": 180, "offset": 0, "knock": 240, "step": 0, "heal": 6, "color": "9fbf6a",
-			"desc": "A full turn of the bone ladle. Hits everything around her and splashes allies inside with 6 HP of broth."
-		},
-		"ninefingers": {
-			"name": "Skewer", "mult": 3.0, "reach": 62, "arc": 12, "offset": 0, "knock": 280, "step": 14, "color": "f2d36b",
-			"desc": "Daro lunges the full length of the pike. A very long, very narrow line that hits hardest of all. Aim it."
-		},
-		"ottoline": {
-			"name": "Through the Door", "mult": 3.0, "reach": 34, "arc": 55, "offset": 4, "knock": 560, "step": 18, "stun": 1.2, "color": "f07ab8",
-			"desc": "Ottoline throws her whole weight into one punch. Whatever it hits leaves at speed and lands stunned. She charges for the door."
-		},
-		"jessamy": {
-			"name": "Cut and Run", "mult": 2.2, "reach": 32, "arc": 180, "offset": -24, "knock": 200, "step": 52, "vanish": 1.5, "color": "c9b8ff",
-			"desc": "Jessamy darts straight through the crowd, cutting everything she passes, and is gone before they turn round."
-		},
-		"odile": {
-			"name": "Final Demand", "mult": 2.8, "reach": 30, "arc": 180, "offset": 52, "knock": 300, "step": 0, "mark": 6, "mark_mult": 1.5, "color": "e8c45a",
-			"desc": "A great brass seal slams down a good way in front of her. Anything it doesn't flatten is Audited for 6 s."
-		},
-		"velvette": {
-			"name": "Coup de Grace", "mult": 3.2, "reach": 46, "arc": 10, "offset": 0, "knock": 260, "step": 16, "execute": 0.35, "color": "e0405a",
-			"desc": "One perfect thrust down a very narrow line. Anything already below a third of its health takes double. Curtain."
-		}
+		"ash": [
+			{
+				"id": "full_stop",
+				"name": "Full Stop",
+				"mult": 2.4,
+				"reach": 26,
+				"arc": 180,
+				"offset": 22,
+				"knock": 300,
+				"step": 10,
+				"color": "9fd8ff",
+				"fx": "burst",
+				"sound": {
+					"tone": 520,
+					"sweep": -260,
+					"noise": 0.5,
+					"len": 0.28,
+					"ring": 0.3,
+					"thump": 0.3
+				},
+				"desc": "Ash jabs the quill-knife into the page and the full stop bursts: a blast just in front that hits everything around it."
+			},
+			{
+				"id": "comma_splice",
+				"name": "Comma Splice",
+				"mult": 1.5,
+				"reach": 34,
+				"arc": 70,
+				"offset": 0,
+				"knock": 180,
+				"step": 6,
+				"hits": 2,
+				"every": 0.14,
+				"color": "b9c8ff",
+				"fx": "slash",
+				"sound": {
+					"tone": 880,
+					"sweep": 300,
+					"noise": 0.7,
+					"len": 0.22,
+					"ring": 0.1,
+					"thump": 0.0
+				},
+				"desc": "Two quick strokes, one on top of the other, in a wide arc in front. Grammatically wrong; very effective."
+			},
+			{
+				"id": "ellipsis",
+				"name": "Ellipsis",
+				"mult": 1.7,
+				"reach": 20,
+				"arc": 180,
+				"offset": 26,
+				"knock": 220,
+				"chain": 3,
+				"chain_gap": 24,
+				"chain_delay": 0.12,
+				"color": "7fd0ff",
+				"fx": "burst",
+				"sound": {
+					"tone": 660,
+					"sweep": 0,
+					"noise": 0.3,
+					"len": 0.4,
+					"ring": 0.6,
+					"thump": 0.2
+				},
+				"desc": "Three full stops in a row, marching away from Ash. Clears a corridor straight ahead."
+			},
+			{
+				"id": "redaction",
+				"name": "Redaction",
+				"mult": 3.0,
+				"reach": 92,
+				"arc": 7,
+				"offset": 0,
+				"knock": 260,
+				"step": 4,
+				"stun": 1.0,
+				"color": "5a6ea8",
+				"fx": "beam",
+				"sound": {
+					"tone": 140,
+					"sweep": -60,
+					"noise": 0.8,
+					"len": 0.34,
+					"ring": 0.0,
+					"thump": 0.6
+				},
+				"desc": "A thick black bar struck through everything on one long line. Whatever it covers is stunned for 1 s."
+			},
+			{
+				"id": "the_end",
+				"name": "The End",
+				"mult": 4.4,
+				"reach": 64,
+				"arc": 180,
+				"offset": 0,
+				"knock": 440,
+				"delay": 0.45,
+				"execute": 0.3,
+				"heal": 6,
+				"color": "e8f4ff",
+				"fx": "pillar",
+				"sound": {
+					"tone": 392,
+					"sweep": -200,
+					"noise": 0.6,
+					"len": 0.6,
+					"ring": 0.7,
+					"thump": 0.9
+				},
+				"desc": "Ash writes the last two words of the page on the ground. A beat later they go off: a huge blow all around, anything below 30% health takes double, and the party inside is patched for 6."
+			}
+		],
+		"bran": [
+			{
+				"id": "breach_of_contract",
+				"name": "Breach of Contract",
+				"mult": 2.6,
+				"reach": 40,
+				"arc": 80,
+				"offset": 0,
+				"knock": 360,
+				"step": 8,
+				"color": "e0504a",
+				"fx": "sweep",
+				"sound": {
+					"tone": 180,
+					"sweep": -90,
+					"noise": 0.7,
+					"len": 0.32,
+					"ring": 0.0,
+					"thump": 0.5
+				},
+				"desc": "Bran stops negotiating. A huge, slow cleaver arc in front of him that sends Nibblers flying."
+			},
+			{
+				"id": "fine_print",
+				"name": "Fine Print",
+				"mult": 2.0,
+				"reach": 46,
+				"arc": 180,
+				"offset": 0,
+				"knock": -260,
+				"color": "c8463f",
+				"fx": "spiral",
+				"sound": {
+					"tone": 240,
+					"sweep": 220,
+					"noise": 0.5,
+					"len": 0.36,
+					"ring": 0.2,
+					"thump": 0.2
+				},
+				"desc": "Bran reads them the small print. Everything around him is roughed up and dragged in close, right where his cleaver wants it."
+			},
+			{
+				"id": "hostile_takeover",
+				"name": "Hostile Takeover",
+				"mult": 2.3,
+				"reach": 36,
+				"arc": 180,
+				"offset": 0,
+				"knock": 300,
+				"taunt": 5,
+				"guard": 0.5,
+				"guard_time": 5,
+				"color": "f2a65a",
+				"fx": "shock",
+				"sound": {
+					"tone": 110,
+					"sweep": -40,
+					"noise": 0.4,
+					"len": 0.45,
+					"ring": 0.3,
+					"thump": 0.8
+				},
+				"desc": "A slam that hits everything around him. Whatever it hits comes for Bran for 5 s, and he takes half damage while they try."
+			},
+			{
+				"id": "severance",
+				"name": "Severance",
+				"mult": 3.6,
+				"reach": 58,
+				"arc": 62,
+				"offset": 0,
+				"knock": 420,
+				"step": 14,
+				"stun": 1.0,
+				"color": "ff6a4a",
+				"fx": "sweep",
+				"sound": {
+					"tone": 150,
+					"sweep": -120,
+					"noise": 0.9,
+					"len": 0.4,
+					"ring": 0.1,
+					"thump": 0.7
+				},
+				"desc": "One enormous cleaver arc in front, a long way out. Everything inside it is knocked flat and stunned for 1 s."
+			},
+			{
+				"id": "liquidation",
+				"name": "Liquidation",
+				"mult": 2.0,
+				"reach": 46,
+				"arc": 180,
+				"offset": 0,
+				"knock": 320,
+				"hits": 3,
+				"every": 0.28,
+				"last": {
+					"mult": 2.8,
+					"knock": 480,
+					"stun": 1.4
+				},
+				"color": "ff3a2a",
+				"fx": "shards",
+				"sound": {
+					"tone": 90,
+					"sweep": -30,
+					"noise": 0.8,
+					"len": 0.5,
+					"ring": 0.0,
+					"thump": 1.0
+				},
+				"desc": "Three ground-shaking blows all around him, the last the hardest, and it stuns. All assets must go."
+			}
+		],
+		"gristle": [
+			{
+				"id": "stir_the_pot",
+				"name": "Stir the Pot",
+				"mult": 2.0,
+				"reach": 34,
+				"arc": 180,
+				"offset": 0,
+				"knock": 240,
+				"step": 0,
+				"heal": 6,
+				"color": "9fbf6a",
+				"fx": "splash",
+				"sound": {
+					"tone": 300,
+					"sweep": 120,
+					"noise": 0.6,
+					"len": 0.3,
+					"ring": 0.2,
+					"thump": 0.1
+				},
+				"desc": "A full turn of the bone ladle. Hits everything around her and splashes allies inside with 6 HP of broth."
+			},
+			{
+				"id": "ladle_out",
+				"name": "Ladle Out",
+				"mult": 1.6,
+				"reach": 40,
+				"arc": 180,
+				"offset": 0,
+				"knock": 180,
+				"heal": 8,
+				"shield": 8,
+				"shield_time": 6,
+				"color": "b8e08a",
+				"fx": "splash",
+				"sound": {
+					"tone": 420,
+					"sweep": 260,
+					"noise": 0.4,
+					"len": 0.34,
+					"ring": 0.5,
+					"thump": 0.0
+				},
+				"desc": "Seconds for everyone. A splash that stings enemies around her and gives every ally inside 8 HP and an 8-point shield for 6 s."
+			},
+			{
+				"id": "simmer",
+				"name": "Simmer",
+				"mult": 3.0,
+				"reach": 36,
+				"arc": 180,
+				"offset": 44,
+				"knock": 260,
+				"delay": 0.6,
+				"stun": 0.8,
+				"color": "d8c35a",
+				"fx": "splash",
+				"sound": {
+					"tone": 200,
+					"sweep": 60,
+					"noise": 0.9,
+					"len": 0.5,
+					"ring": 0.0,
+					"thump": 0.5
+				},
+				"desc": "She sets something down a way in front. It boils over a moment later: big damage and a stun to whatever is standing there. Watch the bubbles."
+			},
+			{
+				"id": "bone_broth",
+				"name": "Bone Broth",
+				"mult": 2.2,
+				"reach": 48,
+				"arc": 180,
+				"offset": 0,
+				"knock": 220,
+				"heal": 16,
+				"ink": 3,
+				"color": "e0d6a0",
+				"fx": "stars",
+				"sound": {
+					"tone": 523,
+					"sweep": 0,
+					"noise": 0.2,
+					"len": 0.5,
+					"ring": 0.8,
+					"thump": 0.2
+				},
+				"desc": "The good stuff. Hits everything around her, heals allies inside for 16, and gives the whole party nearby 3 Ink."
+			},
+			{
+				"id": "whole_cauldron",
+				"name": "The Whole Cauldron",
+				"mult": 1.6,
+				"reach": 52,
+				"arc": 180,
+				"offset": 0,
+				"knock": 160,
+				"heal": 4,
+				"hits": 4,
+				"every": 0.22,
+				"last": {
+					"knock": 360,
+					"stun": 1.0
+				},
+				"color": "7fe06a",
+				"fx": "spiral",
+				"sound": {
+					"tone": 260,
+					"sweep": 180,
+					"noise": 0.7,
+					"len": 0.6,
+					"ring": 0.3,
+					"thump": 0.4
+				},
+				"desc": "She tips the whole thing over. Four scalding waves all around: each hurts enemies and heals allies inside for 4, and the last knocks them flat."
+			}
+		],
+		"ninefingers": [
+			{
+				"id": "skewer",
+				"name": "Skewer",
+				"mult": 3.0,
+				"reach": 62,
+				"arc": 12,
+				"offset": 0,
+				"knock": 280,
+				"step": 14,
+				"color": "f2d36b",
+				"fx": "line",
+				"sound": {
+					"tone": 700,
+					"sweep": -500,
+					"noise": 0.5,
+					"len": 0.24,
+					"ring": 0.2,
+					"thump": 0.2
+				},
+				"desc": "Daro lunges the full length of the pike. A very long, very narrow line that hits hard. Aim it."
+			},
+			{
+				"id": "twin_prongs",
+				"name": "Twin Prongs",
+				"mult": 2.3,
+				"reach": 60,
+				"arc": 6,
+				"offset": 0,
+				"knock": 260,
+				"step": 8,
+				"spread": [
+					-14,
+					14
+				],
+				"color": "e8c65a",
+				"fx": "line",
+				"sound": {
+					"tone": 780,
+					"sweep": -300,
+					"noise": 0.4,
+					"len": 0.26,
+					"ring": 0.4,
+					"thump": 0.1
+				},
+				"desc": "Both prongs, both sides: two long, narrow thrusts in a V. Catch one enemy between them, or two on them."
+			},
+			{
+				"id": "run_through",
+				"name": "Run Through",
+				"mult": 2.6,
+				"reach": 30,
+				"arc": 180,
+				"offset": -30,
+				"knock": 300,
+				"step": 64,
+				"color": "ffd98a",
+				"fx": "slash",
+				"sound": {
+					"tone": 330,
+					"sweep": 400,
+					"noise": 0.8,
+					"len": 0.3,
+					"ring": 0.0,
+					"thump": 0.3
+				},
+				"desc": "Daro charges a pike's length forward, through everything in the way, and can't be touched while running."
+			},
+			{
+				"id": "the_wheel",
+				"name": "The Wheel",
+				"mult": 2.2,
+				"reach": 52,
+				"arc": 180,
+				"offset": 0,
+				"knock": 300,
+				"hits": 2,
+				"every": 0.2,
+				"color": "f2b84a",
+				"fx": "sweep",
+				"sound": {
+					"tone": 260,
+					"sweep": -100,
+					"noise": 0.6,
+					"len": 0.4,
+					"ring": 0.1,
+					"thump": 0.4
+				},
+				"desc": "The pike goes round twice at full length. Nothing near Daro stays standing."
+			},
+			{
+				"id": "concord_breaker",
+				"name": "Concord Breaker",
+				"mult": 5.0,
+				"reach": 112,
+				"arc": 7,
+				"offset": 0,
+				"knock": 460,
+				"step": 18,
+				"stun": 1.2,
+				"color": "fff0a0",
+				"fx": "beam",
+				"sound": {
+					"tone": 600,
+					"sweep": -540,
+					"noise": 0.6,
+					"len": 0.5,
+					"ring": 0.5,
+					"thump": 0.9
+				},
+				"desc": "The thrust Daro was trained never to use on people. The longest, hardest line in the party, and it stuns everything it passes."
+			}
+		],
+		"ottoline": [
+			{
+				"id": "through_the_door",
+				"name": "Through the Door",
+				"mult": 3.0,
+				"reach": 34,
+				"arc": 55,
+				"offset": 4,
+				"knock": 560,
+				"step": 18,
+				"stun": 1.2,
+				"color": "f07ab8",
+				"fx": "shock",
+				"sound": {
+					"tone": 120,
+					"sweep": -50,
+					"noise": 0.5,
+					"len": 0.3,
+					"ring": 0.0,
+					"thump": 0.9
+				},
+				"desc": "Ottoline throws her whole weight into one punch. Whatever it hits leaves at speed and lands stunned."
+			},
+			{
+				"id": "one_two",
+				"name": "One-Two",
+				"mult": 1.8,
+				"reach": 30,
+				"arc": 50,
+				"offset": 4,
+				"knock": 220,
+				"step": 8,
+				"hits": 2,
+				"every": 0.16,
+				"last": {
+					"knock": 420,
+					"stun": 0.8
+				},
+				"color": "ff8ac8",
+				"fx": "slash",
+				"sound": {
+					"tone": 160,
+					"sweep": 80,
+					"noise": 0.6,
+					"len": 0.26,
+					"ring": 0.0,
+					"thump": 0.7
+				},
+				"desc": "Left, then right, in front of her. The second one sends them off stunned."
+			},
+			{
+				"id": "bar_brawl",
+				"name": "Bar Brawl",
+				"mult": 2.6,
+				"reach": 46,
+				"arc": 180,
+				"offset": 0,
+				"knock": 380,
+				"stun": 1.0,
+				"guard": 0.4,
+				"guard_time": 3,
+				"color": "e0569b",
+				"fx": "shock",
+				"sound": {
+					"tone": 100,
+					"sweep": 40,
+					"noise": 0.9,
+					"len": 0.42,
+					"ring": 0.1,
+					"thump": 0.8
+				},
+				"desc": "She clears the room: everything around her is thrown back and stunned, and she shrugs off 40% of the damage for 3 s."
+			},
+			{
+				"id": "throw_them_out",
+				"name": "Throw Them Out",
+				"mult": 1.2,
+				"reach": 56,
+				"arc": 180,
+				"offset": 0,
+				"knock": -320,
+				"hits": 2,
+				"every": 0.38,
+				"last": {
+					"mult": 3.0,
+					"reach": 40,
+					"knock": 620,
+					"stun": 1.5
+				},
+				"color": "ff5aa0",
+				"fx": "spiral",
+				"sound": {
+					"tone": 210,
+					"sweep": -160,
+					"noise": 0.6,
+					"len": 0.5,
+					"ring": 0.2,
+					"thump": 0.8
+				},
+				"desc": "First she hauls everything around her in by the collar, then she throws it all out at once. The second blow stuns."
+			},
+			{
+				"id": "closing_time",
+				"name": "Closing Time",
+				"mult": 4.2,
+				"reach": 72,
+				"arc": 180,
+				"offset": 0,
+				"knock": 520,
+				"delay": 0.4,
+				"stun": 2.5,
+				"color": "ffc0e0",
+				"fx": "pillar",
+				"sound": {
+					"tone": 80,
+					"sweep": -20,
+					"noise": 0.7,
+					"len": 0.65,
+					"ring": 0.4,
+					"thump": 1.0
+				},
+				"desc": "Both fists come down after a breath. The biggest stun in the party: everything around her is out for 2.5 s."
+			}
+		],
+		"jessamy": [
+			{
+				"id": "cut_and_run",
+				"name": "Cut and Run",
+				"mult": 2.2,
+				"reach": 32,
+				"arc": 180,
+				"offset": -24,
+				"knock": 200,
+				"step": 52,
+				"vanish": 1.5,
+				"color": "c9b8ff",
+				"fx": "slash",
+				"sound": {
+					"tone": 1000,
+					"sweep": -400,
+					"noise": 0.7,
+					"len": 0.24,
+					"ring": 0.1,
+					"thump": 0.0
+				},
+				"desc": "Jessamy darts straight through the crowd, cutting everything she passes, and is gone before they turn round."
+			},
+			{
+				"id": "hook_and_haul",
+				"name": "Hook and Haul",
+				"mult": 1.8,
+				"reach": 64,
+				"arc": 45,
+				"offset": 0,
+				"knock": -340,
+				"color": "b0a0e8",
+				"fx": "spiral",
+				"sound": {
+					"tone": 500,
+					"sweep": -300,
+					"noise": 0.5,
+					"len": 0.3,
+					"ring": 0.3,
+					"thump": 0.1
+				},
+				"desc": "Both hooks out in front, then a yank. Whatever they catch is dragged to her feet."
+			},
+			{
+				"id": "knife_storm",
+				"name": "Knife Storm",
+				"mult": 0,
+				"reach": 120,
+				"arc": 180,
+				"offset": 0,
+				"knock": 0,
+				"knives": {
+					"count": 8,
+					"arc": 360,
+					"speed": 260,
+					"range": 120,
+					"mult": 1.2,
+					"pierce": true
+				},
+				"color": "d8d2c4",
+				"fx": "shards",
+				"sound": {
+					"tone": 1400,
+					"sweep": -800,
+					"noise": 0.8,
+					"len": 0.3,
+					"ring": 0.2,
+					"thump": 0.0
+				},
+				"desc": "Eight knives in every direction at once, each one going straight through whatever it meets."
+			},
+			{
+				"id": "smugglers_route",
+				"name": "Smuggler's Route",
+				"mult": 2.6,
+				"reach": 34,
+				"arc": 180,
+				"offset": -36,
+				"knock": 240,
+				"step": 72,
+				"vanish": 2.5,
+				"crit": 2.5,
+				"color": "8a7fb0",
+				"fx": "slash",
+				"sound": {
+					"tone": 720,
+					"sweep": -600,
+					"noise": 0.6,
+					"len": 0.34,
+					"ring": 0.3,
+					"thump": 0.1
+				},
+				"desc": "She takes the hidden way through the crowd, cutting everything she passes, and disappears for 2.5 s. The next swing she lands does 2.5x damage."
+			},
+			{
+				"id": "midnight_tithe",
+				"name": "Midnight Tithe",
+				"mult": 1.2,
+				"reach": 42,
+				"arc": 180,
+				"offset": 0,
+				"knock": 140,
+				"hits": 5,
+				"every": 0.1,
+				"last": {
+					"mult": 1.8,
+					"execute": 0.35
+				},
+				"vanish": 2.0,
+				"color": "6a5aa0",
+				"fx": "slash",
+				"sound": {
+					"tone": 1200,
+					"sweep": -900,
+					"noise": 0.9,
+					"len": 0.5,
+					"ring": 0.2,
+					"thump": 0.2
+				},
+				"desc": "Five cuts in a blur all around her; the last finishes off anything below 35% health. Then she's gone for 2 s."
+			}
+		],
+		"odile": [
+			{
+				"id": "final_demand",
+				"name": "Final Demand",
+				"mult": 2.8,
+				"reach": 30,
+				"arc": 180,
+				"offset": 52,
+				"knock": 300,
+				"step": 0,
+				"mark": 6,
+				"mark_mult": 1.5,
+				"color": "e8c45a",
+				"fx": "seal",
+				"sound": {
+					"tone": 170,
+					"sweep": -60,
+					"noise": 0.4,
+					"len": 0.32,
+					"ring": 0.5,
+					"thump": 0.8
+				},
+				"desc": "A great brass seal slams down a good way in front of her. Anything it doesn't flatten is Audited for 6 s."
+			},
+			{
+				"id": "compound_interest",
+				"name": "Compound Interest",
+				"mult": 1.4,
+				"reach": 64,
+				"arc": 180,
+				"offset": 0,
+				"knock": 140,
+				"mark": 8,
+				"mark_mult": 1.6,
+				"color": "f0d27a",
+				"fx": "coins",
+				"sound": {
+					"tone": 1046,
+					"sweep": 200,
+					"noise": 0.2,
+					"len": 0.4,
+					"ring": 0.8,
+					"thump": 0.0
+				},
+				"desc": "She opens an account on everything around her: a light blow, and everything hit takes 60% more damage from everyone for 8 s."
+			},
+			{
+				"id": "garnish",
+				"name": "Garnish",
+				"mult": 2.6,
+				"reach": 36,
+				"arc": 180,
+				"offset": 34,
+				"knock": 220,
+				"leech": 0.5,
+				"leech_cap": 12,
+				"color": "e8b04a",
+				"fx": "coins",
+				"sound": {
+					"tone": 880,
+					"sweep": -300,
+					"noise": 0.3,
+					"len": 0.36,
+					"ring": 0.6,
+					"thump": 0.3
+				},
+				"desc": "Wages garnished at the source. A blast a little way ahead; half of the damage it deals comes back as health to the party nearby."
+			},
+			{
+				"id": "repossession",
+				"name": "Repossession",
+				"mult": 2.3,
+				"reach": 26,
+				"arc": 180,
+				"offset": 30,
+				"knock": 260,
+				"chain": 3,
+				"chain_gap": 34,
+				"chain_delay": 0.16,
+				"mark": 4,
+				"mark_mult": 1.5,
+				"color": "d8a83a",
+				"fx": "seal",
+				"sound": {
+					"tone": 200,
+					"sweep": 0,
+					"noise": 0.5,
+					"len": 0.5,
+					"ring": 0.4,
+					"thump": 0.7
+				},
+				"desc": "Three seals stamped in a row, marching forward. Everything under them is hit and Audited for 4 s."
+			},
+			{
+				"id": "writ_of_erasure",
+				"name": "Writ of Erasure",
+				"mult": 4.6,
+				"reach": 56,
+				"arc": 180,
+				"offset": 60,
+				"knock": 380,
+				"delay": 0.6,
+				"stun": 1.0,
+				"mark": 8,
+				"mark_mult": 1.6,
+				"ink": 4,
+				"color": "fff0b0",
+				"fx": "seal",
+				"sound": {
+					"tone": 130,
+					"sweep": -50,
+					"noise": 0.6,
+					"len": 0.7,
+					"ring": 0.6,
+					"thump": 1.0
+				},
+				"desc": "A writ the size of a cart slams down well ahead. Everything under it is flattened, stunned and Audited for 8 s, and the party nearby gets 4 Ink back from the paperwork."
+			}
+		],
+		"velvette": [
+			{
+				"id": "coup_de_grace",
+				"name": "Coup de Grace",
+				"mult": 3.2,
+				"reach": 46,
+				"arc": 10,
+				"offset": 0,
+				"knock": 260,
+				"step": 16,
+				"execute": 0.35,
+				"color": "e0405a",
+				"fx": "line",
+				"sound": {
+					"tone": 1300,
+					"sweep": -700,
+					"noise": 0.3,
+					"len": 0.24,
+					"ring": 0.5,
+					"thump": 0.0
+				},
+				"desc": "One perfect thrust down a very narrow line. Anything already below 35% health takes double. Curtain."
+			},
+			{
+				"id": "flourish",
+				"name": "Flourish",
+				"mult": 1.8,
+				"reach": 46,
+				"arc": 6,
+				"offset": 0,
+				"knock": 200,
+				"step": 6,
+				"spread": [
+					-20,
+					0,
+					20
+				],
+				"color": "ff6a7a",
+				"fx": "line",
+				"sound": {
+					"tone": 1500,
+					"sweep": -500,
+					"noise": 0.4,
+					"len": 0.28,
+					"ring": 0.6,
+					"thump": 0.0
+				},
+				"desc": "Three thrusts fanned out, faster than the eye can follow: three deadly lines across a wedge in front."
+			},
+			{
+				"id": "encore",
+				"name": "Encore",
+				"mult": 1.6,
+				"reach": 52,
+				"arc": 9,
+				"offset": 0,
+				"knock": 160,
+				"step": 6,
+				"hits": 3,
+				"every": 0.12,
+				"execute": 0.35,
+				"color": "e0304a",
+				"fx": "slash",
+				"sound": {
+					"tone": 1100,
+					"sweep": 300,
+					"noise": 0.5,
+					"len": 0.36,
+					"ring": 0.5,
+					"thump": 0.0
+				},
+				"desc": "The same thrust three times down the same line, each one finishing off anything below 35% health."
+			},
+			{
+				"id": "balestra",
+				"name": "Balestra",
+				"mult": 3.6,
+				"reach": 54,
+				"arc": 9,
+				"offset": 0,
+				"knock": 300,
+				"step": 48,
+				"stun": 1.0,
+				"execute": 0.35,
+				"color": "ff4060",
+				"fx": "beam",
+				"sound": {
+					"tone": 900,
+					"sweep": -650,
+					"noise": 0.5,
+					"len": 0.32,
+					"ring": 0.4,
+					"thump": 0.4
+				},
+				"desc": "A hop forward and a lunge from it, all in one motion. Hits very hard down a long line, stuns, and finishes off the wounded."
+			},
+			{
+				"id": "curtain_call",
+				"name": "Curtain Call",
+				"mult": 3.8,
+				"reach": 60,
+				"arc": 180,
+				"offset": 0,
+				"knock": 320,
+				"delay": 0.3,
+				"execute": 0.5,
+				"color": "ff9aa8",
+				"fx": "petals",
+				"sound": {
+					"tone": 784,
+					"sweep": -300,
+					"noise": 0.4,
+					"len": 0.6,
+					"ring": 0.8,
+					"thump": 0.6
+				},
+				"desc": "Velvette takes her bow and the stage comes down around her. Hits everything nearby, and anything at half health or less takes double."
+			}
+		]
 	}
 }

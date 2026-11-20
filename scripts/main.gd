@@ -51,6 +51,7 @@ var results_view  # results_view.gd
 var gear_view  # gear_view.gd: Party gear from the pause menu (issue #15)
 var found_items: Array = []  # gear picked up on the way (item ids); kept unless the party is wiped
 var levels_gained := {}  # hero id -> level reached during this mission, for the results screen
+var skills_gained: Array = []  # "Ash: Quill-knife 3 (Ellipsis)" lines for the results screen (issue #24)
 var quick_menu: QuickMenu  # quick_menu.gd: items, abilities, party, equip with time slowed (issue #6)
 var quick_open := false  # heroes read this: the menu has the controls while it is up
 
@@ -311,6 +312,33 @@ func _award_xp(amount: int) -> Array:
 			Fx.burst(entities, hero.global_position + Vector2(0, -10), [Color("ffd166"), Color.WHITE], 18, 60.0)
 			hud.say("%s reached level %d: %s" % [hero.hero_name, up["level"], Progress.gains_text(up["gains"])], 3.5)
 	return ups
+
+
+## A weapon or Ink skill went up mid-fight (Hero.gain_skill, scripts/skills.gd): a toast over the hero,
+## a line on the banner and a chime. A weapon level teaches a tech; Ink levels 2 and 4 raise a tier.
+func skill_up(hero: Hero, kind: String, color: String, level: int) -> void:
+	var line := ""
+	var label := ""
+	var col := Color("ffd166")
+	if kind == "weapon":
+		var t := Skills.tech_at(hero.hero_id, level)
+		label = "%s %d" % [Skills.weapon_name(hero.hero_id).to_upper(), level]
+		col = Color(str(t.get("color", "ffd166")))
+		line = "%s's %s skill reached %d: learned %s. Hold Attack longer on a full gauge to reach it." % [
+			hero.hero_name, Skills.weapon_name(hero.hero_id), level, t.get("name", "a new tech")]
+		skills_gained.append("%s: %s %d (%s)" % [hero.hero_name, Skills.weapon_name(hero.hero_id), level, t.get("name", "")])
+	else:
+		label = "%s INK %d" % [Skills.ink_name(color).to_upper(), level]
+		col = Skills.ink_color(color)
+		var what := Skills.ink_level_text(level)
+		var names := hero.abilities.filter(func(a): return str(a.get("ink", "")) == color).map(func(a): return str(a.get("name", "")))
+		line = "%s's %s Ink reached %d%s." % [hero.hero_name, Skills.ink_name(color), level,
+			(": %s for %s" % [what, " and ".join(names)]) if what != "" and not names.is_empty() else ""]
+		skills_gained.append("%s: %s Ink %d" % [hero.hero_name, Skills.ink_name(color), level])
+	Fx.damage_number(entities, hero.global_position + Vector2(0, -34), label, col.lightened(0.3))
+	Fx.burst(entities, hero.global_position + Vector2(0, -10), [col, col.lightened(0.5), Color.WHITE], 20, 70.0)
+	Audio.sfx("levelup", 1.25)
+	hud.say(line, 4.0)
 
 
 func _on_gear_closed() -> void:
@@ -614,6 +642,9 @@ func _progress_lines(r: Dictionary, outcome: String) -> void:
 		for id in levels_gained:
 			parts.append("%s Lv %d" % [PartyPicker.short_of(id), levels_gained[id]])
 		lines.append("Level up: " + ", ".join(parts) + ".")
+	if not skills_gained.is_empty():
+		lines.append("Skills: " + ", ".join(skills_gained) + ".")
+		skills_gained = []
 	if not found_items.is_empty():
 		var names := found_items.map(func(i): return Progress.item(i)["name"])
 		if outcome == "wiped":
