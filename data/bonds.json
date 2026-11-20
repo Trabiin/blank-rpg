@@ -389,7 +389,7 @@
 					{"label": "[Nod: you saved a hundred and six]", "bond": 1, "reply": [["ottoline", "Everyone says that. Like it's a sum that comes out even. It doesn't. You can't subtract people.", "angry"]]}
 				], "end": [["ottoline", "Right. Nobody lays a finger on the party while I'm there. House rules. I'll be standing in front of you, so try not to get in my way."]]},
 				{"rank": 4, "title": "Knocking", "lines": [
-					["ottoline", "Pell came to see me. Says there's a sound at Lantern Row. Where the Encore stood, out in Whitewater."],
+					["ottoline", "Pell came to see me. Says there's a sound at Lantern Row, on Gallows Ferry. Where the Encore stood, before the white took the street."],
 					["ottoline", "Knocking. From inside the white. Six knocks, then a wait, then six knocks."],
 					["ottoline", "Could be nothing. Could be the Blank doing an impression. It does that. Learns your voice. Learns the people you lost."],
 					["ottoline", "I've kept that door shut six years. I want to be the one who opens it. Or the one who checks it's still shut. Either way, I'm going.", "angry"]

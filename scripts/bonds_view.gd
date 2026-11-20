@@ -379,6 +379,9 @@ func _draw_details(vs: Vector2, id: String) -> void:
 		elif not Empire.expedition_running(pj).is_empty():
 			state = "under way"
 			col = GOLD
+		elif Empire.personal_lost(id) != "":
+			state = "lost with %s, which the Blank erased. Reclaim it to bring the job back" % Empire.personal_lost(id)
+			col = BAD
 		elif rank >= 4:
 			state = ("on the Guildhall board" + Prompts.tag("expeditions")) if Empire.level_of("guildhall") > 0 else ("needs a Guildhall" + Prompts.tag("buildings"))
 			col = GOLD

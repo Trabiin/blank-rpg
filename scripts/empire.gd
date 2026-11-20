@@ -800,8 +800,8 @@ func job_blocker(jid: String) -> String:
 	if needs.get("erased", false):
 		if p.get("owner", "") != "erased":
 			return "only once %s is erased" % p.get("name", "?")
-	elif p.get("owner", "") == "erased" and j.get("personal", "") == "":
-		return "%s has been erased" % p.get("name", "?")  # personal jobs still go: it's personal
+	elif p.get("owner", "") == "erased":
+		return "%s has been erased" % p.get("name", "?")  # personal jobs too: lose their home, lose rank 5
 	if not expedition_running(jid).is_empty():
 		return "a squad is already out on it"
 	if int(job_ready.get(jid, 0)) > day:
@@ -2154,6 +2154,16 @@ func personal_job(id: String) -> String:
 	return ""
 
 
+## The province whose loss put this person's personal job out of reach ("" = it can still be done).
+## Erased land takes the job with it until a Reclaim mission brings the province back.
+func personal_lost(id: String) -> String:
+	var pj := personal_job(id)
+	if pj == "" or personal_done(id):
+		return ""
+	var p := territory().find(job(pj).get("province", ""))
+	return p.get("name", "?") if p.get("owner", "") == "erased" else ""
+
+
 func personal_done(id: String) -> bool:
 	return bool(bonds.get(id, {}).get("personal_done", false))
 
@@ -2202,6 +2212,8 @@ func bond_next_text(id: String) -> String:
 	var need := bond_threshold(rank + 1) - bond_points(id)
 	if rank == BOND_MAX - 1 and not personal_done(id):
 		var pj := personal_job(id)
+		if personal_lost(id) != "":
+			return "Rank 5 is out of reach: their personal job was in %s, and the Blank has erased it. Reclaim %s to finish their story." % [personal_lost(id), personal_lost(id)]
 		if not expedition_running(pj).is_empty():
 			return "Away on their personal job. Back in %s." % job_left_text(expedition_running(pj))
 		return "Rank 5 needs their personal job: \"%s\" on the Guildhall board%s. They have to go on it." % [job(pj).get("name", "?"), Prompts.tag("expeditions")]

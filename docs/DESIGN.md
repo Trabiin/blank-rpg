@@ -273,13 +273,14 @@ is seen: the person gets a heart over their head in town and "wants a word". Eac
 (replayable from the Bonds screen), perks at ranks 3 and 5 (mission HP/damage/revives/damage taken/gauge, healing,
 expedition odds and speed, surge warning, daily Gilt/Supplies/Insight, Gilt per province held, study pace, cheaper
 buildings, faction standing, Hollowmark Fray), and a **personal job** on the Guildhall board at rank 4 that they
-must go on; rank 5 needs it done, and it can be taken even into erased land so nobody is locked out of rank 5.
+must go on; rank 5 needs it done. If the Blank erases the job's province, rank 5 is out of reach until a Reclaim
+mission brings the province back (Ojon, 2026-11-20: losing someone's home should cost something).
 Scenes show the portraits (`assets/portraits/`) in a visual-novel layout; lines can ask for an expression, which
 shows once #107 draws it. Each bonded hero also has a first chat in town and walking banter with other heroes
 (`data/dialogue.json`).
 
 The four 2026-11-20 heroes' arcs: **Ottoline** shut the Crimson Encore's door on six people to keep the Blank off
-a hundred and six (personal job: answer the knocking at that door in Whitewater). **Jessamy** paid a notary to strike
+a hundred and six (personal job: answer the knocking at that door, on Gallows Ferry). **Jessamy** paid a notary to strike
 her out of the Ledger and has faded in daylight ever since (job: make him write her back in, Tithe Road).
 **Odile** found her own mother's countersignature on the order to collect Lowmere (job: settle the account at Old
 Mill). **Velvette** killed eleven Concord-chosen "volunteers" on stage (job: a last performance on her old

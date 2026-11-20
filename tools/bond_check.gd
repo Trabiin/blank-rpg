@@ -190,5 +190,16 @@ func _check_perks() -> void:
 	var b: Dictionary = e.mission_boosts()
 	if not is_equal_approx(float(b["power_rate"]), 1.15):
 		_fail("Encore: power rate %s" % b["power_rate"])
+	# Losing a home province locks rank 5 (Ojon's rule) until it is reclaimed.
+	var gal: Dictionary = e.territory().find("gallows")
+	var owner_was: String = gal["owner"]
+	e.bonds["ottoline"]["personal_done"] = false
+	gal["owner"] = "erased"
+	if e.personal_lost("ottoline") == "" or e.job_blocker("personal_ottoline") == "":
+		_fail("an erased home province should lock Ottoline's personal job")
+	gal["owner"] = owner_was
+	if e.personal_lost("ottoline") != "":
+		_fail("Ottoline's job should come back with the province")
+	e.bonds["ottoline"]["personal_done"] = true
 	print("perks: ", ", ".join(e.bond_perks().map(func(p): return "%s (%s)" % [p["name"], p["id"]])))
 	print("mission lines: ", b["lines"])

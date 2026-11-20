@@ -149,8 +149,8 @@
 			}
 		},
 		{
-			"id": "personal_ottoline", "name": "Answer the Knocking", "kind": "Personal", "province": "whitewater", "personal": "ottoline",
-			"blurb": "Out in Whitewater, where the Blank took Lantern Row, the door of the Crimson Encore still stands, and something behind it knocks six times, then waits. Big Ottoline shut that door. She wants to be the one who opens it.",
+			"id": "personal_ottoline", "name": "Answer the Knocking", "kind": "Personal", "province": "gallows", "personal": "ottoline",
+			"blurb": "On Gallows Ferry, where a tongue of white swallowed Lantern Row, the door of the Crimson Encore still stands, and something behind it knocks six times, then waits. Big Ottoline shut that door. She wants to be the one who opens it.",
 			"days": 2, "rations": 2, "stats": {"might": 1.0, "grit": 0.5}, "target": 18, "danger": 3, "cooldown": 2,
 			"reward": {"ink": [2, 4], "renown": 1}, "needs": {"blank": true},
 			"text": {
