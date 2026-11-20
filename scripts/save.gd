@@ -213,6 +213,7 @@ func _set_aside(slot: String, text: String, tag: String, remove := true) -> Stri
 		return ""
 	if remove:
 		DirAccess.remove_absolute(_path(slot))
+		_write(kept, text)  # a second close, so the web build also syncs the removal to IndexedDB
 	return kept
 
 
