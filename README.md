@@ -19,7 +19,7 @@ Reality is being eaten by a hungry Blank, and you are the one person it spat bac
 
 Attacks use a power gauge: swinging before it refills still hits, but for less damage.
 
-Saving: pick Save game in the pause menu (three slots). The game also autosaves every minute when no enemy is close and nobody is down, and when you quit to the title or switch away from the tab. Saves live in your browser's storage, so they stay on that browser and device.
+Saving: pick Save game in the pause menu (three slots). The game also autosaves every minute when no enemy is close and nobody is down, and when you quit to the title or switch away from the tab. Saves live in your browser's storage, so they stay on that browser and device. Saves from older versions of the game load and are upgraded automatically; a save that cannot be read is set aside (never deleted) and the title screen says so.
 
 ## Development
 
@@ -46,4 +46,7 @@ Saving: pick Save game in the pause menu (three slots). The game also autosaves 
 - Territory: provinces live in `data/provinces.json` (name, seed point, owner, Fray, output, sites,
   missions). Province shapes and borders are generated from the seed points by `scripts/territory.gd`,
   so moving a seed or changing its weight reshapes the map and its adjacency together.
-- CI: `.github/workflows/deploy-web.yml` builds every push and PR, and deploys `main` to GitHub Pages.
+- CI: `.github/workflows/deploy-web.yml` tests and builds every push and PR, and deploys `main` to GitHub Pages
+  only when the tests pass.
+- Tests: `tools/run_tests.sh` (data checks, save migrations, scene smoke tests). See [docs/TESTING.md](docs/TESTING.md).
+- Saves: old saves must keep loading. Any change to saved state follows [docs/SAVES.md](docs/SAVES.md).

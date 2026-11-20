@@ -59,7 +59,9 @@ func play_lines(ls: Array, heading := "", talk_id := "") -> void:
 	_exprs = ["", ""]
 	_place_speaker()
 	position = Vector2.ZERO
-	size = get_viewport_rect().size
+	# Deferred: a box opened in the same frame it was created (a mission's opening talk) would
+	# otherwise trip Godot's "size overridden after _ready()" warning.
+	set_deferred("size", get_viewport_rect().size)
 	visible = true
 	opened_frame = Engine.get_process_frames()
 

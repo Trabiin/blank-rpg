@@ -19,6 +19,33 @@ env:
   GODOT_VERSION: "4.3"
 
 jobs:
+  # Automated tests (issue #110, docs/TESTING.md): data checks, save migrations, scene smoke tests.
+  # Fails on any failed test and on any script error or warning in the log. Deploy waits for it.
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache Godot
+        id: cache-godot-editor
+        uses: actions/cache@v4
+        with:
+          path: ~/godot
+          key: godot-${{ env.GODOT_VERSION }}-editor
+
+      - name: Download Godot
+        if: steps.cache-godot-editor.outputs.cache-hit != 'true'
+        run: |
+          set -e
+          base="https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable"
+          mkdir -p ~/godot
+          curl -sSL -o /tmp/godot.zip "$base/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
+          unzip -q /tmp/godot.zip -d ~/godot
+          mv ~/godot/Godot_v${GODOT_VERSION}-stable_linux.x86_64 ~/godot/godot
+
+      - name: Run tests
+        run: GODOT=~/godot/godot tools/run_tests.sh
+
   build:
     runs-on: ubuntu-latest
     steps:
@@ -63,7 +90,7 @@ jobs:
 
   deploy:
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
-    needs: build
+    needs: [build, test]
     runs-on: ubuntu-latest
     environment:
       name: github-pages

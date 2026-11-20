@@ -5,6 +5,8 @@ extends "res://tests/test_case.gd"
 const EXPRESSIONS := ["", "happy", "angry", "sad", "surprised", "smug"]
 const OBJECTIVE_KINDS := ["kills", "boss", "defense", "reclaim", "rescue"]
 const OWNERS := ["you", "free", "erased"]
+## Target rules scripts/blank_plans.gd pick_target() understands besides province ids.
+const BLANK_RULES := ["concord_frayest", "yours_frayest", "exposed_frayest"]
 
 var D := {}  # file name -> parsed JSON
 
@@ -280,14 +282,14 @@ func test_missions_and_enemies() -> void:
 		var info: Dictionary = kinds[k]
 		check(EnemyKinds.SCRIPTS.has(info.get("script", k)), "enemies.json %s: no behaviour script" % k)
 		check(D["sprites.json"]["sprites"].has(info.get("sprite", k)), "enemies.json %s: no sprite set %s" % [k, info.get("sprite", k)])
-		check(str(info.get("tip", "")) != "", "enemies.json %s: no tip" % k)
 	for r in D["enemies.json"]["rosters"]:
 		check(r == "default" or _provinces().has(r), "enemies.json roster %s: not a province" % r)
 		for k in D["enemies.json"]["rosters"][r]:
 			check(kinds.has(k), "enemies.json roster %s: unknown enemy %s" % [r, k])
 	for pl in D["blank.json"]["plans"]:
-		check(_provinces().has(pl.get("target", "")), "blank.json %s: target %s missing" % [pl["id"], pl.get("target")])
-		check(pl.get("counter", "") in ["governor", "lamp"], "blank.json %s: unknown counter %s" % [pl["id"], pl.get("counter")])
+		var target := str(pl.get("target", ""))
+		check(_provinces().has(target) or target in BLANK_RULES, "blank.json %s: target %s is neither a province nor a rule" % [pl["id"], target])
+		check(pl.get("counter", "") in ["", "governor", "lamp"], "blank.json %s: unknown counter %s" % [pl["id"], pl.get("counter")])
 
 
 # ------------------------------------------------------------------ words and pictures

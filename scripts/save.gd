@@ -55,7 +55,7 @@ func save(slot: String, data: Dictionary) -> bool:
 	data["version"] = VERSION
 	data["game_version"] = game_version()
 	data["migrations"] = SaveMigrations.ids()
-	data["saved_at"] = int(Time.get_unix_time_from_system())
+	data["saved_at"] = snappedf(Time.get_unix_time_from_system(), 0.001)  # ms: two saves in one second still order
 	data["playtime"] = Empire.playtime
 	data["empire"] = Empire.to_dict()
 	return _write(_path(slot), JSON.stringify(data))
@@ -85,7 +85,7 @@ func parse(text: String) -> Dictionary:
 	if text.strip_edges() == "":
 		return {"status": BROKEN, "error": "the file is empty"}
 	if json.parse(text) != OK:
-		return {"status": BROKEN, "error": "damaged file, line %d" % json.get_error_line()}
+		return {"status": BROKEN, "error": "the file is damaged"}
 	var d = json.data
 	if typeof(d) != TYPE_DICTIONARY:
 		return {"status": BROKEN, "error": "not a save file"}
@@ -131,11 +131,11 @@ func take_notices() -> Array:
 ## The most recently written slot, or "" when there are no saves.
 func latest_slot() -> String:
 	var best := ""
-	var best_t := -1
+	var best_t := -1.0
 	for s in SLOTS:
 		var d := read(s)
-		if not d.is_empty() and int(d.get("saved_at", 0)) > best_t:
-			best_t = int(d.get("saved_at", 0))
+		if not d.is_empty() and float(d.get("saved_at", 0)) > best_t:
+			best_t = float(d.get("saved_at", 0))
 			best = s
 	return best
 
