@@ -63,6 +63,7 @@ var told_opening := false
 func _ready() -> void:
 	art_id = "auditor"  # art pass sprite (boss about twice a hero's height); falls back to the paper doll and code-drawn quill
 	super._ready()
+	boss = true  # no stuns, and it always knows where everyone is
 	max_hp = MAX_HP
 	hp = MAX_HP
 	xp = 80

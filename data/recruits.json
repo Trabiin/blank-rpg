@@ -107,7 +107,7 @@
 			"lines": ["See this one? Owe a man a pig. He's dead now. Still owe it.", "I can mend a blade, a hinge or a grudge. The grudge costs extra.", "When I'm out of skin, the debts go to my next of kin. Lucky them."]
 		},
 		{
-			"id": "jessamy", "name": "Jessamy Nightjar", "title": "smuggler", "tier": "recruit", "start": false,
+			"id": "jessamy", "name": "Jessamy Nightjar", "title": "smuggler", "tier": "field", "start": false,
 			"stats": {"might": 4, "craft": 5, "lore": 3, "charm": 7, "grit": 4}, "traits": ["night_owl", "flirt"],
 			"blurb": "Only moves cargo after dark, and never asks what's in the crates. Asks a lot about you, though.",
 			"post": "tavern", "look": {"outfit": "archer", "colors": {"skin": "d8a888", "cloth": "2a2a4a", "leather": "5a2a3a", "boots": "1e1a24", "trim": "c94a6a"}},
@@ -143,7 +143,7 @@
 			"lines": ["(Pim:) It's my turn with the voice. (Pet, silently, disagrees.)", "(Posy:) The Blank doesn't like harmony. Too many parts. It can't swallow them all at once.", "(Pet:) We used to be four. We don't talk about it. We don't have the voice to spare."]
 		},
 		{
-			"id": "odile", "name": "Odile Penhallow", "title": "tax collector with a conscience", "tier": "recruit", "start": false,
+			"id": "odile", "name": "Odile Penhallow", "title": "tax collector with a conscience", "tier": "field", "start": false,
 			"stats": {"might": 3, "craft": 4, "lore": 5, "charm": 6, "grit": 5}, "traits": ["ex_concord"],
 			"blurb": "Collected tithes for the Concord until she was told to collect a village. Quit on the spot, with the ledger.",
 			"post": "table_side", "look": {"outfit": "mage", "colors": {"skin": "e8c8b0", "cloth": "5a2a4a", "leather": "3a2a2a", "boots": "2a2028", "trim": "e0c060"}},
@@ -155,7 +155,7 @@
 			"lines": ["They told me to collect a village. Not from. Collect. I took the ledger and ran.", "Your books are a disgrace. I love them. So much to do.", "Quill and I disagree about rounding. Quill rounds up. For Quill."]
 		},
 		{
-			"id": "ottoline", "name": "Big Ottoline", "title": "cabaret bouncer", "tier": "recruit", "start": false,
+			"id": "ottoline", "name": "Big Ottoline", "title": "cabaret bouncer", "tier": "field", "start": false,
 			"stats": {"might": 8, "craft": 2, "lore": 1, "charm": 4, "grit": 8}, "traits": ["stubborn"],
 			"blurb": "Tobble's niece, or cousin, or creditor. Threw a Concord magistrate through a door and then charged him for the door.",
 			"post": "tavern", "look": {"outfit": "warrior", "colors": {"skin": "c08060", "metal": "6a6460", "accent": "8a3a6a", "boots": "2a2024"}},
@@ -165,6 +165,18 @@
 			"welcome": "Rule one: no fighting in my tavern. Rule two: if there is fighting, I win it.",
 			"quips": ["Ottoline carried the injured home two at a time and complained it was a light day.", "Ottoline stood in a doorway at the inn and nobody tried to rob the squad. Nobody tried to leave either."],
 			"lines": ["Uncle Tobble says I'm the muscle. I say he's the mouth. Between us we're one bouncer.", "Name's on the list or it isn't. If it isn't, I can help with that. Painfully.", "Throw a magistrate through a door once and they never let you forget it."]
+		},
+		{
+			"id": "velvette", "name": "Velvette", "title": "cabaret duelist", "tier": "field", "start": false,
+			"stats": {"might": 6, "craft": 4, "lore": 4, "charm": 9, "grit": 5}, "traits": ["flirt", "night_owl"],
+			"blurb": "Star of the Crimson Encore, where the closing act is a real duel with a paying volunteer. Knows every secret told in her dressing room, and charges for each one.",
+			"post": "tavern", "look": {"outfit": "archer", "colors": {"skin": "e8c0a8", "cloth": "201a22", "leather": "5a1f3c", "boots": "1a1418", "trim": "e0b04a"}},
+			"join": {"type": "renown", "amount": 5}, "hire": {"gilt": 60},
+			"rumour": "The Crimson Encore went dark when the Blank took its street. Its star duelist only performs for a crowd worth the trouble. Earn 5 Renown.",
+			"pitch": "Darling, the whole Inklands is talking about you, and I hate not being the one they talk about. Sixty Gilt, and I'll fight beside you instead. Better seats.",
+			"welcome": "Ottoline used to keep my door. Now she keeps yours. We'll get on famously, you and I, until one of us gets bored.",
+			"quips": ["Velvette duelled a bandit chief for the road toll and bowed to the survivors. They applauded.", "Velvette came back from the expedition with three secrets, two love letters and nobody's purse but her own. She says."],
+			"lines": ["Every duel is a performance. The trick is making sure the other one doesn't know it's their last.", "I hear things in my dressing room. You'd be amazed what people tell a woman with a sword at their throat. And what they tell her without one.", "Ottoline thinks I'm reckless. I think the volunteers knew what they signed. It was printed on the ticket."]
 		}
 	]
 }

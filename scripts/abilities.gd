@@ -81,6 +81,17 @@ static func use(h: Hero, i: int) -> bool:
 			h.start_dash(a)
 		"taunt":
 			_taunt(h, a, parent)
+		"bolt":
+			_bolt(h, a, parent)
+		"vanish":
+			_vanish(h, a, parent)
+		"drain":
+			_drain(h, a, parent)
+		"mark":
+			_mark(h, a, parent)
+		"parry":
+			h.parry_t = float(a.get("time", 0.8))
+			h.parry_ability = a
 	Fx.damage_number(parent, h.global_position + Vector2(0, -26), str(a.get("name", "")), color_of(a))
 	return true
 
@@ -120,8 +131,9 @@ static func _arc(h: Hero, a: Dictionary, parent: Node) -> void:
 		if to.length() <= reach + enemy.radius and absf(h.facing.angle_to(to)) <= half:
 			if enemy.take_hit(dmg, h.global_position, float(a.get("knock", 220))):
 				hit_any = true
+				enemy.stun(float(a.get("stun", 0)))
 	if hit_any and h.party:
-		h.party.shake(3.0)
+		h.party.shake(4.0 if a.has("stun") else 3.0)
 
 
 static func _taunt(h: Hero, a: Dictionary, parent: Node) -> void:
@@ -138,6 +150,117 @@ static func _taunt(h: Hero, a: Dictionary, parent: Node) -> void:
 			enemy.taunt(h, t)
 
 
+## A fan of thrown blades: count of them, spread degrees apart, centred on facing.
+static func _bolt(h: Hero, a: Dictionary, parent: Node) -> void:
+	var n := int(a.get("count", 1))
+	var spread := deg_to_rad(float(a.get("spread", 12)))
+	var col := color_of(a)
+	for k in n:
+		var b := ThrownKnife.new()
+		b.dir = h.facing.normalized().rotated((k - (n - 1) / 2.0) * spread)
+		b.speed = float(a.get("speed", 240))
+		b.damage = int(a.get("damage", 8))
+		b.knock = float(a.get("knock", 120))
+		b.range_left = float(a.get("range", 150))
+		b.pierce = bool(a.get("pierce", false))
+		b.color = col
+		parent.add_child(b)
+		b.global_position = h.global_position + Vector2(0, -8) + b.dir * 6.0
+
+
+## Lamps Out: out of sight for time s. Enemies within radius forget the hero (bosses don't), she runs
+## faster, and her next swing that lands hits crit times harder.
+static func _vanish(h: Hero, a: Dictionary, parent: Node) -> void:
+	var r := float(a.get("radius", 120))
+	Fx.burst(parent, h.global_position + Vector2(0, -8), [Color("2a2438"), Color("4a4060"), color_of(a)], 22, 60.0)
+	h.vanish(float(a.get("time", 3.0)), float(a.get("speed", 1.3)), float(a.get("crit", 1.0)))
+	for e in h.get_tree().get_nodes_in_group("enemies"):
+		var enemy := e as Enemy
+		if enemy == null or enemy.dead or enemy.boss:
+			continue
+		if enemy.global_position.distance_to(h.global_position) <= r and enemy.target == h:
+			enemy.target = null
+			if enemy.taunter == h:
+				enemy.taunt_t = 0.0
+
+
+## Levy: damage every enemy in radius, then share heal_ratio of what was taken among the party nearby
+## (each ally up to heal_cap).
+static func _drain(h: Hero, a: Dictionary, parent: Node) -> void:
+	var r := float(a.get("radius", 64))
+	var col := color_of(a)
+	Fx.ring(parent, h.global_position, r, col)
+	var taken := 0
+	for e in h.get_tree().get_nodes_in_group("enemies"):
+		var enemy := e as Enemy
+		if enemy == null or enemy.dead or enemy.global_position.distance_to(h.global_position) > r:
+			continue
+		var before := enemy.hp
+		if enemy.take_hit(int(a.get("damage", 8)), h.global_position, float(a.get("knock", 60))):
+			taken += before - enemy.hp
+			_coin_trail(parent, enemy.global_position, h.global_position, col)
+	if taken <= 0:
+		return
+	var pool := int(round(taken * float(a.get("heal_ratio", 0.5))))
+	var cap := int(a.get("heal_cap", 12))
+	for o in h.get_tree().get_nodes_in_group("heroes"):
+		var other := o as Hero
+		if other == null or other.dead or other.party != h.party:
+			continue
+		if other.global_position.distance_to(h.global_position) > float(a.get("heal_radius", 90)):
+			continue
+		var amount := mini(mini(pool, cap), other.max_hp - other.hp)
+		if amount > 0:
+			other.hp += amount
+			Fx.damage_number(parent, other.global_position + Vector2(0, -18), "+%d" % amount, Color("9fe07a"))
+
+
+static func _coin_trail(parent: Node, from: Vector2, to: Vector2, col: Color) -> void:
+	for k in 3:
+		Fx.burst(parent, from.lerp(to, k / 3.0) + Vector2(0, -8), [col, Color("fff1b8")], 3, 20.0)
+
+
+## Audit: every enemy in radius takes mult times damage from everything for time s.
+static func _mark(h: Hero, a: Dictionary, parent: Node) -> void:
+	var r := float(a.get("radius", 80))
+	Fx.ring(parent, h.global_position, r, color_of(a))
+	for e in h.get_tree().get_nodes_in_group("enemies"):
+		var enemy := e as Enemy
+		if enemy and not enemy.dead and enemy.global_position.distance_to(h.global_position) <= r:
+			enemy.mark(float(a.get("time", 6)), float(a.get("mult", 1.5)))
+			Fx.burst(parent, enemy.global_position + Vector2(0, -12), [color_of(a)], 4, 25.0)
+
+
+## Riposte: the hit that just came in from `from` is turned aside, and whoever threw it (the nearest
+## enemy to that point, within reach) takes damage and is stunned. One parry, one answer.
+static func riposte(h: Hero, from: Vector2) -> void:
+	var a := h.parry_ability
+	var parent := h.get_parent()
+	h.parry_t = 0.0
+	h.invuln_t = maxf(h.invuln_t, 0.4)
+	Fx.burst(parent, h.global_position + Vector2(0, -10), [color_of(a), Color.WHITE], 14, 70.0)
+	Fx.damage_number(parent, h.global_position + Vector2(0, -30), "Riposte!", color_of(a).lightened(0.3))
+	var best: Enemy = null
+	var best_d := float(a.get("reach", 60))
+	for e in h.get_tree().get_nodes_in_group("enemies"):
+		var enemy := e as Enemy
+		if enemy == null or enemy.dead:
+			continue
+		var d := enemy.global_position.distance_to(from)
+		if d < best_d:
+			best_d = d
+			best = enemy
+	if best == null:
+		return
+	h.facing = (best.global_position - h.global_position).normalized()
+	Fx.sweep(parent, h.global_position + Vector2(0, -6), h.facing.angle(), deg_to_rad(12), h.global_position.distance_to(best.global_position) + 6.0, color_of(a))
+	if best.take_hit(int(a.get("damage", 20)), h.global_position, float(a.get("knock", 220))):
+		best.stun(float(a.get("stun", 1.0)))
+	h.ink = minf(h.ink + float(a.get("refund", 0)), h.max_ink)
+	if h.party:
+		h.party.shake(3.0)
+
+
 ## Enemies a dash runs through (each one once per dash).
 static func dash_hits(h: Hero) -> void:
 	for e in h.get_tree().get_nodes_in_group("enemies"):
@@ -146,8 +269,9 @@ static func dash_hits(h: Hero) -> void:
 			continue
 		if enemy.global_position.distance_to(h.global_position) <= h.radius + enemy.radius + 8.0:
 			h.dash_hit.append(enemy)
-			enemy.take_hit(int(h.dash_ability.get("damage", 10)), h.global_position - h.dash_dir * 6.0,
-				float(h.dash_ability.get("knock", 180)))
+			if enemy.take_hit(int(h.dash_ability.get("damage", 10)), h.global_position - h.dash_dir * 6.0,
+					float(h.dash_ability.get("knock", 180))):
+				enemy.stun(float(h.dash_ability.get("stun", 0)))
 			if h.party:
 				h.party.shake(2.0)
 
@@ -180,6 +304,15 @@ static func ai_pick(h: Hero) -> int:
 					if d <= float(rule.get("range", 60)) and d > 20.0:
 						h.facing = (tgt.global_position - h.global_position).normalized()
 						return i
+			"windup":
+				for e in h.get_tree().get_nodes_in_group("enemies"):
+					var enemy := e as Enemy
+					if enemy and not enemy.dead and enemy.target == h and enemy.state == Enemy.State.WINDUP \
+							and enemy.global_position.distance_to(h.global_position) <= float(rule.get("range", 40)):
+						return i
+			"self_hurt":
+				if float(h.hp) / h.max_hp < float(rule.get("below", 0.5)) and _count_near(h, h.global_position, float(rule.get("range", 40))) >= 1:
+					return i
 			"threat":
 				if leader and _count_near(h, leader.global_position, float(rule.get("range", 60))) >= int(rule.get("count", 2)):
 					return i

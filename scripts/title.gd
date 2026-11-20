@@ -54,7 +54,7 @@ func _ready() -> void:
 
 
 func _on_slot(id: String) -> void:
-	if id in ["command", "boss_test"]:
+	if id in ["command", "boss_test", "heroes_test"]:
 		_on_choice(id)
 	elif id == "back" or id == "cancel":
 		slots.visible = false
@@ -91,6 +91,13 @@ func _on_choice(id: String) -> void:
 			Progress.award(PartyPicker.mission_party(), 200)
 			Dialogue.mark_seen("talk:meadow_intro")  # Bran already knows Ash by now
 			Missions.launch(Missions.find("auditor_duel"))
+		"heroes_test":  # the new field heroes, hired on day one, Ottoline and Jessamy in the party
+			Saves.pending = {}
+			Empire.reset()
+			Empire.recruits["bran"]["role"] = "idle"
+			for rid in ["ottoline", "jessamy", "odile"]:
+				Empire.recruits[rid] = {"role": "party" if rid != "odile" else "idle", "target": "", "injured": 0}
+			get_tree().change_scene_to_file(Saves.HUB_SCENE)
 		"options":
 			menu.visible = false
 			OptionsView.popup(self).closed.connect(func(): menu.visible = true)
@@ -101,6 +108,7 @@ func _on_choice(id: String) -> void:
 			slots.setup("Test shortcuts", [
 				{"id": "command", "label": "Hollowmark", "detail": "a fresh town and the Command Table"},
 				{"id": "boss_test", "label": "Boss: The Auditor", "detail": "fresh level 6 party, straight into the fight"},
+				{"id": "heroes_test", "label": "New heroes", "detail": "fresh town with Ottoline, Jessamy and Odile already hired"},
 				{"id": "back", "label": "Back"}])
 			menu.visible = false
 			slots.visible = true

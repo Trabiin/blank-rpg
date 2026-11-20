@@ -249,9 +249,11 @@ def save_styled(job, prefix):
 
 def spend_summary():
     """Sum of logged spend per phase."""
+    import glob
     tot = {}
-    if os.path.exists(LEDGER):
-        for line in open(LEDGER):
+    # art_spend.jsonl plus per-thread ledgers (art_spend_<topic>.jsonl), so parallel branches don't edit one file.
+    for path in sorted(glob.glob(os.path.join(HERE, "art_spend*.jsonl"))):
+        for line in open(path):
             r = json.loads(line)
             key = (r.get("phase"), r.get("tool", "pixellab"))
             tot[key] = tot.get(key, 0) + r.get("usd", 0)

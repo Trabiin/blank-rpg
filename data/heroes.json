@@ -30,6 +30,30 @@
 			"ai": "aggressive", "ink": 10, "abilities": ["long_thrust", "pike_sweep"],
 			"trail": {"color": "e8c65a", "style": "thrust"},
 			"special": "Longest reach in the party, on a narrow line. Aim the point."
+		},
+		"ottoline": {
+			"short": "Ottoline", "weapon": "Brass knuckles", "hp": 72, "speed": 58, "damage": 15, "power_rate": 0.9, "reach": 18, "arc": 60,
+			"ai": "aggressive", "ink": 12, "abilities": ["chucking_out", "last_orders"], "poise": 0.35,
+			"trail": {"color": "f07ab8", "style": "thrust"},
+			"special": "Most HP in the party and barely budges when hit. Short reach: get in close and stun them."
+		},
+		"jessamy": {
+			"short": "Jessamy", "weapon": "Hook-knives", "hp": 34, "speed": 80, "damage": 8, "power_rate": 1.4, "reach": 19, "arc": 65,
+			"ai": "distance", "ink": 14, "abilities": ["knife_fan", "lamps_out"],
+			"trail": {"color": "c9b8ff", "style": "arc"},
+			"special": "Fastest hero, fastest gauge, throws knives. Fragile: vanish when it gets hot, then strike from the dark."
+		},
+		"odile": {
+			"short": "Odile", "weapon": "Iron-bound ledger", "hp": 42, "speed": 64, "damage": 10, "power_rate": 0.9, "reach": 24, "arc": 75,
+			"ai": "balanced", "ink": 20, "abilities": ["levy", "audit"],
+			"trail": {"color": "e8c45a", "style": "arc"},
+			"special": "Biggest Ink pool. Audit makes enemies take +50% from everyone; Levy drains them to heal the party."
+		},
+		"velvette": {
+			"short": "Velvette", "weapon": "Rapier", "hp": 40, "speed": 74, "damage": 13, "power_rate": 1.1, "reach": 26, "arc": 35,
+			"ai": "balanced", "ink": 12, "abilities": ["riposte", "fleche"],
+			"trail": {"color": "e0405a", "style": "thrust"},
+			"special": "Narrow, quick thrusts. Time Riposte just before a blow lands to turn it back. Her tech finishes off the wounded."
 		}
 	}
 }

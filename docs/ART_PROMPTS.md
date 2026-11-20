@@ -128,3 +128,26 @@ heroes' body plan (docs/ART_STYLE.md "Proportions"). What worked:
 - Children: generate each child on 32 px as a normal figure, animate, then shrink every frame to 0.7 with
   `tools/compose_group.py`, which also stands a group (the Merrow Three) side by side in one sprite.
 - Cost: a base about $0.027, idle in 5 directions about $0.045, walk in 5 directions about $0.05.
+
+## Field heroes batch (2026-11-20: Ottoline, Jessamy, Odile, Velvette)
+
+Combat sets for the four new field heroes, on the PixelLab characters their town sprites already came from
+(Ottoline `ottoline p8` on a 36 px canvas, Jessamy `jessamy base`, Odile `odile p8 pilot 2`) plus a new Velvette
+(`velvette field 2`). Same action list and frame counts as Phase 1; weapon wording per hero:
+
+| Id | Attack | Tech (second half = release) | Victory |
+|---|---|---|---|
+| ottoline | `throwing a heavy straight punch forward with her bare fist` | `... lunging forward in a mighty shoulder charge` | `cracking her knuckles and flexing her arms triumphantly` |
+| jessamy | `slashing quickly with two short hooked knives in a fast crossing strike` | `... dashing forward in a flurry of knife slashes` | `twirling a knife in her fingers and bowing with a smirk` |
+| odile | `swinging a heavy iron-bound ledger book in a short smacking strike` | `... slamming a large brass stamp seal down in a mighty strike` | `snapping her ledger book shut and adjusting her glasses triumphantly` |
+| velvette | `thrusting a thin rapier forward in a quick fencing lunge` | `crouching low into a fencing stance ... mighty rapier thrust` | `saluting with her rapier and taking an elegant bow` |
+
+Velvette's base: `elegant duelist woman around 30 with a big head and a short wine-red bob haircut, black high-collared
+coat with gold buttons and crimson lining, long black gloves, thin silver rapier in one hand, sturdy build with a large
+head like the other heroes`. The first try with "average build" came out slim with a small head (rejected, $0.027).
+
+Gotchas: the API allows about 8 animation jobs at once (429 "not enough concurrent job slots"), so submit one action at
+a time and wait. Two calls with the same animation name land in separate folders in the ZIP (`attack-<id>/`); rename
+them to `attack_<dir>_<i>.png` before `tools/import_sprites.py`. Spend for this batch is in
+`tools/art_spend_field_heroes.jsonl` (a separate ledger so parallel branches don't both append to `art_spend.jsonl`;
+`pixellab.py spend` reads every `art_spend*.jsonl`).

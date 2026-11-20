@@ -137,8 +137,17 @@ static func fire(h: Hero) -> void:
 			continue
 		if half < PI - 0.01 and to.length() > 4.0 and absf(dir.angle_to(to)) > half:
 			continue
-		if enemy.take_hit(dmg, center - dir * 4.0, knock):
+		var dealt := dmg
+		if float(t.get("execute", 0)) > 0.0 and float(enemy.hp) <= enemy.max_hp * float(t["execute"]):
+			dealt *= 2  # Coup de Grace: finishes off the wounded
+			Fx.damage_number(parent, enemy.global_position + Vector2(0, -26), "Coup!", col.lightened(0.4))
+		if enemy.take_hit(dealt, center - dir * 4.0, knock):
 			hit_any = true
+			enemy.stun(float(t.get("stun", 0)))
+			if float(t.get("mark", 0)) > 0.0:
+				enemy.mark(float(t["mark"]), float(t.get("mark_mult", 1.5)))
+	if float(t.get("vanish", 0)) > 0.0:
+		h.vanish(float(t["vanish"]), 1.3, 1.0)
 	if int(t.get("heal", 0)) > 0:
 		for o in h.get_tree().get_nodes_in_group("heroes"):
 			var other := o as Hero
