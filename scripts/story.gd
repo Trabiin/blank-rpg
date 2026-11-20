@@ -51,7 +51,7 @@ static func command_on() -> bool:
 ##   cleared: [ids]     missions cleared         not_cleared: [ids]   missions not cleared yet
 ##   seen: [talk ids]   conversations played     joined: [ids]        recruits on the roster
 ##   renown: n          at least n Renown        held: n              at least n provinces held
-##   day: n             on day n or later
+##   owns: [ids]        provinces you hold       day: n               on day n or later
 static func meets(c: Dictionary) -> bool:
 	return blocker(c) == ""
 
@@ -77,6 +77,9 @@ static func blocker(c: Dictionary) -> String:
 		return "needs %d Renown" % int(c["renown"])
 	if held() < int(c.get("held", 0)):
 		return "hold %d provinces" % int(c["held"])
+	for pid in c.get("owns", []):
+		if Empire.territory().find(pid).get("owner", "") != "you":
+			return "take %s first" % Empire.territory().find(pid).get("name", pid)
 	if Empire.day < int(c.get("day", 0)):
 		return "not before day %d" % int(c["day"])
 	return ""
@@ -143,7 +146,7 @@ static func summary() -> String:
 	elif not Missions.cleared("auditor_duel"):
 		lines.append("Act 1: The Unregistered Town")
 	else:
-		lines.append("Act 1 complete. More chapters are coming after the MVP.")
+		lines.append("Act 1 complete: The Unregistered Town. Verity Hale has written. Hold the Marches.")
 	lines.append("")
 	for g in goals():
 		lines.append("%s  %s%s" % ["[x]" if g["done"] else "[ ]", g["text"], "" if g["done"] or g["hint"] == "" else "   (%s)" % g["hint"]])

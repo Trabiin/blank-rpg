@@ -27,8 +27,8 @@ static var map_override := ""  # tools/shot.gd map=<name>: show another town lay
 const TITLE_SCENE := "res://scenes/title.tscn"
 const AUTOSAVE_EVERY := 60.0
 const TALK_RANGE := 26.0
-const TABLE_SIZE := Vector2(46, 26)  # the Command Table's footprint (code-drawn when there is no art)
-var table_art: Texture2D = load("res://assets/props/command_table.png") if ResourceLoader.exists("res://assets/props/command_table.png") else null
+const TABLE_SIZE := Vector2(46, 26)  # the Command Table's footprint (collision and the "use" area)
+var table_art: Texture2D = preload("res://assets/props/command_table.png")
 const LAMP_FLAME_Y := 10.0  # lantern centre, from the top of the Wardlamp sprite
 ## What staff say about their building when you talk to them, before what it is doing right now.
 const STAFF_LINES := {
@@ -663,7 +663,7 @@ func open_menu(note := "") -> void:
 	menu.setup("Hollowmark", [
 		{"id": "resume", "label": "Resume"},
 		{"id": "table", "label": "Command Table", "detail": "the territory map"},
-		{"id": "story", "label": "Story", "detail": "the Act 1 checklist"},
+		{"id": "story", "label": "Story", "detail": "where the story stands, and what to do next"},
 		{"id": "roster", "label": "Roster", "detail": Prompts.key("roster")},
 		{"id": "buildings", "label": "Buildings", "detail": Prompts.key("buildings")},
 		{"id": "expeditions", "label": "Expeditions", "detail": Prompts.key("expeditions")},
@@ -832,46 +832,17 @@ func _process(delta: float) -> void:
 
 # ---------------------------------------------------------------- drawing
 
-## The Command Table: a heavy plank table with the map of the Inklands pinned to it.
-## Placeholder art, drawn in code until the PixelLab pass.
+## The Command Table: the art pass sprite with its shadow, outlined in gold while Ash can use it.
 func _draw_table() -> void:
 	var c := table_body
-	var w := TABLE_SIZE.x
-	var h := TABLE_SIZE.y
-	if table_art != null:
-		# Art pass sprite; the candle still flickers and the highlight still shows.
-		var tw := float(table_art.get_width())
-		var th := float(table_art.get_height())
-		c.draw_set_transform(Vector2.ZERO, 0.0, Vector2(1.0, 0.4))
-		c.draw_circle(Vector2(0, 2), tw * 0.5, Color(0, 0, 0, 0.25))
-		c.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
-		c.draw_texture(table_art, Vector2(-tw / 2.0, -th + 3.0))
-		if target.get("kind", "") == "table":
-			c.draw_rect(Rect2(-tw / 2.0 - 2.0, -th + 1.0, tw + 4.0, th + 4.0), Color("ffd166"), false, 1.0)
-		return
-	var top := Rect2(-w / 2.0, -h, w, h - 8.0)
+	var tw := float(table_art.get_width())
+	var th := float(table_art.get_height())
 	c.draw_set_transform(Vector2.ZERO, 0.0, Vector2(1.0, 0.4))
-	c.draw_circle(Vector2(0, 2), w * 0.55, Color(0, 0, 0, 0.25))
+	c.draw_circle(Vector2(0, 2), tw * 0.5, Color(0, 0, 0, 0.25))
 	c.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
-	for lx in [-w / 2.0 + 3.0, w / 2.0 - 6.0]:
-		c.draw_rect(Rect2(lx, -10, 3, 10), Color("4a3222"))
-	c.draw_rect(Rect2(top.position.x, top.end.y, w, 3), Color("5a3c26"))
-	c.draw_rect(top, Color("7a5434"))
-	for i in range(1, 4):
-		c.draw_line(Vector2(top.position.x, top.position.y + i * top.size.y / 4.0), Vector2(top.end.x, top.position.y + i * top.size.y / 4.0), Color("6a4628"), 1.0)
-	# The map, with the Blank eating its right edge, and a candle.
-	var m := Rect2(top.position + Vector2(6, 2), Vector2(w - 16, top.size.y - 4))
-	c.draw_rect(m, Color("e6d8b4"))
-	c.draw_rect(Rect2(m.position + Vector2(4, 3), Vector2(10, 6)), Color("8fa86a"))
-	c.draw_rect(Rect2(m.position + Vector2(13, 6), Vector2(8, 5)), Color("c99a5a"))
-	c.draw_rect(Rect2(m.position + Vector2(20, 2), Vector2(6, 6)), Color("7f8fc0"))
-	c.draw_rect(Rect2(m.end.x - 5, m.position.y, 5, m.size.y), Color("fbfaf5"))
-	c.draw_rect(m, Color("8a7350"), false, 1.0)
-	c.draw_rect(Rect2(top.end.x - 7, top.position.y - 2, 3, 5), Color("efe6d0"))
-	var flick := 0.6 + 0.4 * sin(Time.get_ticks_msec() * 0.013)
-	c.draw_circle(Vector2(top.end.x - 5.5, top.position.y - 4), 1.6, Color(1.0, 0.8, 0.35, flick))
+	c.draw_texture(table_art, Vector2(-tw / 2.0, -th + 3.0))
 	if target.get("kind", "") == "table":
-		c.draw_rect(top.grow(2), Color("ffd166"), false, 1.0)
+		c.draw_rect(Rect2(-tw / 2.0 - 2.0, -th + 1.0, tw + 4.0, th + 4.0), Color("ffd166"), false, 1.0)
 
 
 ## Hollowmark's Wardlamp: an iron post with an ink-blue flame, brighter at level 2.

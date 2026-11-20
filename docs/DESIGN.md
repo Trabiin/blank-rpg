@@ -332,7 +332,7 @@ and Blank positions so the content stretches without feeling copy-pasted.
 
 - **Attack power gauge.** Each hero has a power gauge that refills after every swing (about 1.1 s). Swinging early
   still hits, but for proportionally less damage. A full gauge does full damage; a full gauge held for 1 s more
-  becomes a **charged tech** (later milestone).
+  becomes a **charged tech** (data/techs.json; allies fire theirs too, issue #108).
 - **Abilities on hotkeys.** Each hero has up to 4 abilities mapped to keys 1-4 / gamepad shoulder + face buttons.
   Using one does not pause; it costs **Ink** (MP).
   **As built (#7):** data/abilities.json + scripts/abilities.gd. Each field hero has an Ink pool (10-14) that refills

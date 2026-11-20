@@ -179,14 +179,6 @@ func _gui_input(event: InputEvent) -> void:
 
 # ---------------------------------------------------------------- drawing
 
-func _col(look: Dictionary, keys: Array, fallback: String) -> Color:
-	var cols: Dictionary = look.get("colors", {})
-	for k in keys:
-		if cols.has(k):
-			return Color(cols[k])
-	return Color(fallback)
-
-
 ## The portrait for this character (and expression, if drawn), or null when there is none yet.
 static func portrait(who: String, expression := "") -> Texture2D:
 	for key in ([who + "_" + expression] if expression != "" else []) + [who]:
@@ -223,45 +215,6 @@ func _draw_glow(center: Vector2, radius: float, col: Color) -> void:
 		draw_circle(center, radius * t, Color(col, 0.012))
 
 
-## A big head-and-shoulders card in the character's colours. Placeholder for the AI portraits.
-func _draw_card(r: Rect2, who: String) -> void:
-	var info := Empire.bond_info(who)
-	var accent := Color(info.get("color", "c9c3b6"))
-	draw_rect(r, accent.darkened(0.78))
-	for i in 12:  # soft vertical wash
-		var t := float(i) / 12.0
-		draw_rect(Rect2(r.position.x, r.position.y + r.size.y * t, r.size.x, r.size.y / 12.0 + 1), Color(accent, 0.05 + 0.1 * t))
-	var look: Dictionary = Empire.recruit(who).get("look", {})
-	var skin := _col(look, ["skin"], "d9a07a")
-	var cloth := _col(look, ["cloth", "metal"], "5a4a6a")
-	var trim := _col(look, ["trim", "accent", "metal"], "c9c3b6")
-	var hair := _col(look, ["leather", "boots"], "3a2c22")
-	var c := Vector2(r.get_center().x, r.end.y)
-	# shoulders and chest
-	var w := r.size.x * 0.86
-	draw_colored_polygon(PackedVector2Array([c + Vector2(-w / 2, 0), c + Vector2(-w / 2 + 8, -r.size.y * 0.3),
-		c + Vector2(-w * 0.18, -r.size.y * 0.36), c + Vector2(w * 0.18, -r.size.y * 0.36),
-		c + Vector2(w / 2 - 8, -r.size.y * 0.3), c + Vector2(w / 2, 0)]), cloth)
-	draw_colored_polygon(PackedVector2Array([c + Vector2(-w * 0.12, -r.size.y * 0.36), c + Vector2(w * 0.12, -r.size.y * 0.36),
-		c + Vector2(0, -r.size.y * 0.22)]), skin.darkened(0.15))
-	draw_line(c + Vector2(-w * 0.18, -r.size.y * 0.36), c + Vector2(0, -r.size.y * 0.2), trim, 2.0)
-	draw_line(c + Vector2(w * 0.18, -r.size.y * 0.36), c + Vector2(0, -r.size.y * 0.2), trim, 2.0)
-	# neck and head
-	var head := c + Vector2(0, -r.size.y * 0.56)
-	var hr := r.size.x * 0.2
-	draw_rect(Rect2(head.x - hr * 0.35, head.y + hr * 0.6, hr * 0.7, r.size.y * 0.1), skin.darkened(0.1))
-	draw_circle(head + Vector2(0, -hr * 0.12), hr * 1.08, hair)
-	draw_circle(head + Vector2(0, hr * 0.1), hr, skin)
-	draw_rect(Rect2(head.x - hr, head.y - hr * 0.9, hr * 2, hr * 0.55), hair)
-	draw_circle(head + Vector2(-hr * 0.38, hr * 0.12), 2.0, Color(0.1, 0.08, 0.1))
-	draw_circle(head + Vector2(hr * 0.38, hr * 0.12), 2.0, Color(0.1, 0.08, 0.1))
-	draw_rect(r, accent.darkened(0.2), false, 2.0)
-	var name_s: String = Empire.recruit(who).get("name", who)
-	var nw := font.get_string_size(name_s, HORIZONTAL_ALIGNMENT_LEFT, -1, 10).x
-	draw_rect(Rect2(r.position.x, r.end.y - 18, r.size.x, 18), Color(0, 0, 0, 0.55))
-	draw_string(font, Vector2(r.get_center().x - nw / 2, r.end.y - 6), name_s, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, TEXT)
-
-
 func _draw() -> void:
 	var vs := size
 	draw_rect(Rect2(Vector2.ZERO, vs), Color(0.03, 0.025, 0.05, 0.94))
@@ -286,8 +239,8 @@ func _draw() -> void:
 	if them != null:
 		_draw_glow(Vector2(150, floor_y - 160), 170, accent)
 		_draw_portrait(them, 150, floor_y, 330, true, them_lit, slide)
-	else:
-		_draw_card(Rect2(24, 30, 150, vs.y - 30 - 102), id)
+	else:  # safety net only: tests/test_data.gd requires a portrait for everyone with a bond
+		Dialogue.draw_portrait(self, Rect2(24, 30, 150, vs.y - 30 - 102), id, "", 0.0 if them_lit else 0.55, true)
 	# Header: whose scene, which rank
 	var head := "%s  ·  Bond rank %d: %s%s" % [Empire.short_name(id), rank, sc.get("title", ""), "   (memory)" if replay else ""]
 	var hw := font.get_string_size(head, HORIZONTAL_ALIGNMENT_LEFT, -1, 10).x

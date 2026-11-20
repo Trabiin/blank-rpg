@@ -34,8 +34,9 @@ func _ready() -> void:
 	items.append({"id": "load", "label": "Load Game", "enabled": latest != "", "note": "(no saves yet)"})
 	items.append({"id": "options", "label": "Options", "detail": "speed, difficulty, sound, controls"})
 	items.append({"id": "credits", "label": "Credits"})
-	# Testing shortcuts live one level down, so the main menu reads like a finished game's.
-	items.append({"id": "tests", "label": "Test shortcuts", "detail": "jump straight to the town or the Auditor"})
+	# Testing shortcuts live one level down, and only in builds that ask for them (test_shortcuts_on).
+	if test_shortcuts_on():
+		items.append({"id": "tests", "label": "Test shortcuts", "detail": "jump straight to the town or the Auditor"})
 	menu.setup("", items)
 	menu.chosen.connect(_on_choice)
 
@@ -143,6 +144,13 @@ func _on_choice(id: String) -> void:
 			slots.visible = true
 
 
+## The "Test shortcuts" submenu is for playtesting: on in the editor and in exports whose preset lists the
+## custom feature "test_shortcuts" (the Web preset that publishes the playtest link does). A release
+## preset leaves the feature out, and the entry and its shortcuts are gone.
+static func test_shortcuts_on() -> bool:
+	return OS.has_feature("editor") or OS.has_feature("test_shortcuts")
+
+
 ## Builds the credits text from CREDITS.md so there is one source of truth.
 func _credit_lines() -> String:
 	var lines := ["Design, code and story: Ojon and Claude", ""]
@@ -169,10 +177,7 @@ func _process(delta: float) -> void:
 func _draw() -> void:
 	var vs := get_rect().size
 	draw_rect(Rect2(Vector2.ZERO, vs), Color("0e0b12"))
-	if KEY_ART:
-		_draw_key_art(vs)
-	else:
-		_draw_blank(vs)
+	_draw_key_art(vs)
 	_draw_logo(vs)
 	var ver := "v" + Saves.game_version()
 	var font := ThemeDB.fallback_font
@@ -195,27 +200,6 @@ func _draw_key_art(vs: Vector2) -> void:
 		var py := rng.randf_range(0, vs.y)
 		var px := vs.x * rng.randf_range(0.6, 0.78)
 		draw_rect(Rect2(px, py, 2, 2), Color(0, 0, 0, 0.7) if i % 2 else Color(0.97, 0.96, 0.93, 0.6))
-
-
-## Code-drawn fallback: the Blank creeping in from the right edge.
-func _draw_blank(vs: Vector2) -> void:
-	var pts := PackedVector2Array()
-	var y := -10.0
-	while y <= vs.y + 10.0:
-		var x := vs.x * 0.86 + sin(y * 0.03 + t * 0.7) * 10.0 + sin(y * 0.09 - t * 1.4) * 4.0 - t * 0.6
-		pts.append(Vector2(maxf(x, vs.x * 0.62), y))
-		y += 10.0
-	pts.append(Vector2(vs.x + 10, vs.y + 10))
-	pts.append(Vector2(vs.x + 10, -10))
-	draw_colored_polygon(pts, Color("f3f1ea"))
-	var rng := RandomNumberGenerator.new()
-	rng.seed = int(t * 12.0)
-	for i in 60:
-		var py := rng.randf_range(0, vs.y)
-		var idx := clampi(int((py + 10.0) / 10.0), 0, pts.size() - 3)
-		var px := pts[idx].x - rng.randf() * rng.randf() * 30.0
-		draw_rect(Rect2(px, py, 2, 2), Color(0.97, 0.96, 0.93, 0.9) if i % 2 else Color(0, 0, 0, 0.8))
-
 
 
 func _draw_logo(vs: Vector2) -> void:

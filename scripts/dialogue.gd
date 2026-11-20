@@ -10,8 +10,10 @@ extends RefCounted
 ## "speakers" (characters who are not recruits) or "" for narration. Lines are normalised to
 ## [speaker, text, expression] by line().
 ##
-## Portraits: assets/portraits/<id>_<expression>.png, then assets/portraits/<id>.png. When neither
-## exists the boxes draw a placeholder bust from the character's colours (draw_bust).
+## Portraits: assets/portraits/<id>_<expression>.png, then assets/portraits/<id>.png. Every speaker has
+## one (tests/test_data.gd fails the build otherwise), except speakers whose "stage" is "letter": a
+## letter read aloud stands on stage as a sealed sheet of paper (draw_letter). draw_bust is a last
+## safety net for content added without a portrait and never shows in a passing build.
 ##
 ## Seen conversations and banter zones are saved with the campaign (Empire.to_dict "dialogue").
 ## Text speed is a per-device setting kept in user://settings.cfg.
@@ -130,7 +132,7 @@ static func _col(cols: Dictionary, keys: Array, fallback: String) -> Color:
 	return Color(fallback)
 
 
-## The portrait image for this speaker and expression, or null (draw a placeholder bust instead).
+## The portrait image for this speaker and expression, or null (letters, or a missing file).
 static func portrait(who: String, expr := "") -> Texture2D:
 	if who == "":
 		return null
@@ -151,10 +153,13 @@ static func portrait(who: String, expr := "") -> Texture2D:
 	return tex
 
 
-## Draw this speaker into r: the portrait scaled to fit (feet on the bottom edge), or a placeholder
-## head-and-shoulders bust in their colours. dim darkens it (for whoever is not talking).
+## Draw this speaker into r: the portrait scaled to fit (feet on the bottom edge), a letter for letter
+## speakers, or (safety net) a head-and-shoulders bust in their colours. dim darkens it (for whoever is not talking).
 ## Portraits face the viewer's left; flip = mirror them to face right (for the left side of the stage).
 static func draw_portrait(ci: CanvasItem, r: Rect2, who: String, expr := "", dim := 0.0, flip := false) -> void:
+	if is_letter(who):
+		draw_letter(ci, r, who, dim)
+		return
 	var tex := portrait(who, expr)
 	var tint := Color(1, 1, 1).darkened(dim)
 	if tex:
@@ -171,6 +176,67 @@ static func draw_portrait(ci: CanvasItem, r: Rect2, who: String, expr := "", dim
 		draw_bust(ci, r, who, dim)
 
 
+## Speakers that are a letter read aloud ("stage": "letter" in their speakers entry): no portrait.
+static func is_letter(who: String) -> bool:
+	return str(speaker_info(who).get("stage", "")) == "letter"
+
+
+## A folded letter standing on the stage: a cream sheet with lines of handwriting in the sender's ink,
+## a wax seal in the speaker's trim colour, lifted a little off the floor with a soft shadow.
+static func draw_letter(ci: CanvasItem, r: Rect2, who: String, dim := 0.0) -> void:
+	var cols := _colors(who)
+	var paper := Color("efe6cf").darkened(dim)
+	var shade := Color("d9ccab").darkened(dim)
+	var edge := Color("a8956c").darkened(dim)
+	var ink := Color("3e3150", 0.85).darkened(dim)
+	var seal := _col(cols, ["trim"], "8f2a2a").darkened(dim)
+	var w := minf(r.size.x * 0.62, r.size.y * 0.42)
+	var h := w * 1.35
+	var bob := sin(Time.get_ticks_msec() / 700.0) * 2.0
+	# Standing just above the text box (which covers the bottom ~100 px of the stage).
+	var c := Vector2(r.get_center().x, r.end.y - 104.0 - h / 2.0 + bob)
+	ci.draw_set_transform(Vector2(c.x + 6, c.y + h / 2.0 + 8), 0.0, Vector2(1.0, 0.22))
+	ci.draw_circle(Vector2.ZERO, w * 0.5, Color(0, 0, 0, 0.28))
+	ci.draw_set_transform(c, deg_to_rad(-3.5), Vector2.ONE)
+	var sheet := Rect2(Vector2(-w, -h) / 2.0, Vector2(w, h))
+	ci.draw_rect(sheet.grow(1.0), edge)
+	ci.draw_rect(sheet, paper)
+	for k: int in [1, 2]:  # folded in three: a soft shaded band under each crease
+		var fy: float = sheet.position.y + h * k / 3.0
+		ci.draw_rect(Rect2(sheet.position.x, fy, w, h * 0.04), shade)
+		ci.draw_line(Vector2(sheet.position.x, fy), Vector2(sheet.end.x, fy), edge, 1.0)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash(who)
+	var y := sheet.position.y + h * 0.1
+	var row := 0
+	while y < sheet.end.y - h * 0.2:
+		var x := sheet.position.x + w * (0.16 if row == 0 else 0.1)
+		var end_x := sheet.end.x - w * rng.randf_range(0.08, 0.3)
+		while x < end_x - w * 0.05:  # words: little looping strokes of handwriting
+			var seg := minf(rng.randf_range(w * 0.05, w * 0.15), end_x - x)
+			var pts := PackedVector2Array()
+			var n := maxi(int(seg / 2.0), 2)
+			for q in n + 1:
+				var t := float(q) / n
+				pts.append(Vector2(x + seg * t, y + sin(t * TAU * seg / 7.0 + row) * 1.2))
+			ci.draw_polyline(pts, ink, 1.0)
+			x += seg + w * 0.035
+		y += h * 0.07
+		row += 1
+	# The signature, larger and slanted, then the wax seal at the foot of the sheet.
+	var sig := PackedVector2Array()
+	for q in 13:
+		var t := q / 12.0
+		sig.append(Vector2(sheet.end.x - w * 0.5 + w * 0.36 * t, sheet.end.y - h * 0.13 - sin(t * TAU * 1.5) * 2.5 - t * 3.0))
+	ci.draw_polyline(sig, ink, 1.5)
+	var sp := Vector2(-w * 0.2, sheet.end.y - h * 0.1)
+	ci.draw_circle(sp, w * 0.1, seal.darkened(0.35))
+	ci.draw_circle(sp, w * 0.085, seal)
+	ci.draw_arc(sp, w * 0.05, 0.0, TAU, 16, seal.darkened(0.25), 1.0)
+	ci.draw_circle(sp + Vector2(-w * 0.03, -w * 0.03), w * 0.022, seal.lightened(0.4))
+	ci.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+
+
 ## Just the face, for small banter portraits: the top part of the portrait image, or a small bust.
 static func draw_face(ci: CanvasItem, r: Rect2, who: String, expr := "") -> void:
 	var tex := portrait(who, expr)
@@ -185,7 +251,7 @@ static func draw_face(ci: CanvasItem, r: Rect2, who: String, expr := "") -> void
 	ci.draw_rect(r, accent(who).lightened(0.1), false, 1.0)
 
 
-## Placeholder bust drawn in code from the paper-doll colours, until the AI portraits (#12) land.
+## Safety-net bust drawn from the paper-doll colours, for a speaker whose portrait file is missing.
 ## clip: only draw inside this rect (used by draw_face, which zooms in on the head).
 static func draw_bust(ci: CanvasItem, r: Rect2, who: String, dim := 0.0, clip := Rect2()) -> void:
 	var cols := _colors(who)
