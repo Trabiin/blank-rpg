@@ -118,6 +118,26 @@ func test_first_build_save_is_converted() -> void:
 	check_eq(float(d["empire"]["playtime"]), 412.5, "playtime kept")
 
 
+## Issue #113: a squad out on Bran's old personal job comes home with its rations, and the mission waits.
+func test_personal_job_in_progress_becomes_a_mission() -> void:
+	var r: Dictionary = Saves.parse(_fixture_text("20261121_personal_missions__table_day31_bran_job_out.json"))
+	if not check_eq(r["status"], Saves.GOOD, "save with a personal job out reads"):
+		return
+	var e: Dictionary = r["data"]["empire"]
+	check_eq(e["expeditions"].size(), 0, "the personal job is called off")
+	check_eq(int(e["res"]["supplies"]), 40, "the squad's 4 Supplies come back")
+	check(not e["job_ready"].has("personal_quill"), "old personal cooldowns forgotten")
+	check(e["job_ready"].has("rescue_gristle"), "other cooldowns kept")
+	check_eq(str(e["reports"][0].get("job", "")), "personal_bran", "a report says where the story went")
+	check(str(e["reports"][0]["lines"]).contains("Gallows"), "report names the mission's province")
+	Empire.from_dict(e)
+	check_eq(Empire.role_of("bran"), "idle", "Bran is home")
+	check_eq(Empire.role_of("gristle"), "idle", "Gristle is home")
+	check_eq(Empire.bond_rank("bran"), 4, "bond rank kept")
+	check_eq(PersonalMissions.state("bran"), "offered", "Bran's mission is on the Command Table")
+	check_eq(PersonalMissions.state("quill"), "offered", "so is Quill's")
+
+
 ## Issue #53: a save from the nine-province map opens on the 24-province map, Act 1 as it was.
 func test_pre_region_save_keeps_act1_and_fogs_the_rest() -> void:
 	var r: Dictionary = Saves.parse(_fixture_text("20261120_territory_regions__act1_table_day14.json"))

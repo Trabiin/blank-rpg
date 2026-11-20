@@ -1015,11 +1015,19 @@ func _open_brief(m: Dictionary) -> void:
 	for line in _wrap_words(m.get("brief", ""), 64):
 		lines.append(line)
 	lines.append("")
+	lines.append("%s mission   ·   Threat %s" % [Missions.type_name(m), Missions.threat_text(m)])  # #113
 	lines.append("Objective: " + Objective.describe(m.get("objective", {})))
+	if m.has("force"):
+		lines.append("Personal: %s comes along, whoever else you pick." % Empire.short_name(m["force"]))
+	elif m.has("escort"):
+		lines.append("Escort: %s can't fight. Keep them on their feet." % Empire.short_name(m["escort"]))
 	lines.append("Expect: " + EnemyKinds.names(m))
-	var rew := Missions.res_text(m.get("rewards", {}))
+	var rew := Missions.reward_text(m)
 	if rew != "":
 		lines.append("Reward: " + rew)
+	if int(m.get("until_day", -1)) >= Empire.day:
+		var left := int(m["until_day"]) - Empire.day
+		lines.append("Offered today only." if left == 0 else "Offered for %d more day%s." % [left, "" if left == 1 else "s"])
 	if int(m.get("fray", 0)) < 0:
 		lines.append("Pushes the Blank back: %d Fray in %s" % [int(m["fray"]), territory.find(m.get("province", "")).get("name", "")])
 	if m.has("cost_text"):
@@ -1462,7 +1470,7 @@ func _draw_labels() -> void:
 			_cv.draw_arc(pos + Vector2(0, -6), 14.0 + pulse * 3.0, 0, TAU, 32, Color(1, 0.35, 0.3, 0.5 + 0.4 * pulse), 2.0)
 			var dl := Empire.surge_days_left()
 			_text_c(pos + Vector2(0, 13), "Surge %s" % ("today" if dl <= 0 else "in %d day%s" % [dl, "" if dl == 1 else "s"]), 8, Color(1, 0.55, 0.5), 3)
-		# Reclaim and Rescue missions on offer (Defense already shows as the surge ring).
+		# Type missions on offer: Reclaim, Rescue, Raid, Salvage, Personal (Defense already shows as the surge ring).
 		var tags := []
 		for tm in MissionTypes.for_province(p["id"]):
 			if tm["type"] != "defense":

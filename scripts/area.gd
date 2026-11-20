@@ -23,6 +23,10 @@ var party_start := Vector2.ZERO
 var spawns: Array[Vector2] = []
 var props: Array = []
 var markers := {}  # id -> Array of tile-centre positions (@mark lines: posts, the Command Table)
+## @spot lines (issue #113): named objective spots in tiles, e.g. "@spot ward 50,31 46,22". Missions pick
+## among them (see MissionTypes.vary), so the same map plays differently from one visit to the next.
+var spots := {}  # id -> Array of Vector2i
+var blank_tiles := -1  # set before build() to start the Blank's wall somewhere other than the map's @blank
 var _rows: PackedStringArray = []
 var _signs := {}
 var _custom := {}  # char -> [kind, plate text] from @prop lines
@@ -91,7 +95,60 @@ func _parse(path: String) -> void:
 						mood[kv[0]] = float(kv[1])
 			elif key == "dirt":
 				_dirt_chars += val  # these characters sit on the dirt layer too
+			elif key == "spot":
+				var parts := val.split(" ", false)
+				if parts.size() >= 2:
+					spots[parts[0]] = parse_tiles(parts.slice(1))
 	size_tiles = Vector2i(_rows[0].length(), _rows.size())
+	if blank_tiles > 0 and blank_x < 1e8:
+		blank_x = float(blank_tiles) * 16.0
+
+
+## "50,31" "46,22" -> [Vector2i(50, 31), Vector2i(46, 22)].
+static func parse_tiles(words: Array) -> Array:
+	var out := []
+	for w in words:
+		var xy := str(w).split(",")
+		if xy.size() == 2:
+			out.append(Vector2i(int(xy[0]), int(xy[1])))
+	return out
+
+
+static var _headers := {}  # path -> {"blank": tiles, "spots": {...}, "size": Vector2i}
+
+
+## A map's header without building it: its Blank column, its @spot lines and its size in tiles.
+## The Command Table uses this to lay out a mission before the map is ever loaded.
+static func header(path: String) -> Dictionary:
+	if _headers.has(path):
+		return _headers[path]
+	var out := {"blank": -1, "spots": {}, "size": Vector2i.ZERO, "name": ""}
+	var f := FileAccess.open(path, FileAccess.READ)
+	if f == null:
+		return out
+	var rows := 0
+	var width := 0
+	var in_rows := false
+	while not f.eof_reached():
+		var line := f.get_line()
+		if in_rows:
+			if line.strip_edges() != "":
+				rows += 1
+				width = maxi(width, line.length())
+			continue
+		if line == "---":
+			in_rows = true
+		elif line.begins_with("@blank "):
+			out["blank"] = int(line.substr(7))
+		elif line.begins_with("@name "):
+			out["name"] = line.substr(6)
+		elif line.begins_with("@spot "):
+			var parts := line.substr(6).split(" ", false)
+			if parts.size() >= 2:
+				out["spots"][parts[0]] = parse_tiles(parts.slice(1))
+	out["size"] = Vector2i(width, rows)
+	_headers[path] = out
+	return out
 
 
 func _cell(x: int, y: int) -> String:

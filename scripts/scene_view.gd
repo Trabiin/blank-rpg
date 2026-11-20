@@ -123,7 +123,8 @@ func _finish() -> void:
 	if not perk.is_empty():
 		_outro += "\nPerk unlocked: %s. %s" % [perk["name"], perk["desc"]]
 	if rank == 4 and Empire.personal_job(id) != "":
-		_outro += "\nPersonal job on the Guildhall board: %s." % Empire.job(Empire.personal_job(id)).get("name", "?")
+		var pd := PersonalMissions.def_for(id)
+		_outro += "\nPersonal mission on the Command Table: %s, at %s." % [pd.get("name", "?"), Empire.territory().find(pd.get("province", "")).get("name", "?")]
 
 
 func _process(delta: float) -> void:

@@ -3,7 +3,8 @@ extends "res://tests/test_case.gd"
 ## A failure names the file and the entry, e.g. "missions.json gutterwoods_patrol: map ... missing".
 
 const EXPRESSIONS := ["", "happy", "angry", "sad", "surprised", "smug"]
-const OBJECTIVE_KINDS := ["kills", "boss", "defense", "reclaim", "rescue"]
+const OBJECTIVE_KINDS := ["kills", "boss", "defense", "reclaim", "rescue", "raid", "salvage", "script"]
+const STEP_KINDS := ["talk", "goto", "clear", "hold", "use", "exit"]
 const OWNERS := ["you", "free", "erased"]
 
 var D := {}  # file name -> parsed JSON
@@ -43,6 +44,7 @@ func _provinces() -> Dictionary:
 func _talks() -> Dictionary:
 	var t: Dictionary = D["dialogue.json"]["talks"].duplicate()
 	t.merge(D["story.json"]["talks"])
+	t.merge(D["personal.json"]["talks"])
 	return t
 
 
@@ -53,6 +55,8 @@ func _speakers() -> Dictionary:
 	for id in D["dialogue.json"]["speakers"]:
 		s[id] = true
 	for id in D["story.json"]["speakers"]:
+		s[id] = true
+	for id in D["personal.json"]["speakers"]:
 		s[id] = true
 	return s
 
@@ -322,6 +326,90 @@ func test_missions_and_enemies() -> void:
 		check(pl.get("counter", "") in ["", "governor", "lamp"], "blank.json %s: unknown counter %s" % [pl["id"], pl.get("counter")])
 
 
+## Mission variety (issue #113): the Raid and Salvage tuning, the personal missions and the map pool.
+func test_mission_types() -> void:
+	var mt: Dictionary = D["mission_types.json"]
+	var kinds: Dictionary = D["enemies.json"]["kinds"]
+	var factions := _ids(D["factions.json"]["factions"])
+	for fid in mt["raid"]["factions"]:
+		var fc: Dictionary = mt["raid"]["factions"][fid]
+		var w: String = "mission_types.json raid " + fid
+		check(factions.has(fid), "%s: not a faction" % w)
+		for k in fc.get("guards", {}):
+			check(kinds.has(k), "%s: unknown guard %s" % [w, k])
+		_res_keys(w + " cache", fc.get("cache", {}))
+		for r in fc.get("rival", {}):
+			check(factions.has(r), "%s: rival %s is not a faction" % [w, r])
+		check(str(fc.get("brief", "")).count("%d") == 2, "%s: brief needs two %%d (need, caches)" % w)
+	_res_keys("mission_types.json raid rewards", mt["raid"].get("rewards", {}))
+	_res_keys("mission_types.json salvage pile", mt["salvage"].get("pile", {}))
+	_res_keys("mission_types.json salvage rewards", mt["salvage"].get("rewards", {}))
+	check(int(mt["raid"]["need"]) <= int(mt["raid"]["caches"]), "raid: needs more caches than there are")
+	check(int(mt["salvage"]["need"]) <= int(mt["salvage"]["caches"]), "salvage: needs more piles than there are")
+
+
+func test_personal_missions() -> void:
+	var pm: Dictionary = D["personal.json"]
+	_unique("personal.json", pm["missions"])
+	var kinds: Dictionary = D["enemies.json"]["kinds"]
+	var factions := _ids(D["factions.json"]["factions"])
+	var recruits := _recruits()
+	var talks := _talks()
+	var who := {}
+	for m in pm["missions"]:
+		var w: String = "personal.json " + str(m["id"])
+		var rid := str(m.get("who", ""))
+		check(recruits.has(rid), "%s: who %s is not a recruit" % [w, rid])
+		check(not who.has(rid), "%s: %s has two personal missions" % [w, rid])
+		who[rid] = true
+		check(D["bonds.json"]["cast"].has(rid), "%s: %s has no bond" % [w, rid])
+		check(_provinces().has(m.get("province", "")), "%s: province %s missing" % [w, m.get("province")])
+		check(FileAccess.file_exists(m.get("map", "")), "%s: map %s missing" % [w, m.get("map")])
+		var spots: Dictionary = Area.header(m.get("map", "")).get("spots", {})
+		for k in m.get("enemies", {}):
+			check(kinds.has(k), "%s: unknown enemy %s" % [w, k])
+		_res_keys(w + " rewards", m.get("rewards", {}))
+		for fid in m.get("standing", {}):
+			check(factions.has(fid), "%s: standing for unknown faction %s" % [w, fid])
+		check(int(m.get("threat", 0)) >= 1 and int(m.get("threat", 0)) <= 5, "%s: threat must be 1-5" % w)
+		var steps: Array = m.get("steps", [])
+		check(steps.size() >= 4, "%s: too few steps for a mission" % w)
+		check(steps.any(func(st): return st.get("do", "") == "exit") or steps[-1].get("do", "") == "talk", "%s: no way home" % w)
+		for st in steps:
+			var sw := "%s step %s" % [w, st.get("do", "?")]
+			check(str(st.get("do", "")) in STEP_KINDS, "%s: unknown step" % sw)
+			if st.get("do", "") == "talk":
+				check(talks.has(st.get("talk", "")), "%s: talk %s missing" % [sw, st.get("talk")])
+			else:
+				check(str(st.get("label", "")) != "", "%s: no HUD label" % sw)
+			var ats: Array = st["at"] if st.get("at") is Array and st["at"].size() > 0 and st["at"][0] is String else ([st["at"]] if st.has("at") and st["at"] is String else [])
+			for a in ats:
+				check(a == "start" or spots.has(a), "%s: map has no @spot %s" % [sw, a])
+			for k in st.get("spawn", {}):
+				check(kinds.has(k), "%s: unknown enemy %s" % [sw, k])
+			if st.has("elite"):
+				check(kinds.has(st["elite"].get("kind", "")), "%s: unknown elite kind" % sw)
+			if st.get("by", "party") == "escort":
+				check(recruits[rid].get("tier", "") != "field", "%s: a field hero is in the party, not an escort" % sw)
+			for line in st.get("banter", []) + st.get("done_banter", []):
+				_lines(sw + " banter", [line])
+	for rid in D["bonds.json"]["cast"]:
+		check(who.has(rid), "bonds.json %s: no personal mission in personal.json" % rid)
+
+
+func test_map_pool_has_spots() -> void:
+	for b in D["provinces.json"]["biomes"]:
+		var pool: Array = D["provinces.json"]["biomes"][b].get("maps", [])
+		check(pool.is_empty() or pool.size() >= 3, "biome %s: %d map layouts, want 3 or more" % [b, pool.size()])
+		for mid in pool:
+			var path := "res://maps/%s.txt" % mid
+			check(FileAccess.file_exists(path), "biome %s: map %s missing" % [b, path])
+			var sp: Dictionary = Area.header(path).get("spots", {})
+			for k in ["ward", "blot", "rescue", "spawn"]:
+				check(sp.has(k), "%s: no @spot %s" % [mid, k])
+			check(sp.get("cache", []).size() >= 5, "%s: only %d cache spots" % [mid, sp.get("cache", []).size()])
+
+
 # ------------------------------------------------------------------ words and pictures
 
 func test_dialogue_and_story() -> void:
@@ -390,6 +478,7 @@ func test_every_speaker_has_a_portrait() -> void:
 	var speakers := {}
 	speakers.merge(D["dialogue.json"]["speakers"])
 	speakers.merge(D["story.json"]["speakers"])
+	speakers.merge(D["personal.json"]["speakers"])
 	for id in _recruits():
 		speakers[id] = {}
 	for id in speakers:

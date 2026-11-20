@@ -58,7 +58,7 @@ In the same chat as the locked neutral image, paste the same full prompt, replac
 
 ### Status
 
-Every recruit and story speaker has a neutral portrait (Phase 8, plus Clerk Pettigrew, Governor Thale, the Concord Warden and Tithe-Captain Morrow for issue #111). Expressions (`<id>_<expr>.png`) are issue #107.
+Every recruit and story speaker has a neutral portrait (Phase 8, plus Clerk Pettigrew, Governor Thale, the Concord Warden and Tithe-Captain Morrow for issue #111, and Ozias Crane, Hester Vane, Notary Marrow, Marguerite Penhallow and Augustin Sallow for the personal missions of issue #113). Expressions (`<id>_<expr>.png`) are issue #107.
 
 ## API pipeline (Phase 8)
 

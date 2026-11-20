@@ -71,8 +71,18 @@ func _ready() -> void:
 	entities.y_sort_enabled = true
 	area = Area.new()
 	add_child(area)
+	var layout: Dictionary = mission.get("layout", {})  # the map pool's per-mission layout (#113, MissionTypes.vary)
+	if layout.has("blank"):
+		area.blank_tiles = int(layout["blank"])
 	area.build(map_path, entities)
 	world = area.world_size()
+	if layout.has("spawns"):  # only some of the map's spawn points wake up, so repeat visits differ
+		var keep: Array[Vector2] = []
+		for t in layout["spawns"]:
+			keep.append(Vector2(int(t[0]) * 16 + 8, int(t[1]) * 16 + 8))
+		area.spawns = keep
+	if mission.get("respawn", true) == false:
+		respawn_t = 1e9  # no stream of Nibblers out of the Blank (a raid on faction land)
 
 	blank = Blank.new()
 	blank.base_x = area.blank_x
@@ -88,7 +98,7 @@ func _ready() -> void:
 	# Whoever was picked on the Command Table (party_picker.gd); Ash always leads.
 	# Same body and animation rig for everyone; outfit layer + colors make the hero.
 	var offsets := [Vector2.ZERO, Vector2(-20, 14), Vector2(20, 14)]
-	var ids := PartyPicker.mission_party()
+	var ids := PartyPicker.mission_party(mission)
 	for i in ids.size():
 		var look: Dictionary = Empire.recruit(ids[i]).get("look", {})
 		var h := _make_hero(PartyPicker.short_of(ids[i]), start + offsets[i % offsets.size()],
@@ -625,7 +635,7 @@ func _show_results(outcome: String) -> void:
 	quick_menu.close()
 	get_tree().paused = true
 	touch.release_all()
-	var r := Missions.settle(mission, outcome, found, {"kills": kills, "time": mission_time, "objective": objective.text(), "fail": objective.fail_text()})
+	var r := Missions.settle(mission, outcome, found, {"kills": kills, "time": mission_time, "objective": objective.text(), "fail": objective.fail_text(), "info": objective.info()})
 	_progress_lines(r, outcome)
 	results_view.open(r)
 
@@ -701,6 +711,8 @@ func _update_revive(delta: float) -> void:
 
 
 func _update_respawn(delta: float) -> void:
+	if respawn_t > 1e8:
+		return
 	var count := get_tree().get_nodes_in_group("enemies").filter(func(e): return not e.is_queued_for_deletion()).size()
 	if count >= MAX_ENEMIES:
 		return

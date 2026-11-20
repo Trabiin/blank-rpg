@@ -1,6 +1,6 @@
 extends SceneTree
 ## Bond check (not exported: tools/* is excluded). Plays every rank scene of the given people through
-## the real scene view, checks the data, the perks and the personal jobs, and saves screenshots.
+## the real scene view, checks the data, the perks and the personal missions, and saves screenshots.
 ##   xvfb-run -a godot --path . -s tools/bond_check.gd -- out=/tmp/bonds who=ottoline,jessamy,odile,velvette
 ## Prints "BOND CHECK OK" at the end, or a list of problems.
 
@@ -64,7 +64,7 @@ func _check_data(id: String) -> void:
 		if not info.get("perks", {}).has(k):
 			_fail("%s has no rank %s perk" % [id, k])
 	if empire.personal_job(id) == "":
-		_fail("%s has no personal job" % id)
+		_fail("%s has no personal mission" % id)
 	var ranks := []
 	for sc in info.get("scenes", []):
 		ranks.append(int(sc["rank"]))
@@ -130,12 +130,9 @@ func _process(_delta: float) -> bool:
 		empire.bonds[id] = empire.bonds.get(id, {"points": 0, "rank": r - 1, "talk_day": 0, "personal_done": false})
 		empire.bonds[id]["points"] = empire.bond_threshold(r)
 		if r == 5:
-			var jid: String = empire.personal_job(id)
-			if not jid in empire.job_ids():
-				_fail("%s's personal job is not on the board at rank 4" % id)
-			var jb: String = empire.job_blocker(jid)
-			if jb != "":
-				_fail("%s's personal job is blocked: %s" % [id, jb])
+			var st: String = PersonalMissions.state(id)
+			if st != "offered" and st != "blocked":
+				_fail("%s's personal mission is not on the Command Table at rank 4 (%s)" % [id, st])
 			empire.bonds[id]["personal_done"] = true
 		if empire.bond_next_scene(id) != r:
 			_fail("%s: next scene is %d, expected %d" % [id, empire.bond_next_scene(id), r])
@@ -195,8 +192,8 @@ func _check_perks() -> void:
 	var owner_was: String = gal["owner"]
 	e.bonds["ottoline"]["personal_done"] = false
 	gal["owner"] = "erased"
-	if e.personal_lost("ottoline") == "" or e.job_blocker("personal_ottoline") == "":
-		_fail("an erased home province should lock Ottoline's personal job")
+	if e.personal_lost("ottoline") == "" or PersonalMissions.state("ottoline") != "lost":
+		_fail("an erased home province should lock Ottoline's personal mission")
 	gal["owner"] = owner_was
 	if e.personal_lost("ottoline") != "":
 		_fail("Ottoline's job should come back with the province")

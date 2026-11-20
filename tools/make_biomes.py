@@ -1,7 +1,12 @@
 #!/usr/bin/env python3
-"""Builds the Act 1 biome mission maps (docs/ART_ROADMAP.md phase 4): one 80 x 60 map per biome, laid out
-like maps/frayed_meadow.txt so the Defense / Reclaim / Rescue spots in scripts/mission_types.gd (wardstone,
-Blot, rescue spots, the Blank's wall at tile 69) fall on open ground in every one of them.
+"""Builds the biome mission maps (docs/ART_ROADMAP.md phase 4, map pool issue #113): 80 x 60 maps, three
+layouts per biome, so repeat missions differ. Each map writes its objective spots as @spot lines (wardstone,
+Blot, rescue spots, caches for Raid / Salvage, spawn points); scripts/mission_types.gd picks among them per
+mission, and moves the Blank's wall a little, so the same map plays differently from one visit to the next.
+
+Layout "a" is the original Act 1 shape (the party comes in from the west, the Blank's wall at tile 69);
+"b" comes in from the south-west and "c" from the north-west. Cache spots are picked after the props are
+placed, on ground the party can reach, so adding them never moves a tree.
 
 Each biome is a recipe: a ground set, a winding road from the party start to the Blot, side trails to the
 rescue spots and spawn clearings, a dense border, and props scattered by noise so they clump into groves,
@@ -17,22 +22,71 @@ W, H = 80, 60
 HERE = os.path.dirname(os.path.abspath(__file__))
 MAPS = os.path.join(HERE, "..", "maps")
 
-START = (12, 31)
-BLANK = 69
-WARD = (50, 31)
-BLOT = (64, 30)
-RESCUE = [(60, 9), (60, 50), (59, 22)]
-SPAWNS = [(31, 10), (58, 24), (40, 26), (52, 33), (60, 38), (36, 40), (47, 44)]
-SIGN_AT = (14, 28)
+# Objective layouts. routes: (from, to, path width scale, wiggle) carved in this order. cache: rough places for
+# Raid / Salvage caches (snapped to reachable open ground); the east ones sit near the Blank for Salvage.
+LAYOUTS = {
+    "a": {"start": (12, 31), "blank": 69, "sign": (14, 28),
+          "ward": [(50, 31)], "blot": [(64, 30)], "rescue": [(60, 9), (60, 50), (59, 22)],
+          "spawns": [(31, 10), (58, 24), (40, 26), (52, 33), (60, 38), (36, 40), (47, 44)],
+          "routes": [((12, 31), (50, 31), 1.0, 4.5), ((50, 31), (64, 30), 1.0, 3.0),
+                     ((44, 28), (60, 9), 0.8, 4.5), ((50, 31), (60, 50), 0.8, 4.5), ((44, 28), (59, 22), 0.8, 4.5)],
+          "cache": [(28, 14), (36, 44), (44, 20), (24, 46), (56, 14), (58, 44), (62, 24), (62, 36)]},
+    "b": {"start": (14, 50), "blank": 66, "sign": (17, 47),
+          "ward": [(44, 26), (48, 40)], "blot": [(59, 18), (59, 42)], "rescue": [(54, 8), (56, 52), (30, 10)],
+          "spawns": [(24, 38), (34, 28), (44, 14), (50, 46), (28, 18), (54, 30), (40, 50)],
+          "routes": [((14, 50), (44, 26), 1.0, 4.5), ((44, 26), (48, 40), 0.9, 3.0), ((44, 26), (59, 18), 1.0, 3.0),
+                     ((48, 40), (59, 42), 1.0, 3.0), ((44, 26), (54, 8), 0.8, 4.5), ((48, 40), (56, 52), 0.8, 4.5),
+                     ((30, 36), (30, 10), 0.8, 4.0)],
+          "cache": [(22, 30), (36, 16), (26, 10), (40, 52), (52, 12), (58, 30), (56, 48), (34, 40)]},
+    "c": {"start": (10, 10), "blank": 72, "sign": (13, 7),
+          "ward": [(46, 38), (54, 22)], "blot": [(66, 44), (66, 20)], "rescue": [(62, 10), (50, 54), (24, 50)],
+          "spawns": [(22, 24), (32, 14), (42, 30), (56, 40), (30, 44), (60, 30), (48, 10)],
+          "routes": [((10, 10), (54, 22), 1.0, 4.5), ((54, 22), (46, 38), 1.0, 3.5), ((54, 22), (66, 20), 1.0, 3.0),
+                     ((46, 38), (66, 44), 1.0, 3.0), ((54, 22), (62, 10), 0.8, 4.0), ((46, 38), (50, 54), 0.8, 4.0),
+                     ((30, 18), (24, 50), 0.8, 4.5)],
+          "cache": [(20, 34), (36, 24), (40, 48), (28, 54), (60, 34), (64, 52), (66, 30), (44, 8)]},
+}
 
 # Prop sizes in tiles (width, height) for spacing: from the sprites, rounded up.
 SIZE = {"fortree": (3, 4), "tree": (3, 4), "fungus": (2, 2), "log": (2, 2), "fern": (3, 2), "roots": (3, 3),
         "totem": (2, 3), "reeds": (2, 2), "marshstump": (2, 2), "lilypad": (2, 1), "planks": (3, 2),
         "boulder": (2, 2), "outcrop": (2, 2), "inkspring": (2, 2), "roadlamp": (1, 2), "drygrass": (2, 2),
         "taxbanner": (1, 3), "milestone": (2, 3), "barricade": (3, 3), "seized": (3, 3), "dock": (4, 3),
-        "mill": (6, 6), "tollbooth": (6, 6), "fence": (3, 2), "crates": (2, 2), "barrels": (2, 2)}
+        "mill": (6, 6), "tollbooth": (6, 6), "fence": (3, 2), "crates": (2, 2), "barrels": (2, 2),
+        "house_a": (6, 6), "house_b": (6, 6), "house_c": (6, 6), "house_d": (6, 6), "house_e": (7, 6),
+        "house_f": (6, 6), "house_g": (6, 6), "house_h": (6, 6), "stall": (4, 4), "garden": (3, 2),
+        "fountain": (3, 3), "produce": (3, 2)}
 
 BIOMES = {
+    # The Frayed Meadow's own layout "a" is hand-made (maps/frayed_meadow.txt); b and c are generated.
+    "meadow": {
+        "name": "The Frayed Meadow", "mood": "grade=1.0,1.0,0.98 mist=1.0 motes=1.0,0.97,0.85", "ground": "meadow", "seed": 61,
+        "layouts": "bc",
+        "sign": "THE FRAYED MEADOW|pop. 212   pop. 40   pop. ?",
+        "props": {"T": "bush", "t": "shrub", "r": "rock", "R": "rock_big", "S": "stump", "o": "pond", "b": "bones",
+                  "F": "tree", "Z": "drygrass", "N": "fern", "P": "boulder"},
+        "border": ["T", "F", "T"],
+        "scatter": [("t", 0.05, 0.35), ("T", 0.03, 0.5), ("Z", 0.04, 0.35), ("r", 0.02, 0.3), ("N", 0.015, 0.4),
+                    ("F", 0.012, 0.6), ("b", 0.004, 0.0)],
+        "path_r": 1.2,
+        # Landmarks: a stump circle, a pond with a boulder, a lone tree with bones under it.
+        "landmarks": [("S", (34, 8)), ("S", (38, 9)), ("S", (36, 12)), ("S", (32, 11)), ("o", (44, 46)),
+                      ("P", (47, 49)), ("F", (22, 22)), ("b", (24, 24))],
+        "groves": [("T", 5, 5, 8), ("F", 3, 6, 6), ("Z", 3, 4, 6)],
+    },
+    "gallows": {
+        "name": "Gallows Ferry", "mood": "grade=0.88,0.92,1.0 mist=1.6 motes=0.7,0.75,0.65", "ground": "marsh", "seed": 71,
+        "sign": "GALLOWS FERRY|Crossing: 2 Gilt.|Crossing back: negotiable.",
+        "props": {"D": "reeds", "M": "marshstump", "Y": "lilypad", "K": "planks", "J": "dock", "X": "crates",
+                  "B": "barrels", "E": "fence", "F": "tree", "A": "roadlamp", "Z": "drygrass"},
+        "border": ["F", "D"],
+        "scatter": [("D", 0.07, 0.35), ("Y", 0.03, 0.5), ("F", 0.03, 0.55), ("M", 0.015, 0.3), ("Z", 0.03, 0.3)],
+        "path_r": 1.5, "patches": (6, 0.62),
+        # Landmarks: the ferry landing (docks, planks, cargo), lamps on the towpath.
+        "landmarks": [("J", (34, 32)), ("J", (40, 34)), ("K", (30, 36)), ("K", (46, 30)), ("X", (36, 28)),
+                      ("B", (39, 27)), ("X", (43, 37)), ("A", (26, 30)), ("A", (50, 32)), ("E", (24, 24))],
+        "groves": [("D", 5, 5, 8), ("F", 2, 6, 6), ("Y", 3, 4, 5)],
+    },
     "gutterwoods": {
         "name": "The Gutterwoods", "mood": "grade=0.80,0.93,0.86 mist=1.3 motes=0.75,0.95,0.6", "ground": "forest", "seed": 11,
         "sign": "GUTTERWOODS|Letters left here are delivered.|Eventually.",
@@ -130,10 +184,94 @@ def value_noise(seed, cell):
     return f
 
 
-def build(bid, b):
-    rnd = random.Random(b["seed"])
+# Props that sit at their top-left tile in scripts/prop.gd (KINDS with a footprint) rather than their bottom-centre.
+TOPLEFT = {"bush": (2, 2), "stump": (2, 2), "rock_big": (2, 2), "pond": (2, 2), "shrub": (1, 1), "rock": (1, 1),
+           "house": (5, 5), "tavern": (5, 5), "townhall": (5, 5), "well": (3, 3), "cart": (3, 2), "lamppost": (1, 2),
+           "noticeboard": (3, 2), "grave": (1, 2), "banner": (1, 2), "bench": (3, 1)}
+# Chars area.gd knows without an @prop line.
+BUILTIN = {"T": "bush", "t": "shrub", "r": "rock", "R": "rock_big", "S": "stump", "o": "pond", "b": "bones", "k": "skull"}
+# Walk-through props (scripts/prop.gd NOBLOCK): they never block a path.
+NOBLOCK = {"fern", "drygrass", "reeds", "lilypad", "planks", "dock", "roots", "fungus", "inkspring", "bones", "skull"}
+
+
+def cells_of(kind, x, y):
+    if kind in TOPLEFT:
+        w, h = TOPLEFT[kind]
+        return {(xx, yy) for yy in range(y, y + h) for xx in range(x, x + w)}
+    w, h = SIZE.get(kind, (2, 2))
+    return {(xx, yy) for yy in range(y - h + 1, y + 1) for xx in range(x - w // 2, x - w // 2 + w)}
+
+
+def reachable(start, blocked, blank):
+    """Tiles the party can walk to from start: inside the border band, west of the Blank, not under a prop."""
+    seen = {start}
+    todo = [start]
+    while todo:
+        x, y = todo.pop()
+        for nx, ny in ((x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)):
+            if 1 <= nx < min(W - 1, blank - 1) and 1 <= ny < H - 1 and (nx, ny) not in seen and (nx, ny) not in blocked:
+                seen.add((nx, ny))
+                todo.append((nx, ny))
+    return seen
+
+
+def pick_caches(wanted, reach, blocked, avoid):
+    """Snap each rough cache place to the nearest reachable tile with open ground all round it."""
+    out = []
+    for cx, cy in wanted:
+        best = None
+        for r in range(0, 9):
+            for y in range(cy - r, cy + r + 1):
+                for x in range(cx - r, cx + r + 1):
+                    if max(abs(x - cx), abs(y - cy)) != r or (x, y) not in reach:
+                        continue
+                    if any((x + dx, y + dy) in blocked for dx in (-1, 0, 1) for dy in (-1, 0, 1)):
+                        continue
+                    if any(abs(x - a) + abs(y - b2) < 5 for a, b2 in avoid + out):
+                        continue
+                    best = (x, y)
+                    break
+                if best:
+                    break
+            if best:
+                break
+        if best:
+            out.append(best)
+    return out
+
+
+def spot_lines(L, reach, blocked, marks):
+    lines = []
+    fixed = [L["start"]] + L["ward"] + L["blot"] + L["rescue"] + [m[1] for m in marks]
+    for name, pts in [("ward", L["ward"]), ("blot", L["blot"]), ("rescue", L["rescue"])] + [(m[0], [m[1]]) for m in marks]:
+        for pt in pts:
+            if pt not in reach:
+                print("  warning: %s spot %s is not reachable" % (name, pt))
+    caches = pick_caches(L["cache"], reach, blocked, fixed)
+    if len(caches) < 6:
+        print("  warning: only %d cache spots" % len(caches))
+    lines.append("@spot start %d,%d" % L["start"])
+    for name, pts in [("ward", L["ward"]), ("blot", L["blot"]), ("rescue", L["rescue"]), ("cache", caches),
+                      ("spawn", L["spawns"])]:
+        lines.append("@spot %s %s" % (name, " ".join("%d,%d" % p for p in pts)))
+    named = {}
+    for name, pt in marks:
+        named.setdefault(name, []).append(pt)
+    for name, pts in named.items():
+        lines.append("@spot %s %s" % (name, " ".join("%d,%d" % p for p in pts)))
+    return lines
+
+
+def build(bid, b, lid="a", out_name=None, extra=None):
+    L = dict(LAYOUTS[lid])
+    extra = extra or {}
+    BLANK = extra.get("blank", L["blank"])
+    START, SIGN_AT = L["start"], L["sign"]
+    seed = b["seed"] + {"a": 0, "b": 101, "c": 202}[lid] + extra.get("seed", 0)
+    rnd = random.Random(seed)
     g = [['.' for _ in range(W)] for _ in range(H)]
     taken = set()  # tiles a prop or a clearing already holds
+    blocked = set()  # tiles under a prop you cannot walk through
 
     def disc(cx, cy, r):
         for y in range(max(0, int(cy - r - 1)), min(H, int(cy + r + 2))):
@@ -163,18 +301,16 @@ def build(bid, b):
                     taken.add((x, y))
 
     r = b["path_r"]
-    road(START, WARD, r)
-    road(WARD, BLOT, r, 3.0)
-    for p in RESCUE:
-        road(WARD if p[1] > 30 else (44, 28), p, r * 0.8)
-    for s in SPAWNS:
+    for a, c, scale, wig in L["routes"] + extra.get("routes", []):
+        road(a, c, r * scale, wig)
+    for s in L["spawns"]:
         if rnd.random() < 0.6:
             disc(s[0], s[1], 2.2)
     if "patches" in b:  # open ground of the biome's own floor: bog in the marsh, scree on the hills
         cell, cut = b["patches"]
-        pn = value_noise(b["seed"] * 7 + 1, cell)
-        fine = value_noise(b["seed"] * 7 + 2, cell / 2.5)
-        wx, wy = value_noise(b["seed"] * 7 + 3, cell * 1.3), value_noise(b["seed"] * 7 + 4, cell * 1.3)
+        pn = value_noise(seed * 7 + 1, cell)
+        fine = value_noise(seed * 7 + 2, cell / 2.5)
+        wx, wy = value_noise(seed * 7 + 3, cell * 1.3), value_noise(seed * 7 + 4, cell * 1.3)
         for y in range(H):
             for x in range(W):
                 # Domain-warped, two octaves: lobed, wandering shapes instead of the square blobs of plain noise.
@@ -182,31 +318,34 @@ def build(bid, b):
                 if pn(qx, qy) * 0.75 + fine(qx, qy) * 0.25 > cut * 0.75 + 0.18:
                     g[y][x] = ':'
     disc(START[0], START[1], 2.5)
-    disc(BLOT[0], BLOT[1], 3.0)
+    for bl in L["blot"]:
+        disc(bl[0], bl[1], 3.0)
     for x in range(W):  # paths stay a little ragged
         for y in range(H):
             if g[y][x] == ':' and rnd.random() < 0.04:
                 g[y][x] = '.'
-    # What must stay open: the start, the wardstone, the Blot, rescue spots, spawn points, the road itself.
-    for p, rr in [(START, 4), (WARD, 4), (BLOT, 4), (SIGN_AT, 2)] + [(p, 3) for p in RESCUE] + [(s, 2) for s in SPAWNS]:
+    # What must stay open: the start, the wardstones, the Blots, rescue spots, spawn points, the road itself.
+    keep = [(START, 4)] + [(w, 4) for w in L["ward"]] + [(bl, 4) for bl in L["blot"]] + [(SIGN_AT, 2)] \
+        + [(p, 3) for p in L["rescue"]] + [(s, 2) for s in L["spawns"]] + [(m[1], m[2] if len(m) > 2 else 3) for m in extra.get("marks", [])]
+    for p, rr in keep:
         clear(p[0], p[1], rr)
     for y in range(H):
         for x in range(W):
             if g[y][x] == ':':
                 taken.add((x, y))
 
-    props = b["props"]
+    props = dict(b["props"])
+    props.update(extra.get("props", {}))
     chars = {k: k for k in props}
     placed = []
-    assert not set(chars) & set("TtrRSobkfe@:0123456789"), "prop chars clash with the map legend"
+    assert not (set(chars) - set(BUILTIN)) & set("TtrRSobkfe@:0123456789"), "prop chars clash with the map legend"
 
-    def place(key, x, y):
+    def place(key, x, y, force=False):
         kind = props[key]
-        w, h = SIZE.get(kind, (2, 2))
-        cells = {(xx, yy) for yy in range(y - h + 1, y + 1) for xx in range(x - w // 2, x - w // 2 + w)}
+        cells = cells_of(kind, x, y)
         if any(not (0 <= cx < W and 0 <= cy < H) for cx, cy in cells):
             return False
-        if cells & taken:
+        if cells & taken and not force:
             return False
         # No identical twin: the game picks a variant from the tile (scripts/prop.gd), so skip a spot where this
         # prop would show the same variant as one of its kind within TWIN_RADIUS tiles (tools/audit_art.py).
@@ -216,10 +355,16 @@ def build(bid, b):
                 return False
         placed.append((x, y, kind, v))
         taken.update(cells)
+        if kind not in NOBLOCK:
+            blocked.update(cells)
         g[y][x] = chars[key]
         return True
 
-    for key, at in b.get("landmarks", []):
+    # Set pieces first (personal missions): placed exactly where the recipe says, on cleared ground.
+    for key, at in extra.get("setpiece", []):
+        if not place(key, at[0], at[1], force=True):
+            print("  warning: set piece %s did not fit at %s" % (props[key], at))
+    for key, at in b.get("landmarks", []) + extra.get("landmarks", []):
         if not place(key, at[0], at[1]):
             # nudge a landmark until it fits next to the road
             for d in range(1, 6):
@@ -252,7 +397,7 @@ def build(bid, b):
 
     # Scatter: each prop thinned by its own noise field so it clumps, with little between the clumps.
     for key, dens, clump in b["scatter"]:
-        noise = value_noise(b["seed"] * 31 + ord(key[0]), 9)
+        noise = value_noise(seed * 31 + ord(key[0]), 9)
         for y in range(H):
             for x in range(W):
                 n = noise(x, y)
@@ -267,25 +412,66 @@ def build(bid, b):
             if g[y][x] == '.' and (x, y) not in taken and rnd.random() < 0.03:
                 g[y][x] = 'f'
 
-    for s in SPAWNS:
+    for s in L["spawns"]:
         g[s[1]][s[0]] = 'e'
     g[START[1]][START[0]] = '@'
     g[SIGN_AT[1]][SIGN_AT[0]] = '1'
 
-    head = ["# Last Ink map: %s (80 x 60 tiles of 16px). Generated by tools/make_biomes.py: edit that script, not this file." % b["name"],
+    reach = reachable(START, blocked, BLANK)
+    name = extra.get("name", b["name"])
+    head = ["# Last Ink map: %s (80 x 60 tiles of 16px). Generated by tools/make_biomes.py: edit that script, not this file." % name,
             "# Same legend as frayed_meadow.txt; the @prop lines below name this biome's props (free-standing, placed at",
-            "# their bottom-centre tile). Same open spots as the meadow, so Defense / Reclaim / Rescue missions fit.",
-            "@name " + b["name"], "@blank %d" % BLANK, "@ground " + b["ground"], "@mood " + b["mood"]]
+            "# their bottom-centre tile). @spot lines are the objective spots missions pick from (layout \"%s\")." % lid,
+            "@name " + name, "@blank %d" % BLANK, "@ground " + b["ground"], "@mood " + extra.get("mood", b["mood"])]
     for k, kind in props.items():
-        head.append("@prop%s %s" % (chars[k], kind))
-    head.append("@sign1 " + b["sign"])
+        if k not in BUILTIN:
+            head.append("@prop%s %s" % (chars[k], kind))
+    head.append("@sign1 " + extra.get("sign", b["sign"]))
+    head += spot_lines(L, reach, blocked, [(m[0], m[1]) for m in extra.get("marks", [])])
     head.append("---")
-    path = os.path.join(MAPS, bid + ".txt")
+    path = os.path.join(MAPS, (out_name or bid) + ".txt")
     with open(path, "w") as f:
         f.write("\n".join(head) + "\n" + "\n".join("".join(row) for row in g) + "\n")
     print("wrote", path)
 
 
+def annotate(name, lid="a"):
+    """Adds @spot lines to a hand-made map (frayed_meadow) without touching its rows."""
+    path = os.path.join(MAPS, name + ".txt")
+    text = open(path).read().split("\n")
+    sep = text.index("---")
+    head = [l for l in text[:sep] if not l.startswith("@spot ") and not l.startswith("# @spot")]
+    rows = [l for l in text[sep + 1:] if l.strip()]
+    L = dict(LAYOUTS[lid])
+    L["spawns"] = [(x, y) for y, row in enumerate(rows) for x, ch in enumerate(row) if ch == "e"] or L["spawns"]
+    blank = L["blank"]
+    for l in head:
+        if l.startswith("@blank "):
+            blank = int(l[7:])
+    blocked = set()
+    for y, row in enumerate(rows):
+        for x, ch in enumerate(row):
+            kind = BUILTIN.get(ch)
+            if kind and kind not in NOBLOCK:
+                blocked |= cells_of(kind, x, y)
+    reach = reachable(L["start"], blocked, blank)
+    head += ["# @spot lines: objective spots missions pick from (tools/make_biomes.py annotate)."]
+    head += spot_lines(L, reach, blocked, [])
+    with open(path, "w") as f:
+        f.write("\n".join(head + ["---"] + rows) + "\n")
+    print("annotated", path)
+
+
 if __name__ == "__main__":
+    import sys
+    only = sys.argv[1:]
     for bid, b in BIOMES.items():
-        build(bid, b)
+        for lid in b.get("layouts", "abc"):
+            out = bid if lid == "a" else "%s_%s" % (bid, lid)
+            if not only or out in only or bid in only:
+                build(bid, b, lid, out)
+    if not only or "frayed_meadow" in only:
+        annotate("frayed_meadow")
+    if not only or "personal" in only:
+        import make_personal  # the hand-placed set pieces of the personal missions (issue #113)
+        make_personal.build_all(build, BIOMES)

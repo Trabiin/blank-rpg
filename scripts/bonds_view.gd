@@ -2,7 +2,7 @@ extends Control
 ## Bonds screen. Opened with H, from the menus, or the Bonds button on the Command Table.
 ##
 ## Left: the core cast who have joined, with their bond rank (0-5) and how close the next one is.
-## Right: what they like, what their bond has unlocked, their personal job, and their scenes.
+## Right: what they like, what their bond has unlocked, their personal mission, and their scenes.
 ## Enter on someone who "wants a word" plays their next rank scene; otherwise Enter (or Right)
 ## moves to their scene list, where seen scenes can be replayed. Esc / H closes.
 
@@ -376,16 +376,17 @@ func _draw_details(vs: Vector2, id: String) -> void:
 		if Empire.personal_done(id):
 			state = "done"
 			col = GOOD
-		elif not Empire.expedition_running(pj).is_empty():
-			state = "under way"
-			col = GOLD
 		elif Empire.personal_lost(id) != "":
-			state = "lost with %s, which the Blank erased. Reclaim it to bring the job back" % Empire.personal_lost(id)
+			state = "lost with %s, which the Blank erased. Reclaim it to bring the mission back" % Empire.personal_lost(id)
 			col = BAD
 		elif rank >= 4:
-			state = ("on the Guildhall board" + Prompts.tag("expeditions")) if Empire.level_of("guildhall") > 0 else ("needs a Guildhall" + Prompts.tag("buildings"))
+			var pd := PersonalMissions.def_for(id)
+			state = "waiting at %s on the Command Table" % Empire.territory().find(pd.get("province", "")).get("name", "?")
+			var why := PersonalMissions.blocker(id)
+			if why != "":
+				state += " (%s)" % why
 			col = GOLD
-		y += _wrap(Vector2(x, y + 9), "Personal job, %s: %s." % [Empire.job(pj).get("name", "?"), state], w, 8, col) + 1
+		y += _wrap(Vector2(x, y + 9), "Personal mission, %s: %s." % [PersonalMissions.def_for(id).get("name", "?"), state], w, 8, col) + 1
 	y += 8
 	# Scenes
 	_text(Vector2(x, y + 8), "Scenes", 9, Color(0.75, 0.72, 0.7))

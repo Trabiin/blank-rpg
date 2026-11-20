@@ -1,0 +1,41 @@
+{
+	"_comment": "Tuning for the runtime mission types (scripts/mission_types.gd, issue #113). window: how Raid and Salvage chances come and go on the Command Table: every 'period' days a province offers one for 'open' days (each province on its own phase), then waits 'cooldown' days after you go, win or lose. threat_names: the briefing's word for threat 1-5. raid: grab caches from a faction's land before its garrison closes in. Offered on a faction-held province that borders your land, unless that faction is Friendly or better. factions.<id>: guards (spawn weights of data/enemies.json kinds standing watch over each cache and coming as reinforcements), per_cache (guards at each cache), cache (what one cache holds: [min, max]), quiet / loud (standing change when you get away unseen / once the alarm went up), rival (factions glad to see it: standing change on success). caches: how many sit on the map, need: how many you must carry out, seconds: time before the garrison arrives, alarm_cap: seconds left once the alarm is raised, open_time: seconds to pry one open. salvage: pull what the Blank has not finished eating out of its edge. Offered on your land or unclaimed land with Fray at or above min_fray, or next to erased land. pile: what one pile holds; near_bonus: up to this much more for a pile right at the white's edge; creep: px/s the white advances (plus creep_per_fray x Fray/10); push: px a kill pushes it back. Rewards on top of what the caches hold are paid on success.",
+	"window": {"period": 5, "open": 3, "cooldown": 4},
+	"threat_names": ["", "Light", "Steady", "Stiff", "Grim", "Deadly"],
+	"raid": {
+		"caches": 5, "need": 3, "seconds": 170, "alarm_cap": 45, "open_time": 1.6,
+		"alarm_seen": 9.0, "alarm_open": 14.0, "alarm_fall": 3.0, "reinforce_every": 6.5,
+		"rewards": {"renown": 1},
+		"factions": {
+			"concord": {
+				"name": "Concord tithe-store",
+				"guards": {"enforcer": 2, "sellsword": 2}, "per_cache": 2,
+				"cache": {"gilt": [14, 22], "supplies": [2, 5]},
+				"quiet": -4, "loud": -9, "rival": {"guild": 2},
+				"brief": "The Concord keeps its seized tithes in strongboxes along the road, watched by clerks with very large friends. Prise open at least %d of the %d boxes and get out before the garrison rides in. Stay out of sight and they may never know it was you."
+			},
+			"guild": {
+				"name": "Guild cargo",
+				"guards": {"sellsword": 3, "enforcer": 1}, "per_cache": 2,
+				"cache": {"gilt": [8, 14], "supplies": [5, 9]},
+				"quiet": -3, "loud": -8, "rival": {"concord": 2},
+				"brief": "Guild barges unload toll cargo on the landing, and the Guild charges both ways for the privilege. Take at least %d of the %d crates back before their sellswords finish their dice game. Quietly, if you can."
+			},
+			"coven": {
+				"name": "Coven stores",
+				"guards": {"moth": 2, "spitter": 2}, "per_cache": 1,
+				"cache": {"supplies": [4, 7], "insight": [1, 2], "ink": [0, 1]},
+				"quiet": -4, "loud": -10, "rival": {},
+				"brief": "The Coven leaves its stores in the woods under guard of things it raised from old letters. Lift at least %d of the %d caches before the witches notice the woods have gone quiet."
+			}
+		}
+	},
+	"salvage": {
+		"caches": 5, "need": 3, "open_time": 2.0, "min_fray": 35,
+		"creep": 4.0, "creep_per_fray": 0.6, "push": 4.0,
+		"pile": {"supplies": [3, 6], "ink": [0, 1], "insight": [0, 1], "gilt": [2, 6]},
+		"near_bonus": 1.0,
+		"rewards": {"supplies": 4},
+		"brief": "The white is eating %s from the east, and what it has not finished is still lying at its edge: carts, cellars, a chapel's plate. Pull at least %d of the %d piles out before it swallows them. The closer to the white, the better the pickings."
+	}
+}

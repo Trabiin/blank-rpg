@@ -142,8 +142,10 @@ func test_garrisons_past_nine_provinces() -> void:
 
 
 func test_mission_maps_come_from_the_biome_pool() -> void:
-	check_eq(MissionTypes.map_for("gutterwoods"), "res://maps/gutterwoods.txt", "woods")
-	check_eq(MissionTypes.map_for("whitewater"), "res://maps/frayed_meadow.txt", "meadow")
+	var woods := ["res://maps/gutterwoods.txt", "res://maps/gutterwoods_b.txt", "res://maps/gutterwoods_c.txt"]
+	check(MissionTypes.map_for("gutterwoods") in woods, "woods: %s" % MissionTypes.map_for("gutterwoods"))
+	var meadow := ["res://maps/frayed_meadow.txt", "res://maps/meadow_b.txt", "res://maps/meadow_c.txt"]
+	check(MissionTypes.map_for("whitewater") in meadow, "meadow: %s" % MissionTypes.map_for("whitewater"))
 	check_eq(MissionTypes.map_for("abbey"), MissionTypes.MAP, "an empty pool falls back to the meadow")
 
 
