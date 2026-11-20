@@ -88,10 +88,15 @@ func _draw() -> void:
 		draw_string(font, Vector2(-w / 2.0, 0), text, HORIZONTAL_ALIGNMENT_LEFT, -1, size, Color(color, a))
 	elif kind == Kind.SWEEP:
 		var t := life / max_life
-		var pts := PackedVector2Array([Vector2.ZERO])
-		for i in 13:
-			pts.append(Vector2.RIGHT.rotated(angle - half_arc + 2.0 * half_arc * i / 12.0) * radius * (0.6 + 0.4 * t))
-		draw_colored_polygon(pts, Color(color, 0.45 * a))
+		var rr := radius * (0.6 + 0.4 * t)
+		if half_arc >= PI - 0.01:  # an all-round sweep: a disc (a closed fan repeats its first point and won't triangulate)
+			draw_circle(Vector2.ZERO, rr, Color(color, 0.45 * a))
+		else:
+			var pts := PackedVector2Array([Vector2.ZERO])
+			var n := clampi(int(rad_to_deg(2.0 * half_arc) / 15.0), 1, 12)  # thin lunges: few points
+			for i in n + 1:
+				pts.append(Vector2.RIGHT.rotated(angle - half_arc + 2.0 * half_arc * i / n) * rr)
+			draw_colored_polygon(pts, Color(color, 0.45 * a))
 		draw_arc(Vector2.ZERO, radius * (0.6 + 0.4 * t), angle - half_arc, angle + half_arc, 16, Color(color.lightened(0.4), a), 1.5)
 	elif kind == Kind.RING:
 		var t2 := life / max_life

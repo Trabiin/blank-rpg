@@ -95,6 +95,19 @@ var charging := false
 var charge_t := 0.0
 var charge_ready := false
 var tech_flash_t := 0.0
+## Allies charge techs too (scripts/ally_techs.gd): ai_charging marks a charge the AI started.
+var ai_charging := false
+var tech_mode := "auto"  # "auto" (the preset decides) or "call" (only when ordered from the quick menu)
+var ai_tech_order_t := 0.0  # > 0 while a quick menu order to fire the tech stands
+var ai_tech_cd := 0.0
+var ai_tech_hold := 0.0
+var ai_think_t := 0.0
+var ai_tech_dir := Vector2.DOWN
+var ai_tech_focus: Enemy = null
+var ai_tech_spot := Vector2.ZERO  # where it is walking to land the tech
+var ai_tech_promise := false  # a tech looks worth it: the preset holds its swing so the gauge can fill
+var ai_tech_full_t := 0.0  # seconds the gauge has sat full while a tech was promised
+var ai_tech := {}  # the tech the AI is charging (AllyTechs.techs_of picks among the hero's techs)
 
 
 func _ready() -> void:
@@ -152,7 +165,7 @@ func _physics_process(delta: float) -> void:
 	else:
 		dir = _ai(delta)
 
-	if dir.length() > 0.1 and swing_t <= 0.0:
+	if dir.length() > 0.1 and swing_t <= 0.0 and not ai_charging:  # a charging ally keeps its aim while it steps
 		facing = dir.normalized()
 	var spd := (vanish_speed if vanish_t > 0.0 else 1.0) * move_speed * (0.3 if swing_t > 0.0 or cast_t > 0.0 else (Techs.CHARGE_SPEED if charging else 1.0))
 	velocity = dir * spd + knockback
@@ -219,7 +232,11 @@ func take_hit(amount: int, from: Vector2, force := 160.0) -> bool:
 	if parry_t > 0.0 and not dead and amount > 0:
 		Abilities.riposte(self, from)
 		return true
-	return super.take_hit(amount, from, force * poise)
+	var before := hp
+	var landed := super.take_hit(amount, from, force * poise)
+	if hp < before:
+		AllyTechs.interrupted(self, before - hp)  # a heavy blow breaks an ally's charge
+	return landed
 
 
 ## Out of sight for t seconds (enemies' _find_target skips hidden heroes; bosses still see).
@@ -489,6 +506,8 @@ func _process(_delta: float) -> void:
 func _draw() -> void:
 	# Drawn before the child sprites, so it sits underneath them.
 	draw_shadow(5.5)
+	if not dead:
+		Techs.draw_area(self, self)  # where a charging tech will land, on the ground
 
 
 func _draw_overlay() -> void:

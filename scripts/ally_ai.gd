@@ -1,6 +1,7 @@
 class_name AllyAI
 extends RefCounted
-## Ally AI presets (issue #9). Hero._ai() handles leader catch-up and getting unstuck, then asks
+## Ally AI presets (issue #9); charged techs under AI live in scripts/ally_techs.gd.
+## Hero._ai() handles leader catch-up and getting unstuck, then asks
 ## steer() where to move. Set per hero from the quick menu's Party tab (Empire.ai_presets keeps the
 ## choice between missions); defaults come from data/heroes.json "ai". Names and blurbs: heroes.json "styles".
 ##
@@ -32,6 +33,11 @@ static func steer(h: Hero, leader: Hero, delta: float) -> Vector2:
 	var id := preset_id(h.ai_style)
 	var p: Dictionary = PRESETS[id]
 
+	# A charging tech (scripts/ally_techs.gd) has the ally's full attention. Otherwise abilities come
+	# first (heals before blasts), then the chance to start a tech, then the preset's footwork.
+	var tech_move: Array = []
+	if h.charging and AllyTechs.steer(h, leader, id, delta, tech_move):
+		return tech_move[0]
 	if not h.abilities.is_empty():
 		h.ai_ability_t -= delta
 		if h.ai_ability_t <= 0.0:
@@ -39,6 +45,8 @@ static func steer(h: Hero, leader: Hero, delta: float) -> Vector2:
 			var pick := pick_ability(h, id, leader)
 			if pick >= 0 and Abilities.use(h, pick):
 				return Vector2.ZERO
+	if AllyTechs.steer(h, leader, id, delta, tech_move):
+		return tech_move[0]
 	if id == "support" and h.heal_every > 0.0:
 		h.heal_t -= delta * SUPPORT_HEAL_SPEEDUP
 
@@ -63,7 +71,7 @@ static func steer(h: Hero, leader: Hero, delta: float) -> Vector2:
 			if in_reach:
 				h.facing = to_t.normalized()
 				if h.power >= float(h.get_meta("ai_commit")):
-					h.try_attack()
+					_swing(h, id)
 				return Vector2.ZERO
 			return to_t.normalized()
 		"distance":
@@ -71,7 +79,7 @@ static func steer(h: Hero, leader: Hero, delta: float) -> Vector2:
 			if h.power >= float(p["commit"]):
 				if in_reach:
 					h.facing = to_t.normalized()
-					h.try_attack()
+					_swing(h, id)
 					return Vector2.ZERO
 				return to_t.normalized()
 			h.facing = to_t.normalized()
@@ -91,7 +99,7 @@ static func steer(h: Hero, leader: Hero, delta: float) -> Vector2:
 			if near_leader and h.power >= float(p["commit"]):
 				if in_reach:
 					h.facing = to_t.normalized()
-					h.try_attack()
+					_swing(h, id)
 					return Vector2.ZERO
 				return to_t.normalized()
 			h.facing = to_t.normalized()
@@ -106,13 +114,22 @@ static func steer(h: Hero, leader: Hero, delta: float) -> Vector2:
 	if h.power >= float(p["commit"]):
 		if in_reach:
 			h.facing = to_t.normalized()
-			h.try_attack()
+			_swing(h, id)
 			return Vector2.ZERO
 		return to_t.normalized()
 	h.facing = to_t.normalized()
 	if d < float(p["back_off"]):
 		return -to_t.normalized() * 0.8
 	return Vector2.ZERO
+
+
+## An ordinary swing, unless the gauge is being saved for a charged tech (AllyTechs.saving).
+static func _swing(h: Hero, id: String) -> void:
+	if AllyTechs.saving(h, id):
+		return
+	h.try_attack()
+	if id == "aggressive":
+		AllyTechs.roll_turn(h)
 
 
 ## Walks behind the leader (a negative distance walks ahead of them).

@@ -124,6 +124,8 @@ var regions_open := []  # region ids open on the map, in the order the story ope
 ## behaviour picked per hero in its Party tab (recruit id -> AllyAI.PRESETS key).
 var satchel := {}
 var ai_presets := {}
+## Charged tech mode per recruit id under AI: "auto" or "call" (scripts/ally_techs.gd).
+var ai_techs := {}
 
 
 func territory() -> Territory:
@@ -137,6 +139,7 @@ func territory() -> Territory:
 func reset() -> void:
 	satchel = Satchel.start_stock()
 	ai_presets = {}
+	ai_techs = {}
 	day = 1
 	day_t = 0.3  # start mid-morning
 	speed = 1
@@ -1993,6 +1996,7 @@ func to_dict() -> Dictionary:
 		"progress": progress,
 		"dialogue": Dialogue.seen,
 		"satchel": satchel, "ai_presets": ai_presets,
+		"ai_techs": ai_techs,
 		"rng_state": str(rng.state)}
 
 
@@ -2028,6 +2032,9 @@ func from_dict(d: Dictionary) -> void:
 	var saved_ai = d.get("ai_presets", {})
 	if typeof(saved_ai) == TYPE_DICTIONARY:
 		ai_presets = saved_ai.duplicate()
+	var saved_techs = d.get("ai_techs", {})
+	if typeof(saved_techs) == TYPE_DICTIONARY:
+		ai_techs = saved_techs.duplicate()
 	var saved_seen = d.get("dialogue", {})
 	Dialogue.seen = saved_seen.duplicate() if typeof(saved_seen) == TYPE_DICTIONARY else {}
 	var saved_b: Dictionary = d.get("buildings", {})
