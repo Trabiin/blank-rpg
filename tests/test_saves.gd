@@ -118,6 +118,26 @@ func test_first_build_save_is_converted() -> void:
 	check_eq(float(d["empire"]["playtime"]), 412.5, "playtime kept")
 
 
+## Issue #53: a save from the nine-province map opens on the 24-province map, Act 1 as it was.
+func test_pre_region_save_keeps_act1_and_fogs_the_rest() -> void:
+	var r: Dictionary = Saves.parse(_fixture_text("20261120_territory_regions__act1_table_day14.json"))
+	if not check_eq(r["status"], Saves.GOOD, "pre-region save reads"):
+		return
+	var d: Dictionary = r["data"]
+	check_eq(d["empire"].get("regions", []), ["marches"], "only the Hollow Marches are open")
+	Empire.from_dict(d["empire"])
+	var t: Territory = Empire.territory()
+	check_eq(t.provinces.size(), 24, "the whole map")
+	check_eq(t.find("oldmill")["owner"], "you", "Old Mill still yours")
+	check_eq(int(t.find("meadow")["fray"]), 46, "Meadow Fray kept")
+	check_eq(int(t.find("saltreed")["scar"]), 2, "surge scar kept")
+	check_eq(Empire.governor_of("oldmill"), "quill", "governor kept")
+	check_eq(Empire.surge.get("id", ""), "saltreed", "surge kept")
+	check(not Empire.province_open(t.find("abbey")), "the Abbey is under the fog")
+	check_eq(int(t.find("halfwave")["fray"]), 40, "new provinces start as written")
+	check_eq(t.find("spire")["owner"], "concord", "the capital is the Concord's")
+
+
 func test_cut_content_is_dropped_not_fatal() -> void:
 	var r: Dictionary = Saves.parse(_fixture_text("20261120_save_format_v2__hub_day9.json"))
 	Empire.from_dict(r["data"]["empire"])

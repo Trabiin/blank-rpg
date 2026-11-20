@@ -47,3 +47,13 @@ once both see each other's charges and trip the guard.
 | Pro style-locked image (generate-image-v2) | $0.081 | 4 options at 96 px, 16 at 64 px, 25 at 48 px |
 | Image edit (edit-images-v2), up to 4 images at 81-128 px | $0.081 | the same buildings, edited (levels 1 and 2) |
 | Map object (map-objects) | $0.008 | 1 image; init-image edits lose the shape, not used for levels |
+
+## Territory map of the whole Inklands (issue #53, 2026-11-20)
+
+| Call | Estimate | Real cost |
+|---|---|---|
+| Pilot: gpt-image-2 edit, medium, 1536x1024 (layout guide + the Phase 8 island as style reference) | ~$0.06 | $0.062 |
+| Final: gpt-image-2 edit, high, 1536x1024 (the pilot as layout, the island as style) | ~$0.19 | $0.185 |
+
+Total $0.247. The painting is `assets/ui/map_painted.jpg`; `tools/trace_land.py` traces its coast into
+`assets/map/land_mask.png`, and the provinces are laid over that, so the borders follow the painted coast.

@@ -84,8 +84,30 @@ never required.
 
 ### 5.2 The territory map
 
-The Inklands are split into **provinces**, connected by roads. The MVP map has about **8 provinces** around
-Hollowmark; the full game has about **24** across five regions.
+The Inklands are split into **provinces**, connected by roads: **24 provinces in five regions** (issue #53). The
+Hollow Marches (Act 1, nine provinces round Hollowmark) are open from the start; the other four regions lie under
+fog, each showing its name, the chapter that opens it and a rumour of what is there, until its story chapter lifts
+the fog (`Empire.open_region()`, or a story beat with `then: open_region:<id>`):
+
+| Region | Chapter | Provinces | Notes |
+|---|---|---|---|
+| The Hollow Marches | 1 (open) | Hollowmark, Frayed Meadow, Gutterwoods, Old Mill Crossing, Lampwick Hills, Saltreed Marsh, Gallows Ferry, Tithe Road, Whitewater | Act 1, unchanged |
+| Saint Ledger's Abbey | 2 | Saint Ledger's Abbey, Candlemere, Bonefield Cloister, Quillpine Pass | North, across the Candle Sound from the capital |
+| The Velvet Causeway | 3 | The Velvet Causeway, Lantern Quay, Inkmere Shallows, Rosewine Terraces | South-west, round the ink lake |
+| The Unfinished Coast | 4 | Saltgrave Harbour, Halfwave Bay, The Drowned Light | South-east, next to the Blank; region pressure +1 Fray a day ("the sea forgets itself") |
+| The Gilded Spire | 5 | The Gilded Spire, Ledgerside, Tollmarch, Goldwash Fields | West, the capital at the end of the Tithe Road |
+
+The Margin (Chapter 6) is the Blank itself: the white wall down the map's east edge, not a set of provinces.
+
+Under the fog nothing moves: no Fray, no missions, no claims, no surges or Verity's plans. Once open, a region
+joins every system (the Blank's spread from the east, surges, plans, governors, claims). Holding more than nine
+provinces costs 1 Gilt and 1 Supplies a day for each one past nine (garrisons and roads), which Act 1 can never
+reach. Each province has a biome; each biome has a pool of mission maps (`data/provinces.json`), which the chapters
+and #113 fill for the new regions.
+
+The map is the painted Inklands with the provinces as translucent washes over it. It pans and zooms (mouse wheel,
+drag, pinch, + and -, the right stick and LT, the buttons in its corner) and follows the selection; zoomed right
+out over several open regions, region names take over from province names.
 
 Each province shows:
 - **Fray** (0 to 100): how far the Blank has eaten into it. At 100 it is **Erased**: it turns paper-white,
