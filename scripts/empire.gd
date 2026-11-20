@@ -308,6 +308,9 @@ func fray_sources(p: Dictionary, gov := "-") -> Array:
 		out.append(["Tended by your people", FRAY_TENDED])
 		if has_research("ward_margins"):
 			out.append(["Margin wards (research)", -1])
+		if p["id"] == "hollowmark":
+			for pk in bond_perks_with("fray_home"):
+				out.append(["%s (%s's bond)" % [pk["name"], short_name(pk["id"])], -int(pk["effect"]["fray_home"])])
 		if int(lamps.get(p["id"], 0)) > 0:
 			var lv := int(lamps[p["id"]])
 			var bright := has_research("ward_lampwright")
@@ -797,8 +800,8 @@ func job_blocker(jid: String) -> String:
 	if needs.get("erased", false):
 		if p.get("owner", "") != "erased":
 			return "only once %s is erased" % p.get("name", "?")
-	elif p.get("owner", "") == "erased":
-		return "%s has been erased" % p.get("name", "?")
+	elif p.get("owner", "") == "erased" and j.get("personal", "") == "":
+		return "%s has been erased" % p.get("name", "?")  # personal jobs still go: it's personal
 	if not expedition_running(jid).is_empty():
 		return "a squad is already out on it"
 	if int(job_ready.get(jid, 0)) > day:
@@ -822,7 +825,10 @@ func squad_blocker(id: String) -> String:
 
 ## How long a job takes, in days. Waystations cut a quarter off.
 func job_days(jid: String) -> float:
-	return float(job(jid).get("days", 1)) * (0.75 if has_research("log_waystations") else 1.0)
+	var d := float(job(jid).get("days", 1)) * (0.75 if has_research("log_waystations") else 1.0)
+	for pk in bond_perks_with("job_speed"):  # Back Roads (Jessamy's bond)
+		d *= 1.0 - float(pk["effect"]["job_speed"])
+	return maxf(snappedf(d, 0.05), 0.5)
 
 
 ## "2 days", "1.5 days", "1 day".
@@ -1285,14 +1291,22 @@ func mission_boosts() -> Dictionary:
 	for pk in bond_perks_with("mission_revive"):
 		b["revive"] *= 1.0 + float(pk["effect"]["mission_revive"])
 		b["lines"].append("faster revives (%s)" % pk["name"])
+	for pk in bond_perks_with("mission_power_rate"):
+		b["power_rate"] *= 1.0 + float(pk["effect"]["mission_power_rate"])
+		b["lines"].append("faster gauge (%s)" % pk["name"])
+	for pk in bond_perks_with("mission_guard"):
+		b["lines"].append("-%d%% damage taken (%s)" % [int(round(float(pk["effect"]["mission_guard"]) * 100)), pk["name"]])
 	return b
 
 
 ## Damage a party member actually takes from a hit, after Inkskin.
 func damage_to_party(amount: int) -> int:
-	if has_research("ink_skin"):
-		return maxi(1, int(round(amount * 0.75)))
-	return amount
+	var mult := 0.75 if has_research("ink_skin") else 1.0
+	for pk in bond_perks_with("mission_guard"):  # House Rules (Ottoline's bond)
+		mult *= 1.0 - float(pk["effect"]["mission_guard"])
+	if mult >= 1.0:
+		return amount
+	return maxi(1, int(round(amount * mult)))
 
 
 # ---------------------------------------------------------------- diplomacy
@@ -1444,6 +1458,8 @@ func standing_rate(fid: String, env := "-") -> int:
 func change_standing(fid: String, amount: int, why: String, quiet := false) -> void:
 	if amount == 0 or not faction_data.has(fid):
 		return
+	if amount > 0:
+		amount += bond_perk_total("standing_bonus")  # Pillow Talk (Velvette's bond)
 	var before := tier_of(fid)
 	standing[fid] = clampi(standing_of(fid) + amount, -100, 100)
 	var after := tier_of(fid)
@@ -1780,7 +1796,7 @@ func next_level(id: String) -> Dictionary:
 	if lv >= levels.size():
 		return {}
 	var l: Dictionary = levels[lv]
-	return {"level": lv + 1, "cost": l["cost"], "days": int(l["days"]), "slots": int(l["slots"])}
+	return {"level": lv + 1, "cost": discounted(l["cost"]), "days": int(l["days"]), "slots": int(l["slots"])}
 
 
 ## Why a building can't be built or upgraded right now, or "" if it can.
@@ -1847,7 +1863,19 @@ func lamp_next(pid: String) -> Dictionary:
 	if lv >= levels.size():
 		return {}
 	var l: Dictionary = levels[lv]
-	return {"level": lv + 1, "cost": l["cost"], "days": int(l["days"]), "fray": int(l["fray"])}
+	return {"level": lv + 1, "cost": discounted(l["cost"]), "days": int(l["days"]), "fray": int(l["fray"])}
+
+
+## Building and Wardlamp costs after Clean Books (Odile's bond): Gilt only, rounded down.
+func discounted(cost: Dictionary) -> Dictionary:
+	var cut := 0.0
+	for pk in bond_perks_with("build_discount"):
+		cut += float(pk["effect"]["build_discount"])
+	if cut <= 0.0 or not cost.has("gilt"):
+		return cost
+	var c := cost.duplicate()
+	c["gilt"] = int(floor(int(cost["gilt"]) * (1.0 - minf(cut, 0.9))))
+	return c
 
 
 func lamp_blocker(pid: String) -> String:
@@ -2330,6 +2358,11 @@ func bond_perk_lines() -> Array:
 	var out := []
 	for pk in bond_perks():
 		var e: Dictionary = pk["effect"]
+		if e.has("gilt_per_held"):
+			var held := territory().provinces.filter(func(p): return p["owner"] == "you").size()
+			out.append({"label": "%s (%s, %d held)" % [pk["name"], short_name(pk["id"]), held],
+				"gilt": int(e["gilt_per_held"]) * held, "supplies": 0, "ink": 0, "note": "bond"})
+			continue
 		if not (e.has("gilt") or e.has("supplies") or e.has("ink") or e.has("insight")):
 			continue
 		out.append({"label": "%s (%s)" % [pk["name"], short_name(pk["id"])], "gilt": int(e.get("gilt", 0)),

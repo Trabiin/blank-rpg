@@ -80,6 +80,31 @@
 			["auditor", "You cannot strike out a Corrections officer. There is no form for it. There is no form for YOU."],
 			["", "His edges go first, then his title, then his name. The last thing to fade is a neat signature, still waiting for a date."],
 			["", "The tollgate creaks open. The road to Hollowmark is yours, and so, apparently, is the paperwork."]
+		]},
+		"ottoline_first": {"title": "The Doorframe", "lines": [
+			["", "Big Ottoline has to duck to look at Ash, and she does it slowly, like a drawbridge coming down."],
+			["ottoline", "Uncle Tobble says you're all right. Uncle Tobble also says his knees can tell the weather. So I'll make up my own mind."],
+			["ottoline", "I've kept doors my whole life. Taverns. A cabaret. A magistrate's office, briefly, from the outside."],
+			["ottoline", "Here's how it works. I stand in front. Anything that wants you has to come through me. They usually reconsider.", "smug"],
+			["ottoline", "Don't thank me. Just don't wander off where I can't see you."]
+		]},
+		"jessamy_first": {"title": "Night Shift", "lines": [
+			["jessamy", "There you are. I've been watching you all day from the shady side of the plaza. Don't be flattered. Be a little flattered.", "smug"],
+			["jessamy", "Guild terms: I move whatever you need moved, after dark, and you don't ask what's in the crates."],
+			["", "She tilts her face out of a patch of sunlight, quickly, the way you'd pull your hand back from a stove."],
+			["jessamy", "And I don't do mornings. Or noons. Or afternoons, really. Send for me once the lamps are lit, handsome. Or pretty. Whichever."]
+		]},
+		"odile_first": {"title": "Audit Notice", "lines": [
+			["odile", "I've reviewed Hollowmark's books. All of them. Including the set under the floor of the stores."],
+			["odile", "Quill's beautiful books are a work of art. Quill's true books are a work of fiction with numbers in.", "smug"],
+			["odile", "I brought the Concord's ledger with me. Every village they meant to collect, and the price they put on each one. They want it back very badly."],
+			["odile", "I'd rather they paid for it. So. Where do I sit?"]
+		]},
+		"velvette_first": {"title": "Opening Night", "lines": [
+			["velvette", "There you are. The one the Blank spat out. I expected you to be taller. I always expect people to be taller."],
+			["velvette", "I don't fight for coin, darling. I fight for an audience. And right now the whole Inklands is watching you.", "smug"],
+			["", "She draws the rapier an inch, just to hear it sing, and slides it home."],
+			["velvette", "You may have my sword arm. My back, if you earn it. My secrets cost extra. Everyone pays eventually."]
 		]}
 	},
 	"first_talk": {
@@ -88,7 +113,11 @@
 		"pell": "pell_first",
 		"gristle": "gristle_first",
 		"ninefingers": "ninefingers_first",
-		"abeyance": "abeyance_first"
+		"abeyance": "abeyance_first",
+		"ottoline": "ottoline_first",
+		"jessamy": "jessamy_first",
+		"odile": "odile_first",
+		"velvette": "velvette_first"
 	},
 	"events": {
 		"first_kill": {"once": true, "lines": [["bran", "It popped. Like a thought you weren't supposed to have."]]},
@@ -122,6 +151,17 @@
 			{"id": "meadow_edge", "rect": [64, 0, 6, 60], "lines": [
 				["bran", "Hear that? It's humming. The Blank hums when it's hungry.", "angry"],
 				["bran", "Step back. It spat you out once. It won't make the same mistake twice."]
+			]},
+			{"id": "meadow_ottoline_bran", "rect": [0, 0, 130, 90], "needs": ["ottoline", "bran"], "lines": [
+				["bran", "Ever fought something with no face, Ottoline?"],
+				["ottoline", "Every Saturday night at the Encore. Drunks. Same thing."],
+				["bran", "...Fair."]
+			]},
+			{"id": "meadow_velvette_ottoline", "rect": [0, 30, 58, 20], "needs": ["velvette", "ottoline"], "lines": [
+				["velvette", "Ottoline. Remember when you used to keep my door?"],
+				["ottoline", "I remember you climbing out the window to avoid paying the band."],
+				["velvette", "Artistic differences, darling.", "smug"],
+				["ottoline", "Six weeks' wages is not an artistic difference."]
 			]}
 		],
 		"hollowmark": [
@@ -136,6 +176,74 @@
 			]},
 			{"id": "town_gate", "rect": [19, 25, 10, 7], "needs": ["bran"], "lines": [
 				["bran", "Gate's quiet. I hate quiet. Quiet means nobody's paying anyone to be loud."]
+			]},
+			{"id": "town_tavern_ottoline", "rect": [27, 8, 9, 6], "needs": ["ottoline", "tobble"], "lines": [
+				["tobble", "Ottoline, love, stop glaring at the customers."],
+				["ottoline", "I'm not glaring. This is my face. It's been my face since I was four."],
+				["tobble", "She glared at the midwife. True story. Midwife apologised."]
+			]},
+			{"id": "town_tavern_velvette", "rect": [27, 8, 9, 6], "needs": ["velvette", "jessamy"], "lines": [
+				["velvette", "Jessamy, darling, you're doing that thing where you stand in the shade as if it owes you money."],
+				["jessamy", "It does. Shade's very reliable. Unlike certain performers.", "smug"],
+				["velvette", "Name me. Go on. I adore it.", "happy"]
+			]},
+			{"id": "town_stores_odile", "rect": [35, 7, 8, 5], "needs": ["odile", "quill"], "lines": [
+				["odile", "Quill. Your stores count says eleven days of turnips."],
+				["quill", "It does."],
+				["odile", "There are nine."],
+				["quill", "The other two are in the beautiful books.", "smug"]
+			]},
+			{"id": "town_gate_ottoline", "rect": [19, 26, 10, 6], "needs": ["ottoline", "bran"], "lines": [
+				["bran", "You're standing in my light."],
+				["ottoline", "I'm standing in everyone's light, Coil. It's a public service.", "smug"]
+			]}
+		],
+		"gutterwoods": [
+			{"id": "gutter_jessamy_gristle", "rect": [0, 0, 130, 90], "needs": ["jessamy", "gristle"], "lines": [
+				["gristle", "You're looking peaky, dearie. Translucent, almost."],
+				["jessamy", "It's the light, Mother."],
+				["gristle", "It's the Ledger. I can smell a struck-out line from here. Come by the shop. First visit's free. The second one'll cost you your shadow.", "smug"],
+				["jessamy", "Funny. People usually want the other thing."]
+			]}
+		],
+		"saltreed": [
+			{"id": "saltreed_velvette_jessamy", "rect": [0, 0, 130, 90], "needs": ["velvette", "jessamy"], "lines": [
+				["velvette", "Marsh. Reeds. Fog. Darling, it's like a dressing room nobody's cleaned since the war."],
+				["jessamy", "I ran crates through here for two years. There's a smugglers' path under the water, if you know where to step."],
+				["velvette", "And do you?"],
+				["jessamy", "Mostly.", "smug"]
+			]}
+		],
+		"oldmill": [
+			{"id": "oldmill_odile_daro", "rect": [0, 0, 130, 90], "needs": ["odile", "ninefingers"], "lines": [
+				["ninefingers", "Penhallow. I know that name. Assessors' office, Old Mill."],
+				["odile", "My mother's office. I was the one who checked her sums."],
+				["ninefingers", "Then you know what they do here."],
+				["odile", "I know what it costs. Down to the copper. That's worse.", "sad"]
+			]}
+		],
+		"lampwick": [
+			{"id": "lampwick_ottoline_odile", "rect": [0, 0, 130, 90], "needs": ["ottoline", "odile"], "lines": [
+				["odile", "Ottoline, you have walked into four low branches."],
+				["ottoline", "Five. The fifth one apologised."],
+				["odile", "Branches can't apologise."],
+				["ottoline", "This one did. After I hit it back.", "smug"]
+			]}
+		],
+		"tithe_road": [
+			{"id": "tithe_jessamy_odile", "rect": [0, 0, 130, 90], "needs": ["jessamy", "odile"], "lines": [
+				["jessamy", "Toll post ahead. Smile, Odile. They'll think we're honest."],
+				["odile", "I am honest."],
+				["jessamy", "That's what makes it such a good disguise.", "smug"]
+			]}
+		],
+		"tithe_tollgate": [
+			{"id": "tollgate_velvette_bran", "rect": [0, 0, 130, 90], "needs": ["velvette", "bran"], "lines": [
+				["velvette", "Brannoc, darling, your contract arm is twitching."],
+				["bran", "Does that near Concord ink. Smells the paperwork."],
+				["velvette", "How romantic. Mine only twitches near men who owe me money."],
+				["bran", "...Do I owe you money?"],
+				["velvette", "Not yet.", "smug"]
 			]}
 		]
 	}

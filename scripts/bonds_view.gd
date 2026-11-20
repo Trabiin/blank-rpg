@@ -29,6 +29,8 @@ var flash := ""
 var flash_t := 0.0
 var scene_view
 var _row_rects: Array = []
+var _row_index: Array = []  # list index of each visible row in _row_rects
+var scroll := 0  # first visible row of the people list (it scrolls once the cast outgrows the screen)
 var _scene_rects: Array = []
 var font: Font
 
@@ -177,9 +179,16 @@ func _play(id: String, r: int, is_replay: bool) -> void:
 func _gui_input(event: InputEvent) -> void:
 	if scene_view.visible:
 		return
+	if event is InputEventMouseButton and event.pressed and event.button_index in [MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN] \
+			and event.position.x < LIST_W + 12:
+		var ids := _ids()
+		sel = clampi(sel + (-1 if event.button_index == MOUSE_BUTTON_WHEEL_UP else 1), 0, maxi(ids.size() - 1, 0))
+		focus = 0
+		return
 	if event is InputEventMouseMotion:
-		for i in _row_rects.size():
-			if (_row_rects[i] as Rect2).has_point(event.position):
+		for k in _row_rects.size():
+			if (_row_rects[k] as Rect2).has_point(event.position):
+				var i: int = _row_index[k]
 				if sel != i:
 					focus = 0
 				sel = i
@@ -191,8 +200,9 @@ func _gui_input(event: InputEvent) -> void:
 		if _close_rect().has_point(event.position):
 			close()
 			return
-		for i in _row_rects.size():
-			if (_row_rects[i] as Rect2).has_point(event.position):
+		for k in _row_rects.size():
+			if (_row_rects[k] as Rect2).has_point(event.position):
+				var i: int = _row_index[k]
 				if sel == i and focus == 0:
 					_pick_person()  # tap to select, tap again to act (touch friendly)
 				sel = i
@@ -239,6 +249,12 @@ func _pips(pos: Vector2, rank: int, col: Color) -> void:
 		Art.draw_heart(self, c, 4.0, col if i < rank else Color(0.3, 0.28, 0.33))
 
 
+## A small gold arrow over/under the people list when more rows are scrolled out of sight.
+func _scroll_arrow(at: Vector2, up: bool) -> void:
+	var d := -3.0 if up else 3.0
+	draw_colored_polygon(PackedVector2Array([at + Vector2(-5, -d / 3), at + Vector2(5, -d / 3), at + Vector2(0, d)]), Color(GOLD, 0.8))
+
+
 ## Progress from this rank to the next as 0..1.
 func _progress(id: String) -> float:
 	var r := Empire.bond_rank(id)
@@ -256,6 +272,7 @@ func _draw() -> void:
 	UiSkin.panel(self, cr, "button")
 	_text(cr.position + Vector2(9, 12), "Close", 9, Color(0.75, 0.72, 0.7))
 	_row_rects.clear()
+	_row_index.clear()
 	_scene_rects.clear()
 	_text(Vector2(8, 20), "Bonds", 15, Color("f3efe4"))
 	var ready := Empire.bond_ready_ids().size()
@@ -267,10 +284,15 @@ func _draw() -> void:
 		_text(Vector2(8, 60), "Nobody close enough to Ash yet.", 10, TEXT)
 		return
 	var y := 44.0
-	for i in ids.size():
+	var fits := maxi(int((vs.y - y - 22.0) / ROW_H), 1)
+	scroll = clampi(scroll, maxi(sel - fits + 1, 0), mini(sel, maxi(ids.size() - fits, 0)))
+	if scroll > 0:
+		_scroll_arrow(Vector2(8 + LIST_W / 2, y - 3), true)
+	for i in range(scroll, mini(scroll + fits, ids.size())):
 		var id: String = ids[i]
 		var rr := Rect2(8, y, LIST_W, ROW_H - 3)
 		_row_rects.append(rr)
+		_row_index.append(i)
 		var on := i == sel
 		draw_rect(rr, Color(0.16, 0.13, 0.09) if on else Color(0.09, 0.08, 0.11))
 		if on:
@@ -293,8 +315,10 @@ func _draw() -> void:
 		if Empire.talked_today(id):
 			_text(rr.position + Vector2(10, 29), "chatted today", 7, DIM)
 		y += ROW_H
+	if scroll + fits < ids.size():
+		_scroll_arrow(Vector2(8 + LIST_W / 2, y + 1), false)
 	var missing := Empire.bond_cast().size() - ids.size()
-	if missing > 0:
+	if missing > 0 and scroll + fits >= ids.size():
 		_text(Vector2(10, y + 10), "%d more people Ash could get close to haven't joined yet." % missing, 7, DIM, LIST_W)
 	_draw_details(vs, ids[sel])
 	_text(Vector2(8, vs.y - 8), Prompts.help([["updown", "choose"], ["ui_accept", "talk / scenes"], ["leftright", "people / scenes"], [["ui_cancel", "bonds"], "close"]], "Tap a name, tap again to talk   Tap a scene twice to play it"), 7, Color(0.5, 0.48, 0.52))
