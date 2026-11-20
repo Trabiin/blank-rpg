@@ -146,7 +146,7 @@
 					["ninefingers", "Twelve years in. They don't train you to fight. They train you to stand still while someone reads to you."],
 					["ninefingers", "I still wake up at the fourth bell for roll call. Count myself. Nine, ten. Nine. Always nine."]
 				], "choice": [
-					{"label": "[Salute him]", "bond": 3, "reply": [["ninefingers", "...Dismissed, smart-mouth. Actually, that was all right. Don't do it again."]]},
+					{"label": "[Salute them]", "bond": 3, "reply": [["ninefingers", "...Dismissed, smart-mouth. Actually, that was all right. Don't do it again."]]},
 					{"label": "[Offer a drink]", "bond": 2, "reply": [["ninefingers", "Tobble's? He'll want a secret for the second. I've got plenty. None he can afford."]]}
 				]},
 				{"rank": 3, "title": "The Order", "lines": [
@@ -154,9 +154,9 @@
 					["ninefingers", "Hob's Wick. Forty people, a chapel, a mill. The Concord ruled it had \"no material use\". Erasure order, signed and sealed."],
 					["ninefingers", "We were to strike it from the Ledger. Then the Blank would do the rest. Clean. Bloodless. Paperwork."],
 					["ninefingers", "I tore the order in half. My lieutenant took the finger as a fine. Then I walked."],
-					["", "He says it like a weather report. His hands are shaking."]
+					["", "They say it like a weather report. Their hands are shaking."]
 				], "choice": [
-					{"label": "[Put a hand on his shoulder]", "bond": 3, "reply": [["ninefingers", "Yeah. Yeah, all right. Two seconds. Then it's weird."]]},
+					{"label": "[Put a hand on their shoulder]", "bond": 3, "reply": [["ninefingers", "Yeah. Yeah, all right. Two seconds. Then it's weird."]]},
 					{"label": "[Nod slowly]", "bond": 2, "reply": [["ninefingers", "That's it. That's the right reaction. Everyone else asks if it was worth a finger."]]}
 				], "end": [["ninefingers", "Send me out with the squads. I watch backs. It's the one thing they taught me that's any good."]]},
 				{"rank": 4, "title": "Hob's Wick", "lines": [
@@ -165,7 +165,7 @@
 					["ninefingers", "I need to know. Even if it's white. Especially if it's white."]
 				], "choice": [
 					{"label": "[Nod]", "bond": 3, "reply": [["ninefingers", "Right. It's on the board. I'll go in a hood. A big one. Bring someone who talks to guards."]]},
-					{"label": "[Point at his poster, then shrug]", "bond": 2, "reply": [["ninefingers", "The likeness is terrible, anyway. They gave me ten fingers. Amateurs."]]}
+					{"label": "[Point at their poster, then shrug]", "bond": 2, "reply": [["ninefingers", "The likeness is terrible, anyway. They gave me ten fingers. Amateurs."]]}
 				], "end": [["", "A new job is on the Guildhall board: \"Find Hob's Wick\". Daro has to go on it."]]},
 				{"rank": 5, "title": "Roll of Honour", "lines": [
 					["ninefingers", "It's there. The whole village. The mill's turning. Kids. Goats. Bad beer."],
@@ -173,7 +173,7 @@
 					["ninefingers", "Forty people pray for me every week. They think I'm a hero who died. I didn't have the heart to correct them."],
 					["ninefingers", "First time I've been dead. It's roomier than I expected."]
 				], "choice": [
-					{"label": "[Count his fingers with him: nine]", "bond": 3, "reply": [["ninefingers", "Nine. Yeah. Nine's fine. Nine's what it cost. Cheap, really."]]},
+					{"label": "[Count their fingers with them: nine]", "bond": 3, "reply": [["ninefingers", "Nine. Yeah. Nine's fine. Nine's what it cost. Cheap, really."]]},
 					{"label": "[Salute]", "bond": 2, "reply": [["ninefingers", "Stop that. ...Fine. Back at you, Unwritten."]]}
 				]}
 			]

@@ -3,6 +3,7 @@ extends Control
 ## and a plain list menu (Continue, New Game, Load Game, Options, Credits).
 
 const GAME_SCENE := "res://scenes/main.tscn"
+const KEY_ART: Texture2D = preload("res://assets/ui/title_keyart.jpg")
 
 var menu: InkMenu
 var credits: InkMenu
@@ -22,6 +23,7 @@ func _ready() -> void:
 
 	menu = InkMenu.new()
 	menu.dim = 0.0
+	menu.panel_alpha = 0.62
 	menu.top = 0.42
 	add_child(menu)
 	var latest := Saves.latest_slot()
@@ -132,7 +134,32 @@ func _process(delta: float) -> void:
 func _draw() -> void:
 	var vs := get_rect().size
 	draw_rect(Rect2(Vector2.ZERO, vs), Color("0e0b12"))
-	# The Blank creeping in from the right edge.
+	if KEY_ART:
+		_draw_key_art(vs)
+	else:
+		_draw_blank(vs)
+	_draw_logo(vs)
+
+
+## Painted key art (Phase 8), scaled to cover the screen, with a slow drift so the scene breathes.
+func _draw_key_art(vs: Vector2) -> void:
+	var ts := KEY_ART.get_size()
+	var k := maxf(vs.x / ts.x, vs.y / ts.y) * 1.04
+	var sz := ts * k
+	var drift := Vector2(sin(t * 0.05) * 6.0, cos(t * 0.04) * 3.0)
+	draw_texture_rect(KEY_ART, Rect2((vs - sz) * 0.5 + drift, sz), false)
+	draw_rect(Rect2(Vector2.ZERO, vs), Color(0.03, 0.02, 0.05, 0.22))
+	# Ink motes flaking off the erased edge on the right.
+	var rng := RandomNumberGenerator.new()
+	rng.seed = int(t * 6.0)
+	for i in 30:
+		var py := rng.randf_range(0, vs.y)
+		var px := vs.x * rng.randf_range(0.6, 0.78)
+		draw_rect(Rect2(px, py, 2, 2), Color(0, 0, 0, 0.7) if i % 2 else Color(0.97, 0.96, 0.93, 0.6))
+
+
+## Code-drawn fallback: the Blank creeping in from the right edge.
+func _draw_blank(vs: Vector2) -> void:
 	var pts := PackedVector2Array()
 	var y := -10.0
 	while y <= vs.y + 10.0:
@@ -150,7 +177,9 @@ func _draw() -> void:
 		var px := pts[idx].x - rng.randf() * rng.randf() * 30.0
 		draw_rect(Rect2(px, py, 2, 2), Color(0.97, 0.96, 0.93, 0.9) if i % 2 else Color(0, 0, 0, 0.8))
 
-	# Logo
+
+
+func _draw_logo(vs: Vector2) -> void:
 	var font := ThemeDB.fallback_font
 	var logo_font: Font = UiSkin.TITLE_FONT  # the heading face, as on every screen title
 	var logo := "Last Ink"  # blackletter capitals are hard to read, so title case
