@@ -301,8 +301,13 @@ func test_salvage_mission() -> void:
 	if not check(inner != null and inner.caches.size() >= 3, "piles on the map"):
 		return
 	var start_x: float = main.blank.base_x
+	check(inner.grace > 0.0, "the white waits long enough to reach the first pile")
+	check(main.objective.text().contains("moves in"), "the objective counts the wait down")
 	await frames(30)
-	check(main.blank.base_x < start_x, "the white creeps toward the piles")
+	check_eq(main.blank.base_x, start_x, "the white holds still during the grace")
+	inner.grace = 0.0
+	await frames(30)
+	check(main.blank.base_x < start_x, "then the white creeps toward the piles")
 	main._show_results("success")
 	await frames(3)
 	main._on_results_confirmed()

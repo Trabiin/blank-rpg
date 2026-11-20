@@ -318,7 +318,7 @@ static func salvage(p: Dictionary) -> Dictionary:
 		layout["blank"] = east + 4  # the white is right behind the best pile
 	m["objective"] = {"kind": "salvage", "caches": caches, "need": mini(need, caches.size()),
 		"open_time": float(cfg.get("open_time", 2.0)), "contents": cfg.get("pile", {}), "near_bonus": float(cfg.get("near_bonus", 1.0)),
-		"creep": float(cfg.get("creep", 4.0)) + float(cfg.get("creep_per_fray", 0.6)) * fray / 10.0, "push": float(cfg.get("push", 4.0))}
+		"creep": float(cfg.get("creep", 4.0)) + float(cfg.get("creep_per_fray", 0.6)) * fray / 10.0, "push": float(cfg.get("push", 4.0)), "grace": float(cfg.get("grace", 6.0))}
 	return m
 
 
@@ -394,8 +394,8 @@ static func apply(m: Dictionary, outcome: String, dry := false) -> Array:
 			var got := int(info.get("taken", 0))
 			if won:
 				lines.append("You pulled %d pile%s out of the white at %s." % [got, "" if got == 1 else "s", p["name"]])
-			elif int(info.get("lost", 0)) > 0:
-				lines.append("The white took %d pile%s before you could reach them." % [int(info["lost"]), "" if int(info["lost"]) == 1 else "s"])
+			elif got > 0:  # the fail reason already says what the white took
+				lines.append("You had %d pile%s out, but not enough to make it worth the run." % [got, "" if got == 1 else "s"])
 			lines.append("Nothing more to pull out of %s for %d days." % [p["name"], _cooldown()])
 			if not dry:
 				Empire.mission_ready["salvage:" + p["id"]] = Empire.day + _cooldown()

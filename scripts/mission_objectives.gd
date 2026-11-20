@@ -13,6 +13,7 @@ extends RefCounted
 ##   - an exit to walk back to, and a pointer at the screen edge to whatever matters next.
 
 const KINDS := ["defense", "reclaim", "rescue", "raid", "salvage"]
+const GRACE_SPEED := 70.0  # px/s: a hero's walk with a little slack for fences and trees
 const EnemyScript := preload("res://scripts/enemy.gd")
 const BlotScript := preload("res://scripts/blot.gd")
 const WardScript := preload("res://scripts/wardstone.gd")
@@ -42,6 +43,7 @@ var alarm := 0.0  # 0-100; at 100 the alarm is raised for good
 var raised := false
 var reinforce_t := 0.0
 var need := 0
+var grace := 0.0  # salvage: seconds before the white starts to move (enough to reach the nearest pile)
 var restore := {}  # state from a mid-mission save, applied once the world exists
 
 
@@ -107,6 +109,11 @@ func setup(p_obj: Dictionary, p_main) -> void:
 					for g in int(obj.get("per_cache", 2)):
 						for e in _spawn(c.position + Vector2(randf_range(-30, 30), randf_range(14, 26)) * (1 if g % 2 == 0 else -1)):
 							e.set_meta("post", c.position)
+			if kind == "salvage":  # time to walk to the nearest pile, plus a breath, before the white moves
+				var near := INF
+				for c in caches:
+					near = minf(near, exit_pos.distance_to((c as Cache).position))
+				grace = float(restore.get("grace", near / GRACE_SPEED + float(obj.get("grace", 6.0))))
 			taken = int(restore.get("taken", 0))
 			alarm = float(restore.get("alarm", 0.0))
 			raised = bool(restore.get("raised", false))
@@ -258,6 +265,11 @@ func _far_spawn() -> Vector2:
 
 
 func _update_salvage(delta: float) -> void:
+	if grace > 0.0:
+		grace -= delta
+		if grace <= 0.0:
+			main.hud.say("The white starts to move.", 2.5)
+		return
 	_move_blank(-float(obj.get("creep", 4.0)) * delta)
 	_spawn_timer(delta, 5.0, func(): return _edge_point(main.leader.global_position.y if main.leader else main.world.y / 2.0, 140.0), false)
 	var left := 0
@@ -346,6 +358,8 @@ func text() -> String:
 		"salvage":
 			if taken >= need:
 				return "Get back with it: %d pile%s   (or grab more)" % [taken, "" if taken == 1 else "s"]
+			if grace > 0.0:
+				return "Pull piles out of the white: %d/%d   (it moves in %ds)" % [taken, need, ceili(grace)]
 			return "Pull piles out of the white: %d/%d" % [taken, need]
 	return ""
 
@@ -407,7 +421,7 @@ func save_state() -> Dictionary:
 		if (caches[i] as Cache).gone:
 			gone_list.append(i)
 	return {"done": done_list, "gone": gone_list, "taken": taken, "alarm": alarm, "raised": raised,
-		"time_left": time_left, "blank_x": main.blank.base_x}
+		"time_left": time_left, "blank_x": main.blank.base_x, "grace": grace}
 
 
 ## A small HUD arrow at the screen edge pointing at the objective, plus the exit ring.
