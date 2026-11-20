@@ -61,7 +61,7 @@ var told_opening := false
 
 
 func _ready() -> void:
-	art_id = "auditor"  # art pass sprite (96 px boss); falls back to the paper doll and code-drawn quill
+	art_id = "auditor"  # art pass sprite (boss about twice a hero's height); falls back to the paper doll and code-drawn quill
 	super._ready()
 	max_hp = MAX_HP
 	hp = MAX_HP
@@ -410,11 +410,11 @@ func _draw_overlay() -> void:
 		return
 	if art != null:  # the sprite carries the hat and the quill; only the tells are drawn
 		if dying_t < 0.0 and (act == Act.LINES or act == Act.TRANSITION):
-			overlay.draw_string(ThemeDB.fallback_font, Vector2(-3, -84), "!", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color("ff5d5d"))
+			overlay.draw_string(ThemeDB.fallback_font, Vector2(-3, -64), "!", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color("ff5d5d"))
 		if taunt_t > 0.0:
-			overlay.draw_rect(Rect2(-1.5, -84, 3, 3), Color("f2a65a"))
+			overlay.draw_rect(Rect2(-1.5, -66, 3, 3), Color("f2a65a"))
 		if phase == 2 and dying_t < 0.0:  # ink drips from the nib
-			var tip := facing * 22.0 + Vector2(0, -20)
+			var tip := facing * 15.0 + Vector2(0, -14)
 			overlay.draw_rect(Rect2(tip + Vector2(-0.5, fmod(anim_t * 30.0, 8.0)), Vector2(1, 2)), Color("8a1f2a"))
 		return
 	# Hat first: a tall black clerk's stovepipe with a parchment band.

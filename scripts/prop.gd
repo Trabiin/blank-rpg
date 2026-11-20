@@ -42,6 +42,7 @@ const FLAT := ["pond", "bones", "skull", "garden", "lilypad", "planks", "inkspri
 
 var kind := "bush"
 var text := ""  # sign text, or a building's name plate
+var _plate_y := 0.0
 var seed_v := 0
 
 
@@ -98,6 +99,8 @@ func _ready() -> void:
 	if kind == "lamppost" and has_art:
 		_add_lamp_light(spr.texture.get_height())
 	if text != "" and kind != "sign":
+		if not KINDS.has(kind) and spr != null and spr.texture != null:
+			_plate_y = -spr.texture.get_height() * 0.28  # free-standing art: over its door, low on the wall
 		var plate := Node2D.new()
 		add_child(plate)
 		plate.draw.connect(_draw_plate.bind(plate))
@@ -132,7 +135,7 @@ func _process(_delta: float) -> void:
 func _draw_plate(c: Node2D) -> void:
 	var font := ThemeDB.fallback_font
 	var w := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, 6).x + 8.0
-	var y := -float(KINDS[kind][3]) * 16.0 * 0.42
+	var y := -float(KINDS[kind][3]) * 16.0 * 0.42 if KINDS.has(kind) else _plate_y
 	var r := Rect2(-w / 2.0, y - 7.0, w, 9.0)
 	c.draw_rect(r, Color("3a2a1c"))
 	c.draw_rect(r, Color("c9a46a"), false, 1.0)

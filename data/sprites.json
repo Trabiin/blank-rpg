@@ -148,8 +148,8 @@
 		},
 		"folk_child": {
 			"size": [44, 44],
-			"feet": [22, 35],
-			"face": [12, 6, 20, 20],
+			"feet": [21, 32],
+			"face": [11, 12, 20, 20],
 			"anims": {
 				"rot": {"fps": 1, "loop": true, "frames": 1, "dirs": ["south", "south-east", "east", "north-east", "north"]},
 				"idle": {"fps": 5.0, "loop": true, "frames": 4, "dirs": ["south", "south-east", "east", "north-east", "north"]},
@@ -226,9 +226,9 @@
 			}
 		},
 		"auditor": {
-			"size": [132, 132],
-			"feet": [64, 110],
-			"face": [54, 19, 20, 20],
+			"size": [88, 88],
+			"feet": [40, 74],
+			"face": [30, 12, 20, 20],
 			"anims": {
 				"rot": {"fps": 1, "loop": true, "frames": 1, "dirs": ["south", "south-east", "east", "north-east", "north"]},
 				"idle": {"fps": 4.0, "loop": true, "frames": 4, "dirs": ["south", "south-east", "east", "north-east", "north"]},
@@ -278,8 +278,8 @@
 		},
 		"biscuits": {
 			"size": [44, 44],
-			"feet": [22, 36],
-			"face": [12, 5, 20, 20],
+			"feet": [22, 31],
+			"face": [12, 12, 20, 20],
 			"anims": {
 				"rot": {"fps": 1, "loop": true, "frames": 1, "dirs": ["south", "south-east", "east", "north-east", "north"]},
 				"idle": {"fps": 4.0, "loop": true, "frames": 4, "dirs": ["south", "south-east", "east", "north-east", "north"]}
@@ -287,8 +287,8 @@
 		},
 		"merrow": {
 			"size": [44, 44],
-			"feet": [22, 36],
-			"face": [12, 6, 20, 20],
+			"feet": [22, 32],
+			"face": [12, 11, 20, 20],
 			"anims": {
 				"rot": {"fps": 1, "loop": true, "frames": 1, "dirs": ["south", "south-east", "east", "north-east", "north"]},
 				"idle": {"fps": 4.0, "loop": true, "frames": 4, "dirs": ["south", "south-east", "east", "north-east", "north"]}
@@ -304,9 +304,9 @@
 			}
 		},
 		"ottoline": {
-			"size": [44, 44],
-			"feet": [22, 35],
-			"face": [12, 6, 20, 20],
+			"size": [48, 48],
+			"feet": [24, 39],
+			"face": [14, 6, 20, 20],
 			"anims": {
 				"rot": {"fps": 1, "loop": true, "frames": 1, "dirs": ["south", "south-east", "east", "north-east", "north"]},
 				"idle": {"fps": 4.0, "loop": true, "frames": 4, "dirs": ["south", "south-east", "east", "north-east", "north"]}
