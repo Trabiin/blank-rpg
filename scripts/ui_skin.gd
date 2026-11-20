@@ -93,6 +93,8 @@ static func draw_icon(ci: CanvasItem, id: String, r: Rect2, tint := Color.WHITE)
 ## The text sits on a torn-out ledger page: deckled edges, faint ruling, a red margin line, ink spatter, and the
 ## right edge fraying into blank paper where the Blank has been at it.
 static func page(ci: CanvasItem, box: Rect2) -> void:
+	if box.size.x < 8.0 or box.size.y < 8.0:  # a control not laid out yet: nothing to draw
+		return
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 7
 	var top := PackedVector2Array()
