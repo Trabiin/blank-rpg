@@ -97,10 +97,10 @@ func _old_parts(spec: Dictionary, lv: int) -> void:
 	for part in spec["parts"]:
 		_sprites.append(_sprite(Art.region(part[0]), part[1], spec.get("tint", Color.WHITE)))
 	# Upgrades show: crates at level 2, barrels too at level 3.
-	if lv >= 2:
-		_extras.append(_sprite(Art.tile_region(30, 0, 2, 2), Vector2(30, 4), Color.WHITE))
-	if lv >= 3:
-		_extras.append(_sprite(Art.tile_region(33, 0, 2, 1), Vector2(-34, 8), Color.WHITE))
+	if lv >= 2 and ResourceLoader.exists("res://assets/props/crates.png"):
+		_extras.append(_sprite(load("res://assets/props/crates.png"), Vector2(30, 4), Color.WHITE))
+	if lv >= 3 and ResourceLoader.exists("res://assets/props/barrels.png"):
+		_extras.append(_sprite(load("res://assets/props/barrels.png"), Vector2(-34, 8), Color.WHITE))
 
 
 func _sprite(tex: Texture2D, off: Vector2, tint: Color) -> Sprite2D:
@@ -115,8 +115,60 @@ func _sprite(tex: Texture2D, off: Vector2, tint: Color) -> Sprite2D:
 	return spr
 
 
+## Construction-site sprites: the rising building plus planks, crates and barrels from the town's own props.
+var _site: Array = []
+var _rise: Sprite2D
+var _site_key := ""
+
+
+func _update_site_sprites() -> void:
+	var job: Dictionary = Empire.construction if Empire.construction.get("id", "") == id else {}
+	var lv := Empire.level_of(id)
+	var key := "" if job.is_empty() else "%d" % lv
+	if key != _site_key:
+		_site_key = key
+		for n in _site:
+			n.queue_free()
+		_site.clear()
+		_rise = null
+		if key != "":
+			var full := lv == 0
+			var art := "res://assets/buildings/%s_1.png" % look
+			var half := 34.0
+			if full and ResourceLoader.exists(art):
+				_rise = Sprite2D.new()
+				_rise.texture = load(art)
+				_rise.centered = false
+				_rise.region_enabled = true
+				_rise.material = Art.art_world_material()
+				_rise.modulate = Color(0.8, 0.74, 0.68)
+				add_child(_rise)
+				_site.append(_rise)
+				half = _rise.texture.get_width() / 2.0
+			var x0 := -half - 10.0 if full else 18.0
+			var x1 := half + 8.0 if full else 46.0
+			for pr in [["crates_v1", Vector2(x0, 6)], ["crates", Vector2(x1, 6)], ["barrels", Vector2(x1 + 16, 10)]]:
+				if not full and pr[0] == "barrels":
+					continue
+				var path := "res://assets/props/%s.png" % pr[0]
+				if ResourceLoader.exists(path):
+					var sp := Sprite2D.new()
+					sp.texture = load(path)
+					sp.offset = Vector2(0, -sp.texture.get_height() / 2.0)
+					sp.position = pr[1]
+					sp.material = Art.art_world_material()
+					add_child(sp)
+					_site.append(sp)
+	if _rise:
+		var sz := _rise.texture.get_size()
+		var h := floorf(sz.y * clampf(Empire.job_progress(Empire.construction), 0.08, 1.0))
+		_rise.region_rect = Rect2(0, sz.y - h, sz.x, h)
+		_rise.position = Vector2(-sz.x / 2.0, 3.0 - h).floor()
+
+
 func _process(_delta: float) -> void:
 	refresh()
+	_update_site_sprites()
 	queue_redraw()
 	_over.queue_redraw()
 
@@ -219,23 +271,31 @@ func _draw_scaffold(full: bool) -> void:
 	var x0 := -30.0 if full else 18.0
 	var x1 := 30.0 if full else 40.0
 	var top := -56.0 if full else -40.0
-	var wood := Color("8a6a44")
-	var dark := Color("5a3c26")
-	var x := x0
-	while x <= x1 + 0.1:
-		_over.draw_rect(Rect2(x - 1, top, 2, -top), dark)
-		x += (x1 - x0) / (3.0 if full else 1.0)
+	if full and _rise:
+		# The building rises with progress (a sprite under the scaffold, see _update_site_sprites).
+		var tsz: Vector2 = _rise.texture.get_size()
+		var h := floorf(tsz.y * clampf(Empire.job_progress(Empire.construction), 0.08, 1.0))
+		top = minf(-20.0, 3.0 - h - 6.0)
+		x0 = -tsz.x / 2.0 + 4.0
+		x1 = tsz.x / 2.0 - 4.0
+	# Timber scaffolding: poles with ink outlines and a lit side, cross planks, one brace.
+	var outline := Color("12141f")
+	var lit := Color("8a6a44")
+	var shade := Color("5a3e28")
+	var n := 3 if full else 1
+	for i in n + 1:
+		var x := floorf(lerpf(x0, x1, float(i) / n))
+		_over.draw_rect(Rect2(x - 2, top, 4, -top), outline)
+		_over.draw_rect(Rect2(x - 1, top + 1, 1, -top - 2), lit)
+		_over.draw_rect(Rect2(x, top + 1, 1, -top - 2), shade)
 	var y := top + 6.0
-	while y < -2.0:
-		_over.draw_rect(Rect2(x0 - 2, y, x1 - x0 + 4, 3), wood)
+	while y < -4.0:
+		_over.draw_rect(Rect2(x0 - 3, y - 1, x1 - x0 + 6, 5), outline)
+		_over.draw_rect(Rect2(x0 - 2, y, x1 - x0 + 4, 2), lit)
+		_over.draw_rect(Rect2(x0 - 2, y + 2, x1 - x0 + 4, 1), shade)
 		y += 14.0
-	_over.draw_line(Vector2(x0, -2), Vector2(x1, top + 4), dark, 1.0)
-	if full:
-		# A half-done wall rising with progress.
-		var prog := Empire.job_progress(Empire.construction)
-		var h := 40.0 * prog
-		_over.draw_rect(Rect2(-26, -2 - h, 52, h), Color(0.55, 0.42, 0.3, 0.9))
-		_over.draw_rect(Rect2(-36, -8, 10, 8), Color("7a5434"))  # a stack of planks
+	_over.draw_line(Vector2(x0, -3), Vector2(x1, top + 5), outline, 2.0)
+	_over.draw_line(Vector2(x0, -3), Vector2(x1, top + 5), shade, 1.0)
 
 
 func _draw_smoke(top: Vector2) -> void:

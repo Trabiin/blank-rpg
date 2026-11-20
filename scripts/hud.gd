@@ -12,8 +12,16 @@ var help_t := 14.0
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	if Empire.missions_cleared.size() >= 2:  # control hints only for the first missions
+	# The control hints show once (first mission of a save); after that only on F1, so no text sits on screen.
+	if Dialogue.is_seen("hint:mission"):
 		help_t = 0.0
+	else:
+		Dialogue.mark_seen("hint:mission")
+
+
+func _input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_F1:
+		help_t = 0.0 if help_t > 0.0 else 10.0
 
 
 func say(text: String, duration := 3.5) -> void:
@@ -173,6 +181,7 @@ func _draw() -> void:
 			"Pause: " + Prompts.key("pause"),
 			"Abilities: " + (abil if pad else "1-4"),
 			"Quick menu: " + Prompts.key("quick_menu"),
+			"" if pad else "F1: show or hide this",
 		]
 		for li in lines_h.size():
 			_text(Vector2(vs.x - 150, 96 + 11 * li), lines_h[li], 8, Color(1, 1, 1, a2))  # clear of the banter panel
