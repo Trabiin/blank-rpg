@@ -75,6 +75,7 @@ const BondsView := preload("res://scripts/bonds_view.gd")
 var bonds_view
 const GearViewScript := preload("res://scripts/gear_view.gd")
 var gear_view  # gear_view.gd: party gear and the shop (issue #15)
+var armory_view  # armory_view.gd: Forge & Market (issue #112)
 const NewcomersView := preload("res://scripts/newcomers_view.gd")
 var newcomers_view
 const JournalView := preload("res://scripts/journal_view.gd")
@@ -183,6 +184,9 @@ func _ready() -> void:
 	gear_view = GearViewScript.new()
 	gear_view.visible = false
 	roster_layer.add_child(gear_view)
+	armory_view = ArmoryView.new()
+	armory_view.visible = false
+	roster_layer.add_child(armory_view)
 	journal_view = JournalView.new()
 	journal_view.visible = false
 	roster_layer.add_child(journal_view)
@@ -254,7 +258,7 @@ func alerts_blocked() -> bool:
 		or frame == menu_closed_frame or roster_view.visible or buildings_view.visible or governor_view.visible \
 		or expedition_view.visible or research_view.visible or diplomacy_view.visible or bonds_view.visible \
 		or newcomers_view.visible or party_picker.visible or gear_view.visible \
-		or journal_view.visible
+		or journal_view.visible or armory_view.visible
 
 
 ## "Go there": select the province (and open the mission's briefing when it can be played now),
@@ -327,6 +331,7 @@ func _menu_items(note := "") -> void:
 		{"id": "bonds", "label": "Bonds", "detail": Prompts.key("bonds")},
 		{"id": "newcomers", "label": "Newcomers", "detail": Prompts.key("newcomers")},
 		{"id": "gear", "label": "Party gear & shop", "detail": Prompts.key("gear")},
+		{"id": "armory", "label": "Forge & Market", "detail": Prompts.key("armory")},
 		{"id": "journal", "label": "Journal", "detail": Prompts.key("journal")},
 		{"id": "save", "label": "Save game"},
 		{"id": "load", "label": "Load game", "enabled": Saves.latest_slot() != "", "note": "(no saves yet)"},
@@ -386,6 +391,9 @@ func _on_menu(id: String) -> void:
 		"gear":
 			_close_menu()
 			gear_view.open("town")
+		"armory":
+			_close_menu()
+			armory_view.open()
 		"journal":
 			_close_menu()
 			journal_view.open()
@@ -759,7 +767,8 @@ func _process(delta: float) -> void:
 			or newcomers_view.visible or frame == newcomers_view.closed_frame \
 			or party_picker.visible or frame == party_picker.closed_frame \
 			or gear_view.visible or frame == gear_view.closed_frame \
-			or journal_view.visible or frame == journal_view.closed_frame:
+			or journal_view.visible or frame == journal_view.closed_frame \
+			or armory_view.visible or frame == armory_view.closed_frame:
 		return
 	if Input.is_action_just_pressed("roster"):
 		roster_view.open()
@@ -787,6 +796,9 @@ func _process(delta: float) -> void:
 		return
 	if Input.is_action_just_pressed("gear"):
 		gear_view.open("town")
+		return
+	if Input.is_action_just_pressed("armory"):
+		armory_view.open()
 		return
 	if Input.is_action_just_pressed("journal"):
 		journal_view.open()

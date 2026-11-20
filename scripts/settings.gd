@@ -31,6 +31,7 @@ const REMAPPABLE := [
 	["ability_1", "Ability 1"], ["ability_2", "Ability 2"], ["ability_3", "Ability 3"], ["ability_4", "Ability 4"],
 	["alert_go", "Go to alert / goal"],  # only if that action exists (issue #22)
 	["journal", "Journal"],  # quest log and codex (issue #114)
+	["armory", "Forge & Market"],  # issue #112
 ]
 
 ## Scene effects (docs/ART_STYLE.md "Sitting in the world"), each a 0-100 slider on the options screen's

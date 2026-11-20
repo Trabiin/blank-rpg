@@ -1,20 +1,20 @@
 {
-	"_comment": "Act 1 enemy roster (issue #16). kinds: stats per enemy type, read by scripts/enemy_kinds.gd (hp, damage, speed, xp; the Nibbler's bite stays in scripts/enemy.gd; pack = how many spawn together (one fewer, sometimes); blank = born of the Blank, so it also crawls out of surges and Blots in Defense and Reclaim missions (the others only roam the land); tip = one-line hint shown the first time one notices the party). rosters: spawn weights per province (the Act 1 areas); a mission can override with its own \"enemies\" dict; anything not listed uses default.",
+	"_comment": "Act 1 enemy roster (issue #16). kinds: stats per enemy type, read by scripts/enemy_kinds.gd (hp, damage, speed, xp; the Nibbler's bite stays in scripts/enemy.gd; pack = how many spawn together (one fewer, sometimes); blank = born of the Blank, so it also crawls out of surges and Blots in Defense and Reclaim missions (the others only roam the land); tip = one-line hint shown the first time one notices the party; inflict = a status its hits can cause: {status, chance, time}, see scripts/status.gd, issue #112). rosters: spawn weights per province (the Act 1 areas); a mission can override with its own \"enemies\" dict; anything not listed uses default.",
 	"kinds": {
 		"nibbler": {"name": "Nibbler", "plural": "Nibblers", "blank": true, "hp": 28, "speed": 40, "xp": 3, "pack": 1,
 			"tip": ""},
-		"spitter": {"name": "Spitter", "plural": "Spitters", "blank": true, "hp": 20, "damage": 7, "speed": 34, "xp": 4, "pack": 1,
-			"tip": "Spitter: it swells before it spits. Step aside, then close in."},
+		"spitter": {"name": "Spitter", "plural": "Spitters", "blank": true, "hp": 20, "damage": 7, "speed": 34, "xp": 4, "pack": 1, "inflict": {"status": "erase", "chance": 0.35, "time": 5},
+			"tip": "Spitter: it swells before it spits, and the spit can Erase you: no abilities or techs for a few seconds. Step aside, then close in."},
 		"moth": {"name": "Letter-moth", "plural": "Letter-moths", "hp": 9, "damage": 4, "speed": 86, "xp": 2, "pack": 3,
 			"tip": "Letter-moths: they flash red, then dive. Swing as they come in."},
-		"enforcer": {"name": "Tithe Enforcer", "plural": "Tithe Enforcers", "hp": 72, "damage": 13, "speed": 30, "xp": 9, "pack": 1,
-			"tip": "Tithe Enforcer: his Ledger shield halves hits from the front. Hit him from behind, and leave the red ring."},
-		"reedling": {"name": "Reedling", "plural": "Reedlings", "script": "spitter", "sprite": "reedling", "hp": 24, "damage": 8, "speed": 30, "xp": 4, "pack": 2,
-			"tip": "Reedlings: marsh mud that spits. They swell first, so sidestep and wade in."},
+		"enforcer": {"name": "Tithe Enforcer", "plural": "Tithe Enforcers", "hp": 72, "damage": 13, "speed": 30, "xp": 9, "pack": 1, "inflict": {"status": "stun", "chance": 1.0, "time": 1.2},
+			"tip": "Tithe Enforcer: his Ledger shield halves hits from the front. Hit him from behind, and leave the red ring: it stuns."},
+		"reedling": {"name": "Reedling", "plural": "Reedlings", "script": "spitter", "sprite": "reedling", "hp": 24, "damage": 8, "speed": 30, "xp": 4, "pack": 2, "inflict": {"status": "poison", "chance": 0.5, "time": 8},
+			"tip": "Reedlings: marsh mud that spits, and the mud poisons. They swell first, so sidestep and wade in."},
 		"scarecrow": {"name": "Mill scarecrow", "plural": "Mill scarecrows", "script": "nibbler", "sprite": "scarecrow", "hp": 36, "speed": 34, "xp": 4, "pack": 1,
 			"tip": "Mill scarecrow: it twitches before the sickle swings. Step out of reach."},
-		"sellsword": {"name": "Guild sellsword", "plural": "Guild sellswords", "script": "nibbler", "sprite": "sellsword", "hp": 44, "speed": 46, "xp": 6, "pack": 2,
-			"tip": "Guild sellswords: fast, and they come in pairs. Watch for the lunge."}
+		"sellsword": {"name": "Guild sellsword", "plural": "Guild sellswords", "script": "nibbler", "sprite": "sellsword", "hp": 44, "speed": 46, "xp": 6, "pack": 2, "inflict": {"status": "burn", "chance": 0.3, "time": 4},
+			"tip": "Guild sellswords: fast, in pairs, and their lamp-oil blades can set you alight. Watch for the lunge."}
 	},
 	"rosters": {
 		"default": {"nibbler": 3, "spitter": 1},

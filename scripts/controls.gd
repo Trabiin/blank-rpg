@@ -33,6 +33,7 @@ func _ready() -> void:
 	_add_action("bonds", [KEY_H], [])  # gamepad: through the menus
 	_add_action("newcomers", [KEY_N], [])  # gamepad: through the menus
 	_add_action("gear", [KEY_K], [])  # party gear and the shop (issue #15); gamepad: through the menus
+	_add_action("armory", [KEY_M], [])  # Forge & Market (issue #112); rebindable; gamepad: through the menus
 	_add_action("journal", [KEY_I], [])  # quest log, people, codex, history (issue #114); rebindable; gamepad: through the menus
 	_add_action("quick_menu", [KEY_C], [JOY_BUTTON_BACK])  # missions only; Back is the ledger on the Command Table
 	_add_action("alert_go", [KEY_TAB], [], JOY_AXIS_TRIGGER_RIGHT, 1.0)

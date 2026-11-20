@@ -14,6 +14,8 @@ const LOOKS := {
 	"inkworks": {"box": Vector2(72, 36)},
 	"scriptorium": {"box": Vector2(72, 36)},
 	"guildhall": {"box": Vector2(72, 36)},
+	"forge": {"box": Vector2(72, 38)},
+	"market": {"box": Vector2(72, 38)},
 }
 
 

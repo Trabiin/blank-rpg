@@ -249,7 +249,7 @@ static func _charge(h: Hero, leader: Hero, preset: String, delta: float) -> Vect
 	if _should_dodge(h, preset) and not ordered:
 		_give_up(h, 0.8)
 		return Vector2.ZERO
-	h.charge_t += delta
+	h.charge_t += delta / float(Armory.perk(h.hero_id, "tech_charge", 1.0))  # Clockwork Heart (issue #112)
 	if not h.charge_ready and h.charge_t >= Techs.charge_time(t):
 		h.charge_ready = true
 		h.charge_stage = 1

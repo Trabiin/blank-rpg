@@ -195,8 +195,8 @@ Built and upgraded from the Command Table; each appears in the walkable town whe
 | **Inkworks** | Produces Ink; output scales with Craft staff and Ink provinces held | Yes |
 | **Scriptorium** | Research | Yes |
 | **Guildhall** | Hire recruits, launch expeditions | Yes |
-| **Market** | Gilt income and a shop | Later |
-| **Forge** | Gear crafting and upgrades | Later |
+| **Market** | Gilt income (level, trader Charm, provinces held), a rotating shop of supplies, materials and gear that changes every 3 days, buys materials; Charm cuts prices. Tobble's Stall stays the starter shop | Yes (#112) |
+| **Forge** | Upgrades each hero's weapon through 6 tiers, makes armour, trinkets, field supplies and satchel upgrades from mission materials; Craft shortens every job | Yes (#112) |
 | **Tavern / Cabaret** | Morale, relationship scenes, attracts certain recruits | Later (tavern is walkable from the start) |
 | **Wardlamp** (built in a province) | Slows Fray there | Yes |
 

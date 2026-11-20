@@ -8,6 +8,7 @@ var speed := 105.0
 var damage := 7
 var range_left := 190.0
 var goal: Node2D = null  # a Defense wardstone the spitter was aiming at
+var kind := "spitter"  # the enemy kind that spat it: its "inflict" rides on the glob (issue #112)
 var t := 0.0
 
 
@@ -23,7 +24,8 @@ func _physics_process(delta: float) -> void:
 	for h in get_tree().get_nodes_in_group("heroes"):
 		var hero := h as Hero
 		if hero and not hero.dead and hero.global_position.distance_to(global_position + Vector2(0, 6)) < hero.radius + 4.0:
-			hero.take_hit(Empire.damage_to_party(damage), global_position - dir * 8.0, 150.0)
+			if hero.take_hit(Empire.damage_to_party(damage), global_position - dir * 8.0, 150.0):
+				Status.struck_kind(kind, hero)
 			_pop()
 			return
 	if goal != null and is_instance_valid(goal) and goal.global_position.distance_to(global_position + Vector2(0, 6)) < 10.0:

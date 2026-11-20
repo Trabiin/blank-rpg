@@ -105,6 +105,8 @@ func _draw() -> void:
 		var fw := 24.0 if face != null else 0.0
 		var panel := Rect2(x, y, 112 + fw, 32)
 		UiSkin.panel(self, panel, "ledger")
+		if not hero.dead:
+			Status.draw_icons(self, hero, Vector2(panel.position.x + 3, y - 13))  # ailments and boons (issue #112)
 		if hero.controlled:
 			UiSkin.highlight(self, panel)
 		if face != null:

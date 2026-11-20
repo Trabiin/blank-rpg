@@ -1,17 +1,57 @@
 {
-	"_comment": "Field items carried in the party satchel and used from the quick menu (issue #6). target: 'hurt' = a standing hero below full HP, 'downed' = a downed hero, 'party' = everyone standing (no target to pick). heal: HP restored ('revive' items bring a downed hero back at revive_pct of max HP). power: fills the attack gauge. start: how many Hollowmark's stores put back in the satchel after every mission (you keep any extra you found). drop: chance a defeated enemy leaves one behind.",
+	"_comment": "Field items carried in the party satchel and used from the quick menu (issues #6, #112). Code: scripts/satchel.gd (using them), scripts/status.gd (what cures and buffs do), scripts/armory.gd (stores, packing, buying). target: 'hurt' = a standing hero below full HP, 'downed' = a downed hero, 'ink' = a standing hero short of Ink, 'cure' = a standing hero with one of the 'cures' statuses, 'hero' = any standing hero, 'party' = everyone standing (no target to pick), 'throw' = thrown at the enemy nearest the hero you control (within 'range' px). heal: HP restored ('revive' items bring a downed hero back at revive_pct of max HP). power: fills the attack gauge. ink: Ink restored. cures: statuses removed (poison, burn, stun, erase; 'all' = every one). buff: a timed boon from scripts/status.gd ({id, time}: might = damage x1.25, guard = 25% less damage taken, haste = faster feet and gauge, ward = proof against the Blank). immune: seconds the cured statuses can't come back. throw: {radius px, damage, status, time} on landing ('self': true bursts round the thrower instead). carry: most of this item the satchel holds at once (the satchel also has a total size, see data/market.json satchel). start: rations Hollowmark's stores put back in the satchel for free after every mission, up to what you packed. drop: chance a defeated enemy leaves one behind. price: Gilt at Tobble's Stall (stall: true) or the Market (prices there move with the Market's staff). icon: assets/icons/<id>.png. Order here is the quick menu's order.",
 	"items": {
 		"tonic": {
-			"name": "Bitter Tonic", "target": "hurt", "heal": 25, "start": 3, "drop": 0.06,
+			"name": "Bitter Tonic", "target": "hurt", "heal": 25, "carry": 6, "start": 3, "drop": 0.05, "price": 12, "stall": true,
 			"desc": "Restores 25 HP to one hero. Tastes like a bad decision."
 		},
+		"marrow_broth": {
+			"name": "Marrow Broth", "target": "hurt", "heal": 70, "cures": ["poison"], "carry": 3, "start": 0, "drop": 0.015, "price": 34,
+			"desc": "Restores 70 HP and settles a poisoned gut. Gristle's recipe. Do not ask whose marrow."
+		},
 		"salts": {
-			"name": "Smelling Salts", "target": "downed", "revive_pct": 0.5, "start": 1, "drop": 0.02,
+			"name": "Smelling Salts", "target": "downed", "revive_pct": 0.5, "carry": 3, "start": 1, "drop": 0.02, "price": 30, "stall": true,
 			"desc": "Gets a downed hero back up at half HP, enemies or not."
 		},
 		"draught": {
-			"name": "Black Draught", "target": "party", "power": 1.0, "heal": 8, "start": 1, "drop": 0.02,
+			"name": "Black Draught", "target": "party", "power": 1.0, "heal": 8, "carry": 3, "start": 1, "drop": 0.02, "price": 26,
 			"desc": "Whole party: attack gauges full and 8 HP each. Mostly coffee."
+		},
+		"wormwood": {
+			"name": "Wormwood Drops", "target": "cure", "cures": ["poison", "burn"], "immune": 10, "heal": 6, "carry": 4, "start": 0, "drop": 0.03, "price": 14, "stall": true,
+			"desc": "Burns out poison, cools a burn, and keeps both off for 10 seconds. Bitter enough to make the tonic taste kind."
+		},
+		"fresh_ink": {
+			"name": "Pot of Fresh Ink", "target": "ink", "ink": 30, "cures": ["erase"], "immune": 6, "carry": 4, "start": 0, "drop": 0.025, "price": 22,
+			"desc": "Restores 30 Ink and writes an Erased hero back in. Still wet. Don't drink it, whatever Bran says."
+		},
+		"clean_sheet": {
+			"name": "Clean Sheet", "target": "party", "cures": ["all"], "immune": 6, "carry": 2, "start": 0, "drop": 0.008, "price": 48,
+			"desc": "Whole party: every ailment wiped, and nothing sticks for 6 seconds. A page with nothing wrong written on it yet."
+		},
+		"iron_tea": {
+			"name": "Iron Tea", "target": "party", "buff": {"id": "guard", "time": 30}, "carry": 3, "start": 0, "drop": 0.012, "price": 28,
+			"desc": "Whole party: 25% less damage taken for 30 seconds. Brewed with a horseshoe in the pot."
+		},
+		"gutter_gin": {
+			"name": "Gutter Gin", "target": "hero", "buff": {"id": "might", "time": 30}, "carry": 3, "start": 0, "drop": 0.015, "price": 20,
+			"desc": "One hero hits 25% harder for 30 seconds. Distilled in a gutter. The gutter has a name, and a following."
+		},
+		"courier_snuff": {
+			"name": "Courier's Snuff", "target": "party", "buff": {"id": "haste", "time": 25}, "carry": 3, "start": 0, "drop": 0.012, "price": 24,
+			"desc": "Whole party: faster feet and a faster gauge for 25 seconds. One sniff and you can hear colours."
+		},
+		"oil_flask": {
+			"name": "Lamp-oil Flask", "target": "throw", "range": 170, "throw": {"radius": 38, "damage": 8, "status": "burn", "time": 5}, "carry": 4, "start": 0, "drop": 0.02, "price": 18,
+			"desc": "Thrown at the nearest enemy: everything near it catches fire. Lampwick's finest, and its most common complaint."
+		},
+		"flash_powder": {
+			"name": "Flash Powder", "target": "throw", "range": 0, "throw": {"self": true, "radius": 72, "damage": 0, "status": "stun", "time": 2.5}, "carry": 3, "start": 0, "drop": 0.012, "price": 26,
+			"desc": "A white flash round the hero you control: every enemy close by is stunned for a moment. Bosses only blink."
+		},
+		"ward_candle": {
+			"name": "Ward Candle", "target": "party", "buff": {"id": "ward", "time": 45}, "cures": ["erase"], "carry": 2, "start": 0, "drop": 0.006, "price": 60,
+			"desc": "Whole party, 45 seconds: the Blank can't Erase you, its edge doesn't burn, its creatures lose interest, and every hit lands a quarter softer."
 		}
 	}
 }

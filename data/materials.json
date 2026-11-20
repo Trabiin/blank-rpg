@@ -1,0 +1,50 @@
+{
+	"_comment": "Forge materials (issue #112), kept in the town stores (Empire.progress.armory.mats, scripts/armory.gd). Every material has a use (data/forge.json; tests/test_items.gd checks it) and a source. region: where it belongs (data/provinces.json regions); tier: the gear tier it is for. value: Gilt the Market pays for one (it sells for double). enemies: per-kill drop for a kind from data/enemies.json: chance, then a weighted table (one material, 1 to 'most' of it). regions: per-kill drop on any mission in a province of that region when the kind has no table of its own, so a chapter's new enemies drop its materials without more data here. Raid caches and Salvage piles hold materials too (data/mission_types.json, cache and pile).",
+	"materials": {
+		"blank_pith": {"name": "Blank Pith", "region": "marches", "tier": 2, "value": 4,
+			"blurb": "What's left when the Blank stops chewing: a white, weightless fluff that makes your teeth itch. The Forge quenches blades in it so they bite things that aren't there."},
+		"scrap_iron": {"name": "Scrap Iron", "region": "marches", "tier": 2, "value": 3,
+			"blurb": "Bent shield rims, broken pike heads, the odd Concord buckle. The smiths don't ask where it came from, and you don't tell them."},
+		"moth_silk": {"name": "Moth Silk", "region": "marches", "tier": 2, "value": 4,
+			"blurb": "Spun from the wings of letter-moths. Faint words still run along the thread if you hold it to a candle."},
+		"oak_gall": {"name": "Oak Gall", "region": "marches", "tier": 2, "value": 3,
+			"blurb": "The ink-maker's oldest friend: a wasp's nursery, ground to powder. Bitter, black and good for what ails you."},
+		"tithe_wax": {"name": "Tithe Wax", "region": "marches", "tier": 3, "value": 5,
+			"blurb": "Red sealing wax scraped off Concord strongboxes. It still smells of somebody else's money."},
+		"lamp_brass": {"name": "Lamp Brass", "region": "marches", "tier": 3, "value": 5,
+			"blurb": "Fittings off Lampwick's lamps: hinges, chimneys, little brass flames. Lampwick would like them back."},
+		"relic_silver": {"name": "Reliquary Silver", "region": "abbey", "tier": 4, "value": 9,
+			"blurb": "Prised off saints' boxes in the Abbey. The saints were not using it, and the Blank hates the shine."},
+		"bell_bronze": {"name": "Bell Bronze", "region": "abbey", "tier": 4, "value": 8,
+			"blurb": "Shards of a cracked abbey bell. Still hums when struck, and the humming makes erased things flinch."},
+		"ink_pearl": {"name": "Ink Pearl", "region": "causeway", "tier": 5, "value": 12,
+			"blurb": "Black pearls dived from the ink lake under the Causeway. Each one is a word the lake has not finished saying."},
+		"velvet_cord": {"name": "Velvet Cord", "region": "causeway", "tier": 5, "value": 11,
+			"blurb": "Rope from the masquerade's curtains, stronger than it looks. So is everyone at the masquerade."},
+		"saltglass": {"name": "Saltglass", "region": "coast", "tier": 6, "value": 15,
+			"blurb": "Sea-water the Blank froze mid-wave. Clear, cold, and it remembers the shape of everything it touched."},
+		"wreck_oak": {"name": "Wreck Oak", "region": "coast", "tier": 6, "value": 13,
+			"blurb": "Ship timbers that sailed into the white and washed back without their crews. Dense as stone and twice as stubborn."},
+		"spire_leaf": {"name": "Spire Gold Leaf", "region": "spire", "tier": 6, "value": 18,
+			"blurb": "Gold beaten thin enough to see through, peeled off the capital's walls. The Concord gilds what it can't fix."},
+		"ledger_steel": {"name": "Ledger Steel", "region": "spire", "tier": 6, "value": 17,
+			"blurb": "The bindings of the Great Ledger's own shelves. Folded a thousand times, like a lie told often enough."}
+	},
+	"enemies": {
+		"nibbler": {"chance": 0.16, "most": 1, "table": {"blank_pith": 1}},
+		"spitter": {"chance": 0.22, "most": 2, "table": {"blank_pith": 3, "oak_gall": 1}},
+		"moth": {"chance": 0.2, "most": 1, "table": {"moth_silk": 1}},
+		"enforcer": {"chance": 0.4, "most": 2, "table": {"scrap_iron": 3, "tithe_wax": 2}},
+		"reedling": {"chance": 0.22, "most": 2, "table": {"oak_gall": 3, "blank_pith": 1}},
+		"scarecrow": {"chance": 0.22, "most": 2, "table": {"scrap_iron": 2, "moth_silk": 1}},
+		"sellsword": {"chance": 0.28, "most": 2, "table": {"scrap_iron": 2, "lamp_brass": 2}},
+		"auditor": {"chance": 1.0, "most": 4, "table": {"tithe_wax": 2, "blank_pith": 2}}
+	},
+	"regions": {
+		"marches": {"chance": 0.12, "most": 1, "table": {"blank_pith": 2, "scrap_iron": 2, "oak_gall": 1}},
+		"abbey": {"chance": 0.2, "most": 2, "table": {"relic_silver": 3, "bell_bronze": 3, "blank_pith": 2}},
+		"causeway": {"chance": 0.2, "most": 2, "table": {"ink_pearl": 3, "velvet_cord": 3, "blank_pith": 2}},
+		"coast": {"chance": 0.2, "most": 2, "table": {"saltglass": 3, "wreck_oak": 3, "blank_pith": 2}},
+		"spire": {"chance": 0.2, "most": 2, "table": {"spire_leaf": 3, "ledger_steel": 3, "blank_pith": 2}}
+	}
+}

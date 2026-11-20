@@ -60,6 +60,26 @@
 				{"cost": {"gilt": 120, "supplies": 15, "ink": 1}, "days": 3, "slots": 2},
 				{"cost": {"gilt": 180, "supplies": 20, "ink": 3}, "days": 4, "slots": 2}
 			]
+		},
+		{
+			"id": "forge", "name": "Forge", "start_level": 0, "stat": "craft", "site": "site_forge", "look": "forge",
+			"blurb": "An anvil, a bellows and a smith who has stopped asking questions. Upgrades weapons and makes armour, trinkets and field supplies from mission materials. Needs at least one smith; their Craft speeds every job.",
+			"staff_title": "Smith",
+			"levels": [
+				{"cost": {"gilt": 70, "supplies": 15}, "days": 2, "slots": 1},
+				{"cost": {"gilt": 130, "supplies": 20, "ink": 2}, "days": 3, "slots": 2},
+				{"cost": {"gilt": 200, "supplies": 25, "ink": 4}, "days": 4, "slots": 3}
+			]
+		},
+		{
+			"id": "market", "name": "Market", "start_level": 0, "stat": "charm", "site": "site_market", "look": "market",
+			"blurb": "Stalls, awnings and a great deal of shouting. Traders bring in Gilt every day and a stock that changes every few days; their Charm haggles the prices down. Needs at least one trader.",
+			"staff_title": "Trader",
+			"levels": [
+				{"cost": {"gilt": 60, "supplies": 10}, "days": 2, "slots": 1},
+				{"cost": {"gilt": 110, "supplies": 15, "ink": 1}, "days": 3, "slots": 2},
+				{"cost": {"gilt": 170, "supplies": 20, "ink": 3}, "days": 4, "slots": 2}
+			]
 		}
 	],
 	"wardlamp": {

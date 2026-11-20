@@ -1,0 +1,66 @@
+{
+	"_comment": "The Forge (issue #112): upgrading and crafting gear from mission materials, in scripts/armory.gd. Gear tiers (data/gear.json 'tier'): 1 what a hero starts with, 2-3 the Hollow Marches, 4 Saint Ledger's Abbey, 5 the Velvet Causeway, 6 the Unfinished Coast and the Gilded Spire. levels: per Forge level, the highest tier its smiths can work and how many jobs run at once (benches). A job needs at least one smith at work; the smiths' Craft cuts its days (days x 10 / (10 + Craft of everyone working there), at least 1), and it is done at dawn. weapon_upgrades: every hero's weapon line is one tier after another: the tier N weapon is forged from the tier N-1 one (taken from the bag, or worked on while the hero still carries it and swapped in when done) plus these materials and Gilt; hero_mat adds that many of the hero's own material (hero_mats) to tiers 2 and 3. recipes: everything else, by result id (gear from data/gear.json, items from data/items.json, or a satchel upgrade from data/market.json): mats, gilt, days, makes (how many; items only), tier (sets the Forge level it needs; gear uses its own tier). Gear and items found or bought still work as before.",
+	"levels": [
+		{"tier": 3, "benches": 1},
+		{"tier": 5, "benches": 1},
+		{"tier": 6, "benches": 2}
+	],
+	"craft_base": 10,
+	"weapon_upgrades": {
+		"2": {"mats": {"scrap_iron": 3}, "gilt": 30, "days": 1, "hero_mat": 1},
+		"3": {"mats": {"scrap_iron": 4, "blank_pith": 2}, "gilt": 70, "days": 2, "hero_mat": 3},
+		"4": {"mats": {"relic_silver": 4, "bell_bronze": 3, "blank_pith": 3}, "gilt": 140, "days": 2},
+		"5": {"mats": {"ink_pearl": 4, "velvet_cord": 3, "blank_pith": 4}, "gilt": 220, "days": 3},
+		"6": {"mats": {"spire_leaf": 4, "ledger_steel": 4, "saltglass": 2, "blank_pith": 6}, "gilt": 360, "days": 4}
+	},
+	"hero_mats": {
+		"ash": "oak_gall", "bran": "scrap_iron", "gristle": "oak_gall", "ninefingers": "scrap_iron",
+		"ottoline": "lamp_brass", "jessamy": "moth_silk", "odile": "tithe_wax", "velvette": "lamp_brass"
+	},
+	"recipes": {
+		"padded_coat": {"mats": {"moth_silk": 2, "scrap_iron": 1}, "gilt": 10, "days": 1},
+		"ledger_mail": {"mats": {"scrap_iron": 5, "tithe_wax": 1}, "gilt": 30, "days": 2},
+		"mothsilk_shawl": {"mats": {"moth_silk": 5, "oak_gall": 1}, "gilt": 25, "days": 1},
+		"inkskin_vest": {"mats": {"oak_gall": 4, "blank_pith": 3, "scrap_iron": 2}, "gilt": 60, "days": 2},
+		"tollkeepers_coat": {"mats": {"scrap_iron": 6, "tithe_wax": 3, "lamp_brass": 2}, "gilt": 60, "days": 2},
+		"chapel_hauberk": {"mats": {"relic_silver": 5, "scrap_iron": 4}, "gilt": 110, "days": 2},
+		"penitents_cassock": {"mats": {"bell_bronze": 3, "moth_silk": 4, "relic_silver": 2}, "gilt": 100, "days": 2},
+		"masquers_brigandine": {"mats": {"velvet_cord": 5, "scrap_iron": 6, "ink_pearl": 1}, "gilt": 170, "days": 3},
+		"pearlscale_coat": {"mats": {"ink_pearl": 5, "moth_silk": 4}, "gilt": 160, "days": 3},
+		"ledgerplate": {"mats": {"ledger_steel": 6, "spire_leaf": 3, "wreck_oak": 2}, "gilt": 260, "days": 4},
+		"saltglass_mantle": {"mats": {"saltglass": 5, "wreck_oak": 3, "velvet_cord": 2}, "gilt": 240, "days": 4},
+
+		"bent_nib": {"mats": {"scrap_iron": 2}, "gilt": 10, "days": 1},
+		"running_boots": {"mats": {"moth_silk": 2}, "gilt": 10, "days": 1},
+		"blotter_charm": {"mats": {"oak_gall": 2, "moth_silk": 1}, "gilt": 15, "days": 1},
+		"wormwood_sachet": {"mats": {"oak_gall": 3, "moth_silk": 1}, "gilt": 20, "days": 1},
+		"smiths_patch": {"mats": {"scrap_iron": 2, "lamp_brass": 1}, "gilt": 20, "days": 1},
+		"leech_locket": {"mats": {"blank_pith": 3, "oak_gall": 2, "lamp_brass": 1}, "gilt": 30, "days": 2},
+		"inkblot_brooch": {"mats": {"oak_gall": 3, "blank_pith": 2}, "gilt": 30, "days": 2},
+		"thornwire_bracelet": {"mats": {"scrap_iron": 5, "tithe_wax": 1}, "gilt": 40, "days": 2},
+		"widows_ribbon": {"mats": {"moth_silk": 4, "blank_pith": 3}, "gilt": 45, "days": 2},
+		"steady_bell": {"mats": {"bell_bronze": 4, "moth_silk": 1}, "gilt": 80, "days": 2},
+		"bellringers_clapper": {"mats": {"bell_bronze": 5, "scrap_iron": 2}, "gilt": 90, "days": 2},
+		"clockwork_heart": {"mats": {"ink_pearl": 3, "lamp_brass": 4, "velvet_cord": 1}, "gilt": 130, "days": 3},
+		"saltglass_eye": {"mats": {"saltglass": 4, "relic_silver": 2}, "gilt": 170, "days": 3},
+		"second_signature": {"mats": {"spire_leaf": 4, "blank_pith": 6, "tithe_wax": 3}, "gilt": 200, "days": 4},
+
+		"tonic": {"mats": {"oak_gall": 1}, "gilt": 4, "days": 1, "makes": 3, "tier": 1},
+		"marrow_broth": {"mats": {"oak_gall": 2, "blank_pith": 1}, "gilt": 10, "days": 1, "makes": 2, "tier": 2},
+		"salts": {"mats": {"blank_pith": 1, "oak_gall": 1}, "gilt": 8, "days": 1, "makes": 2, "tier": 1},
+		"draught": {"mats": {"oak_gall": 2}, "gilt": 8, "days": 1, "makes": 2, "tier": 1},
+		"wormwood": {"mats": {"oak_gall": 2}, "gilt": 4, "days": 1, "makes": 3, "tier": 1},
+		"fresh_ink": {"mats": {"oak_gall": 2, "tithe_wax": 1}, "gilt": 8, "days": 1, "makes": 3, "tier": 2},
+		"clean_sheet": {"mats": {"moth_silk": 2, "blank_pith": 2, "oak_gall": 1}, "gilt": 16, "days": 1, "makes": 2, "tier": 3},
+		"iron_tea": {"mats": {"scrap_iron": 1, "oak_gall": 1}, "gilt": 8, "days": 1, "makes": 2, "tier": 2},
+		"gutter_gin": {"mats": {"oak_gall": 2, "lamp_brass": 1}, "gilt": 6, "days": 1, "makes": 3, "tier": 2},
+		"courier_snuff": {"mats": {"moth_silk": 1, "oak_gall": 1}, "gilt": 8, "days": 1, "makes": 2, "tier": 2},
+		"oil_flask": {"mats": {"lamp_brass": 1, "oak_gall": 1}, "gilt": 6, "days": 1, "makes": 3, "tier": 2},
+		"flash_powder": {"mats": {"blank_pith": 2, "lamp_brass": 1}, "gilt": 10, "days": 1, "makes": 2, "tier": 3},
+		"ward_candle": {"mats": {"tithe_wax": 2, "blank_pith": 3, "relic_silver": 1}, "gilt": 30, "days": 2, "makes": 2, "tier": 4},
+
+		"oilcloth_satchel": {"mats": {"moth_silk": 4, "scrap_iron": 2}, "gilt": 40, "days": 2, "tier": 1},
+		"brass_bandolier": {"mats": {"lamp_brass": 4, "tithe_wax": 2, "moth_silk": 2}, "gilt": 90, "days": 2, "tier": 3},
+		"velvet_harness": {"mats": {"velvet_cord": 4, "ink_pearl": 1}, "gilt": 160, "days": 3, "tier": 5}
+	}
+}

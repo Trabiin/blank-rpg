@@ -1,0 +1,39 @@
+{
+	"_comment": "The Market (issue #112) and the satchel's size, in scripts/armory.gd. market.levels: per Market level, how many stalls the rotating stock fills and the highest gear tier traders bring. A trader on staff is needed for any of it. income: Gilt a day = per_level x level + the traders' Charm / charm_div + one for every provinces_per held provinces. rotation: the stock changes every this many days (on a seeded roll, so it is the same on reload). discount: 1% off Market prices per point of the traders' Charm, up to max_discount. pool: what can turn up: kinds picks what a stall holds by weight, then items (data/items.json, in stacks of qty), materials (data/materials.json, only from regions you have opened), gear (data/gear.json, tiers up to the level's tier, never hero weapons: those come from the Forge). Each stall holds one stack; buy as much of it as you like. sell_rate: share of a material's value the Market pays. satchel: the satchel's total size (base) and the Forge-made upgrades that add to it.",
+	"market": {
+		"levels": [
+			{"stalls": 4, "tier": 2},
+			{"stalls": 6, "tier": 4},
+			{"stalls": 8, "tier": 6}
+		],
+		"income": {"per_level": 2, "charm_div": 2, "provinces_per": 3},
+		"rotation": 3,
+		"discount": 0.01,
+		"max_discount": 0.2,
+		"markup": 1.15,
+		"sell_rate": 1.0,
+		"pool": {
+			"kinds": {"items": 6, "materials": 5, "gear": 3},
+			"items": {
+				"tonic": {"weight": 4, "qty": [3, 5]}, "marrow_broth": {"weight": 3, "qty": [2, 3]}, "salts": {"weight": 3, "qty": [1, 2]},
+				"draught": {"weight": 3, "qty": [1, 2]}, "wormwood": {"weight": 3, "qty": [2, 4]}, "fresh_ink": {"weight": 3, "qty": [2, 3]},
+				"clean_sheet": {"weight": 1, "qty": [1, 2]}, "iron_tea": {"weight": 2, "qty": [1, 3]}, "gutter_gin": {"weight": 2, "qty": [2, 3]},
+				"courier_snuff": {"weight": 2, "qty": [1, 3]}, "oil_flask": {"weight": 3, "qty": [2, 4]}, "flash_powder": {"weight": 2, "qty": [1, 2]},
+				"ward_candle": {"weight": 1, "qty": [1, 1]}
+			},
+			"materials": {"qty": [2, 5]},
+			"gear": {"qty": [1, 1]}
+		}
+	},
+	"satchel": {
+		"base": 10,
+		"upgrades": {
+			"oilcloth_satchel": {"name": "Oilcloth Satchel", "slots": 3,
+				"blurb": "A bigger bag, waxed against rain and spilt tonic. Three more things fit in the satchel."},
+			"brass_bandolier": {"name": "Brass Bandolier", "slots": 3,
+				"blurb": "Loops and buckles across the chest for flasks and pots. Three more things fit in the satchel."},
+			"velvet_harness": {"name": "Velvet Harness", "slots": 4,
+				"blurb": "A masquerade costume's hidden pockets, sewn into a field harness. Four more things fit in the satchel."}
+		}
+	}
+}
