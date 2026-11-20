@@ -50,7 +50,9 @@ Nothing is ever deleted:
    (or script it, like `tests/run.gd` does) and copy the slot file from the user data folder
    (`~/.local/share/godot/app_userdata/Last Ink/` on Linux).
 2. Save it as `tests/fixtures/saves/<step id>__<what it shows>.json`.
-3. Add `scripts/migrations/<yyyymmdd>_<what>.gd`:
+3. Add `scripts/migrations/<yyyymmdd>_<what>.gd`. Steps run sorted by file name, so the name must sort after
+   every step yours relies on (`20261120_journal` would have run before `20261120_save_format_v2`; it is
+   `20261121_journal` for that reason):
 
    ```gdscript
    extends RefCounted
@@ -77,4 +79,5 @@ fixture fails to upgrade, load into the campaign, save again and read back witho
 | `20261120_save_format_v2` | Format 1 to 2. First-build saves get a campaign and scene, mission saves from before missions.json get the Meadow patrol, banter speaker names become recruit ids, `said_first_kill` / `said_low_power` become seen dialogue events, and the save is marked `pre-release`. |
 | `20261120_territory_regions` | Issue #53: saves from the nine-province map get `regions: ["marches"]` (the only region they could have). Their provinces keep owner, Fray and scars; the 15 new provinces start as `data/provinces.json` has them, under the fog. |
 | `20261120_weapon_ink_skills` | Issue #24: heroes in the save get weapon and Ink skill levels for the fighting they have already done (30 weapon points and 10 points in each Ink colour their abilities use per character level past 1), capped at level 3 like the Barracks drill; techs are chosen by hold length. |
+| `20261121_journal` | Issue #114: the journal's state (`empire.journal`). Enemies on the rosters of provinces where a mission was cleared count as met and beaten once (the Auditor too after `auditor_duel`), the save's expedition reports become history, and each mission cleared before the journal gets a history entry marked "before the journal". Dated a day later on purpose: steps run in file-name order and this one needs `20261120_save_format_v2` to have run first. |
 | `20261121_personal_missions` | Issue #113: personal Guildhall jobs became Command Table missions. A squad out on one (`personal_<who>`) is called home, its 2 Supplies a head are refunded, a report says where the mission waits, and old `personal_*` cooldowns are dropped. Bond ranks are kept. |

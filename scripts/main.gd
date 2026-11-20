@@ -49,6 +49,7 @@ var mission_time := 0.0
 var ending := false  # the results screen is up (or about to be)
 var results_view  # results_view.gd
 var gear_view  # gear_view.gd: Party gear from the pause menu (issue #15)
+var journal_view  # journal_view.gd: the journal from the pause menu (issue #114)
 var found_items: Array = []  # gear picked up on the way (item ids); kept unless the party is wiped
 var levels_gained := {}  # hero id -> level reached during this mission, for the results screen
 var skills_gained: Array = []  # "Ash: Quill-knife 3 (Ellipsis)" lines for the results screen (issue #24)
@@ -280,6 +281,7 @@ func touch_active() -> bool:
 
 func _on_enemy_died(_e: Actor) -> void:
 	kills += 1
+	Journal.defeated(Journal.kind_of(_e))  # the codex learns its weakness (issue #114)
 	Empire.bond_fought(kills, heroes.map(func(h): return (h as Hero).hero_id))  # fighting beside Ash builds bonds
 	banter.event("first_kill", present())
 	if not ending:
@@ -351,6 +353,18 @@ func skill_up(hero: Hero, kind: String, color: String, level: int) -> void:
 	hud.say(line, 4.0)
 
 
+## The journal from the pause menu (issue #114), made the first time it is asked for. The map is out of
+## reach mid-mission, so "show on map" waits until the party is home.
+func _journal() -> Control:
+	if journal_view == null:
+		journal_view = preload("res://scripts/journal_view.gd").new()
+		journal_view.visible = false
+		journal_view.can_go = false
+		pause_menu.get_parent().add_child(journal_view)
+		journal_view.closed.connect(_on_gear_closed)
+	return journal_view
+
+
 func _on_gear_closed() -> void:
 	if get_tree().paused and not ending:
 		pause_menu.set_deferred("visible", true)  # next frame, so the same Esc doesn't also close it
@@ -415,6 +429,7 @@ func _pause_items() -> Array:
 	return [
 		{"id": "resume", "label": "Resume"},
 		{"id": "gear", "label": "Party gear", "detail": "levels and equipment"},
+		{"id": "journal", "label": "Journal", "detail": "quests, people, codex, history"},
 		{"id": "save", "label": "Save game"},
 		{"id": "load", "label": "Load game", "enabled": Saves.latest_slot() != "", "note": "(no saves yet)"},
 		{"id": "retreat", "label": "Retreat to Hollowmark", "detail": "end the mission, keep what you found"},
@@ -433,6 +448,9 @@ func _on_pause_choice(id: String) -> void:
 		"gear":
 			pause_menu.visible = false
 			gear_view.open("mission")
+		"journal":
+			pause_menu.visible = false
+			_journal().open()
 		"retreat":
 			pause_menu.visible = false
 			_end_mission("retreat")
@@ -668,6 +686,7 @@ func _progress_lines(r: Dictionary, outcome: String) -> void:
 
 
 func _on_results_confirmed() -> void:
+	Journal.record_mission(results_view.result)  # History tab (issue #114)
 	Missions.go_home(results_view.result)
 
 

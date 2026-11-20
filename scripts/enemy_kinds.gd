@@ -98,6 +98,7 @@ static func spawn(parent: Node, pos: Vector2, mission: Dictionary, id := "", bla
 ## The first time a kind notices the party, the HUD says how to deal with it.
 static func notice(e: Enemy) -> void:
 	var id: String = e.get_meta("kind", "nibbler")
+	Journal.saw(id)  # met: its codex entry opens (issue #114)
 	if _told.has(id):
 		return
 	_told[id] = true

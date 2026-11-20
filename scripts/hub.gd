@@ -20,6 +20,7 @@ const SceneView := preload("res://scripts/scene_view.gd")
 const SiteScript := preload("res://scripts/building_site.gd")
 const DialogueBox := preload("res://scripts/dialogue_box.gd")
 const ChapterCard := preload("res://scripts/chapter_card.gd")
+const JournalView := preload("res://scripts/journal_view.gd")
 const BanterScript := preload("res://scripts/banter.gd")
 
 const MAP := "res://maps/hollowmark.txt"
@@ -56,6 +57,7 @@ var research_view
 var diplomacy_view
 var bonds_view
 var gear_view  # gear_view.gd: party gear and the shop (issue #15)
+var journal_view  # journal_view.gd: quest log, people, codex, history (issue #114)
 var newcomers_view
 var scene_view  # bond scenes started by talking to someone in town
 var dialogue_box  # dialogue_box.gd: talking to people in town
@@ -166,6 +168,10 @@ func _ready() -> void:
 	gear_view = GearViewScript.new()
 	gear_view.visible = false
 	roster_layer.add_child(gear_view)
+	journal_view = JournalView.new()  # quest log and codex (issue #114)
+	journal_view.visible = false
+	roster_layer.add_child(journal_view)
+	journal_view.go.connect(alert_go)
 	Empire.lead_arrived.connect(func(_id): _place_people())
 	scene_view = SceneView.new()
 	scene_view.visible = false
@@ -597,7 +603,8 @@ func alerts_blocked() -> bool:
 	return leaving or get_tree().paused or menu.visible or roster_view.visible or buildings_view.visible \
 		or expedition_view.visible or research_view.visible or diplomacy_view.visible or bonds_view.visible \
 		or scene_view.visible or newcomers_view.visible or gear_view.visible or dialogue_box.visible \
-		or chapter_card.visible or Engine.get_process_frames() == menu_closed_frame
+		or chapter_card.visible or Engine.get_process_frames() == menu_closed_frame \
+		or journal_view.visible
 
 
 ## "Go there" from town: screens open right here; provinces and missions are on the Command Table.
@@ -663,7 +670,7 @@ func open_menu(note := "") -> void:
 	menu.setup("Hollowmark", [
 		{"id": "resume", "label": "Resume"},
 		{"id": "table", "label": "Command Table", "detail": "the territory map"},
-		{"id": "story", "label": "Story", "detail": "where the story stands, and what to do next"},
+		{"id": "journal", "label": "Journal", "detail": "quests, people, codex, history" + Prompts.tag("journal")},
 		{"id": "roster", "label": "Roster", "detail": Prompts.key("roster")},
 		{"id": "buildings", "label": "Buildings", "detail": Prompts.key("buildings")},
 		{"id": "expeditions", "label": "Expeditions", "detail": Prompts.key("expeditions")},
@@ -699,10 +706,9 @@ func _on_menu(id: String) -> void:
 			else:
 				_close_menu()
 				_open_table()
-		"story":
-			menu.setup("Story", [{"id": "menu_back", "label": "Back"}], Story.summary())
-		"menu_back":
-			open_menu()
+		"journal":
+			_close_menu()
+			journal_view.open("quests")
 		"roster":
 			_close_menu()
 			roster_view.open()
@@ -779,7 +785,8 @@ func _process(delta: float) -> void:
 	var screen_open: bool = roster_view.visible or buildings_view.visible or expedition_view.visible or research_view.visible \
 			or diplomacy_view.visible or bonds_view.visible or scene_view.visible or newcomers_view.visible or gear_view.visible \
 			or dialogue_box.visible or chapter_card.visible
-	if screen_open or frame == roster_view.closed_frame or frame == buildings_view.closed_frame \
+	screen_open = screen_open or journal_view.visible
+	if screen_open or frame == journal_view.closed_frame or frame == roster_view.closed_frame or frame == buildings_view.closed_frame \
 			or frame == expedition_view.closed_frame or frame == research_view.closed_frame \
 			or frame == diplomacy_view.closed_frame or frame == bonds_view.closed_frame \
 			or frame == scene_view.closed_frame or frame == newcomers_view.closed_frame or frame == menu_closed_frame \
@@ -814,6 +821,9 @@ func _process(delta: float) -> void:
 		return
 	if Input.is_action_just_pressed("gear"):
 		gear_view.open("town")
+		return
+	if Input.is_action_just_pressed("journal"):
+		journal_view.open()
 		return
 	for i in Empire.SPEEDS.size():
 		if Input.is_action_just_pressed("clock_speed_%d" % i):
