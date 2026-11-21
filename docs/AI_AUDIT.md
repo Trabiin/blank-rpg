@@ -80,3 +80,15 @@ other portrait's hands, the rest of the idle and walk strips.
   224x336 it reads as glow, but new expressions should ask for "plain glowing lines, no letters".
 
 Before/after images: project files `last-ink/art-pass/ai-audit/`.
+
+## Art Review page
+
+Every sprite animation, portrait, prop, building, icon, tile set and painted piece can be reviewed on one
+page with a checklist per asset (private Artifact: https://claude.ai/artifact/Nfctt4HLGoT3kushq2PspF).
+The page source lives in project files (last-ink/art-review/index.html). Its data comes from:
+
+    python3 tools/build_art_review.py OUT_DIR
+
+Rebuild and republish when art changes. Each unit carries a pixel hash, so the page marks an asset
+"Changed" if it was edited after it was checked. Review state is stored in the page's database
+(`reviews/<doc>`, one field per unit); Claude's notes per asset go in `notes/<doc>`.
