@@ -206,6 +206,8 @@ func test_every_tech_fires_and_lands() -> void:
 			var t := Techs.find(td["id"])
 			h.global_position = home
 			h.facing = Vector2.RIGHT
+			if not (t.get("spread", []) as Array).is_empty():  # a V of thrusts: aim one prong at it (a small Moth fits between)
+				h.facing = Vector2.RIGHT.rotated(-deg_to_rad(float(t["spread"][0])))
 			h.dead = false
 			h.hp = h.max_hp
 			var stand := AllyTechs.standoff(t)
