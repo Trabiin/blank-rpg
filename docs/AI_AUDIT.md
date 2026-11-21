@@ -52,13 +52,13 @@ needed a fix.
 
 | What | Where | Fix |
 |---|---|---|
-| Face appears on the back of the head / character turns round | Velvette, Dunmore, Tobble, Folk man, Nibbler idle north; Gristle idle east; Ottoline idle north-east | breathe |
-| Held item pops in, vanishes or changes | Odile (briefcase), Hesper (tool), Folk elder (cane) idle north | breathe |
+| Face appears on the back of the head / character turns round | Fauvette, Dunmore, Tobble, Folk man, Nibbler idle north; Gristle idle east; Ottoline idle north-east | breathe |
+| Held item pops in, vanishes or changes | Odile (briefcase), Hetty (tool), Folk elder (cane) idle north | breathe |
 | Body swells and changes pose | Tobble idle south-east | breathe |
 | A different face every frame | Nibbler idle south and south-east; walk south, south-east, east | breathe / lock |
 | Glyph-like scribble on its side | Nibbler east rotation, idle and walk | hand edit + breathe/lock |
-| Sprite hair does not match portrait | Velvette (magenta to crimson, every strip) | recolour |
-| Sprite hood does not match portrait | Abeyance (slate grey to bone white) | recolour |
+| Sprite hair does not match portrait | Fauvette (magenta to crimson, every strip) | recolour |
+| Sprite hood does not match portrait | Sister Hild (slate grey to bone white) | recolour |
 | Shadow blob and smear over the face | Merrow portrait (middle girl) | hand edit |
 | Ledger page pixelated into fake writing | Concord Warden portrait | hand edit (clean ruled page + seal) |
 
@@ -69,14 +69,14 @@ other portrait's hands, the rest of the idle and walk strips.
 **Left for a paid regeneration or a decision** (issue #173, `needs-topup`, nothing spent):
 
 - Walk strips where the character turns mid-cycle or a weapon flickers: Ottoline, Jessamy and the Sellsword
-  walking south, Velvette walking north (sword), the Spitter's mouth changing while walking south.
+  walking south, Fauvette walking north (sword), the Spitter's mouth changing while walking south.
 - Bran's field sprite has a full grey beard and red face marks; the portrait has grey stubble.
 - The Auditor's sprite mask has no red mark.
 - Clerk Pettigrew and Ozias Crane read as the same face (balding, spectacles, quill behind the ear).
 - Title key art: Ash holds a sword and has a second hilt at the hip. Wait for #165 (human-made key art)
   before paying for a fix.
 - Decision, $0: Ash's field sprite keeps the hood up, the portrait and key art have it down.
-- Prompt rule for #107/#117, $0: Abeyance's writ shows glowing pseudo-script in the painted source. At
+- Prompt rule for #107/#117, $0: Sister Hild's writ shows glowing pseudo-script in the painted source. At
   224x336 it reads as glow, but new expressions should ask for "plain glowing lines, no letters".
 
 Before/after images: project files `last-ink/art-pass/ai-audit/`.

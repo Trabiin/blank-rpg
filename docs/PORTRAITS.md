@@ -79,8 +79,8 @@ rotations side by side for checking; see docs/AI_AUDIT.md for the audit.
 | Jessamy | dark hood up, long dark hair, violet scarf, lantern in her right hand | none |
 | Odile | black hair in a bun, round spectacles, navy uniform with gold trim, satchel and book | none |
 | Ottoline | long black hair, magenta waistcoat over black shirt, rolled sleeves, arms crossed | none |
-| Velvette | crimson-red bob, black high-collared coat with crimson lining, gold buttons, rapier | none since the sprite hair recolour |
-| Abeyance | bone-white hood and robe, brown hair, glowing writ held to her chest, satchel of quills | none since the sprite hood recolour |
+| Fauvette | crimson-red bob, black high-collared coat with crimson lining, gold buttons, rapier | none since the sprite hair recolour |
+| Sister Hild | bone-white hood and robe, brown hair, glowing writ held to her chest, satchel of quills | none since the sprite hood recolour |
 | Quill | grey hair, quill behind the ear, green coat, book | none |
 | Tobble | bald with a white beard, cream shirt, brown apron, copper mug | none |
 | Verity | silver-streaked dark hair pinned up, bone robe with violet stole, ledger | none |
