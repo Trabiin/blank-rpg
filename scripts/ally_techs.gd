@@ -14,6 +14,8 @@ extends RefCounted
 ##   It starts charging when the best is worth START[preset], walks to the spot while charging, fires
 ##   once ready if what it would hit from where it actually stands is worth FIRE[preset], and gives up
 ##   (keeping its gauge) if nothing is worth it within HOLD_MAX seconds, or to step out of a lunge.
+##   Deciding to start assumes enemies close the last few pixels (slack), but only those that can move
+##   before the tech is ready; a stunned crowd just out of reach is walked up to, never waited on (#161).
 ##   While a tech looks worth it and the gauge is nearly full, the preset holds its normal swing
 ##   (saving()), so the gauge can fill; Aggressive only does that on every other gauge.
 ##
@@ -58,6 +60,7 @@ const REPOSITION := 30.0  # how far an ally will walk during the wind-up to line
 const LEAD := 0.35  # seconds ahead an enemy's movement is predicted
 const DODGE_R := 38.0  # a lunge or slam winding up at the ally from this close makes it think twice
 const BREAK_HIT := 0.25  # a blow taking this much of an ally's max HP breaks its charge
+const CLOSE_TIME := 0.35  # seconds an enemy needs on its feet to close the slack before the tech is ready
 const LONG_REACH := 50.0  # techs reaching this far are safe enough for Keep Distance to use on one enemy
 
 
@@ -259,6 +262,8 @@ static func _charge(h: Hero, leader: Hero, preset: String, delta: float) -> Vect
 	if plan["focus"] != null:
 		h.ai_tech_focus = plan["focus"]
 		h.ai_tech_spot = plan["spot"]
+	else:
+		_close_in(h, t)  # nothing in reach from any spot it can step to: walk in on its target (#161)
 	var aim_dir: Vector2 = plan["dir"] if plan["focus"] != null else h.ai_tech_dir
 	h.ai_tech_dir = Vector2.from_angle(lerp_angle(h.ai_tech_dir.angle(), aim_dir.angle(), minf(delta * 10.0, 1.0)))
 	h.facing = h.ai_tech_dir
@@ -281,6 +286,21 @@ static func _charge(h: Hero, leader: Hero, preset: String, delta: float) -> Vect
 			h.ai_tech_order_t = 0.0
 			return Vector2.ZERO
 	return _approach(h, leader, preset)
+
+
+## The charge's target has drifted out of reach of every spot within REPOSITION (it stopped short, was
+## knocked back, or a stun held it in place): head for the right standoff from it, the way an ordered
+## tech does (_order_fallback), instead of standing still until HOLD_MAX runs out.
+static func _close_in(h: Hero, t: Dictionary) -> void:
+	if not is_instance_valid(h.ai_tech_focus):
+		return
+	var e: Enemy = h.ai_tech_focus
+	if e == null or e.dead or e.dying_t >= 0.0:
+		return
+	var away := h.global_position - e.global_position
+	if away.length() < 0.5:
+		return
+	h.ai_tech_spot = e.global_position + away.normalized() * standoff(t)
 
 
 static func _give_up(h: Hero, cooldown: float) -> void:
@@ -342,7 +362,8 @@ static func _should_dodge(h: Hero, preset: String) -> bool:
 
 ## The best place and direction to fire from: {"dir", "score", "focus", "spot"}. Tries where the hero
 ## stands (facing and a line to every enemy in range) and, with move, the right standoff from each
-## enemy it can walk to during the wind-up. slack widens the reach a little (enemies keep coming).
+## enemy it can walk to during the wind-up. slack widens the reach a little (enemies keep coming), but
+## only for enemies that can still come before the tech is ready (see _closing).
 static func best_aim(h: Hero, t: Dictionary, preset: String, leader: Hero, slack: float, move := false) -> Dictionary:
 	var here := h.global_position
 	var out := {"dir": h.facing.normalized(), "score": 0.0, "focus": null, "spot": here}
@@ -387,18 +408,20 @@ static func score(h: Hero, t: Dictionary, origin: Vector2, dir: Vector2, preset:
 	var focus: Enemy = null
 	var focus_v := 0.0
 	var k: Dictionary = t.get("knives", {})
+	var window := Techs.charge_time(t) - (h.charge_t if h.charging else 0.0)
 	for e in near:
 		var enemy: Enemy = e
 		var at := _predict(enemy)
 		var taken := 0.0
 		var from := origin
+		var give := slack if _closing(enemy, window) else 0.0  # a stunned crowd won't close the gap (#161)
 		for b in bl:
 			var grown: Dictionary = b.duplicate()
-			grown["reach"] = float(b["reach"]) + slack
+			grown["reach"] = float(b["reach"]) + give
 			if Techs.inside(grown, at, enemy.radius):
 				taken += roundi(h.base_damage * float((b["p"] as Dictionary).get("mult", 2.0)))
 				from = (b["at"] as Vector2) - (b["dir"] as Vector2) * 4.0
-		if not k.is_empty() and at.distance_to(origin) <= float(k.get("range", 120)) + slack:
+		if not k.is_empty() and at.distance_to(origin) <= float(k.get("range", 120)) + give:
 			taken += roundi(h.base_damage * float(k.get("mult", 1.0))) * 0.6  # not every blade finds it
 		if taken <= 0.0:
 			continue
@@ -452,6 +475,12 @@ static func _worth(enemy: Enemy, t: Dictionary, dmg: int, from: Vector2) -> floa
 	if float(t.get("mark", 0)) > 0.0 and not enemy.marked() and dealt < enemy.hp:
 		v += 0.2
 	return v
+
+
+## Whether an enemy can still walk the last few pixels toward the blast in the next `window` seconds:
+## not stunned for (nearly) all of it, and able to move at all. Stunned or held enemies get no slack.
+static func _closing(e: Enemy, window: float) -> bool:
+	return e.move_speed > 0.0 and e.stun_left() < window - CLOSE_TIME
 
 
 static func _predict(e: Enemy) -> Vector2:
