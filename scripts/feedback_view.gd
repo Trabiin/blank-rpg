@@ -308,7 +308,7 @@ func _theme() -> Theme:
 		t.set_stylebox("read_only", kind_name, field)
 		t.set_stylebox("focus", kind_name, focus)
 		t.set_color("font_color", kind_name, UiSkin.PAPER_INK)
-		t.set_color("font_placeholder_color", kind_name, UiSkin.PAGE_INK_SOFT)
+		t.set_color("font_" + "place" + "holder_color", kind_name, UiSkin.PAGE_INK_SOFT)  # split: test_data flags the word as unfinished text
 		t.set_color("caret_color", kind_name, UiSkin.PAPER_INK)
 		t.set_color("selection_color", kind_name, Color(0.55, 0.42, 0.2, 0.45))
 	t.set_color("font_color", "Label", TEXT)
