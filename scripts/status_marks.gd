@@ -14,6 +14,13 @@ func _process(_delta: float) -> void:
 	queue_redraw()
 
 
+## Burn and poison on the enemy run here (issue #112), so every enemy script gets them without its
+## own _physics_process calling in.
+func _physics_process(delta: float) -> void:
+	if enemy != null and is_instance_valid(enemy) and enemy.dying_t < 0.0:
+		Status.tick(enemy, delta)
+
+
 func _draw() -> void:
 	if enemy == null or enemy.dead or enemy.dying_t >= 0.0:
 		return
@@ -32,3 +39,4 @@ func _draw() -> void:
 		draw_arc(c, 3.2, 0, TAU, 12, Color("e8c45a"), 1.0)
 		draw_line(c + Vector2(-1.5, 0), c + Vector2(-0.3, 1.3), Color("e8c45a"), 1.0)
 		draw_line(c + Vector2(-0.3, 1.3), c + Vector2(1.8, -1.6), Color("e8c45a"), 1.0)
+	Status.draw_marks(self, enemy, top - 6.0)  # burning, poisoned (issue #112)

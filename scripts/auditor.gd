@@ -261,7 +261,8 @@ func _thrust_hits(a: Vector2, b: Vector2) -> void:
 		var q := Geometry2D.get_closest_point_to_segment(hero.global_position, a, tip_b)
 		if q.distance_to(hero.global_position) < THRUST_WIDTH / 2.0 + hero.radius:
 			thrust_hit.append(hero)
-			hero.take_hit(Empire.damage_to_party(damage), q - aim_dir * 8.0, 260.0)
+			if hero.take_hit(Empire.damage_to_party(damage), q - aim_dir * 8.0, 260.0):
+				Status.struck(self, hero)  # the quill Erases (issue #112)
 
 
 ## Strikes rows/columns of the arena out of the record.

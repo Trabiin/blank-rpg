@@ -147,6 +147,9 @@ static func res_text(d: Dictionary) -> String:
 	for k in ["gilt", "supplies", "ink", "renown", "insight"]:
 		if int(d.get(k, 0)) != 0:
 			parts.append("%d %s" % [int(d[k]), Empire.RES_NAMES.get(k, k)])
+	var other := Armory.found_text(d)  # Forge materials and field items (issue #112)
+	if other != "":
+		parts.append(other)
 	return ", ".join(parts)
 
 
@@ -205,7 +208,8 @@ static func _effect_lines(m: Dictionary, outcome: String, stats: Dictionary) -> 
 static func apply(result: Dictionary) -> void:
 	var pay: Dictionary = result["pay"]
 	for k in pay:
-		Empire.gain(k, int(pay[k]))
+		if not Armory.bank(k, int(pay[k])):  # materials and field items go to the town stores (issue #112)
+			Empire.gain(k, int(pay[k]))
 	if result["outcome"] == "success" and not cleared(result["mission"]):
 		Empire.missions_cleared.append(result["mission"])
 	var p := Empire.territory().find(result.get("province_id", ""))
@@ -215,7 +219,7 @@ static func apply(result: Dictionary) -> void:
 	var m: Dictionary = result.get("mission_dict", {})
 	if m.get("effects", false):
 		MissionTypes.apply(m, result["outcome"])
-	Satchel.restock()  # Hollowmark's stores top the satchel back up (issue #6)
+	Satchel.restock(true)  # free rations and the town stores repack the satchel (issues #6, #112)
 	Empire.active_mission = {}
 	Empire.last_mission = result
 

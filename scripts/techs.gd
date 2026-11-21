@@ -89,6 +89,8 @@ static func find(tech_id: String) -> Dictionary:
 
 ## The techs this hero can charge right now: the picked one, or every one it knows.
 static func charge_options(h: Hero) -> Array:
+	if Status.has(h, "erase"):
+		return []  # Erased: no techs until it wears off (issue #112)
 	var p := Skills.picked_tech(h.hero_id)
 	return [p] if not p.is_empty() else Skills.known_techs(h.hero_id)
 
@@ -158,7 +160,7 @@ static func fill(h: Hero) -> float:
 static func control(h: Hero, delta: float) -> void:
 	if h.charging:
 		if Input.is_action_pressed("attack"):
-			h.charge_t += delta
+			h.charge_t += delta / float(Armory.perk(h.hero_id, "tech_charge", 1.0))  # Clockwork Heart (issue #112)
 			_advance(h)
 			return
 		# Released.

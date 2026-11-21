@@ -62,6 +62,7 @@ static func from_save(d) -> Dictionary:
 	for k in bag:
 		if not item(k).is_empty() and int(bag[k]) > 0:
 			out["bag"][k] = int(bag[k])
+	out["armory"] = Armory.clean(d.get("armory", {}))  # materials, stores, satchel, Forge, Market (issue #112)
 	var hs: Dictionary = d.get("heroes", {})
 	for id in hs:
 		var h: Dictionary = hs[id]
@@ -357,6 +358,9 @@ static func item_text(item_id: String) -> String:
 		if st.has(k):
 			var v := float(st[k])
 			parts.append("%s%s %s" % ["+" if v > 0 else "-", stat_value(k, absf(v)), STAT_NAMES[k]])
+	var perks := Armory.perks_text(item_id)  # build-defining trinkets (issue #112)
+	if perks != "":
+		parts.append(perks)
 	return ", ".join(parts) if not parts.is_empty() else "No bonus"
 
 
@@ -424,7 +428,7 @@ static func sell_price(item_id: String) -> int:
 
 
 static func sell(item_id: String) -> bool:
-	if count(item_id) <= 0 or sell_price(item_id) <= 0:
+	if count(item_id) <= Armory.reserved(item_id) or sell_price(item_id) <= 0:  # not while the Forge is reworking it (#112)
 		return false
 	take_item(item_id)
 	Empire.res["gilt"] = int(Empire.res["gilt"]) + sell_price(item_id)

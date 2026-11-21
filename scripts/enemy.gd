@@ -206,6 +206,8 @@ func _find_target(dist: float) -> Hero:
 		if hero == null or hero.dead or (hero.hidden() and not boss):
 			continue
 		var d := hero.global_position.distance_to(global_position)
+		if Status.warded_from(self, hero, d) and not boss:
+			continue  # a Ward Candle: Blank-born things leave them be unless they're right there (issue #112)
 		if d < best_d:
 			best_d = d
 			best = hero
@@ -219,7 +221,8 @@ func _check_lunge_hits() -> void:
 			continue
 		if hero.global_position.distance_to(global_position) < radius + hero.radius + 4.0:
 			hit_this_lunge.append(hero)
-			hero.take_hit(Empire.damage_to_party(DAMAGE), global_position, 200.0)
+			if hero.take_hit(Empire.damage_to_party(DAMAGE), global_position, 200.0):
+				Status.struck(self, hero)  # what this kind inflicts (data/enemies.json, issue #112)
 
 
 func _on_hit() -> void:

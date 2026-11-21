@@ -92,6 +92,7 @@ func _physics_process(delta: float) -> void:
 
 func _spit() -> void:
 	var shot: InkGlob = ShotScript.new()
+	shot.kind = Journal.kind_of(self)  # what the glob inflicts (Status, issue #112)
 	shot.position = global_position + Vector2(0, -6)
 	shot.dir = aim.normalized() if aim.length() > 0.1 else facing
 	shot.damage = damage

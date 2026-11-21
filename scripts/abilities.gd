@@ -111,6 +111,8 @@ static func blocker(h: Hero, i: int) -> String:
 		return "none"
 	if h.dead:
 		return "down"
+	if Status.has(h, "erase") or Status.has(h, "stun"):
+		return "erased" if Status.has(h, "erase") else "stunned"  # issue #112
 	if h.cooldowns[i] > 0.0:
 		return "cooldown"
 	if h.ink < float(h.abilities[i].get("cost", 0)):

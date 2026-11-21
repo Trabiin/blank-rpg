@@ -57,3 +57,15 @@ once both see each other's charges and trip the guard.
 
 Total $0.247. The painting is `assets/ui/map_painted.jpg`; `tools/trace_land.py` traces its coast into
 `assets/map/land_mask.png`, and the provinces are laid over that, so the borders follow the painted coast.
+
+## Items, Forge and Market (issue #112, 2026-11-20)
+
+| Call | Estimate | Real cost |
+|---|---|---|
+| Forge level 3, Pro style-locked (guildhall style, inkworks + barracks refs), 4 options | ~$0.081 | $0.081 |
+| Market level 3, the same | ~$0.081 | $0.081 |
+| Levels 1 and 2 of both, 2 edit calls (both buildings per call so they age alike) | ~$0.16 | $0.161 |
+| 91 icons, 12 Pro calls at 32x32 (8 concepts x 8 options each) | ~$0.98 | $0.991 |
+
+Tools: `tools/make_forge_market_art.py` (buildings) and `tools/make_item_icons.py` (icons). Every pick is
+palette-snapped; building sprites also go through the depth pass (`tools/depth_pass.py`). Total $1.31.

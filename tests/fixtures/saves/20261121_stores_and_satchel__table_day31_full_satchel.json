@@ -1,0 +1,339 @@
+{
+	"area_name": "Command Table",
+	"empire": {
+		"ai_presets": {
+
+		},
+		"ai_techs": {
+
+		},
+		"blank_plans": {
+			"next": 0,
+			"pressure": [],
+			"repeat_day": 0
+		},
+		"bonds": {
+			"bran": {
+				"personal_done": false,
+				"points": 999,
+				"rank": 4,
+				"talk_day": 0
+			},
+			"gristle": {
+				"personal_done": false,
+				"points": 999,
+				"rank": 4,
+				"talk_day": 0
+			},
+			"quill": {
+				"personal_done": false,
+				"points": 999,
+				"rank": 4,
+				"talk_day": 0
+			},
+			"tobble": {
+				"personal_done": false,
+				"points": 999,
+				"rank": 4,
+				"talk_day": 0
+			}
+		},
+		"buildings": {
+			"barracks": 0,
+			"command_table": 1,
+			"guildhall": 2,
+			"infirmary": 0,
+			"inkworks": 0,
+			"scriptorium": 0
+		},
+		"construction": {
+
+		},
+		"day": 31,
+		"day_t": 0.3,
+		"deal_ready": {
+
+		},
+		"dialogue": {
+
+		},
+		"diplo_log": [],
+		"expeditions": [],
+		"hungry": false,
+		"intel_until": 0,
+		"job_ready": {
+			"rescue_gristle": 40
+		},
+		"lamp_jobs": {
+
+		},
+		"lamps": {
+
+		},
+		"missions_cleared": [],
+		"next_surge_day": 4,
+		"next_trouble_day": 5,
+		"pacts": [],
+		"playtime": 0,
+		"progress": {
+			"bag": {
+
+			},
+			"heroes": {
+
+			}
+		},
+		"provinces": [
+			{
+				"fray": 4,
+				"id": "hollowmark",
+				"owner": "you",
+				"scar": 0
+			},
+			{
+				"fray": 38,
+				"id": "meadow",
+				"owner": "free",
+				"scar": 0
+			},
+			{
+				"fray": 12,
+				"id": "gutterwoods",
+				"owner": "coven",
+				"scar": 0
+			},
+			{
+				"fray": 8,
+				"id": "oldmill",
+				"owner": "free",
+				"scar": 0
+			},
+			{
+				"fray": 24,
+				"id": "lampwick",
+				"owner": "free",
+				"scar": 0
+			},
+			{
+				"fray": 61,
+				"id": "saltreed",
+				"owner": "free",
+				"scar": 0
+			},
+			{
+				"fray": 2,
+				"id": "gallows",
+				"owner": "guild",
+				"scar": 0
+			},
+			{
+				"fray": 0,
+				"id": "tithe",
+				"owner": "concord",
+				"scar": 0
+			},
+			{
+				"fray": 100,
+				"id": "whitewater",
+				"owner": "erased",
+				"scar": 0
+			},
+			{
+				"fray": 10,
+				"id": "candlemere",
+				"owner": "free",
+				"scar": 0
+			},
+			{
+				"fray": 18,
+				"id": "abbey",
+				"owner": "concord",
+				"scar": 0
+			},
+			{
+				"fray": 30,
+				"id": "ossuary",
+				"owner": "free",
+				"scar": 0
+			},
+			{
+				"fray": 26,
+				"id": "quillpine",
+				"owner": "free",
+				"scar": 0
+			},
+			{
+				"fray": 4,
+				"id": "tollmarch",
+				"owner": "concord",
+				"scar": 0
+			},
+			{
+				"fray": 2,
+				"id": "ledgerside",
+				"owner": "concord",
+				"scar": 0
+			},
+			{
+				"fray": 0,
+				"id": "spire",
+				"owner": "concord",
+				"scar": 0
+			},
+			{
+				"fray": 6,
+				"id": "goldwash",
+				"owner": "free",
+				"scar": 0
+			},
+			{
+				"fray": 8,
+				"id": "lanternquay",
+				"owner": "guild",
+				"scar": 0
+			},
+			{
+				"fray": 6,
+				"id": "causeway",
+				"owner": "concord",
+				"scar": 0
+			},
+			{
+				"fray": 24,
+				"id": "inkmere",
+				"owner": "free",
+				"scar": 0
+			},
+			{
+				"fray": 12,
+				"id": "terraces",
+				"owner": "free",
+				"scar": 0
+			},
+			{
+				"fray": 28,
+				"id": "saltgrave",
+				"owner": "free",
+				"scar": 0
+			},
+			{
+				"fray": 40,
+				"id": "halfwave",
+				"owner": "free",
+				"scar": 0
+			},
+			{
+				"fray": 52,
+				"id": "lighthouse",
+				"owner": "free",
+				"scar": 0
+			}
+		],
+		"recruits": {
+			"ash": {
+				"injured": 0,
+				"role": "party",
+				"target": ""
+			},
+			"bran": {
+				"injured": 0,
+				"role": "idle",
+				"target": ""
+			},
+			"gristle": {
+				"injured": 0,
+				"role": "idle",
+				"target": ""
+			},
+			"pell": {
+				"injured": 0,
+				"role": "idle",
+				"target": ""
+			},
+			"quill": {
+				"injured": 0,
+				"role": "idle",
+				"target": ""
+			},
+			"tobble": {
+				"injured": 0,
+				"role": "idle",
+				"target": ""
+			}
+		},
+		"regions": [
+			"marches"
+		],
+		"reports": [
+			{
+				"day": 31,
+				"job": "personal_bran",
+				"title": "Brannoc's errand: called back",
+				"outcome": "success",
+				"squad": [
+					"bran",
+					"gristle"
+				],
+				"chance": 100,
+				"read": false,
+				"lines": [
+					"The squad turned round on the road. Brannoc won't have this settled by proxy.",
+					"It's a mission now: Brannoc is waiting at Gallows Ferry on the Command Table, and is coming in person.",
+					"The 4 Supplies the squad took were returned to the stores."
+				]
+			}
+		],
+		"res": {
+			"gilt": 120,
+			"ink": 5,
+			"insight": 0,
+			"renown": 0,
+			"supplies": 40
+		},
+		"research_active": "",
+		"research_done": [],
+		"research_paid": [],
+		"research_progress": {
+
+		},
+		"rng_state": "5147283058137325692",
+		"satchel": {
+			"tonic": 7,
+			"salts": 2,
+			"draught": 3
+		},
+		"speed": 1,
+		"standing": {
+			"concord": -55,
+			"coven": -15,
+			"guild": 5
+		},
+		"surge": {
+
+		},
+		"visitors": {
+
+		},
+		"journal": {
+			"enemies": {
+
+			},
+			"log": [],
+			"read": {
+
+			}
+		}
+	},
+	"game_version": "0.9.0",
+	"migrations": [
+		"20261120_save_format_v2",
+		"20261120_territory_regions",
+		"20261120_weapon_ink_skills",
+		"20261121_journal",
+		"20261121_personal_missions"
+	],
+	"playtime": 0,
+	"saved_at": 1795203652.286,
+	"scene": "res://scenes/command.tscn",
+	"version": 2
+}

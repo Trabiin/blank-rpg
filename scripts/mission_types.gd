@@ -333,6 +333,9 @@ static func _range_text(d: Dictionary) -> String:
 		var hi := int(v[1]) if v is Array else int(v)
 		var nm: String = Empire.RES_NAMES.get(k, k)
 		parts.append(("%d %s" % [hi, nm]) if lo == hi else ("up to %d %s" % [hi, nm]) if lo == 0 else ("%d-%d %s" % [lo, hi, nm]))
+	var mats := d.keys().filter(func(k): return Armory.is_mat(str(k))).map(func(k): return Armory.mat_name(str(k)))
+	if not mats.is_empty():  # Forge materials (issue #112)
+		parts.append("some %s" % " and ".join(mats))
 	return ", ".join(parts)
 
 

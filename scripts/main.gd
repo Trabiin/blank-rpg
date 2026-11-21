@@ -292,10 +292,23 @@ func _on_enemy_died(_e: Actor) -> void:
 		if not got.is_empty():
 			found_flash = 1.5
 			Audio.sfx("coin")
-		var item := Satchel.roll_drop()  # field items go straight into the satchel
+		var item := Satchel.roll_drop()  # field items go straight into the satchel, or home if it's full
 		if item != "":
-			Satchel.add(item)
-			hud.say("Found: %s (quick menu)." % Satchel.item(item).get("name", item), 2.0)
+			if Satchel.add(item):
+				hud.say("Found: %s (quick menu)." % Satchel.item(item).get("name", item), 2.0)
+			else:
+				found[item] = int(found.get(item, 0)) + 1
+				found_flash = 1.5
+				hud.say("Found: %s. The satchel is full: it goes to the stores." % Satchel.item(item).get("name", item), 2.5)
+		var mats := Armory.roll_mats(Journal.kind_of(_e), mission)  # Forge materials (issue #112)
+		for k in mats:
+			found[k] = int(found.get(k, 0)) + int(mats[k])
+			found_flash = 1.5
+			Fx.damage_number(entities, (_e as Node2D).global_position + Vector2(0, -20), Armory.mat_name(k), Color("c8d8a8"))
+		var tooth := Status.enemy_fell(_e as Node2D, heroes)  # Inkblot Brooch, Gilt Tooth
+		if tooth > 0:
+			found["gilt"] = int(found.get("gilt", 0)) + tooth
+			found_flash = 1.5
 	if kills == 10:
 		banter.event("tenth_kill", present())
 	_award_xp(int(_e.get("xp")) if _e.get("xp") != null else 0)
@@ -699,7 +712,7 @@ func _update_blank_contact(delta: float) -> void:
 		var edge := blank.edge_x(hero.global_position.y)
 		if hero.global_position.x > edge - 4.0:
 			hero.knockback = Vector2(-160, 0)
-			if blank_tick <= 0.0:
+			if blank_tick <= 0.0 and not Status.has(hero, "ward"):  # a Ward Candle keeps the edge from biting (issue #112)
 				hero.invuln_t = 0.0
 				hero.take_hit(3, hero.global_position + Vector2(10, 0), 160.0)
 				if hero == leader:

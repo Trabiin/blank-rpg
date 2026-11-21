@@ -180,7 +180,10 @@ func _rebuild() -> void:
 	rows = []
 	match TABS[tab]:
 		"Items":
-			for id in Satchel.ids():
+			if Satchel.carried().is_empty():
+				rows.append({"id": "", "label": "The satchel is empty", "right": "%d/%d" % [Armory.satchel_total(), Armory.satchel_slots()],
+					"detail": "Pack it in town: Forge & Market, Satchel tab.", "enabled": true, "info": true})
+			for id in Satchel.carried():  # issue #112: only what is packed
 				var it := Satchel.item(id)
 				var why := Satchel.blocker(id, _heroes())
 				rows.append({"id": id, "icon": id, "label": str(it.get("name", id)), "right": "x%d" % Satchel.count(id),
@@ -267,13 +270,16 @@ func _pick_row(i: int) -> void:
 	if TABS[tab] == "Options":
 		_open_options()
 		return
+	if TABS[tab] == "Items" and str(r.get("id", "")) == "":
+		_say("Nothing packed. The Forge & Market screen's Satchel tab packs it before a mission.")
+		return
 	if r.get("info", false) or (TABS[tab] == "Abilities" and not r.has("hero")):
 		_say("%s has no Ink abilities: Attack, and the charged tech on a full gauge." % r.get("label", "") if TABS[tab] == "Abilities" else "The gear screen can't open right now.")
 		return
 	match TABS[tab]:
 		"Items":
 			var id: String = r["id"]
-			if str(Satchel.item(id).get("target", "")) == "party":
+			if not Satchel.needs_target(id):  # party items and throwables (issue #112)
 				_use_item(id, null)
 				return
 			sub_title = "Use %s on" % Satchel.item(id).get("name", id)
@@ -283,8 +289,11 @@ func _pick_row(i: int) -> void:
 			for h in _heroes():
 				var hero: Hero = h
 				var ok := Satchel.can_target(id, hero)
-				sub.append({"id": "item:%s:%d" % [id, sub.size()], "label": hero.hero_name,
-					"right": "down" if hero.dead else "HP %d/%d" % [hero.hp, hero.max_hp], "enabled": ok})
+				var ails := Status.active(hero).filter(func(a): return a[0] in Status.AILMENTS).map(func(a): return Status.name_of(a[0]))
+				var right := "down" if hero.dead else ("Ink %d/%d" % [int(hero.ink), int(hero.max_ink)] if str(Satchel.item(id).get("target", "")) == "ink" else "HP %d/%d" % [hero.hp, hero.max_hp])
+				if not ails.is_empty() and not hero.dead:
+					right += "  " + ", ".join(ails)
+				sub.append({"id": "item:%s:%d" % [id, sub.size()], "label": hero.hero_name, "right": right, "enabled": ok})
 				var ratio := float(hero.hp) / float(hero.max_hp)
 				if ok and ratio < best_ratio:  # start on whoever needs it most
 					best_ratio = ratio

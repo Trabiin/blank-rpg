@@ -274,3 +274,30 @@ func test_old_town_save_resumes_in_hollowmark() -> void:
 	if hub == null:
 		return
 	check(hub.leader.global_position.distance_to(Vector2(600, 420)) < 1.0, "Ash where the save left them")
+
+
+## Issue #112: an old satchel full of found extras keeps the starting pack and stores the rest.
+func test_unlimited_satchel_moves_extras_to_the_stores() -> void:
+	var r: Dictionary = Saves.parse(_fixture_text("20261121_stores_and_satchel__table_day31_full_satchel.json"))
+	if not check_eq(r["status"], Saves.GOOD, "save with a full old satchel reads"):
+		return
+	var e: Dictionary = r["data"]["empire"]
+	check_eq(int(e["satchel"]["tonic"]), 3, "three Tonics stay packed")
+	check_eq(int(e["satchel"]["salts"]), 1, "one Salts stays packed")
+	var a: Dictionary = e["progress"]["armory"]
+	check_eq(int(a["stores"]["tonic"]), 4, "four extra Tonics go to the stores")
+	check_eq(int(a["stores"]["salts"]), 1, "the extra Salts too")
+	check_eq(int(a["stores"]["draught"]), 2, "and two Draughts")
+	Empire.from_dict(e)
+	check_eq(Armory.stored("tonic"), 4, "stores survive loading")
+	check(Armory.satchel_total() <= Armory.satchel_slots(), "the satchel fits its capacity")
+	check_eq(Armory.pack_of("tonic"), 3, "the pack is the starting stock")
+
+
+## Issue #112: a save made mid-mission keeps its satchel until the mission ends.
+func test_mid_mission_satchel_is_left_alone() -> void:
+	var r: Dictionary = Saves.parse(_fixture_text("20261120_save_format_v2__mid_mission.json"))
+	if not check_eq(r["status"], Saves.GOOD, "old mission save reads"):
+		return
+	var e: Dictionary = r["data"]["empire"]
+	check(e["progress"]["armory"]["stores"].is_empty(), "nothing moved to the stores mid-mission")

@@ -57,6 +57,7 @@ var research_view
 var diplomacy_view
 var bonds_view
 var gear_view  # gear_view.gd: party gear and the shop (issue #15)
+var armory_view  # armory_view.gd: Forge & Market (issue #112)
 var journal_view  # journal_view.gd: quest log, people, codex, history (issue #114)
 var newcomers_view
 var scene_view  # bond scenes started by talking to someone in town
@@ -168,6 +169,9 @@ func _ready() -> void:
 	gear_view = GearViewScript.new()
 	gear_view.visible = false
 	roster_layer.add_child(gear_view)
+	armory_view = ArmoryView.new()
+	armory_view.visible = false
+	roster_layer.add_child(armory_view)
 	journal_view = JournalView.new()  # quest log and codex (issue #114)
 	journal_view.visible = false
 	roster_layer.add_child(journal_view)
@@ -462,6 +466,8 @@ func _use(t: Dictionary) -> void:
 			expedition_view.open()  # the Guildhall's job board
 		elif t["id"] == "scriptorium" and Empire.level_of("scriptorium") > 0:
 			research_view.open()  # the Scriptorium's desks
+		elif (t["id"] == "forge" or t["id"] == "market") and Empire.level_of(t["id"]) > 0:
+			armory_view.open(t["id"])  # the Forge's benches, the Market's stalls (issue #112)
 		else:
 			buildings_view.open(t["id"])
 		touch.release_all()
@@ -546,6 +552,8 @@ func _story_check() -> void:
 	if roster_view.visible or buildings_view.visible or expedition_view.visible or research_view.visible \
 			or diplomacy_view.visible or bonds_view.visible or scene_view.visible or newcomers_view.visible or gear_view.visible:
 		return
+	if armory_view.visible:
+		return
 	var b := Story.next_beat()
 	if b.is_empty():
 		return
@@ -604,7 +612,7 @@ func alerts_blocked() -> bool:
 		or expedition_view.visible or research_view.visible or diplomacy_view.visible or bonds_view.visible \
 		or scene_view.visible or newcomers_view.visible or gear_view.visible or dialogue_box.visible \
 		or chapter_card.visible or Engine.get_process_frames() == menu_closed_frame \
-		or journal_view.visible
+		or journal_view.visible or armory_view.visible
 
 
 ## "Go there" from town: screens open right here; provinces and missions are on the Command Table.
@@ -679,6 +687,7 @@ func open_menu(note := "") -> void:
 		{"id": "bonds", "label": "Bonds", "detail": Prompts.key("bonds")},
 		{"id": "newcomers", "label": "Newcomers", "detail": Prompts.key("newcomers")},
 		{"id": "gear", "label": "Party gear & shop", "detail": Prompts.key("gear")},
+		{"id": "armory", "label": "Forge & Market", "detail": Prompts.key("armory")},
 		{"id": "save", "label": "Save game"},
 		{"id": "load", "label": "Load game", "enabled": Saves.latest_slot() != "", "note": "(no saves yet)"},
 		{"id": "options", "label": "Options"},
@@ -733,6 +742,9 @@ func _on_menu(id: String) -> void:
 		"gear":
 			_close_menu()
 			gear_view.open("town")
+		"armory":
+			_close_menu()
+			armory_view.open()
 		"options":
 			menu.visible = false
 			OptionsView.popup(self).closed.connect(func(): menu.visible = true)
@@ -785,8 +797,8 @@ func _process(delta: float) -> void:
 	var screen_open: bool = roster_view.visible or buildings_view.visible or expedition_view.visible or research_view.visible \
 			or diplomacy_view.visible or bonds_view.visible or scene_view.visible or newcomers_view.visible or gear_view.visible \
 			or dialogue_box.visible or chapter_card.visible
-	screen_open = screen_open or journal_view.visible
-	if screen_open or frame == journal_view.closed_frame or frame == roster_view.closed_frame or frame == buildings_view.closed_frame \
+	screen_open = screen_open or journal_view.visible or armory_view.visible
+	if screen_open or frame == armory_view.closed_frame or frame == journal_view.closed_frame or frame == roster_view.closed_frame or frame == buildings_view.closed_frame \
 			or frame == expedition_view.closed_frame or frame == research_view.closed_frame \
 			or frame == diplomacy_view.closed_frame or frame == bonds_view.closed_frame \
 			or frame == scene_view.closed_frame or frame == newcomers_view.closed_frame or frame == menu_closed_frame \
@@ -821,6 +833,9 @@ func _process(delta: float) -> void:
 		return
 	if Input.is_action_just_pressed("gear"):
 		gear_view.open("town")
+		return
+	if Input.is_action_just_pressed("armory"):
+		armory_view.open()
 		return
 	if Input.is_action_just_pressed("journal"):
 		journal_view.open()

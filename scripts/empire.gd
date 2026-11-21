@@ -194,6 +194,7 @@ func reset() -> void:
 	missions_cleared = []
 	last_mission = {}
 	progress = Progress.fresh()
+	progress["armory"] = Armory.fresh()  # materials, stores, satchel pack, Forge, Market (issue #112)
 	visitors = {}
 	journal = Journal.fresh()
 	rng.seed = 1234
@@ -262,6 +263,9 @@ func ledger() -> Array:
 	var guild := current_effect("guildhall")
 	if int(guild.get("gilt", 0)) > 0:
 		lines.append({"label": "Guildhall contracts", "gilt": int(guild["gilt"]), "supplies": 0, "ink": 0, "note": ""})
+	var market := current_effect("market")
+	if int(market.get("gilt", 0)) > 0:
+		lines.append({"label": "Market stalls", "gilt": int(market["gilt"]), "supplies": 0, "ink": 0, "note": ""})
 	var ins := int(current_effect("scriptorium").get("insight", 0))
 	if ins > 0:
 		lines.append({"label": "Scriptorium", "gilt": 0, "supplies": 0, "ink": 0, "note": "+%d Insight" % ins})
@@ -289,6 +293,7 @@ func _settle() -> void:
 	if hungry:
 		res["supplies"] = 0
 	Progress.dawn()  # the Barracks trains whoever is on the bench
+	Armory.dawn()  # the Forge finishes its jobs (issue #112)
 	ledger_settled.emit(net)
 
 
@@ -1791,6 +1796,8 @@ func building_effect(id: String, level: int, staff: Array) -> Dictionary:
 				return {"gilt": 0, "text": "Idle: needs a broker"}
 			var g := 2 * level + _stat_sum(staff, "charm", 2)
 			return {"gilt": g, "text": "+%d Gilt a day from contracts" % g}
+		"forge", "market":  # issue #112: scripts/armory.gd
+			return Armory.building_effect(id, level, staff)
 	return {"text": ""}
 
 

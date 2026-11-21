@@ -63,6 +63,8 @@ HEADER = """# Last Ink map: Hollowmark, the hub town (46 x 32 tiles of 16px). Ge
 @markD site_inkworks
 @markE site_scriptorium
 @markK site_guildhall
+@markW site_forge
+@marku site_market
 @markL lamp
 @markY visitors
 @dirt CFMPNVhvqwmx12LOQZlXU
@@ -113,11 +115,13 @@ BIG = {  # 5x5 kinds and plots: written at top-left = (x - 2, y - 5)
     (38, 20): 'D',  # inkworks, south-east alley
     (31, 26): 'E',  # scriptorium
     (12, 19): 'K',  # guildhall, by the graveyard alley
+    (4, 18): 'W',   # forge, west of the guildhall, downwind of the square (issue #112)
+    (17, 27): 'u',  # market, by the gate road where carts come in (issue #112)
 }
-DOOR = {'H': 0, 'I': 0, 'J': 0, 'A': 0, 'B': 0, 'D': 0, 'E': 0, 'K': 0,
+DOOR = {'H': 0, 'I': 0, 'J': 0, 'A': 0, 'B': 0, 'D': 0, 'E': 0, 'K': 0, 'W': 0, 'u': 0,
         'a': 0, 'b': 0, 'c': 1, 'd': -1, 'e': 0, 'j': 1, 'k': -1, 'n': 0}
 HOUSES = {  # free-standing art, written at the bottom-centre tile
-    (3, 7): 'a', (44, 16): 'c', (44, 5): 'd', (4, 18): 'e', (16, 26): 'j',
+    (3, 7): 'a', (44, 16): 'c', (44, 5): 'd',
     (40, 30): 'k', (29, 31): 'n',
 }
 MARKS = {

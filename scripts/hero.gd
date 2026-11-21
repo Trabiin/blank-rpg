@@ -126,6 +126,7 @@ func _physics_process(delta: float) -> void:
 	anim_t += delta
 	flash_t = max(flash_t - delta, 0.0)
 	invuln_t = max(invuln_t - delta, 0.0)
+	var held := Status.tick(self, delta)  # poison, burn, stun, Erase and boons (issue #112)
 
 	if dead:
 		knockback = knockback.move_toward(Vector2.ZERO, 600.0 * delta)
@@ -137,6 +138,13 @@ func _physics_process(delta: float) -> void:
 	if heal_every > 0.0:
 		_update_heal(delta)
 	_update_abilities(delta)
+	if held:  # stunned: no moving, swinging or casting until it wears off
+		velocity = knockback
+		knockback = knockback.move_toward(Vector2.ZERO, 900.0 * delta)
+		move_and_slide()
+		moving = false
+		queue_redraw()
+		return
 
 	if dash_t > 0.0:
 		dash_t -= delta
@@ -195,7 +203,7 @@ func try_attack() -> void:
 
 
 func _apply_hit() -> void:
-	var dmg := maxi(1, roundi(base_damage * swing_power * crit_next))
+	var dmg := maxi(1, roundi(base_damage * swing_power * crit_next * Status.swing_mult(self)))
 	var hit_any := false
 	for e in get_tree().get_nodes_in_group("enemies"):
 		var enemy := e as Enemy
@@ -205,6 +213,7 @@ func _apply_hit() -> void:
 		if to.length() <= reach + enemy.radius and absf(facing.angle_to(to)) <= arc:
 			if enemy.take_hit(dmg, global_position, 120.0 + 160.0 * swing_power):
 				hit_any = true
+				Status.swing_landed(self, enemy, dmg)  # trinket perks: first strike, lifesteal, stun (issue #112)
 	if hit_any and crit_next > 1.0:
 		Fx.damage_number(get_parent(), global_position + Vector2(0, -30), "Ambush!", Color("c9b8ff"))
 		crit_next = 1.0
@@ -227,6 +236,7 @@ func _adjust_damage(amount: int) -> int:
 			Fx.damage_number(get_parent(), global_position + Vector2(0, -16), "blocked", Color("9fd8ff"))
 			invuln_t = 0.3
 			return 0
+	amount = Status.adjust_incoming(self, amount)  # Iron Tea, the ward, Widow's Ribbon (issue #112)
 	if guard_t > 0.0:
 		amount = maxi(1, roundi(amount * (1.0 - guard_cut)))
 	if guard > 0.0:  # armor (issue #15)
@@ -238,6 +248,8 @@ func take_hit(amount: int, from: Vector2, force := 160.0) -> bool:
 	if parry_t > 0.0 and not dead and amount > 0:
 		Abilities.riposte(self, from)
 		return true
+	if amount > 0 and not dead and invuln_t <= 0.0:
+		Status.thorns(self, from)  # Thornwire Bracelet bites back (issue #112)
 	var before := hp
 	var landed := super.take_hit(amount, from, force * poise)
 	if hp < before:
@@ -550,6 +562,7 @@ func _draw_overlay() -> void:
 		overlay.draw_arc(Vector2(0, -7), 12.5, PI * 0.15, PI * 0.85, 12, Color("f2a65a", 0.7), 1.5)
 	if cast_t > 0.0:
 		overlay.draw_circle(Vector2(0, -22), 2.0 * cast_t / SWING_TIME + 0.5, Color(cast_color, 0.9))
+	Status.draw_marks(overlay, self, -27.0)  # status shapes over the head (issue #112)
 	if dash_t > 0.0:
 		for k in 3:
 			var back := -dash_dir * (6.0 + 6.0 * k)
