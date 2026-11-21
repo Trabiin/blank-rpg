@@ -1,6 +1,6 @@
 // Tests for the report worker with a fake GitHub API: node tools/feedback_worker/test.mjs
 import assert from "node:assert/strict";
-import worker, { validate } from "./worker.js";
+import worker, { validate, surveyRound } from "./worker.js";
 
 const env = { GITHUB_TOKEN: "t", REPORTS_REPO: "o/reports", GAME_KEY: "k" };
 let calls = [];
@@ -78,6 +78,18 @@ assert.equal((await post("{nope", { ip: "4.4.4.4" })).status, 400);
 assert.equal((await worker.fetch(new Request("https://w.example/", { method: "PUT" }), env)).status, 405);
 assert.equal((await worker.fetch(new Request("https://w.example/", { method: "OPTIONS" }), env)).status, 204);
 assert.equal(validate(report(), { GAME_KEY: "" }), "unknown game", "no key configured: refuse everything");
+
+// A playtest survey (issue #168): accepted, labelled with its round; a round name that isn't plain is dropped.
+calls = [];
+const survey = (round) => report({ kind: "survey", text: "Playtest survey, round r1 (survey v1)", previous_session: {},
+  attachments: { "survey.json": { type: "application/json", data: JSON.stringify({ round, answers: { enjoy: 4 } }) } } });
+res = await post(survey("R1"), { ip: "5.5.5.5" });
+assert.equal(res.status, 200);
+const sIssue = calls.find((c) => c.path === "/repos/o/reports/issues").body;
+assert.deepEqual(sIssue.labels, ["report", "survey", "round-r1"]);
+assert.ok(sIssue.title.startsWith("[survey] Playtest survey, round r1"));
+assert.equal(surveyRound(survey("../../x")), "");
+assert.equal(surveyRound(report()), "", "only surveys have a round");
 
 // Rate limit without a binding: the seventh report in an hour from one address is refused.
 let last;

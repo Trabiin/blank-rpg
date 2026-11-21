@@ -60,7 +60,8 @@ Run it when Ojon asks, after each playtest round, or on a schedule during playte
    OS/GPU, the error lines, and `Reports: LI-XXXXXXXX`. Labels as usual (`bug`, `release`, milestone).
    Never copy the contact field, the save or the free text word for word into the public repo.
 5. Feedback and ideas: collect them in one comment per playtest round on #126 (or the relevant
-   design issue), summarised.
+   design issue), summarised. Playtest surveys (label `survey`, `round-<id>`) are summed up with
+   `tools/playtest_report.py` instead; see docs/PLAYTEST.md "After a round".
 6. Comment on the report issue with the public issue link and close it (`completed`), or close as
    `not planned` with a reason. Reports for released fixes, and anything older than 12 months, are
    deleted (folder and issue), as PRIVACY.md promises.

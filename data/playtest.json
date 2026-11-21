@@ -1,0 +1,16 @@
+{
+	"_comment": "Playtest builds (issues #148, #168; docs/PLAYTEST.md). round: the playtest round this build is for, e.g. \"r1\"; empty in release builds. With a round set (or in builds with the test_shortcuts feature, as round \"dev\"), the title and pause menus show \"Playtest survey\", the title shows the welcome note once per round, and the title (also after Quit to title) offers the survey once offer_after_min minutes have been played, then again every 45 more minutes, at most 3 times. ai_short is the fallback copy of the short AI statement; data/ai_use.json (key \"short\", issue #164) wins when it exists. Survey answers go out through the report inbox in data/feedback.json as kind \"survey\".",
+	"round": "",
+	"offer_after_min": 30,
+	"welcome_title": "Welcome to the playtest",
+	"welcome": "Thank you for testing Last Ink! This is an unfinished build, so expect rough edges.\n\nWhen you stop playing, for any reason, please fill in the short survey: Menu > Playtest survey. It takes about 5 minutes and is the most useful thing you can do for the game. Found a bug? Menu > Report a bug.\n\nPlease don't share screenshots or videos publicly yet, unless the invite says that's OK for this build.",
+	"ai_short": "Last Ink is made by one developer working with AI tools. The pixel art and portraits started as AI generations and were reworked into one locked style, and an AI assistant helped write the code and text. Nothing is generated while you play.",
+	"ai_url": "https://github.com/Trabiin/last-ink/blob/main/docs/AI_USE.md",
+	"targets": {
+		"_comment": "Round targets (issue #168, from the AI reception research): unprompted AI mentions on the neutral pages, and 'I wouldn't buy it because of this' on the AI page. tools/playtest_report.py marks a round against them.",
+		"unprompted_ai_max": 0.1,
+		"ai_wont_buy_baseline": 0.08,
+		"ai_wont_buy_alarm": 0.12,
+		"min_responses": 10
+	}
+}
