@@ -716,7 +716,7 @@ func role_options(id: String) -> Array:
 		out.append({"role": "staff", "target": bid, "label": "Work the %s (%d/%d)" % [b["name"], staff.size(), slots_of(bid)],
 			"enabled": note == "", "note": note, "preview": preview})
 	var expedition_note := ("send squads from the Expeditions screen" + Prompts.tag("expeditions")) if level_of("guildhall") > 0 else "needs a Guildhall"
-	for fid in faction_ids():
+	for fid in (faction_ids() if Help.is_open("diplomacy") else []):  # no envoys before the story opens Diplomacy (issue #115)
 		var fa := faction(fid)
 		var cur := envoy_of(fid)
 		var replaces := "" if cur == "" or cur == id else "  Replaces %s." % short_name(cur)
@@ -1615,7 +1615,7 @@ func make_deal(fid: String, kind: String) -> String:
 			var p := territory().find(fa["province"])
 			p["owner"] = "you"
 			change_standing(fid, int(d["standing"]), d["name"], true)
-			notice.emit("%s is yours. Post a governor there (G) before it frays." % p["name"], false)
+			notice.emit("%s is yours. Post a governor there%s before it frays." % [p["name"], Prompts.tag("govern")], false)
 	if diplo_log.size() > DIPLO_LOG_KEPT:
 		diplo_log.resize(DIPLO_LOG_KEPT)
 	return d["text"]

@@ -34,7 +34,7 @@
 			"blurb": "Kept Hollowmark's books for the Concord. Now cooks them for you. Knows where every coin is buried, and who buried it.",
 			"post": "stores", "look": {"outfit": "mage", "colors": {"skin": "e9c4a6", "cloth": "3f5a4a", "leather": "5a4636", "boots": "2e2838", "trim": "d8cfa8"}},
 			"quips": ["Quill kept receipts for everything, including the weather.", "Quill has filed the trip under \"deductible\"."],
-			"lines": ["Every coin in Hollowmark has a story. Most of them end with me.", "The Concord taught me bookkeeping. I taught it creativity.", "Ask me about the ledger. Actually, don't. Press L at the table."]
+			"lines": ["Every coin in Hollowmark has a story. Most of them end with me.", "The Concord taught me bookkeeping. I taught it creativity.", "Ask me about the ledger. Actually, don't. Read it yourself at the table{tag:ledger}."]
 		},
 		{
 			"id": "tobble", "name": "Old Tobble", "title": "tavern keeper", "tier": "core", "start": true,

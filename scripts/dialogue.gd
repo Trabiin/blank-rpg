@@ -48,11 +48,12 @@ static func data() -> Dictionary:
 
 
 ## [speaker, text, expression] from either list or {"who", "text", "expr"} form.
+## Button tokens in the text ({tag:ledger}...) are filled for the device in use (Prompts.fill, issue #115).
 static func line(l) -> Array:
 	if typeof(l) == TYPE_DICTIONARY:
-		return [String(l.get("who", "")), String(l.get("text", "")), String(l.get("expr", ""))]
+		return [String(l.get("who", "")), Prompts.fill(String(l.get("text", ""))), String(l.get("expr", ""))]
 	var a: Array = l
-	return [String(a[0]) if a.size() > 0 else "", String(a[1]) if a.size() > 1 else "", String(a[2]) if a.size() > 2 else ""]
+	return [String(a[0]) if a.size() > 0 else "", Prompts.fill(String(a[1])) if a.size() > 1 else "", String(a[2]) if a.size() > 2 else ""]
 
 
 static func lines(raw: Array) -> Array:

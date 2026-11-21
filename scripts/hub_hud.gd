@@ -181,11 +181,15 @@ func _draw() -> void:
 			_text(Vector2(vs.x - 236, 58), "Clock: %s / %s   Menu: %s" % [Prompts.key("clock_slower"), Prompts.key("clock_faster"), Prompts.key("pause")], 8, Color(1, 1, 1, a4))
 			_text(Vector2(vs.x - 236, 69), "Roster %s  Buildings %s  Expeditions %s" % [Prompts.key("roster"), Prompts.key("buildings"), Prompts.key("expeditions")], 8, Color(1, 1, 1, a4))
 			_text(Vector2(vs.x - 236, 80), "Everything else: the Menu", 8, Color(1, 1, 1, a4))
-		else:
-			_text(Vector2(vs.x - 236, 58), "Clock: 1-4   Menu: Esc", 8, Color(1, 1, 1, a4))
-			_text(Vector2(vs.x - 236, 69), "Roster R  Buildings B  Research T  Factions F  Bonds H", 8, Color(1, 1, 1, a4))
-			_text(Vector2(vs.x - 236, 80), "F1: show or hide this", 8, Color(1, 1, 1, a4))
-			_text(Vector2(vs.x - 236, 80), "Newcomers N", 8, Color(1, 1, 1, a4))
+		else:  # read from the InputMap, so remapped keys show (issue #115)
+			_text(Vector2(vs.x - 236, 58), "Clock: %s-%s   Menu: %s   Journal: %s" % [Prompts.key("clock_speed_0"), Prompts.key("clock_speed_3"),
+				Prompts.key("pause"), Prompts.key("journal")], 8, Color(1, 1, 1, a4))
+			var keys := PackedStringArray()
+			for a in [["roster", "Roster"], ["buildings", "Buildings"], ["research", "Research"], ["diplomacy", "Factions"], ["bonds", "Bonds"], ["newcomers", "Newcomers"]]:
+				if Prompts.key(a[0]) != "" and Help.is_open(a[0]):
+					keys.append("%s %s" % [a[1], Prompts.key(a[0])])
+			_text(Vector2(vs.x - 236, 69), "  ".join(keys), 8, Color(1, 1, 1, a4))
+			_text(Vector2(vs.x - 236, 80), "F1: show or hide this   Help: in the Menu", 8, Color(1, 1, 1, a4))
 
 
 func _wrap_lines(s: String, width: float, size: int) -> PackedStringArray:

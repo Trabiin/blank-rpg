@@ -1,0 +1,641 @@
+{
+	"_comment": "Onboarding and in-game help (issue #115, scripts/help.gd). Every entry is a topic: id (unique; seen markers are saved as help:<id>, never reuse), kind, group, title, voice (speaker ids, the first one on the roster speaks; recruits or data/story.json speakers, each needs a portrait), lines (strings spoken by the voice, or [speaker, text, expression] for a line by someone else), alt (voice id -> lines used instead when that voice speaks), summary (one line for the Help screen list). Text may use button tokens (Prompts.fill): {tag:action}, {key:action}, {confirm}, {back}, {dev:keyboard|pad|touch}. KINDS: screen = plays the first time its screen opens (screen: roster, buildings, governor, expeditions, research, diplomacy, bonds, newcomers, gear, armory, journal, party, command; command plays when the Command Table first opens). unlock = a system of the Command Table opened by the story: screens (the screens it unlocks), when (conditions), locked (lines said when a locked screen is asked for). In a story campaign those screens stay shut until when holds; then the topic plays once wherever Ash is. tip = plays the first time its when holds. manual = only in the Help screen and the codex. CONDITIONS: Journal.meets keys (Story.meets keys plus command, region, erased_any, plans...) and any (a list: one must hold), flag (set by the game: erased = a province was erased while you watched), surge (a surge gathers against your land), injured (someone on the roster is hurt), trouble (the Concord has made trouble), hungry (supplies ran out), visitor (someone waits at the south gate), bond_ready (someone has a bond scene waiting), fray_high (one of your provinces is at this much Fray or more), seen_help (a topic id that has played). GROUPS order the Help screen: start, screens, unlocks, events, field.",
+	"topics": [
+		{
+			"id": "command",
+			"kind": "screen",
+			"screen": "command",
+			"group": "start",
+			"title": "The Command Table",
+			"voice": [
+				"quill"
+			],
+			"summary": "The map, the clock, Fray and governors.",
+			"lines": [
+				"This is the governor's old table. He used it to decide who to tax. We'll use it to decide who to keep.",
+				"Every patch of colour is a province. The paler it goes, the more Fray: the Blank wearing it thin. At a hundred it's gone. Not burned, not taken. Gone, and everyone in it.",
+				"The clock only runs while we're at this table or walking the town. {dev:Keys 1 to 4 set the pace, from stopped to fast|{key:clock_slower} and {key:clock_faster} step it slower and faster|The speed buttons up top set the pace}. Stop it whenever you need to think. I do, constantly.",
+				"Pick a province and post a governor{tag:govern}. Ungoverned land frays faster and pays a quarter less. Free land next to ours can be claimed for Gilt and Supplies, once somebody's there to run it.",
+				"The bar along the top is what we have. The ledger{tag:ledger} is where it goes every dawn. People eat. Mostly I mind that they eat on credit.",
+				"Anything on fire turns up in the corner, and {dev:Tab|{key:alert_go}|a tap on it} takes you straight to it. The journal{tag:journal} keeps the long list of things trying to kill us.",
+				"The rest we'll take a day at a time. Running a town nobody may legally run is enough for one afternoon."
+			]
+		},
+		{
+			"id": "day_one",
+			"kind": "tip",
+			"group": "start",
+			"title": "Who to post first",
+			"voice": [
+				"quill"
+			],
+			"when": {
+				"command": true,
+				"seen_help": "command"
+			},
+			"summary": "A first-day plan: governors, the Meadow, the town.",
+			"lines": [
+				"If you want my advice, and you do: put somebody in charge of Hollowmark itself before anything else. Pell, Tobble, me. Somebody.",
+				"Then look east at the Frayed Meadow. It's free, it's close and it's going pale. Claim it with a governor and it stops being the Blank's lunch.",
+				"Buildings{tag:buildings} grow the town. A Guildhall gets us squads and contracts, a Scriptorium gets us readers. One build at a time; we have one crew and they have opinions."
+			]
+		},
+		{
+			"id": "roster",
+			"kind": "screen",
+			"screen": "roster",
+			"group": "screens",
+			"title": "The roster",
+			"voice": [
+				"bran",
+				"quill"
+			],
+			"summary": "Everyone you have, and the one job each of them does.",
+			"lines": [
+				"Every pair of hands we've got, on one sheet. Each of them does exactly one thing at a time: fight, govern, staff a building, carry messages. Nobody does two. I've tried. You get paid for neither.",
+				"Fighters can join the party. Three go out on missions, Ash always leads. The rest earn their keep here.",
+				"Match the job to the person. A governor with the right temper holds a province better; a soft touch in the wrong place just bleeds it. The sheet tells you the fit before you commit.",
+				"Hurt people sit out until they mend. Don't take it personally. They don't."
+			],
+			"alt": {
+				"quill": [
+					"Everyone we have, on one sheet. Each does one job at a time: fight, govern, staff a building, carry messages. One. I've checked the arithmetic.",
+					"Three go out with the party, Ash always leads. Match the job to the person; the sheet shows the fit before you commit. Hurt people sit out until they mend."
+				]
+			}
+		},
+		{
+			"id": "governor",
+			"kind": "screen",
+			"screen": "governor",
+			"group": "screens",
+			"title": "Governors and claims",
+			"voice": [
+				"quill"
+			],
+			"summary": "Posting governors, province fit and claiming free land.",
+			"lines": [
+				"A governor turns a coloured patch on a map into a place someone answers for. Fray climbs slower, the province pays in full, and the Blank finds fewer gaps.",
+				"Every province favours a kind of person. Put a scrapper where they want a scholar and you'll hear about it. The fit is shown beside each name: good, fair or poor.",
+				"Free land next to ours can be claimed. It costs Gilt and Supplies up front and a governor to hold it. Land we can't hold is just a bigger target."
+			]
+		},
+		{
+			"id": "buildings",
+			"kind": "screen",
+			"screen": "buildings",
+			"group": "screens",
+			"title": "Buildings",
+			"voice": [
+				"pell",
+				"tobble"
+			],
+			"summary": "Growing Hollowmark, one build crew at a time.",
+			"lines": [
+				"I dig holes for a living. Turns out the same people who fill them can put walls up. One crew, so one job at a time. It takes days. Things worth having do.",
+				"Each building does one thing well and better with people working in it. Staff them from here or from the roster.",
+				"Wardlamps are the odd one: we hang one in a province we hold and its Fray climbs slower every day after. Lamplight's about the only thing the Blank doesn't like the taste of."
+			],
+			"alt": {
+				"tobble": [
+					"One build crew, so one job at a time, and it takes days. Each building does one thing well, better with people working in it.",
+					"Wardlamps hang in a province we hold and slow its Fray. The Blank doesn't like lamplight. Neither do my regulars, come to think of it."
+				]
+			}
+		},
+		{
+			"id": "expeditions",
+			"kind": "screen",
+			"screen": "expeditions",
+			"group": "screens",
+			"title": "Expeditions",
+			"voice": [
+				"bran"
+			],
+			"summary": "Sending squads out on jobs while you stay home.",
+			"lines": [
+				"The board's where coin finds us. Pick a job, pick a squad, send them. They're gone a few days and come back with Gilt, Supplies, people, or a story about why they didn't.",
+				"The odds are shown before you sign. Better-suited people, better odds. Sending someone who'd rather be elsewhere is how you get a report that ends in 'regrettably'.",
+				"One squad out per Guildhall level. And while they're away, they're away. No governing, no fighting, no favours."
+			]
+		},
+		{
+			"id": "research",
+			"kind": "screen",
+			"screen": "research",
+			"group": "screens",
+			"title": "Research",
+			"voice": [
+				"abeyance",
+				"quill"
+			],
+			"summary": "Spending Insight on what the Concord knew about the Blank.",
+			"lines": [
+				"Every page in this pile was written by someone the Ledger later struck out. They knew things. Wards, margins, the shapes the Blank prefers.",
+				"Researchers at the Scriptorium gather Insight. Spend it to start a study, and then it takes days of reading. Better readers, faster days.",
+				"One study at a time. Set one aside and the pages keep their place for later. Paper is patient. It's people who aren't."
+			],
+			"alt": {
+				"quill": [
+					"Pell's crates from the tax office. The Concord's own notes on the Blank, filed under 'do not read'. So, naturally.",
+					"Researchers at the Scriptorium gather Insight. Spend it to start a study; then it takes days of reading. Better readers, faster study.",
+					"One study at a time. When someone who actually enjoys this turns up, give them the desk. Until then, it's me."
+				]
+			}
+		},
+		{
+			"id": "diplomacy",
+			"kind": "screen",
+			"screen": "diplomacy",
+			"group": "screens",
+			"title": "Diplomacy",
+			"voice": [
+				"odile",
+				"tobble"
+			],
+			"summary": "The three factions, standing, envoys and deals.",
+			"lines": [
+				"Three neighbours. The Concord thinks it owns everything with a name. The Coven thinks it owns everything with roots. The Guild owns whatever pays.",
+				"Standing runs from Hostile to Allied and drifts every dawn. Send an envoy and it drifts your way. Leave it, and old grudges do the drifting.",
+				"Deals cost something and buy something: a gift, intel on the next surge, trade, help holding the line, and, if they like you enough, land.",
+				"And when the Concord turns hostile it starts sending fines and writs. Being liked by somebody makes that much easier to survive."
+			],
+			"alt": {
+				"tobble": [
+					"Three neighbours. The Concord thinks it owns everything with a name, the Coven everything with roots, and the Guild whatever pays.",
+					"Standing drifts every dawn, Hostile to Allied. An envoy pulls it our way. Deals cost something and buy something: gifts, intel, trade, aid against a surge, even land, if they like us enough.",
+					"When the Concord gets nasty it sends fines and writs. Friends elsewhere soften the blow. I'd know. I've been fined for having friends."
+				]
+			}
+		},
+		{
+			"id": "bonds",
+			"kind": "screen",
+			"screen": "bonds",
+			"group": "screens",
+			"title": "Bonds",
+			"voice": [
+				"tobble"
+			],
+			"summary": "Getting to know people, and what they become.",
+			"lines": [
+				"People aren't a roster, love. They're who stays when the roof comes in. Get to know them and they'll get to know you back.",
+				"Bonds grow by fighting side by side, by talking in town and by giving folk work they like. When someone's ready for a proper word, their name lights up here.",
+				"Each rank is a scene, and some ranks bring something: a knack in the field, a better hand at a job. The last ranks ask something of you first."
+			]
+		},
+		{
+			"id": "newcomers",
+			"kind": "screen",
+			"screen": "newcomers",
+			"group": "screens",
+			"title": "Newcomers",
+			"voice": [
+				"tobble"
+			],
+			"summary": "People waiting at the south gate, and taking them on.",
+			"lines": [
+				"Word gets around that Hollowmark takes in the unlisted. So the unlisted turn up, with a bag and a story.",
+				"They wait at the south gate. Talk to them there or take them on from here. Some just want a bed. Some want a price. Some want you to promise something, and they'll remember.",
+				"They won't wait forever. Nobody does. Except me. I'm very patient."
+			]
+		},
+		{
+			"id": "gear",
+			"kind": "screen",
+			"screen": "gear",
+			"group": "screens",
+			"title": "Party gear and the shop",
+			"voice": [
+				"bran"
+			],
+			"summary": "Levels, equipment, skills and buying kit.",
+			"lines": [
+				"Steel, leather and the odd lucky charm. Each fighter has a weapon, armour and a trinket. Better kit, fewer funerals.",
+				"Levels come from fighting. They bring Skill Points for the skill tree, and the weapon you swing grows with use: new techs, sharper ones.",
+				"Spare gear lives in the bag. The stall sells more if you've Gilt. Go on. Spend it before Quill finds a reason not to."
+			]
+		},
+		{
+			"id": "armory",
+			"kind": "screen",
+			"screen": "armory",
+			"group": "screens",
+			"title": "Forge and Market",
+			"voice": [
+				"dunmore",
+				"tobble"
+			],
+			"summary": "Making and upgrading kit, buying and selling.",
+			"lines": [
+				"Bring me what you pull off things you've killed. I'll make it into something that kills better. Upgrades take days. Iron doesn't hurry for anyone.",
+				"Market's next door. They buy your spare bits and sell what came in on the cart. Stock changes every few days, so don't dither."
+			],
+			"alt": {
+				"tobble": [
+					"The Forge turns what you drag home from missions into kit, and upgrades weapons, given days. The Market buys spares and sells whatever came in on the cart; stock turns over every few days."
+				]
+			}
+		},
+		{
+			"id": "journal",
+			"kind": "screen",
+			"screen": "journal",
+			"group": "screens",
+			"title": "The journal",
+			"voice": [
+				"quill"
+			],
+			"summary": "Quests, people, the codex and history.",
+			"lines": [
+				"My filing. Quests: what the story wants, what each person wants, what each faction wants, and every fire on the map. Show one on the map and you're there.",
+				"People: everyone we've met and how to bring in the ones we haven't. The codex: places, factions, the things that bite, and these little lectures of mine, should you miss them.",
+				"History: what happened and when. For the inquest."
+			]
+		},
+		{
+			"id": "party",
+			"kind": "screen",
+			"screen": "party",
+			"group": "screens",
+			"title": "Choosing a party",
+			"voice": [
+				"bran"
+			],
+			"summary": "Who goes on a mission, and how allies fight.",
+			"lines": [
+				"Three go: Ash and two others. Look at what you're walking into before you pick. Expect lines on the briefing aren't decoration.",
+				"You steer whoever's in front and can swap any time. The others follow orders you set in the quick menu: aggressive, balanced, keep their distance, or look after everyone else.",
+				"Whoever stays home keeps their job. Whoever goes doesn't do it while they're out."
+			]
+		},
+		{
+			"id": "unlock_bonds",
+			"kind": "unlock",
+			"group": "unlocks",
+			"title": "Bonds open",
+			"voice": [
+				"tobble"
+			],
+			"screens": [
+				"bonds"
+			],
+			"when": {
+				"any": [
+					{
+						"day": 2
+					},
+					{
+						"seen": [
+							"act1_rumours"
+						]
+					}
+				]
+			},
+			"summary": "Day 2: the people who stood with you want a word.",
+			"lines": [
+				"Funny thing. Ever since the square, folk keep coming into the tavern asking about you. The ones who stood next to you most of all.",
+				"Have a proper word with them now and then. Bonds{tag:bonds}, if you want a name for it. I call it not drinking alone."
+			],
+			"locked": [
+				"Give it a day, love. People need to sleep on a thing like the square before they want to talk about it."
+			]
+		},
+		{
+			"id": "unlock_expeditions",
+			"kind": "unlock",
+			"group": "unlocks",
+			"title": "Expeditions open",
+			"voice": [
+				"bran"
+			],
+			"screens": [
+				"expeditions"
+			],
+			"when": {
+				"any": [
+					{
+						"day": 3
+					},
+					{
+						"seen": [
+							"act1_rumours"
+						]
+					}
+				]
+			},
+			"summary": "Word gets out: jobs go up on the Guildhall board.",
+			"lines": [
+				"Word got out. There's jobs pinned on the old Guildhall board now, and half of them are addressed 'to whoever's running Hollowmark, if anyone'.",
+				"Build the Guildhall properly and we can send squads out: forage, scout, fetch people. Expeditions{tag:expeditions}. Money for nothing, minus the nothing."
+			],
+			"locked": [
+				"Nobody's posting jobs to a town that doesn't exist. Not yet. Give the gossip a day or two to get around."
+			]
+		},
+		{
+			"id": "unlock_research",
+			"kind": "unlock",
+			"group": "unlocks",
+			"title": "Research opens",
+			"voice": [
+				"pell"
+			],
+			"screens": [
+				"research"
+			],
+			"when": {
+				"day": 3
+			},
+			"summary": "Day 3: Pell digs the Concord's files out of the white.",
+			"lines": [
+				"Been digging at the edge of the white where the tax office was. It doesn't take things evenly. Left a cellar.",
+				"Crates of files in there. The Concord's own notes on the Blank, stamped 'not for reading'. Somebody who reads ought to read them.",
+				"A Scriptorium to read them in, readers to sit at it, and we could learn what they knew. Research{tag:research}, Quill says. I say: careful what you dig up."
+			],
+			"locked": [
+				"Still digging out the old tax office cellar. Something's down there. Give me till the third day."
+			]
+		},
+		{
+			"id": "unlock_diplomacy",
+			"kind": "unlock",
+			"group": "unlocks",
+			"title": "Diplomacy opens",
+			"voice": [
+				"quill"
+			],
+			"screens": [
+				"diplomacy"
+			],
+			"when": {
+				"any": [
+					{
+						"day": 4
+					},
+					{
+						"seen": [
+							"act1_writ"
+						]
+					}
+				]
+			},
+			"summary": "Day 4: the factions notice a town that doesn't exist.",
+			"lines": [
+				"Three letters this morning. The Concord, the Coven and the Guild have all noticed Hollowmark. Which is impressive, as legally there's nothing here to notice.",
+				"The Concord's is a bill. The Coven's is a warning written on a leaf. The Guild's is a price list.",
+				"We can answer them now. Diplomacy{tag:diplomacy}: envoys and deals. Answer the Concord soon, though. Hostile people with ledgers get creative."
+			],
+			"locked": [
+				"Nobody has written to us yet. They will. Nobody ignores a hole in the tax rolls for long. Day four, at a guess."
+			]
+		},
+		{
+			"id": "tip_surge",
+			"kind": "tip",
+			"group": "events",
+			"title": "A surge is gathering",
+			"voice": [
+				"quill"
+			],
+			"when": {
+				"surge": true
+			},
+			"summary": "Warnings, Defense missions and asking for aid.",
+			"lines": [
+				"There. The Blank is massing against one of ours. A surge lands as a lump of Fray all at once and leaves a scar that keeps fraying for days.",
+				"We see it coming, which is the only mercy. Days on the clock, marked on the map. Go and stand on it: a Defense mission there means holding the wardstone while the white comes at you.",
+				"Or ask a friendly faction to hold the line with us{tag:diplomacy}. Halves it. Pride is cheaper than land."
+			]
+		},
+		{
+			"id": "tip_erased",
+			"kind": "tip",
+			"group": "events",
+			"title": "A province is erased",
+			"voice": [
+				"pell",
+				"quill"
+			],
+			"when": {
+				"flag": "erased"
+			},
+			"summary": "What erasure takes, and Reclaim missions.",
+			"lines": [
+				"That's one gone. I've buried a lot of people. Never buried a place before. There's nothing to bury.",
+				"Whoever was governing got out hurt, if they got out. The land's white now, and the Blank leans on everything next to it.",
+				"It can be taken back. A Reclaim mission: walk in, break the Blot at the heart of it, and it comes back raw. Claim it again quick, or it goes again."
+			],
+			"alt": {
+				"quill": [
+					"That's one gone. Whoever was governing got out hurt, if they got out. The land is white, and everything next to it frays faster now.",
+					"It can be taken back: a Reclaim mission there, break the Blot at its heart. It comes back raw and frayed. Claim it again quickly or lose it twice."
+				]
+			}
+		},
+		{
+			"id": "tip_injured",
+			"kind": "tip",
+			"group": "events",
+			"title": "Someone is hurt",
+			"voice": [
+				"gristle",
+				"tobble"
+			],
+			"when": {
+				"injured": true
+			},
+			"summary": "Injuries, rest and the Infirmary.",
+			"lines": [
+				"Hold still. No, stiller. There. Hurt folk can't fight, govern or go anywhere until they mend; the roster shows the days left.",
+				"An Infirmary mends them faster, and faster still with a healer on staff. Like me. I take payment in gossip and gin."
+			],
+			"alt": {
+				"tobble": [
+					"One of ours is hurt. They sit out until they mend: no fighting, no governing, no squads. The roster shows the days left.",
+					"An Infirmary shortens it, more so with someone who knows a poultice from a pudding on staff. Find us a healer."
+				]
+			}
+		},
+		{
+			"id": "tip_trouble",
+			"kind": "tip",
+			"group": "events",
+			"title": "The Concord makes trouble",
+			"voice": [
+				"odile",
+				"quill"
+			],
+			"when": {
+				"trouble": true
+			},
+			"summary": "Fines, seizures and writs from a hostile Concord.",
+			"lines": [
+				"I used to write those. Fines, seizures, writs read in the square. The Concord does it every few days to a town it dislikes, and it dislikes you a great deal.",
+				"Raise their standing and the paperwork slows. Or make friends with someone they're afraid of. Either works. Only one of them is satisfying."
+			],
+			"alt": {
+				"quill": [
+					"And there's the Concord's answer: fines, seizures, writs. While they're Hostile or Wary it comes every few days; the Diplomacy screen{tag:diplomacy} says when to expect the next.",
+					"An envoy and a gift buy patience. Friends they fear buy more. Either way, keep a little Gilt back. They fine what they can find."
+				]
+			}
+		},
+		{
+			"id": "tip_hungry",
+			"kind": "tip",
+			"group": "events",
+			"title": "Supplies ran out",
+			"voice": [
+				"tobble"
+			],
+			"when": {
+				"hungry": true
+			},
+			"summary": "Hunger, upkeep and finding Supplies.",
+			"lines": [
+				"Kitchen's empty. When Supplies hit nothing, people go hungry, work slows and tempers go. I've watered the soup as far as soup goes.",
+				"Farmland pays Supplies. So do forage jobs on the board, and anything we take off the Concord's carts. The ledger{tag:ledger} shows who's eating what."
+			]
+		},
+		{
+			"id": "tip_visitor",
+			"kind": "tip",
+			"group": "events",
+			"title": "Someone at the gate",
+			"voice": [
+				"tobble"
+			],
+			"when": {
+				"visitor": true
+			},
+			"summary": "A newcomer waits to be taken on.",
+			"lines": [
+				"Somebody's standing at the south gate with a bag and a look. Go and talk to them, or see them on the Newcomers sheet{tag:newcomers}.",
+				"They won't wait for ever. Nobody waits for ever for a town with no name."
+			]
+		},
+		{
+			"id": "tip_bond",
+			"kind": "tip",
+			"group": "events",
+			"title": "A bond scene is waiting",
+			"voice": [
+				"tobble"
+			],
+			"when": {
+				"bond_ready": true,
+				"seen_help": "unlock_bonds"
+			},
+			"summary": "When someone's ready for a proper word.",
+			"lines": [
+				"Someone's been hovering by your table all evening, working up to something. Find them in town, or on the Bonds sheet{tag:bonds}."
+			]
+		},
+		{
+			"id": "tip_fray",
+			"kind": "tip",
+			"group": "events",
+			"title": "Land wearing thin",
+			"voice": [
+				"quill"
+			],
+			"when": {
+				"fray_high": 60
+			},
+			"summary": "High Fray, and how to push it back.",
+			"lines": [
+				"One of ours is over sixty Fray. Past fifty it feeds on itself, and the paler it gets, the less it pays.",
+				"A governor who fits, a Wardlamp, a Defense when it surges, or scouting from the board all pull it back. Doing nothing pulls it to a hundred."
+			]
+		},
+		{
+			"id": "tip_plans",
+			"kind": "tip",
+			"group": "events",
+			"title": "Verity takes aim",
+			"voice": [
+				"quill"
+			],
+			"when": {
+				"plans": true
+			},
+			"summary": "When the Blank is aimed on purpose.",
+			"lines": [
+				"That isn't the Blank wandering. Somebody pointed it. Look at the province panel: her schemes are listed by name, with what counters each.",
+				"Some fold if a governor is posted. Some go out with a Wardlamp. All of them end eventually. The trick is still having the province when they do."
+			]
+		},
+		{
+			"id": "field_basics",
+			"kind": "manual",
+			"group": "field",
+			"title": "Fighting",
+			"voice": [
+				"bran"
+			],
+			"summary": "Moving, attacking and swapping heroes.",
+			"lines": [
+				"{dev:WASD or the arrows|The left stick|The pad on the left} moves, {key:attack} swings. Watch for red: big hits telegraph, and they're the ones that put you on your back.",
+				"{key:swap} swaps to the next hero in the party. Whoever's hurt can drop back while somebody fresh takes the front.",
+				"Everything you can see can see you. Enemies wander in plain sight, so you pick the fights. Mostly."
+			]
+		},
+		{
+			"id": "field_abilities",
+			"kind": "manual",
+			"group": "field",
+			"title": "Ink abilities",
+			"voice": [
+				"bran"
+			],
+			"summary": "Abilities on 1-4 and the Ink they burn.",
+			"lines": [
+				"Each hero carries up to four abilities{dev: on 1 to 4| on {key:ability_1}, {key:ability_2}, {key:ability_3} and {key:ability_4}| on the buttons round Attack}. They burn Ink and need a moment to come back.",
+				"Ink refills slowly in a fight. Spend it on the moment that matters, not the first one."
+			]
+		},
+		{
+			"id": "field_techs",
+			"kind": "manual",
+			"group": "field",
+			"title": "Charged techs",
+			"voice": [
+				"bran"
+			],
+			"summary": "Filling the gauge and holding Attack.",
+			"lines": [
+				"Hitting things fills the tech gauge. When it's full, hold {key:attack} for a second and let go. Each hero's weapon has its own, and more come as the weapon levels.",
+				"Allies use theirs when they see a good moment. Their idea of a good moment may differ from yours."
+			]
+		},
+		{
+			"id": "field_quick",
+			"kind": "manual",
+			"group": "field",
+			"title": "The quick menu",
+			"voice": [
+				"bran"
+			],
+			"summary": "Items, abilities, party orders and gear mid-fight.",
+			"lines": [
+				"{key:quick_menu} opens the quick menu and time crawls while it's up. Items, abilities, orders for the others, even a change of kit.",
+				"The satchel refills between missions, not during. Count your tonics."
+			]
+		},
+		{
+			"id": "field_retreat",
+			"kind": "manual",
+			"group": "field",
+			"title": "Retreat and defeat",
+			"voice": [
+				"bran"
+			],
+			"summary": "Leaving early, and what a wipe costs.",
+			"lines": [
+				"Pause{tag:pause} and retreat any time: you keep what you found and the mission stays open. No shame in it. Shame doesn't pay.",
+				"If everyone goes down, you limp home and drop what you picked up. Try again from the last autosave if you'd rather pretend it didn't happen."
+			]
+		}
+	]
+}
