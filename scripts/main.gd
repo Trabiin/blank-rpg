@@ -447,6 +447,7 @@ func _pause_items() -> Array:
 		{"id": "journal", "label": tr("Journal"), "detail": tr("quests, people, codex, history")},
 		{"id": "help", "label": tr("Help"), "detail": tr("explainers, field notes and controls")},
 		{"id": "report", "label": tr("Report a bug"), "detail": tr("or send feedback")},
+	] + Survey.menu_items() + [  # playtest builds only (issue #168)
 		{"id": "save", "label": tr("Save game")},
 		{"id": "load", "label": tr("Load game"), "enabled": Saves.latest_slot() != "", "note": tr("(no saves yet)")},
 		{"id": "retreat", "label": tr("Retreat to Hollowmark"), "detail": tr("end the mission, keep what you found")},
@@ -474,6 +475,9 @@ func _on_pause_choice(id: String) -> void:
 		"report":  # issue #146
 			pause_menu.visible = false
 			FeedbackView.popup(self).closed.connect(func(): pause_menu.visible = true)
+		"survey":  # issue #168
+			pause_menu.visible = false
+			SurveyView.popup(self).closed.connect(func(): pause_menu.visible = true)
 		"retreat":
 			pause_menu.visible = false
 			_end_mission("retreat")

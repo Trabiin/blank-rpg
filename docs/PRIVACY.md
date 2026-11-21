@@ -32,6 +32,16 @@ does not store it.
 "Save to file" writes the same report as a zip on your device instead, so you can read it and share
 it any way you like.
 
+## The playtest survey
+
+Playtest builds have a "Playtest survey" in the title screen and pause menus. It sends nothing until
+you press **Send** on its last page. It contains your answers (every question can be skipped), the
+game version, system information and where you were in the game, as listed above, plus a way to
+reach you for the next round only if you fill it in. It never attaches logs, screenshots or saves.
+Survey answers go to the same private place as reports and follow the same rules. Results are
+published only as numbers and summaries, never with your words quoted or your contact details.
+Release builds have no survey.
+
 ## Where reports go and how long they are kept
 
 Reports are stored in a private GitHub repository that only the developers can read. Bugs found in
@@ -43,4 +53,4 @@ To have a report deleted earlier, or to ask what a report held, write to the dev
 game's page and quote the report number the game showed you after sending (it looks like
 `LI-1A2B3C4D`).
 
-_Last changed: 2026-11-21 (issue #146)._
+_Last changed: 2026-11-21 (issue #146; playtest survey, issue #168)._

@@ -34,6 +34,7 @@ func _ready() -> void:
 	items.append({"id": "load", "label": tr("Load Game"), "enabled": latest != "", "note": tr("(no saves yet)")})
 	items.append({"id": "options", "label": tr("Options"), "detail": tr("speed, difficulty, sound, controls")})
 	items.append({"id": "report", "label": tr("Report a bug"), "detail": tr("or send feedback")})
+	items.append_array(Survey.menu_items())  # playtest builds only (issue #168)
 	items.append({"id": "credits", "label": tr("Credits")})
 	if DisplaySettings.is_desktop():  # a browser tab is closed by the browser (issue #145)
 		items.append({"id": "quit", "label": tr("Quit")})
@@ -84,6 +85,7 @@ func _show_save_notices() -> void:
 ## Nothing is sent unless the player goes on to press Send in the form.
 func _offer_report() -> void:
 	if not Diag.should_offer_report():
+		_playtest_notice()
 		return
 	var prev: Dictionary = Diag.previous
 	var n := int(prev.get("errors", 0))
@@ -181,6 +183,8 @@ func _on_choice(id: String) -> void:
 		"report":  # issue #146
 			menu.visible = false
 			FeedbackView.popup(self, {"screenshot": false}).closed.connect(func(): menu.visible = true)
+		"survey":  # issue #168
+			_open_survey()
 		"error_test":  # issue #146: something for the next launch's report offer to find
 			push_error("Test error from the title screen's test shortcuts (issue #146).")
 			Diag.toast(tr("Logged a test error. Restart the game to see the report offer."))
@@ -199,6 +203,56 @@ func _on_choice(id: String) -> void:
 				{"id": "back", "label": tr("Back")}])
 			menu.visible = false
 			slots.visible = true
+
+
+## Playtest builds (issue #168, docs/PLAYTEST.md): the welcome note once per round, else the survey
+## offer after enough play. At most one of them per visit to the title, and never over a crash offer.
+func _playtest_notice() -> void:
+	if not Survey.enabled() or Diag.scripted:
+		return
+	var note := InkMenu.new()
+	note.dim = 0.85
+	note.top = 0.22
+	add_child(note)
+	var s := Survey.settings()
+	if not Survey.welcomed():
+		Survey.mark_welcomed()
+		note.setup(tr(str(s["welcome_title"])), [{"id": "ok", "label": tr("Let's play")}],
+			tr(str(s["welcome"])) + "\n\n" + tr(Survey.ai_short()))
+	elif Survey.should_offer():
+		Survey.mark_offered()
+		note.setup(tr("How was it?"), [
+			{"id": "survey", "label": tr("Take the playtest survey"), "detail": tr("about 5 minutes")},
+			{"id": "later", "label": tr("Later"), "detail": tr("it's in the menu any time")},
+			{"id": "mute", "label": tr("Don't ask again")},
+		], tr("You've played for a while. A few answers about how it went help more than anything else."))
+	else:
+		note.queue_free()
+		return
+	menu.visible = false
+	note.chosen.connect(func(id: String):
+		note.queue_free()
+		menu.visible = true
+		if id == "survey":
+			_open_survey()
+		elif id == "mute":
+			Survey.mute_offers())
+
+
+func _open_survey() -> void:
+	menu.visible = false
+	SurveyView.popup(self).closed.connect(func():
+		menu.visible = true
+		_refresh_survey_item())
+
+
+## The menu entry's note changes once the survey is sent.
+func _refresh_survey_item() -> void:
+	var fresh := Survey.menu_items()
+	for it in menu.items:
+		if it["id"] == "survey" and not fresh.is_empty():
+			it["detail"] = fresh[0]["detail"]
+	menu.queue_redraw()
 
 
 ## The "Test shortcuts" submenu is for playtesting: on in the editor and in exports whose preset lists the

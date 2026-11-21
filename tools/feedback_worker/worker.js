@@ -13,7 +13,7 @@
 // The sender's IP address is used only for the rate limit and never written anywhere.
 
 const MAX_BODY = 4.5 * 1024 * 1024;
-const KINDS = ["bug", "feedback", "idea"];
+const KINDS = ["bug", "feedback", "idea", "survey"]; // survey: playtest answers (issue #168, docs/PLAYTEST.md)
 const ID_RE = /^LI-[0-9A-F]{8}$/;
 const NAME_RE = /^[A-Za-z0-9_.-]{1,64}$/;
 const MAX_FILES = 8;
@@ -103,11 +103,25 @@ async function file(r, env) {
   const first = (r.text || "").split("\n")[0].trim().slice(0, 70) || "(no description)";
   const labels = ["report", r.kind];
   if (r.previous_session && (r.previous_session.crashed || r.previous_session.errors > 0)) labels.push("crash");
+  const round = surveyRound(r);
+  if (round) labels.push("round-" + round);
   await gh(env, "POST", `/repos/${repo}/issues`, {
     title: `[${r.kind}] ${first} (${r.id})`,
     body: summary(r, dir, repo),
     labels,
   });
+}
+
+// The playtest round of a survey report ("r1", "dev", ...), from its survey.json, or "".
+export function surveyRound(r) {
+  if (r.kind !== "survey") return "";
+  const a = (r.attachments || {})["survey.json"];
+  try {
+    const round = String(JSON.parse(a.data).round || "");
+    return /^[a-z0-9-]{1,20}$/i.test(round) ? round.toLowerCase() : "";
+  } catch (e) {
+    return "";
+  }
 }
 
 // All files in one commit on the default branch (Git data API), retried once if the branch moved.

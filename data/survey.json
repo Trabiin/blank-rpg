@@ -1,0 +1,87 @@
+{
+	"_comment": "The in-game playtest survey (issues #148, #168; docs/PLAYTEST.md). Pages are shown in order. Every page before the one marked \"ai\": true is neutral and never mentions AI, so a tester who brings it up there does so unprompted (tools/playtest_report.py counts those). Opening the AI page locks the earlier answers. Question types: scale (pick 1 of n, n labels), choice (pick 1), multi (pick any), text (a few lines), line (one line), character (pick 1 of the characters in the tester's roster, or 'someone else' plus a line). Answers that are left blank are fine everywhere: nothing is required. Change the wording only between rounds and bump version, so rounds stay comparable.",
+	"version": 1,
+	"pages": [
+		{
+			"id": "stop",
+			"title": "Where you stopped",
+			"intro": "Thanks for playing! This takes about 5 minutes. Skip anything you like.",
+			"questions": [
+				{"id": "stop_reason", "type": "choice", "prompt": "Why did you stop playing (for now)?",
+					"options": ["I reached the end of this build", "I ran out of time", "I got bored", "I got confused or lost", "It got too hard or frustrating", "A bug or crash", "Something else"]},
+				{"id": "stop_where", "type": "line", "prompt": "Where were you, and what were you trying to do?"},
+				{"id": "continue", "type": "scale", "prompt": "If you could, would you keep playing right now?",
+					"labels": ["No", "Probably not", "Not sure", "Probably", "Yes"]}
+			]
+		},
+		{
+			"id": "play",
+			"title": "How it played",
+			"questions": [
+				{"id": "enjoy", "type": "scale", "prompt": "How much did you enjoy it overall?",
+					"labels": ["Not at all", "A little", "Somewhat", "A lot", "Loved it"]},
+				{"id": "difficulty", "type": "scale", "prompt": "The fights were...",
+					"labels": ["Far too easy", "A bit easy", "About right", "A bit hard", "Far too hard"]},
+				{"id": "pacing", "type": "scale", "prompt": "The pace was...",
+					"labels": ["Far too slow", "A bit slow", "About right", "A bit rushed", "Far too rushed"]},
+				{"id": "loved", "type": "text", "prompt": "What did you enjoy most?"},
+				{"id": "confused", "type": "text", "prompt": "What confused you, or what did you have to figure out on your own?"},
+				{"id": "annoyed", "type": "text", "prompt": "What annoyed you or felt like a chore?"}
+			]
+		},
+		{
+			"id": "look",
+			"title": "Look, characters and writing",
+			"questions": [
+				{"id": "art", "type": "scale", "prompt": "How do you rate the art?",
+					"labels": ["Poor", "Weak", "OK", "Good", "Great"]},
+				{"id": "odd_art_yes", "type": "choice", "prompt": "Did anything look out of place or inconsistent?",
+					"options": ["No", "Yes, a little", "Yes, a lot"]},
+				{"id": "odd_art", "type": "text", "prompt": "If yes: what was it, and where did you see it?"},
+				{"id": "alive_most", "type": "character", "prompt": "Which character felt the most alive?"},
+				{"id": "alive_least", "type": "character", "prompt": "Which character felt the least alive?"},
+				{"id": "writing", "type": "scale", "prompt": "How do you rate the writing?",
+					"labels": ["Poor", "Weak", "OK", "Good", "Great"]},
+				{"id": "flat_lines", "type": "text", "prompt": "Did any dialogue feel flat or generic? Which lines or scenes?"}
+			]
+		},
+		{
+			"id": "buy",
+			"title": "If it were out today",
+			"questions": [
+				{"id": "buy", "type": "scale", "prompt": "Would you buy the finished game?",
+					"labels": ["Definitely not", "Probably not", "Not sure", "Probably", "Definitely"]},
+				{"id": "price", "type": "choice", "prompt": "What would feel like a fair price for the full game (15 to 20 hours)?",
+					"options": ["Under $5", "$5 to $10", "$10 to $15", "$15 to $20", "Over $20", "I wouldn't pay for it"]},
+				{"id": "like_games", "type": "line", "prompt": "Which games did it remind you of?"},
+				{"id": "input", "type": "choice", "prompt": "What did you play with?",
+					"options": ["Keyboard", "Keyboard and mouse", "Gamepad", "Touch screen"]},
+				{"id": "genre_fan", "type": "choice", "prompt": "How often do you play action RPGs or SNES-era RPGs?",
+					"options": ["Rarely or never", "Now and then", "They're my favourite kind of game"]}
+			]
+		},
+		{
+			"id": "ai",
+			"ai": true,
+			"title": "One more thing",
+			"intro": "Your earlier answers are kept exactly as you gave them.",
+			"questions": [
+				{"id": "ai_seen", "type": "choice", "prompt": "Did you know this before starting to play?",
+					"options": ["Yes, I read it in the invite or on the game's page", "I noticed it while playing", "No, this is the first I've heard"]},
+				{"id": "ai_feel", "type": "scale", "prompt": "Does it change how you feel about the game?",
+					"labels": ["Much worse", "A bit worse", "No difference", "A bit better", "Much better"]},
+				{"id": "ai_buy", "type": "scale", "prompt": "Does it change whether you'd buy it?",
+					"labels": ["I wouldn't buy it because of this", "Less likely", "No difference", "More likely", "Much more likely"]},
+				{"id": "ai_text", "type": "text", "prompt": "Anything you'd like to say about it?"}
+			]
+		},
+		{
+			"id": "end",
+			"title": "Thank you",
+			"questions": [
+				{"id": "anything", "type": "text", "prompt": "Anything else you'd like to tell us?"},
+				{"id": "contact", "type": "line", "prompt": "How to reach you for the next playtest round (optional)"}
+			]
+		}
+	]
+}

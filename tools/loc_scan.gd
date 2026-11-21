@@ -21,7 +21,7 @@ const NAME_CALLS := [
 	"is_action", "has_action", "action_get_events", "get_setting", "set_setting", "has_setting", "eval",
 	"get_value", "set_value", "has_section_key", "add_theme_color_override", "add_theme_font_size_override",
 	"add_theme_constant_override", "add_theme_stylebox_override", "add_theme_font_override", "get_theme_color",
-	"get_theme_font", "get_theme_stylebox", "set_stylebox", "set_color", "set_font", "set_font_size",
+	"get_theme_font", "get_theme_stylebox", "get_stylebox", "get_color", "get_font", "set_stylebox", "set_color", "set_font", "set_font_size",
 	"set_constant", "tween_property", "tween_method", "set_shader_parameter", "has_feature",
 	"begins_with", "ends_with", "find", "contains", "split", "replace", "get_slice", "count",
 	"is_valid_identifier", "play", "add_user_signal", "icon", "draw_icon", "box", "panel", "highlight",

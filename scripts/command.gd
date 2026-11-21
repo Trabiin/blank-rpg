@@ -336,6 +336,7 @@ func _menu_items(note := "") -> void:
 		{"id": "journal", "label": tr("Journal"), "detail": Prompts.key("journal")},
 		{"id": "help", "label": tr("Help"), "detail": tr("explainers, tips and controls")},
 		{"id": "report", "label": tr("Report a bug"), "detail": tr("or send feedback")},
+	] + Survey.menu_items() + [  # playtest builds only (issue #168)
 		{"id": "save", "label": tr("Save game")},
 		{"id": "load", "label": tr("Load game"), "enabled": Saves.latest_slot() != "", "note": tr("(no saves yet)")},
 		{"id": "options", "label": tr("Options")},
@@ -366,6 +367,9 @@ func _on_menu(id: String) -> void:
 		"report":  # issue #146
 			menu.visible = false
 			FeedbackView.popup(self).closed.connect(func(): menu.visible = true)
+		"survey":  # issue #168
+			menu.visible = false
+			SurveyView.popup(self).closed.connect(func(): menu.visible = true)
 		"options":
 			menu.visible = false
 			OptionsView.popup(self).closed.connect(func(): menu.visible = true)
