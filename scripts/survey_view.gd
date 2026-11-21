@@ -197,8 +197,7 @@ func _ai_block() -> Control:
 func _privacy_block() -> Control:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 8)
-	var note := _note(tr("Nothing leaves your device until you press Send. The survey holds your answers, the game "
-		+ "version, your system and where you were in the game. No logs, screenshots or saves."), SOFT, true)
+	var note := _note(tr("Nothing leaves your device until you press Send. The survey holds your answers, the game version, your system and where you were in the game. No logs, screenshots or saves."), SOFT, true)
 	note.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(note)
 	var link := LinkButton.new()

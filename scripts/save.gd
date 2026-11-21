@@ -49,7 +49,7 @@ func game_version() -> String:
 
 
 func slot_label(slot: String) -> String:
-	return "Autosave" if slot == "auto" else "Slot " + slot
+	return tr("Autosave") if slot == "auto" else tr("Slot ") + slot
 
 
 func save(slot: String, data: Dictionary) -> bool:
@@ -77,8 +77,8 @@ func inspect(slot: String) -> Dictionary:
 	var r := parse(text)
 	if r["status"] == BROKEN:
 		var kept := _set_aside(slot, text, "broken")
-		var where := (" A copy was kept as %s." % kept.get_file()) if kept != "" else ""
-		notices.append("%s could not be read (%s), so it was set aside instead of loaded.%s The slot is free again."
+		var where := (tr(" A copy was kept as %s.") % kept.get_file()) if kept != "" else ""
+		notices.append(tr("%s could not be read (%s), so it was set aside instead of loaded.%s The slot is free again.")
 			% [slot_label(slot), r["error"], where])
 		push_warning("Save %s set aside: %s" % [slot, r["error"]])
 	return r
@@ -88,20 +88,20 @@ func inspect(slot: String) -> Dictionary:
 func parse(text: String) -> Dictionary:
 	var json := JSON.new()
 	if text.strip_edges() == "":
-		return {"status": BROKEN, "error": "the file is empty"}
+		return {"status": BROKEN, "error": tr("the file is empty")}
 	if json.parse(text) != OK:
-		return {"status": BROKEN, "error": "the file is damaged"}
+		return {"status": BROKEN, "error": tr("the file is damaged")}
 	var d = json.data
 	if typeof(d) != TYPE_DICTIONARY:
-		return {"status": BROKEN, "error": "not a save file"}
+		return {"status": BROKEN, "error": tr("not a save file")}
 	var v := int(d.get("version", 0))
 	if v < 1:
-		return {"status": BROKEN, "error": "no save format version"}
+		return {"status": BROKEN, "error": tr("no save format version")}
 	if v > VERSION:
-		return {"status": NEWER, "error": "made by a newer version of Last Ink (%s)" % d.get("game_version", "?")}
+		return {"status": NEWER, "error": tr("made by a newer version of Last Ink (%s)") % d.get("game_version", "?")}
 	var unknown := SaveMigrations.unknown(d)
 	if not unknown.is_empty():
-		return {"status": NEWER, "error": "made by a newer version of Last Ink (%s)" % d.get("game_version", "?")}
+		return {"status": NEWER, "error": tr("made by a newer version of Last Ink (%s)") % d.get("game_version", "?")}
 	var m := SaveMigrations.apply(d)
 	if not m["ok"]:
 		return {"status": BROKEN, "error": m["error"]}
@@ -151,22 +151,22 @@ func describe(slot: String) -> String:
 	if r["status"] == NEWER:
 		return "(%s)" % r["error"]
 	if r["status"] != GOOD:
-		return "(empty)"
+		return tr("(empty)")
 	var d: Dictionary = r["data"]
 	var mins := int(float(d.get("playtime", 0.0)) / 60.0)
 	var day := int(d.get("empire", {}).get("day", 1))
-	return "Day %d   %s   %dm played   (%s)" % [day, d.get("area_name", "?"), mins, _ago(int(d.get("saved_at", 0)))]
+	return tr("Day %d   %s   %dm played   (%s)") % [day, d.get("area_name", "?"), mins, _ago(int(d.get("saved_at", 0)))]
 
 
 func _ago(t: int) -> String:
 	var s := int(Time.get_unix_time_from_system()) - t
 	if s < 60:
-		return "just now"
+		return tr("just now")
 	if s < 3600:
-		return "%d min ago" % (s / 60)
+		return tr("%d min ago") % (s / 60)
 	if s < 86400:
-		return "%d h ago" % (s / 3600)
-	return "%d days ago" % (s / 86400)
+		return tr("%d h ago") % (s / 3600)
+	return tr("%d days ago") % (s / 86400)
 
 
 ## Loads a slot and starts the scene it was saved in (a mission or the Command Table).
@@ -192,7 +192,7 @@ func slot_items(for_saving: bool) -> Array:
 			continue
 		var has := exists(s)
 		out.append({"id": s, "label": slot_label(s), "detail": describe(s), "enabled": for_saving or has})
-	out.append({"id": "back", "label": "Back"})
+	out.append({"id": "back", "label": tr("Back")})
 	return out
 
 

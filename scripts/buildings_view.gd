@@ -76,7 +76,7 @@ func _cost_text(cost: Dictionary) -> String:
 	var parts := []
 	for k in ["gilt", "supplies", "ink"]:
 		if int(cost.get(k, 0)) > 0:
-			parts.append("%d %s" % [int(cost[k]), Empire.RES_NAMES[k]])
+			parts.append("%d %s" % [int(cost[k]), Loc.t(Empire.RES_NAMES[k])])
 	return ", ".join(parts) if not parts.is_empty() else "free"
 
 
@@ -94,10 +94,10 @@ func _actions() -> Array:
 		if not nl.is_empty():
 			var blocker := Empire.lamp_blocker(pid)
 			var p := Empire.territory().find(pid)
-			var verb := "Light a Wardlamp" if lv == 0 else "Brighten the Wardlamp to level %d" % nl["level"]
-			out.append({"kind": "lamp", "label": "%s  (%s, %d day%s)" % [verb, _cost_text(nl["cost"]), nl["days"], "" if nl["days"] == 1 else "s"],
+			var verb := tr("Light a Wardlamp") if lv == 0 else tr("Brighten the Wardlamp to level %d") % nl["level"]
+			out.append({"kind": "lamp", "label": tr("%s  (%s, %d day%s)") % [verb, _cost_text(nl["cost"]), nl["days"], "" if nl["days"] == 1 else "s"],
 				"enabled": blocker == "", "note": blocker,
-				"preview": "%s: Fray %d a day from the lamp instead of %d. The province would change by %+d a day." % [p["name"], nl["fray"], Empire.lamp_fray(lv), Empire.fray_rate(p) - Empire.lamp_fray(lv) + int(nl["fray"])]})
+				"preview": tr("%s: Fray %d a day from the lamp instead of %d. The province would change by %+d a day.") % [p["name"], nl["fray"], Empire.lamp_fray(lv), Empire.fray_rate(p) - Empire.lamp_fray(lv) + int(nl["fray"])]})
 		return out
 	var id: String = row["id"]
 	var b := Empire.building(id)
@@ -106,20 +106,20 @@ func _actions() -> Array:
 	var building_now: bool = Empire.construction.get("id", "") == id
 	if not nl.is_empty() and not building_now:
 		var blocker := Empire.build_blocker(id)
-		var verb := "Build" if lv == 0 else "Upgrade to level %d" % nl["level"]
+		var verb := tr("Build") if lv == 0 else tr("Upgrade to level %d") % nl["level"]
 		var next_fx: Dictionary = Empire.building_effect(id, nl["level"], Empire.staff_of(id))
-		var preview := "Level %d: %s. %d staff slot%s." % [nl["level"], next_fx["text"], nl["slots"], "" if nl["slots"] == 1 else "s"]
-		out.append({"kind": "build", "label": "%s  (%s, %d day%s)" % [verb, _cost_text(nl["cost"]), nl["days"], "" if nl["days"] == 1 else "s"],
+		var preview := tr("Level %d: %s. %d staff slot%s.") % [nl["level"], next_fx["text"], nl["slots"], "" if nl["slots"] == 1 else "s"]
+		out.append({"kind": "build", "label": tr("%s  (%s, %d day%s)") % [verb, _cost_text(nl["cost"]), nl["days"], "" if nl["days"] == 1 else "s"],
 			"enabled": blocker == "", "note": blocker, "preview": preview})
 	var staff := Empire.staff_of(id)
 	for i in Empire.slots_of(id):
 		var who: String = staff[i] if i < staff.size() else ""
-		var label := "%s %d:  %s" % [b["staff_title"], i + 1, Empire.recruit(who)["name"] if who != "" else "empty"]
+		var label := "%s %d:  %s" % [b["staff_title"], i + 1, Empire.recruit(who)["name"] if who != "" else Loc.t("empty")]
 		if who != "":
 			label += "  (%s %d)" % [String(b["stat"]).capitalize(), int(Empire.recruit(who)["stats"][b["stat"]])]
 		var pairs := Relationships.notes_text(staff, "building")  # friends and rivals at work (issue #116)
 		out.append({"kind": "slot", "slot": i, "who": who, "label": label, "enabled": true, "note": "",
-			"preview": "Choose who works here. %s drives this building.%s" % [String(b["stat"]).capitalize(), ("\n" + pairs) if pairs != "" else ""]})
+			"preview": tr("Choose who works here. %s drives this building.%s") % [String(b["stat"]).capitalize(), ("\n" + pairs) if pairs != "" else ""]})
 	return out
 
 
@@ -134,15 +134,15 @@ func _picks() -> Array:
 	var now_text: String = Empire.current_effect(id)["text"]
 	var out := []
 	var without := staff.filter(func(r): return r != current)
-	out.append({"id": "", "label": "Leave empty" if current == "" else "Send %s back to idle" % Empire.recruit(current)["name"], "enabled": true, "note": "",
-		"preview": "%s  (now: %s)" % [Empire.building_effect(id, lv, without)["text"], now_text]})
+	out.append({"id": "", "label": tr("Leave empty") if current == "" else tr("Send %s back to idle") % Empire.recruit(current)["name"], "enabled": true, "note": "",
+		"preview": tr("%s  (now: %s)") % [Empire.building_effect(id, lv, without)["text"], now_text]})
 	for rid in Empire.roster_ids():
 		if rid == current or rid in staff:
 			continue
 		var r := Empire.recruit(rid)
 		var note := ""
 		if r.get("locked_party", false):
-			note = "Ash leads the party"
+			note = tr("Ash leads the party")
 		elif int(Empire.recruits[rid]["injured"]) > 0:
 			note = "injured"
 		var with_me := without.duplicate()
@@ -150,8 +150,8 @@ func _picks() -> Array:
 		var role := Empire.role_label(rid)
 		var pairs := Relationships.notes_text(with_me, "building")  # friends and rivals at work (issue #116)
 		out.append({"id": rid, "label": "%s  %s %d" % [r["name"], String(b["stat"]).capitalize(), int(r["stats"][b["stat"]])], "enabled": note == "", "note": note,
-			"role": role, "preview": "%s  (now: %s)%s%s" % [Empire.building_effect(id, lv, with_me)["text"], now_text,
-			"" if Empire.role_of(rid) == "idle" else ". Leaves their post: " + role, ("\n" + pairs) if pairs != "" else ""]})
+			"role": role, "preview": tr("%s  (now: %s)%s%s") % [Empire.building_effect(id, lv, with_me)["text"], now_text,
+			"" if Empire.role_of(rid) == "idle" else tr(". Leaves their post: ") + role, ("\n" + pairs) if pairs != "" else ""]})
 	return out
 
 
@@ -212,16 +212,16 @@ func _process(delta: float) -> void:
 func _do(a: Dictionary) -> void:
 	var row: Dictionary = _rows()[sel]
 	if not a["enabled"]:
-		_flash("Can't: %s." % a["note"])
+		_flash(tr("Can't: %s.") % a["note"])
 		return
 	match a["kind"]:
 		"build":
 			if Empire.start_build(row["id"]):
 				var b := Empire.building(row["id"])
-				_flash("Builders start on the %s. Done in %s." % [b["name"], Empire.job_left_text(Empire.construction)])
+				_flash(tr("Builders start on the %s. Done in %s.") % [b["name"], Empire.job_left_text(Empire.construction)])
 		"lamp":
 			if Empire.start_lamp(row["id"]):
-				_flash("A Wardlamp goes up in %s." % Empire.territory().find(row["id"])["name"])
+				_flash(tr("A Wardlamp goes up in %s.") % Empire.territory().find(row["id"])["name"])
 		"slot":
 			picker_slot = int(a["slot"])
 			focus = 2
@@ -230,7 +230,7 @@ func _do(a: Dictionary) -> void:
 
 func _choose(p: Dictionary) -> void:
 	if not p["enabled"]:
-		_flash("Can't: %s." % p["note"])
+		_flash(tr("Can't: %s.") % p["note"])
 		return
 	var id: String = _rows()[sel]["id"]
 	var staff := Empire.staff_of(id)
@@ -241,7 +241,7 @@ func _choose(p: Dictionary) -> void:
 		if Empire.assign(p["id"], "staff", id):
 			_flash("%s: %s." % [Empire.recruit(p["id"])["name"], Empire.role_label(p["id"])])
 	elif current != "":
-		_flash("%s is idle." % Empire.recruit(current)["name"])
+		_flash(tr("%s is idle.") % Empire.recruit(current)["name"])
 	focus = 1
 
 
@@ -321,35 +321,35 @@ func _row_status(row: Dictionary) -> Array:
 	if row["kind"] == "lamp":
 		var pid: String = row["id"]
 		if Empire.lamp_jobs.has(pid):
-			return ["Going up: %s left" % Empire.job_left_text(Empire.lamp_jobs[pid]), GOLD]
+			return [tr("Going up: %s left") % Empire.job_left_text(Empire.lamp_jobs[pid]), GOLD]
 		var lv := int(Empire.lamps.get(pid, 0))
-		return ["Unlit" if lv == 0 else "Lit, level %d  (Fray %d a day)" % [lv, Empire.lamp_fray(lv)], Color(0.62, 0.6, 0.62) if lv == 0 else GOOD]
+		return [tr("Unlit") if lv == 0 else tr("Lit, level %d  (Fray %d a day)") % [lv, Empire.lamp_fray(lv)], Color(0.62, 0.6, 0.62) if lv == 0 else GOOD]
 	var id: String = row["id"]
 	var lv := Empire.level_of(id)
 	if Empire.construction.get("id", "") == id:
-		return ["%s: %s left" % ["Building" if lv == 0 else "Upgrading", Empire.job_left_text(Empire.construction)], GOLD]
+		return [tr("%s: %s left") % [tr("Building") if lv == 0 else tr("Upgrading"), Empire.job_left_text(Empire.construction)], GOLD]
 	if lv == 0:
-		return ["Not built", Color(0.55, 0.53, 0.56)]
-	return ["Level %d/%d   staff %d/%d" % [lv, Empire.max_level(id), Empire.staff_of(id).size(), Empire.slots_of(id)], Color(0.7, 0.68, 0.7)]
+		return [tr("Not built"), Color(0.55, 0.53, 0.56)]
+	return [tr("Level %d/%d   staff %d/%d") % [lv, Empire.max_level(id), Empire.staff_of(id).size(), Empire.slots_of(id)], Color(0.7, 0.68, 0.7)]
 
 
 func _draw() -> void:
 	var vs := size
 	UiSkin.screen(self, vs)
-	_text(Vector2(LIST_X, 20), "Buildings", 15, Color("f3efe4"))
+	_text(Vector2(LIST_X, 20), tr("Buildings"), 15, Color("f3efe4"))
 	# Resources, Insight included (it only lives here and in the ledger for now).
 	var x := LIST_X + 90
 	for k in ["gilt", "supplies", "ink", "insight"]:
-		var s := "%s %d" % [Empire.RES_NAMES[k], int(Empire.res.get(k, 0))]
+		var s := "%s %d" % [Loc.t(Empire.RES_NAMES[k]), int(Empire.res.get(k, 0))]
 		_text(Vector2(x, 19), s, 9, RES_COLORS[k])
 		x += font.get_string_size(s, HORIZONTAL_ALIGNMENT_LEFT, -1, 9).x + 12
-	var crew := "Builders: idle"
+	var crew := tr("Builders: idle")
 	if not Empire.construction.is_empty():
-		crew = "Builders: %s, %s left" % [Empire.building(Empire.construction["id"])["name"], Empire.job_left_text(Empire.construction)]
+		crew = tr("Builders: %s, %s left") % [Empire.building(Empire.construction["id"])["name"], Empire.job_left_text(Empire.construction)]
 	_text(Vector2(x + 6, 19), crew, 9, GOLD if not Empire.construction.is_empty() else Color(0.6, 0.58, 0.6))
 	var cr := _close_rect()
 	UiSkin.panel(self, cr, "button")
-	_text(cr.position + Vector2(9, 12), "Close", 9, Color(0.75, 0.72, 0.7))
+	_text(cr.position + Vector2(9, 12), tr("Close"), 9, Color(0.75, 0.72, 0.7))
 
 	# Left list
 	var rows := _rows()
@@ -361,7 +361,7 @@ func _draw() -> void:
 		if row["kind"] == "lamp" and not lamps_header:
 			lamps_header = true
 			y += 4
-			_text(Vector2(LIST_X, y + 9), "Wardlamps", 9, Color(0.7, 0.68, 0.7))
+			_text(Vector2(LIST_X, y + 9), tr("Wardlamps"), 9, Color(0.7, 0.68, 0.7))
 			y += 13
 		var r := Rect2(LIST_X, y, LIST_W, ROW_H - 3)
 		_row_rects.append(r)
@@ -389,29 +389,29 @@ func _draw() -> void:
 	var dy := 44.0
 	if row["kind"] == "lamp":
 		var p := Empire.territory().find(row["id"])
-		_text(Vector2(DETAIL_X, dy), "Wardlamp: " + p["name"], 15, Color("f3efe4"))
+		_text(Vector2(DETAIL_X, dy), tr("Wardlamp: ") + p["name"], 15, Color("f3efe4"))
 		dy += 8
 		dy += _wrap(Vector2(DETAIL_X, dy + 9), Empire.lamp_data["blurb"], w, 8, Color(0.62, 0.6, 0.62)) + 6
 		var rate := Empire.fray_rate(p)
-		_text(Vector2(DETAIL_X, dy + 9), "Fray %d / 100, changing %+d a day" % [int(p["fray"]), rate], 9, BAD if rate > 0 else GOOD)
+		_text(Vector2(DETAIL_X, dy + 9), tr("Fray %d / 100, changing %+d a day") % [int(p["fray"]), rate], 9, BAD if rate > 0 else GOOD)
 		dy += 16
 		if Empire.lamp_jobs.has(row["id"]):
-			dy = _draw_job(Empire.lamp_jobs[row["id"]], "Going up", dy, w)
+			dy = _draw_job(Empire.lamp_jobs[row["id"]], tr("Going up"), dy, w)
 	else:
 		var id: String = row["id"]
 		var b := Empire.building(id)
 		var lv := Empire.level_of(id)
 		UiSkin.draw_icon(self, id, Rect2(DETAIL_X + w - 34, dy - 14, 32, 32))
 		_text(Vector2(DETAIL_X, dy), b["name"], 15, Color("f3efe4"))
-		var lvl_s := "Not built" if lv == 0 else "Level %d of %d" % [lv, Empire.max_level(id)]
+		var lvl_s := tr("Not built") if lv == 0 else tr("Level %d of %d") % [lv, Empire.max_level(id)]
 		_text(Vector2(DETAIL_X + font.get_string_size(b["name"], HORIZONTAL_ALIGNMENT_LEFT, -1, 15).x + 10, dy), lvl_s, 9, Color(0.75, 0.72, 0.7))
 		dy += 8
 		dy += _wrap(Vector2(DETAIL_X, dy + 9), Prompts.fill(str(b["blurb"])), w, 8, Color(0.62, 0.6, 0.62)) + 6
 		if lv > 0:
-			_text(Vector2(DETAIL_X, dy + 9), "Now: " + Empire.current_effect(id)["text"], 9, Color("cfe0b0"))
+			_text(Vector2(DETAIL_X, dy + 9), tr("Now: ") + Empire.current_effect(id)["text"], 9, Color("cfe0b0"))
 			dy += 16
 		if Empire.construction.get("id", "") == id:
-			dy = _draw_job(Empire.construction, "Building" if lv == 0 else "Upgrading to level %d" % (lv + 1), dy, w)
+			dy = _draw_job(Empire.construction, tr("Building") if lv == 0 else tr("Upgrading to level %d") % (lv + 1), dy, w)
 
 	# Actions
 	var acts := _actions()
@@ -432,7 +432,7 @@ func _draw() -> void:
 			_text(r.position + Vector2(14 + lw, 12), "(" + a["note"] + ")", 7, Color(0.6, 0.45, 0.42))
 		ay += 19
 	if acts.is_empty():
-		var why := "Fully upgraded." if row["kind"] == "lamp" else "Nothing to do here right now."
+		var why := tr("Fully upgraded.") if row["kind"] == "lamp" else tr("Nothing to do here right now.")
 		_text(Vector2(DETAIL_X, ay + 10), why, 8, Color(0.5, 0.48, 0.52))
 		ay += 16
 
@@ -441,11 +441,11 @@ func _draw() -> void:
 	elif focus == 1 and act < acts.size() and acts[act]["preview"] != "":
 		_wrap(Vector2(DETAIL_X, ay + 12), acts[act]["preview"], w, 8, Color("cfe0b0"))
 
-	var help := Prompts.help([["updown", "choose"], ["ui_accept", "open"], [["ui_cancel", "buildings"], "close"]], "Tap a building, then tap what to do")
+	var help := Prompts.help([["updown", "choose"], ["ui_accept", "open"], [["ui_cancel", "buildings"], "close"]], tr("Tap a building, then tap what to do"))
 	if focus == 1:
-		help = Prompts.help([["updown", "choose"], ["ui_accept", "do it"], ["ui_cancel", "back"]], "Tap what to do   Tap the building list to go back")
+		help = Prompts.help([["updown", "choose"], ["ui_accept", tr("do it")], ["ui_cancel", "back"]], tr("Tap what to do   Tap the building list to go back"))
 	elif focus == 2:
-		help = Prompts.help([["updown", "choose who"], ["ui_accept", "post them"], ["ui_cancel", "back"]], "Tap who to post")
+		help = Prompts.help([["updown", tr("choose who")], ["ui_accept", tr("post them")], ["ui_cancel", "back"]], tr("Tap who to post"))
 	_text(Vector2(DETAIL_X, vs.y - 8), help, 7, Color(0.5, 0.48, 0.52))
 	if flash_t > 0.0:
 		var a2 := clampf(flash_t / 0.4, 0.0, 1.0)
@@ -453,7 +453,7 @@ func _draw() -> void:
 
 
 func _draw_job(job: Dictionary, label: String, dy: float, w: float) -> float:
-	_text(Vector2(DETAIL_X, dy + 9), "%s: %s left" % [label, Empire.job_left_text(job)], 9, GOLD)
+	_text(Vector2(DETAIL_X, dy + 9), tr("%s: %s left") % [label, Empire.job_left_text(job)], 9, GOLD)
 	draw_rect(Rect2(DETAIL_X, dy + 13, w, 4), Color(0.18, 0.16, 0.2))
 	draw_rect(Rect2(DETAIL_X, dy + 13, w * Empire.job_progress(job), 4), GOLD)
 	return dy + 22
@@ -462,7 +462,7 @@ func _draw_job(job: Dictionary, label: String, dy: float, w: float) -> float:
 func _draw_picker(py: float, w: float) -> void:
 	var picks := _picks()
 	pick = clampi(pick, 0, picks.size() - 1)
-	var title := "Who works here?"
+	var title := tr("Who works here?")
 	_text(Vector2(DETAIL_X, py + 10), title, 9, Color("f3efe4"))
 	py += 14
 	_pick_rects.clear()

@@ -108,7 +108,7 @@ func ratio() -> float:
 func take_hit(amount: int, from: Vector2, force := 160.0) -> bool:
 	if act == Act.DORMANT or act == Act.TRANSITION:
 		if not dead and flash_t <= 0.0:
-			Fx.damage_number(get_parent(), global_position + Vector2(0, -40), "no effect", Color(0.8, 0.8, 0.8))
+			Fx.damage_number(get_parent(), global_position + Vector2(0, -40), tr("no effect"), Color(0.8, 0.8, 0.8))
 			flash_t = 0.05
 		return false
 	if act == Act.STUCK:
@@ -234,7 +234,7 @@ func _end_thrust() -> void:
 		scene.shake(2.5)
 	if not told_opening and scene != null and scene.get("hud") != null:
 		told_opening = true
-		scene.hud.say("His nib is stuck in the ground. Hit him now!", 3.0)
+		scene.hud.say(tr("His nib is stuck in the ground. Hit him now!"), 3.0)
 
 
 ## Allies the player is not steering read the lane too, and step out of it sideways.

@@ -96,7 +96,7 @@ func _draw() -> void:
 		var total := 0
 		for e in BlankPlans.on(p):
 			total += int(e["per_day"])
-		_text_c(pos + Vector2(0, -12), "Verity %+d/day" % total if total != 0 else "Verity (held off)", 8, CHALK)
+		_text_c(pos + Vector2(0, -12), tr("Verity %+d/day") % total if total != 0 else tr("Verity (held off)"), 8, CHALK)
 	# Dawn: rings where land was erased, and every province's Fray change floating up.
 	if marks_t > 0.0:
 		var k := 1.0 - marks_t / FLOAT
@@ -110,12 +110,12 @@ func _draw() -> void:
 		for m in marks:
 			var p: Dictionary = cmd.territory.find(m[0])
 			var pos: Vector2 = cmd._province_screen_pos(p) + Vector2(34, -2 - k * 14.0)
-			_text_c(pos, "%s Fray" % m[1], 9, Color(m[2], a))
+			_text_c(pos, tr("%s Fray") % m[1], 9, Color(m[2], a))
 	# The Blank's watch: who goes next if nothing changes.
 	var next := next_to_fall()
 	if not next.is_empty():
 		var yours: bool = next["owner"] == "you"
-		var s := "Next to fall: %s in ~%d day%s" % [next["name"], next["days"], "" if next["days"] == 1 else "s"]
+		var s := tr("Next to fall: %s in ~%d day%s") % [next["name"], next["days"], "" if next["days"] == 1 else "s"]
 		var col := Color(1, 0.6, 0.52) if yours else Color(0.85, 0.83, 0.78)
 		if yours and next["days"] <= 5:
 			col.a = 0.7 + 0.3 * sin(t * 4.0)

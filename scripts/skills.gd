@@ -53,7 +53,7 @@ static func weapon_fraction(id: String) -> float:
 
 
 static func weapon_name(id: String) -> String:
-	return str(PartyPicker.hero_data(id).get("weapon", "Weapon"))
+	return str(PartyPicker.hero_data(id).get("weapon", Loc.t("Weapon")))
 
 
 ## Adds weapon points. Returns the new levels reached (usually [] or [n]). cap: highest level these
@@ -254,10 +254,10 @@ static func colors_of(id: String) -> Array:
 ## What a colour level does, for menus: "stronger tier", "cooldowns -15%".
 static func ink_level_text(lvl: int) -> String:
 	if lvl == 2 or lvl == 4:
-		return "tier %d abilities" % (2 if lvl == 2 else 3)
+		return Loc.t("tier %d abilities") % (2 if lvl == 2 else 3)
 	var cut := cooldown_cut(lvl)
 	if cut > 0.0 and cut > cooldown_cut(lvl - 1):
-		return "cooldowns -%d%%" % int(round(cut * 100.0))
+		return Loc.t("cooldowns -%d%%") % int(round(cut * 100.0))
 	return ""
 
 

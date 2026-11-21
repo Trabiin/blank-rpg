@@ -216,15 +216,15 @@ func _ready() -> void:
 		if d.has("x"):
 			leader.global_position = Vector2(float(d["x"]), float(d["y"]))
 			leader.facing = Vector2.DOWN
-		hud.say("Loaded. Hollowmark is still here. Mostly.", 2.5)
+		hud.say(tr("Loaded. Hollowmark is still here. Mostly."), 2.5)
 	if not Empire.last_mission.is_empty():  # home from a mission: say what came back with you
 		var r: Dictionary = Empire.last_mission
 		Empire.last_mission = {}
 		var pay := Missions.res_text(r.get("pay", {}))
-		hud.toast("Back from %s." % r.get("name", "the field"))
+		hud.toast(tr("Back from %s.") % r.get("name", tr("the field")))
 		hud.toast_t = 5.0
 		if pay != "":
-			hud.notice("Brought home: " + pay, false)
+			hud.notice(tr("Brought home: ") + pay, false)
 	camera.global_position = leader.global_position
 	camera.reset_smoothing()
 	if Empire.territory().find("hollowmark").get("owner", "") == "erased":
@@ -431,13 +431,13 @@ func _find_target() -> Dictionary:
 		var d: float = (npcs[id] as Node2D).global_position.distance_to(p)
 		if d < best_d:
 			best_d = d
-			best = {"kind": "npc", "id": id, "pos": (npcs[id] as Node2D).global_position, "label": "Talk to " + Empire.recruit(id)["name"]
-				+ ("  (wants a word)" if Empire.bond_next_scene(id) > 0 else "") + ("  (looking for work)" if Empire.is_visitor(id) else "")}
+			best = {"kind": "npc", "id": id, "pos": (npcs[id] as Node2D).global_position, "label": tr("Talk to ") + Empire.recruit(id)["name"]
+				+ (tr("  (wants a word)") if Empire.bond_next_scene(id) > 0 else "") + (tr("  (looking for work)") if Empire.is_visitor(id) else "")}
 	# The table is wide: measure to its nearest edge, not its middle.
 	var tr := Rect2(table_pos - Vector2(TABLE_SIZE.x / 2.0, TABLE_SIZE.y), TABLE_SIZE)
 	var nearest := Vector2(clampf(p.x, tr.position.x, tr.end.x), clampf(p.y, tr.position.y, tr.end.y))
 	if nearest.distance_to(p) < minf(best_d, 18.0):
-		best = {"kind": "table", "id": "table", "pos": table_pos, "label": "Use the Command Table"}
+		best = {"kind": "table", "id": "table", "pos": table_pos, "label": tr("Use the Command Table")}
 		best_d = nearest.distance_to(p)
 	for id in sites:
 		var site = sites[id]
@@ -448,8 +448,8 @@ func _find_target() -> Dictionary:
 		if d < minf(best_d, 14.0) and best.is_empty():
 			var b := Empire.building(id)
 			var lv := Empire.level_of(id)
-			var verb := "Check on" if lv > 0 or Empire.construction.get("id", "") == id else "Plan"
-			best = {"kind": "site", "id": id, "pos": site.global_position, "label": "%s the %s" % [verb, b["name"]]}
+			var verb := tr("Check on") if lv > 0 or Empire.construction.get("id", "") == id else tr("Plan")
+			best = {"kind": "site", "id": id, "pos": site.global_position, "label": tr("%s the %s") % [verb, b["name"]]}
 			best_d = d
 	if best.get("kind", "") == "site":
 		sites[best["id"]].highlight = true
@@ -498,12 +498,12 @@ func _use(t: Dictionary) -> void:
 	var short_name := Empire.short_name(id)
 	var line := "..."
 	if int(Empire.recruits[id]["injured"]) > 0:
-		line = "Still stitching myself back together. Ask me again in %d days." % int(Empire.recruits[id]["injured"])
+		line = tr("Still stitching myself back together. Ask me again in %d days.") % int(Empire.recruits[id]["injured"])
 	elif Empire.role_of(id) == "governor":
-		line = "I keep the hall and the ledgers. Hollowmark holds while I'm here. Mostly."
+		line = tr("I keep the hall and the ledgers. Hollowmark holds while I'm here. Mostly.")
 	elif Empire.role_of(id) == "staff":
 		var bid: String = Empire.recruits[id]["target"]
-		line = "%s Right now: %s." % [STAFF_LINES.get(bid, "Working."), Empire.current_effect(bid)["text"].to_lower()]
+		line = tr("%s Right now: %s.") % [Loc.t(STAFF_LINES.get(bid, tr("Working."))), Empire.current_effect(bid)["text"].to_lower()]
 	elif not lines.is_empty():
 		var i: int = talk_index.get(id, 0)
 		line = Prompts.fill(str(lines[i % lines.size()]))
@@ -511,14 +511,14 @@ func _use(t: Dictionary) -> void:
 			line = Relationships.talk_line(id, i)
 		talk_index[id] = i + 1
 	var gained := Empire.bond_talk(id)
-	var bond_note := "   (bond +%d)" % gained if gained > 0 else ""
+	var bond_note := tr("   (bond +%d)") % gained if gained > 0 else ""
 	touch.release_all()
 	var first := Dialogue.first_talk(id)
 	if first != "" and int(Empire.recruits[id]["injured"]) <= 0:
 		dialogue_box.play(first)  # the first proper chat: their introduction
 		talk_index[id] = 0
 		if gained > 0:
-			dialogue_box.title += "   ·   Bond with %s +%d" % [short_name, gained]
+			dialogue_box.title += tr("   ·   Bond with %s +%d") % [short_name, gained]
 		return
 	dialogue_box.play_lines([[id, line + bond_note]])
 
@@ -533,15 +533,15 @@ func _talk_visitor(id: String) -> void:
 	var price := "free" if cost.is_empty() else Empire.cost_text(cost)
 	if not pitched.has(id):
 		pitched[id] = true
-		hud.say("%s: %s   (Talk again to take them on: %s.)" % [who, r.get("pitch", "Looking for work."), price], 6.0)
+		hud.say(tr("%s: %s   (Talk again to take them on: %s.)") % [who, r.get("pitch", tr("Looking for work.")), price], 6.0)
 		return
 	var why := Empire.hire_blocker(id)
 	if why != "":
-		hud.say("%s: Come back when you can afford me. (%s: %s.)" % [who, price, why], 4.5)
+		hud.say(tr("%s: Come back when you can afford me. (%s: %s.)") % [who, price, why], 4.5)
 		return
 	if Empire.hire(id):
 		pitched.erase(id)
-		hud.say("%s: %s" % [who, r.get("welcome", "Glad to be here.")], 5.0)
+		hud.say("%s: %s" % [who, r.get("welcome", tr("Glad to be here."))], 5.0)
 		_place_people()
 
 
@@ -552,7 +552,7 @@ func _open_table() -> void:
 	if Story.command_on():
 		_leave(Saves.COMMAND_SCENE)
 	else:
-		hud.say("The Concord's clerks have the table under seal. Not yours. Not yet.", 3.0)
+		hud.say(tr("The Concord's clerks have the table under seal. Not yours. Not yet."), 3.0)
 
 
 ## Plays the next story beat in town if one is due and nothing else is on screen.
@@ -599,7 +599,7 @@ func _on_talk_finished(id: String) -> void:
 
 func _on_day_passed(d: int) -> void:
 	call_deferred("_story_check")
-	hud.toast("Day %d begins." % d, "Supplies ran out. People are going hungry." if Empire.hungry else "")
+	hud.toast(tr("Day %d begins.") % d, tr("Supplies ran out. People are going hungry.") if Empire.hungry else "")
 
 
 func _on_notice(_text: String, _warning: bool) -> void:
@@ -638,7 +638,7 @@ func alert_go(target: Dictionary) -> void:
 			if not target.has("province"):
 				return
 			if not Story.command_on():
-				hud.say("The Concord's clerks have the table under seal. Not yours. Not yet.", 3.0)
+				hud.say(tr("The Concord's clerks have the table under seal. Not yours. Not yet."), 3.0)
 				return
 			Alerts.focus = target
 			_leave(Saves.COMMAND_SCENE)
@@ -658,7 +658,7 @@ func _go_command_unsaved() -> void:
 
 
 func snapshot() -> Dictionary:
-	return {"scene": Saves.HUB_SCENE, "area_name": "Hollowmark",
+	return {"scene": Saves.HUB_SCENE, "area_name": tr("Hollowmark"),
 		"x": leader.global_position.x, "y": leader.global_position.y}
 
 
@@ -685,26 +685,26 @@ func _notification(what: int) -> void:
 # ---------------------------------------------------------------- menu
 
 func open_menu(note := "") -> void:
-	menu.setup("Hollowmark", [
-		{"id": "resume", "label": "Resume"},
-		{"id": "table", "label": "Command Table", "detail": "the territory map"},
-		{"id": "journal", "label": "Journal", "detail": "quests, people, codex, history" + Prompts.tag("journal")},
-		{"id": "roster", "label": "Roster", "detail": Prompts.key("roster")},
-		{"id": "buildings", "label": "Buildings", "detail": Prompts.key("buildings")},
-		{"id": "expeditions", "label": "Expeditions", "detail": Prompts.key("expeditions"), "enabled": Help.is_open("expeditions"), "note": "(%s)" % Help.locked_note("expeditions")},
-		{"id": "research", "label": "Research", "detail": Prompts.key("research"), "enabled": Help.is_open("research"), "note": "(%s)" % Help.locked_note("research")},
-		{"id": "diplomacy", "label": "Diplomacy", "detail": Prompts.key("diplomacy"), "enabled": Help.is_open("diplomacy"), "note": "(%s)" % Help.locked_note("diplomacy")},
-		{"id": "bonds", "label": "Bonds", "detail": Prompts.key("bonds"), "enabled": Help.is_open("bonds"), "note": "(%s)" % Help.locked_note("bonds")},
-		{"id": "newcomers", "label": "Newcomers", "detail": Prompts.key("newcomers")},
-		{"id": "gear", "label": "Party gear & shop", "detail": Prompts.key("gear")},
-		{"id": "armory", "label": "Forge & Market", "detail": Prompts.key("armory")},
-		{"id": "help", "label": "Help", "detail": "explainers, tips and controls"},
-		{"id": "report", "label": "Report a bug", "detail": "or send feedback"},
+	menu.setup(tr("Hollowmark"), [
+		{"id": "resume", "label": tr("Resume")},
+		{"id": "table", "label": tr("Command Table"), "detail": tr("the territory map")},
+		{"id": "journal", "label": tr("Journal"), "detail": tr("quests, people, codex, history") + Prompts.tag("journal")},
+		{"id": "roster", "label": tr("Roster"), "detail": Prompts.key("roster")},
+		{"id": "buildings", "label": tr("Buildings"), "detail": Prompts.key("buildings")},
+		{"id": "expeditions", "label": tr("Expeditions"), "detail": Prompts.key("expeditions"), "enabled": Help.is_open("expeditions"), "note": "(%s)" % Help.locked_note("expeditions")},
+		{"id": "research", "label": tr("Research"), "detail": Prompts.key("research"), "enabled": Help.is_open("research"), "note": "(%s)" % Help.locked_note("research")},
+		{"id": "diplomacy", "label": tr("Diplomacy"), "detail": Prompts.key("diplomacy"), "enabled": Help.is_open("diplomacy"), "note": "(%s)" % Help.locked_note("diplomacy")},
+		{"id": "bonds", "label": tr("Bonds"), "detail": Prompts.key("bonds"), "enabled": Help.is_open("bonds"), "note": "(%s)" % Help.locked_note("bonds")},
+		{"id": "newcomers", "label": tr("Newcomers"), "detail": Prompts.key("newcomers")},
+		{"id": "gear", "label": tr("Party gear & shop"), "detail": Prompts.key("gear")},
+		{"id": "armory", "label": tr("Forge & Market"), "detail": Prompts.key("armory")},
+		{"id": "help", "label": tr("Help"), "detail": tr("explainers, tips and controls")},
+		{"id": "report", "label": tr("Report a bug"), "detail": tr("or send feedback")},
 	] + Survey.menu_items() + [  # playtest builds only (issue #168)
-		{"id": "save", "label": "Save game"},
-		{"id": "load", "label": "Load game", "enabled": Saves.latest_slot() != "", "note": "(no saves yet)"},
-		{"id": "options", "label": "Options"},
-		{"id": "title", "label": "Quit to title"},
+		{"id": "save", "label": tr("Save game")},
+		{"id": "load", "label": tr("Load game"), "enabled": Saves.latest_slot() != "", "note": tr("(no saves yet)")},
+		{"id": "options", "label": tr("Options")},
+		{"id": "title", "label": tr("Quit to title")},
 	], note)
 	menu.visible = true
 	get_tree().paused = true
@@ -773,7 +773,7 @@ func _on_menu(id: String) -> void:
 		"save", "load":
 			slot_mode = id
 			menu.visible = false
-			slot_menu.setup("Save to which slot?" if id == "save" else "Load which save?", Saves.slot_items(id == "save"))
+			slot_menu.setup(tr("Save to which slot?") if id == "save" else tr("Load which save?"), Saves.slot_items(id == "save"))
 			slot_menu.visible = true
 		"title":
 			_leave(TITLE_SCENE)
@@ -789,7 +789,7 @@ func _on_slot(id: String) -> void:
 		return
 	var ok := Saves.save(id, snapshot())
 	slot_menu.visible = false
-	open_menu(("Saved to %s." % Saves.slot_label(id)) if ok else "Saving failed. Your browser may be blocking storage.")
+	open_menu((tr("Saved to %s.") % Saves.slot_label(id)) if ok else tr("Saving failed. Your browser may be blocking storage."))
 
 
 # ---------------------------------------------------------------- frame
@@ -912,7 +912,7 @@ func _draw_lamp() -> void:
 		var spr: Sprite2D = c.get_node_or_null("Art")
 		if spr == null:
 			spr = Sprite2D.new()
-			spr.name = "Art"
+			spr.name = "Art"  # no-tr: node name
 			spr.centered = false
 			spr.material = Art.art_world_material()
 			spr.show_behind_parent = true

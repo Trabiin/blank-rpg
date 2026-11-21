@@ -217,7 +217,7 @@ func update(delta: float) -> void:
 	if creep > 0.0:
 		_move_blank(-creep * delta)
 		if escort != null and not escort.dead and main.blank.edge_x(escort.position.y) <= escort.position.x + 4.0:
-			fail_why = "The white closed over %s." % escort.hero_name
+			fail_why = tr("The white closed over %s.") % escort.hero_name
 			return
 	step_t += delta
 	var done := false
@@ -233,10 +233,10 @@ func update(delta: float) -> void:
 			_pressure(delta)
 			if guarded != null:
 				if guarded.hp <= 0:
-					fail_why = str(st.get("fail", "%s did not hold." % guarded.label.capitalize()))
+					fail_why = str(st.get("fail", tr("%s did not hold.") % guarded.label.capitalize()))
 					return
 				if main.blank.edge_x(guarded.position.y) <= guarded.position.x + 4.0:
-					fail_why = "The white swallowed %s." % guarded.label
+					fail_why = tr("The white swallowed %s.") % guarded.label
 					return
 			done = step_t >= float(st.get("seconds", 30.0))
 		"use":
@@ -292,23 +292,23 @@ func _update_escort(delta: float) -> void:
 		if escort.revive_progress >= Hero.REVIVE_TIME:
 			escort.revive()
 			escort.hp = maxi(escort.hp, escort.max_hp / 2)
-			main.hud.say("%s is back on their feet. Shaky, but walking." % escort.hero_name, 2.5)
+			main.hud.say(tr("%s is back on their feet. Shaky, but walking.") % escort.hero_name, 2.5)
 	else:
 		escort.revive_progress = maxf(escort.revive_progress - delta, 0.0)
 	if down_t > DOWN_LIMIT:
-		fail_why = "%s went down and stayed down. You carried them home." % escort.hero_name
+		fail_why = tr("%s went down and stayed down. You carried them home.") % escort.hero_name
 
 
 func text() -> String:
 	if end_t >= 0.0 or step >= steps.size():
-		return "Done"
+		return tr("Done")
 	var label := str(st.get("label", ""))
 	match str(st.get("do", "")):
 		"talk":
 			return label
 		"clear":
 			var left := wave.filter(func(e): return is_instance_valid(e) and not e.dead).size()
-			return "%s   (%d left)" % [label, left]
+			return tr("%s   (%d left)") % [label, left]
 		"hold":
 			var s := "%s   (%d s)" % [label, ceili(maxf(float(st.get("seconds", 30.0)) - step_t, 0.0))]
 			if guarded != null:
@@ -413,7 +413,7 @@ class Overlay extends Control:
 		if es != null:
 			var x := 8.0
 			var y := vs.y - 58.0
-			var txt := "%s%s" % [es.hero_name, "  DOWN: get to them" if es.dead else ""]
+			var txt := "%s%s" % [es.hero_name, tr("  DOWN: get to them") if es.dead else ""]
 			draw_string_outline(f, Vector2(x, y), txt, HORIZONTAL_ALIGNMENT_LEFT, -1, 8, 3, Color(0, 0, 0, 0.85))
 			draw_string(f, Vector2(x, y), txt, HORIZONTAL_ALIGNMENT_LEFT, -1, 8, Color("ff9b8a") if es.dead else Color("f3efe4"))
 			draw_rect(Rect2(x, y + 3, 80, 4), Color(0, 0, 0, 0.6))

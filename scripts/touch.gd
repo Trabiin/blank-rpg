@@ -145,7 +145,7 @@ func _draw() -> void:
 	var a := _attack_center()
 	draw_circle(a, BTN_ATTACK_R, Color(1, 1, 1, 0.18 if not button_touches.values().has("attack") else 0.4))
 	draw_arc(a, BTN_ATTACK_R, 0, TAU, 32, Color(1, 1, 1, 0.5), 1.5)
-	var a_label := "TALK" if _in_town() else "ATTACK"
+	var a_label := tr("TALK") if _in_town() else tr("ATTACK")
 	var alw := ThemeDB.fallback_font.get_string_size(a_label, HORIZONTAL_ALIGNMENT_LEFT, -1, 9).x
 	draw_string(ThemeDB.fallback_font, a + Vector2(-alw / 2.0, 4), a_label, HORIZONTAL_ALIGNMENT_LEFT, -1, 9, Color(1, 1, 1, 0.8))
 	if not _in_town():
@@ -158,7 +158,7 @@ func _draw_mission_buttons() -> void:
 	var s := _swap_center()
 	draw_circle(s, BTN_SWAP_R, Color(1, 1, 1, 0.18 if not button_touches.values().has("swap") else 0.4))
 	draw_arc(s, BTN_SWAP_R, 0, TAU, 32, Color(1, 1, 1, 0.5), 1.5)
-	draw_string(ThemeDB.fallback_font, s + Vector2(-12, 4), "SWAP", HORIZONTAL_ALIGNMENT_LEFT, -1, 9, Color(1, 1, 1, 0.8))
+	draw_string(ThemeDB.fallback_font, s + Vector2(-12, 4), tr("SWAP"), HORIZONTAL_ALIGNMENT_LEFT, -1, 9, Color(1, 1, 1, 0.8))
 	for i in _ability_count():
 		var hero: Hero = party.leader
 		var ab: Dictionary = hero.abilities[i]
@@ -192,4 +192,4 @@ func _draw_stick() -> void:
 		draw_circle(knob, 12.0, Color(1, 1, 1, 0.35))
 	else:
 		var vs := get_viewport_rect().size
-		draw_string(ThemeDB.fallback_font, Vector2(24, vs.y - 50), "drag here to move", HORIZONTAL_ALIGNMENT_LEFT, -1, 9, Color(1, 1, 1, 0.35))
+		draw_string(ThemeDB.fallback_font, Vector2(24, vs.y - 50), tr("drag here to move"), HORIZONTAL_ALIGNMENT_LEFT, -1, 9, Color(1, 1, 1, 0.35))

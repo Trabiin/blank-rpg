@@ -187,12 +187,12 @@ func _draw() -> void:
 		draw_colored_polygon(PackedVector2Array([tip, tip + Vector2(-3, -7), tip + Vector2(0, -10), tip + Vector2(3, -7)]), INK)
 		draw_line(tip + Vector2(0, -2), tip + Vector2(0, -6), Color("d6cdba"), 1.0)
 	# Skip, and what the buttons do on this device.
-	var skip := "Skip"
+	var skip := tr("Skip")
 	var sw := font.get_string_size(skip, HORIZONTAL_ALIGNMENT_LEFT, -1, 8).x
 	_skip_rect = Rect2(box.position.x, box.end.y + 1, sw + 12, 11)
 	draw_string(font, _skip_rect.position + Vector2(4, 8), skip, HORIZONTAL_ALIGNMENT_LEFT, -1, 8, Color(0.75, 0.72, 0.7))
-	var hint := Prompts.help([["ui_accept", "next"], ["ui_cancel", "skip"]], "Tap: next")
-	hint += "   Replay any time: Help in the menu"
+	var hint := Prompts.help([["ui_accept", "next"], ["ui_cancel", "skip"]], tr("Tap: next"))
+	hint += tr("   Replay any time: Help in the menu")
 	var hw := font.get_string_size(hint, HORIZONTAL_ALIGNMENT_LEFT, -1, 7).x
 	draw_rect(Rect2(vs.x - hw - 18, vs.y - 10, hw + 18, 10), Color(0.05, 0.04, 0.07, 0.9))  # over the screen's own hint line
 	draw_string(font, Vector2(vs.x - font.get_string_size(hint, HORIZONTAL_ALIGNMENT_LEFT, -1, 7).x - 12, vs.y - 2), hint,

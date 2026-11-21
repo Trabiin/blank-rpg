@@ -127,7 +127,7 @@ func _draw() -> void:
 		_draw_markers(store)
 	var x := origin.x
 	var pend: Array = store.pending()
-	var tab_hint := "tap" if Prompts.touch() else Prompts.key("alert_go")  # follows the device and remaps (issue #115)
+	var tab_hint := Loc.t("tap") if Prompts.touch() else Prompts.key("alert_go")  # follows the device and remaps (issue #115)
 	var g := Alerts.goal()
 	var y := origin.y
 	if grow_up:
@@ -138,12 +138,12 @@ func _draw() -> void:
 	# The pinned story goal.
 	if not g.is_empty():
 		goal_target = g.get("target", {})
-		var gs := "Story: " + str(g["text"])
+		var gs := tr("Story: ") + str(g["text"])
 		var hint := Prompts.fill(str(g.get("hint", "")))
 		var gw := font.get_string_size(gs, HORIZONTAL_ALIGNMENT_LEFT, -1, 8).x
 		var key := ""
 		if not goal_target.is_empty():
-			key = "  [%s: go]" % tab_hint if pend.is_empty() else "  [go]"
+			key = tr("  [%s: go]") % tab_hint if pend.is_empty() else tr("  [go]")
 		var hw := font.get_string_size(("  " + hint if hint != "" else "") + key, HORIZONTAL_ALIGNMENT_LEFT, -1, 7).x
 		goal_rect = Rect2(x, y, minf(gw + hw + 12, width + 60), 13)
 		draw_rect(goal_rect, Color(0.06, 0.05, 0.08, 0.78))
@@ -169,7 +169,7 @@ func _draw() -> void:
 			pulse = 0.5 + 0.5 * sin(t * 8.0)  # new: blink for a few seconds
 		draw_rect(r, Color(0.06, 0.05, 0.08, 0.8))
 		draw_rect(Rect2(x, y, 2, ROW_H), (WARN if a["warning"] else GOLD).lerp(Color.WHITE, pulse * 0.6))
-		var go := ("%s: go" % tab_hint) if shown == 0 else "go"
+		var go := (tr("%s: go") % tab_hint) if shown == 0 else Loc.t("go")
 		var gw2 := font.get_string_size(go, HORIZONTAL_ALIGNMENT_LEFT, -1, 7).x
 		_text(Vector2(x + 6, y + 9), _fit(str(a["text"]), width - gw2 - 30, 8), 8, col)
 		_text(Vector2(x + width - 18 - gw2, y + 9), go, 7, GOLD)
@@ -178,7 +178,7 @@ func _draw() -> void:
 		y += ROW_H + 1.0
 		shown += 1
 	if pend.size() > MAX_ROWS:
-		_text(Vector2(x + 6, y + 8), "+%d more" % (pend.size() - MAX_ROWS), 7, Color(0.7, 0.68, 0.7))
+		_text(Vector2(x + 6, y + 8), tr("+%d more") % (pend.size() - MAX_ROWS), 7, Color(0.7, 0.68, 0.7))
 		y += 10.0
 
 	# Plain notices fade out below.

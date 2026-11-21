@@ -34,7 +34,7 @@ static func data() -> Dictionary:
 	if _data.is_empty():
 		var f := FileAccess.open(DATA_PATH, FileAccess.READ)
 		if f:
-			var parsed = JSON.parse_string(f.get_as_text())
+			var parsed = Loc.data(JSON.parse_string(f.get_as_text()), f.get_path().get_file())
 			if typeof(parsed) == TYPE_DICTIONARY:
 				_data = parsed
 		# The main story's talks and speakers (data/story.json, issue #18) and the personal missions'
@@ -359,7 +359,7 @@ static func speed_index() -> int:
 
 
 static func speed_name() -> String:
-	return SPEEDS[speed_index()][0]
+	return Loc.t(SPEEDS[speed_index()][0])
 
 
 ## Characters per second for typewriter text (0 = show the whole line at once).

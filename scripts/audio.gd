@@ -72,17 +72,17 @@ func _ready() -> void:
 	unlocked = not OS.has_feature("web")
 	for i in 2:
 		var p := AudioStreamPlayer.new()
-		p.bus = "Music"
+		p.bus = "Music"  # no-tr: audio bus
 		p.volume_db = -80.0
 		add_child(p)
 		_music.append(p)
 	for i in VOICES:
 		var v := AudioStreamPlayer.new()
-		v.bus = "SFX"
+		v.bus = "SFX"  # no-tr: audio bus
 		add_child(v)
 		_voices.append(v)
 	_hum = AudioStreamPlayer.new()
-	_hum.bus = "SFX"
+	_hum.bus = "SFX"  # no-tr: audio bus
 	_hum.stream = _hum_stream()
 	_hum.volume_db = -80.0
 	add_child(_hum)
@@ -92,7 +92,7 @@ func _ready() -> void:
 ## Creates the "Music" and "SFX" buses under Master if they don't exist yet. Safe to call twice;
 ## the Options screen does the same check.
 static func ensure_buses() -> void:
-	for bus_name in ["Music", "SFX"]:
+	for bus_name in ["Music", "SFX"]:  # no-tr: audio bus
 		if AudioServer.get_bus_index(bus_name) == -1:
 			AudioServer.add_bus()
 			var idx := AudioServer.bus_count - 1

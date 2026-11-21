@@ -149,29 +149,29 @@ func update(delta: float) -> void:
 			_move_blank(-float(obj.get("creep", 3.0)) * delta)
 			_spawn_timer(delta, float(obj.get("spawn_every", 3.0)), func(): return _edge_point(ward.position.y, 160.0), true)
 			if ward.hp <= 0:
-				fail_why = "The wardstone broke. The surge will land."
+				fail_why = tr("The wardstone broke. The surge will land.")
 			elif main.blank.edge_x(ward.position.y) <= ward.position.x + 8.0:
-				fail_why = "The Blank swallowed the wardstone."
+				fail_why = tr("The Blank swallowed the wardstone.")
 			elif time_left <= 0.0:
 				time_left = 0.0
 				end_t = 0.0
-				main.hud.say("The surge breaks. The white goes quiet.", 3.0)
+				main.hud.say(tr("The surge breaks. The white goes quiet."), 3.0)
 		"reclaim":
 			if blot.dead:
 				end_t = 0.0
-				main.hud.say("The Blot bursts. The Blank lets go of the land.", 3.0)
+				main.hud.say(tr("The Blot bursts. The Blank lets go of the land."), 3.0)
 				return
 			_spawn_timer(delta, float(obj.get("spawn_every", 4.0)), func(): return blot.position + Vector2(randf_range(-30, -14), randf_range(-26, 26)), false)
 		"rescue":
 			if phase == 0:
 				_move_blank(-float(obj.get("creep", 2.6)) * delta)
 				if main.blank.edge_x(captive.position.y) <= captive.position.x + 6.0:
-					fail_why = "The white closed over %s before you got there." % captive.hero_name
+					fail_why = tr("The white closed over %s before you got there.") % captive.hero_name
 				elif main.leader and main.leader.global_position.distance_to(captive.global_position) < FIND_RANGE:
 					phase = 1
 					captive.party = main
 					captive.set_physics_process(true)  # follows the leader and fights like an ally
-					main.hud.say("%s: \"Took you long enough. Which way is out?\"" % captive.hero_name, 3.5)
+					main.hud.say(tr("%s: \"Took you long enough. Which way is out?\"") % captive.hero_name, 3.5)
 			elif main.leader and main.leader.global_position.distance_to(exit_pos) < EXIT_RANGE:
 				end_t = 1.6  # nothing to watch here: done right away
 		"raid":
@@ -203,9 +203,9 @@ func _open_cache(c: Cache) -> void:
 			main.found[k] = int(main.found.get(k, 0)) + n
 	main.found_flash = 1.5
 	var txt := Missions.res_text(got)
-	Fx.damage_number(main.entities, c.position + Vector2(0, -30), txt if txt != "" else "empty", Color("ffe7a3"))
+	Fx.damage_number(main.entities, c.position + Vector2(0, -30), txt if txt != "" else Loc.t("empty"), Color("ffe7a3"))
 	if taken == need:
-		main.hud.say("That's enough. Get back to where you came in (or grab more first).", 3.5)
+		main.hud.say(tr("That's enough. Get back to where you came in (or grab more first)."), 3.5)
 		Audio.sfx("alert")
 	if kind == "raid":
 		_raise(float(obj.get("alarm_open", 14.0)))
@@ -219,7 +219,7 @@ func _raise(amount: float) -> void:
 		raised = true
 		time_left = minf(time_left, float(obj.get("alarm_cap", 45.0)))
 		reinforce_t = 1.5
-		main.hud.say("The alarm is up! The garrison is coming. Grab what you can and run.", 3.5)
+		main.hud.say(tr("The alarm is up! The garrison is coming. Grab what you can and run."), 3.5)
 		Audio.sfx("alert")
 
 
@@ -246,10 +246,10 @@ func _update_raid(delta: float) -> void:
 					e.target = main.leader  # they know where you are
 	if taken >= need and main.leader and main.leader.global_position.distance_to(exit_pos) < EXIT_RANGE:
 		end_t = 1.6
-		main.hud.say("Out, with %d cache%s. Nobody followed. Yet." % [taken, "" if taken == 1 else "s"], 3.0)
+		main.hud.say(tr("Out, with %d cache%s. Nobody followed. Yet.") % [taken, "" if taken == 1 else "s"], 3.0)
 	elif time_left <= 0.0:
 		time_left = 0.0
-		fail_why = "The garrison closed in. You dropped everything and ran."
+		fail_why = tr("The garrison closed in. You dropped everything and ran.")
 
 
 ## A spawn point well away from the party (reinforcements come from somewhere you aren't).
@@ -268,7 +268,7 @@ func _update_salvage(delta: float) -> void:
 	if grace > 0.0:
 		grace -= delta
 		if grace <= 0.0:
-			main.hud.say("The white starts to move.", 2.5)
+			main.hud.say(tr("The white starts to move."), 2.5)
 		return
 	_move_blank(-float(obj.get("creep", 4.0)) * delta)
 	_spawn_timer(delta, 5.0, func(): return _edge_point(main.leader.global_position.y if main.leader else main.world.y / 2.0, 140.0), false)
@@ -279,7 +279,7 @@ func _update_salvage(delta: float) -> void:
 			continue
 		if main.blank.edge_x(cc.position.y) <= cc.position.x + 6.0:
 			cc.swallow()
-			main.hud.say("The white swallowed a pile.", 2.0)
+			main.hud.say(tr("The white swallowed a pile."), 2.0)
 			continue
 		if cc.work(delta, _workers()):
 			_open_cache(cc)
@@ -288,9 +288,9 @@ func _update_salvage(delta: float) -> void:
 	if taken >= need:
 		if main.leader and main.leader.global_position.distance_to(exit_pos) < EXIT_RANGE:
 			end_t = 1.6
-			main.hud.say("Out with %d pile%s. The white can have the rest." % [taken, "" if taken == 1 else "s"], 3.0)
+			main.hud.say(tr("Out with %d pile%s. The white can have the rest.") % [taken, "" if taken == 1 else "s"], 3.0)
 	elif taken + left < need:
-		fail_why = "The white took the rest before you could reach it."
+		fail_why = tr("The white took the rest before you could reach it.")
 
 
 func _move_blank(dx: float) -> void:
@@ -341,26 +341,26 @@ func fail_text() -> String:
 func text() -> String:
 	match kind:
 		"defense":
-			return "Hold the wardstone: %d s   (stone %d/%d)" % [ceili(time_left), ward.hp, ward.max_hp]
+			return tr("Hold the wardstone: %d s   (stone %d/%d)") % [ceili(time_left), ward.hp, ward.max_hp]
 		"reclaim":
-			return "Break the Blot   (%d/%d)" % [blot.hp, blot.max_hp] if not blot.dead else "The Blot is broken"
+			return tr("Break the Blot   (%d/%d)") % [blot.hp, blot.max_hp] if not blot.dead else tr("The Blot is broken")
 		"rescue":
 			if phase == 0:
 				var gap := maxf(main.blank.edge_x(captive.position.y) - captive.position.x, 0.0)
-				return "Find %s before the white does   (%d paces)" % [captive.hero_name, int(gap / 4.0)]
-			return "Bring %s back to where you came in" % captive.hero_name
+				return tr("Find %s before the white does   (%d paces)") % [captive.hero_name, int(gap / 4.0)]
+			return tr("Bring %s back to where you came in") % captive.hero_name
 		"raid":
 			var clock := "%d:%02d" % [int(time_left) / 60, int(time_left) % 60]
-			var a := "ALARM" if raised else "alarm %d%%" % int(alarm)
+			var a := tr("ALARM") if raised else tr("alarm %d%%") % int(alarm)
 			if taken >= need:
-				return "Get out with it: %d cache%s   (%s, %s)" % [taken, "" if taken == 1 else "s", a, clock]
-			return "Take the caches: %d/%d   (%s, %s)" % [taken, need, a, clock]
+				return tr("Get out with it: %d cache%s   (%s, %s)") % [taken, "" if taken == 1 else "s", a, clock]
+			return tr("Take the caches: %d/%d   (%s, %s)") % [taken, need, a, clock]
 		"salvage":
 			if taken >= need:
-				return "Get back with it: %d pile%s   (or grab more)" % [taken, "" if taken == 1 else "s"]
+				return tr("Get back with it: %d pile%s   (or grab more)") % [taken, "" if taken == 1 else "s"]
 			if grace > 0.0:
-				return "Pull piles out of the white: %d/%d   (it moves in %ds)" % [taken, need, ceili(grace)]
-			return "Pull piles out of the white: %d/%d" % [taken, need]
+				return tr("Pull piles out of the white: %d/%d   (it moves in %ds)") % [taken, need, ceili(grace)]
+			return tr("Pull piles out of the white: %d/%d") % [taken, need]
 	return ""
 
 
@@ -444,7 +444,7 @@ class Pointer extends Control:
 			var ep: Vector2 = xf * obj.exit_pos
 			var r := (13.0 + sin(t * 4.0) * 1.5) * xf.get_scale().x
 			draw_arc(ep, r, 0, TAU, 32, Color("ffd166"), 2.0)
-			_label(ep + Vector2(0, -r - 4), "EXIT")
+			_label(ep + Vector2(0, -r - 4), tr("EXIT"))
 		var tp = obj.target_pos()
 		if tp == null:
 			return

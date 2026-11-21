@@ -45,7 +45,7 @@ func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	visible = false
-	var parsed = JSON.parse_string(FileAccess.get_file_as_string("res://data/heroes.json"))
+	var parsed = Loc.load_json("res://data/heroes.json")
 	_hero_data = parsed if typeof(parsed) == TYPE_DICTIONARY else {}
 	# This menu only exists on missions, so it is where battle speed (Options) switches on and off.
 	Settings.in_battle = true
@@ -103,16 +103,16 @@ func _style_desc(style: String) -> String:
 func _tech_line(h: Hero) -> String:
 	var known := Skills.known_techs(h.hero_id)
 	if known.is_empty():
-		return "No charged techs"
+		return tr("No charged techs")
 	var picked := Skills.picked_tech(h.hero_id)
 	if h.controlled:
-		var held := ("Always %s" % picked.get("name", "?")) if not picked.is_empty() else \
-			("%s, hold longer for %d more" % [known[0].get("name", "?"), known.size() - 1] if known.size() > 1 else str(known[0].get("name", "?")))
-		return "%s  (hold Attack on a full gauge)" % held
-	var what := ("Always %s" % picked.get("name", "?")) if not picked.is_empty() else \
-		("Picks from %d techs" % known.size() if known.size() > 1 else str(known[0].get("name", "?")))
+		var held := (tr("Always %s") % picked.get("name", "?")) if not picked.is_empty() else \
+			(tr("%s, hold longer for %d more") % [known[0].get("name", "?"), known.size() - 1] if known.size() > 1 else str(known[0].get("name", "?")))
+		return tr("%s  (hold Attack on a full gauge)") % held
+	var what := (tr("Always %s") % picked.get("name", "?")) if not picked.is_empty() else \
+		(tr("Picks from %d techs") % known.size() if known.size() > 1 else str(known[0].get("name", "?")))
 	var mode := AllyTechs.mode_of(h)
-	var how := ("Auto, " + str(AllyTechs.PRESET_RULE.get(AllyTechs.preset_of(h), ""))) if mode == "auto" else str(AllyTechs.MODE_NAMES[mode])
+	var how := (tr("Auto, ") + str(AllyTechs.PRESET_RULE.get(AllyTechs.preset_of(h), ""))) if mode == "auto" else str(AllyTechs.MODE_NAMES[mode])
 	return "%s  (%s, %s)" % [what, how, AllyTechs.state_text(h)]
 
 
@@ -122,7 +122,7 @@ func _gear_line(h: Hero) -> String:
 	var parts := []
 	for slot in Progress.SLOTS:
 		var item_id := str(worn.get(slot, ""))
-		parts.append("%s: %s" % [Progress.SLOT_NAMES[slot], Progress.item(item_id).get("name", item_id) if item_id != "" else "none"])
+		parts.append("%s: %s" % [Loc.t(Progress.SLOT_NAMES[slot]), Progress.item(item_id).get("name", item_id) if item_id != "" else tr("none")])
 	return "  ·  ".join(parts)
 
 
@@ -144,7 +144,7 @@ func _abilities_script():
 
 func _ability_blocker(h: Hero, i: int) -> String:
 	var ab = _abilities_script()
-	return str(ab.blocker(h, i)) if ab else "not ready"
+	return str(ab.blocker(h, i)) if ab else tr("not ready")
 
 
 ## The full gear screen (issue #15), when it exists: the Equip tab hands over to it.
@@ -171,8 +171,8 @@ func _open_gear() -> bool:
 func _tree_right(id: String) -> String:
 	var free := SkillTree.points_free(id)
 	if SkillTree.can_spend(id):
-		return "%d Skill Point%s to spend" % [free, "" if free == 1 else "s"]
-	return "%d/%d nodes" % [SkillTree.learned(id).size(), SkillTree.all_nodes(id).size()]
+		return tr("%d Skill Point%s to spend") % [free, "" if free == 1 else "s"]
+	return tr("%d/%d nodes") % [SkillTree.learned(id).size(), SkillTree.all_nodes(id).size()]
 
 
 ## The Tree tab's second line: how far along each branch the hero is.
@@ -181,7 +181,7 @@ func _tree_line(id: String) -> String:
 	for b in SkillTree.branches(id):
 		var done := (b["nodes"] as Array).filter(func(n): return SkillTree.knows(id, str(n["id"]))).size()
 		parts.append("%s %d/%d" % [b.get("name", "?"), done, (b["nodes"] as Array).size()])
-	return "  ·  ".join(parts) + "  (pick to open the tree)"
+	return "  ·  ".join(parts) + tr("  (pick to open the tree)")
 
 
 ## The skill tree screen (issue #25) over the fight, paused underneath until it closes.
@@ -216,8 +216,8 @@ func _rebuild() -> void:
 	match TABS[tab]:
 		"Items":
 			if Satchel.carried().is_empty():
-				rows.append({"id": "", "label": "The satchel is empty", "right": "%d/%d" % [Armory.satchel_total(), Armory.satchel_slots()],
-					"detail": "Pack it in town: Forge & Market, Satchel tab.", "enabled": true, "info": true})
+				rows.append({"id": "", "label": tr("The satchel is empty"), "right": "%d/%d" % [Armory.satchel_total(), Armory.satchel_slots()],
+					"detail": tr("Pack it in town: Forge & Market, Satchel tab."), "enabled": true, "info": true})
 			for id in Satchel.carried():  # issue #112: only what is packed
 				var it := Satchel.item(id)
 				var why := Satchel.blocker(id, _heroes())
@@ -229,43 +229,43 @@ func _rebuild() -> void:
 				var hero: Hero = h
 				var list := _abilities_of(hero)
 				if list.is_empty():  # a hero with no Ink abilities in data/heroes.json fights with Attack and their tech
-					rows.append({"id": hero.hero_id, "label": hero.hero_name, "right": "No Ink abilities",
+					rows.append({"id": hero.hero_id, "label": hero.hero_name, "right": tr("No Ink abilities"),
 						"detail": str(_hd(hero).get("special", "")), "enabled": true, "info": true})
 				else:
-					var ink := "Ink %d/%d" % [int(hero.get("ink")), int(hero.get("max_ink"))]
-					rows.append({"id": hero.hero_id, "label": hero.hero_name + ("  (down)" if hero.dead else ""), "right": ink,
+					var ink := tr("Ink %d/%d") % [int(hero.get("ink")), int(hero.get("max_ink"))]
+					rows.append({"id": hero.hero_id, "label": hero.hero_name + (tr("  (down)") if hero.dead else ""), "right": ink,
 						"detail": ", ".join(list.map(func(a): return str(a.get("name", "?")))), "enabled": not hero.dead, "hero": hero})
 		"Techs":  # issue #24: weapon skill level, which tech, and orders for allies
 			for h in _heroes():
 				var hero: Hero = h
-				var state := "  (down)" if hero.dead else ("  (you)" if hero.controlled else "")
+				var state := tr("  (down)") if hero.dead else (tr("  (you)") if hero.controlled else "")
 				rows.append({"id": hero.hero_id, "label": "%s%s" % [hero.hero_name, state],
-					"right": "%s Lv %d  %d/%d techs" % [Skills.weapon_name(hero.hero_id), Skills.weapon_level(hero.hero_id),
+					"right": tr("%s Lv %d  %d/%d techs") % [Skills.weapon_name(hero.hero_id), Skills.weapon_level(hero.hero_id),
 						Skills.known_techs(hero.hero_id).size(), Skills.all_techs(hero.hero_id).size()],
 					"detail": _tech_line(hero), "enabled": true, "hero": hero})
 		"Tree":  # issue #25: Skill Points to spend; picking a hero opens their tree (the fight pauses)
 			for h in _heroes():
 				var hero: Hero = h
-				rows.append({"id": hero.hero_id, "label": hero.hero_name + ("  (down)" if hero.dead else ""),
+				rows.append({"id": hero.hero_id, "label": hero.hero_name + (tr("  (down)") if hero.dead else ""),
 					"right": _tree_right(hero.hero_id), "detail": _tree_line(hero.hero_id), "enabled": true, "hero": hero})
 		"Party":
 			for h in _heroes():
 				var hero: Hero = h
-				var state := "  (down)" if hero.dead else ("  (you)" if hero.controlled else "")
-				rows.append({"id": hero.hero_id, "label": hero.hero_name + state, "right": "AI: " + _style_name(hero.ai_style),
+				var state := tr("  (down)") if hero.dead else (tr("  (you)") if hero.controlled else "")
+				rows.append({"id": hero.hero_id, "label": hero.hero_name + state, "right": tr("AI: ") + _style_name(hero.ai_style),
 					"detail": _style_desc(hero.ai_style), "enabled": true, "hero": hero})
 		"Equip":
 			for h in _heroes():
 				var hero: Hero = h
-				rows.append({"id": hero.hero_id, "label": "%s  Lv %d" % [hero.hero_name, Progress.level(hero.hero_id)],
-					"right": "DMG %d  Reach %d" % [hero.base_damage, int(hero.reach)],
+				rows.append({"id": hero.hero_id, "label": tr("%s  Lv %d") % [hero.hero_name, Progress.level(hero.hero_id)],
+					"right": tr("DMG %d  Reach %d") % [hero.base_damage, int(hero.reach)],
 					"detail": _gear_line(hero), "enabled": true, "info": true})
 		"Options":  # issue #14: a summary here, the full screen one press away
-			rows.append({"id": "speed", "label": "Battle speed", "right": Settings.battle_speed_name(),
-				"detail": "Pick to open Options", "enabled": true})
-			rows.append({"id": "difficulty", "label": "Difficulty", "right": Settings.DIFFICULTIES[Settings.difficulty],
-				"detail": Settings.DIFFICULTY_INFO[Settings.difficulty], "enabled": true})
-			rows.append({"id": "more", "label": "All options", "right": "text, shake, sound, controls",
+			rows.append({"id": "speed", "label": tr("Battle speed"), "right": Settings.battle_speed_name(),
+				"detail": tr("Pick to open Options"), "enabled": true})
+			rows.append({"id": "difficulty", "label": tr("Difficulty"), "right": Loc.t(Settings.DIFFICULTIES[Settings.difficulty]),
+				"detail": Loc.t(Settings.DIFFICULTY_INFO[Settings.difficulty]), "enabled": true})
+			rows.append({"id": "more", "label": tr("All options"), "right": tr("text, shake, sound, controls"),
 				"detail": "", "enabled": true})
 	sel = clampi(sel, 0, maxi(rows.size() - 1, 0))
 	if not rows.is_empty() and not rows[sel].get("enabled", true):
@@ -314,10 +314,10 @@ func _pick_row(i: int) -> void:
 		_open_options()
 		return
 	if TABS[tab] == "Items" and str(r.get("id", "")) == "":
-		_say("Nothing packed. The Forge & Market screen's Satchel tab packs it before a mission.")
+		_say(tr("Nothing packed. The Forge & Market screen's Satchel tab packs it before a mission."))
 		return
 	if r.get("info", false) or (TABS[tab] == "Abilities" and not r.has("hero")):
-		_say("%s has no Ink abilities: Attack, and the charged tech on a full gauge." % r.get("label", "") if TABS[tab] == "Abilities" else "The gear screen can't open right now.")
+		_say(tr("%s has no Ink abilities: Attack, and the charged tech on a full gauge.") % r.get("label", "") if TABS[tab] == "Abilities" else tr("The gear screen can't open right now."))
 		return
 	match TABS[tab]:
 		"Items":
@@ -325,7 +325,7 @@ func _pick_row(i: int) -> void:
 			if not Satchel.needs_target(id):  # party items and throwables (issue #112)
 				_use_item(id, null)
 				return
-			sub_title = "Use %s on" % Satchel.item(id).get("name", id)
+			sub_title = tr("Use %s on") % Satchel.item(id).get("name", id)
 			sub = []
 			var best := -1
 			var best_ratio := 2.0
@@ -333,7 +333,7 @@ func _pick_row(i: int) -> void:
 				var hero: Hero = h
 				var ok := Satchel.can_target(id, hero)
 				var ails := Status.active(hero).filter(func(a): return a[0] in Status.AILMENTS).map(func(a): return Status.name_of(a[0]))
-				var right := "down" if hero.dead else ("Ink %d/%d" % [int(hero.ink), int(hero.max_ink)] if str(Satchel.item(id).get("target", "")) == "ink" else "HP %d/%d" % [hero.hp, hero.max_hp])
+				var right := Loc.t("down") if hero.dead else (tr("Ink %d/%d") % [int(hero.ink), int(hero.max_ink)] if str(Satchel.item(id).get("target", "")) == "ink" else tr("HP %d/%d") % [hero.hp, hero.max_hp])
 				if not ails.is_empty() and not hero.dead:
 					right += "  " + ", ".join(ails)
 				sub.append({"id": "item:%s:%d" % [id, sub.size()], "label": hero.hero_name, "right": right, "enabled": ok})
@@ -350,17 +350,17 @@ func _pick_row(i: int) -> void:
 			for i2 in list.size():
 				var why := _ability_blocker(hero, i2)
 				sub.append({"id": "ability:%d" % i2, "icon": str(list[i2].get("id", "")), "label": str(list[i2].get("name", "?")),
-					"right": ("%d Ink" % int(list[i2].get("cost", 0))) if why == "" else why, "enabled": why == ""})
+					"right": (tr("%d Ink") % int(list[i2].get("cost", 0))) if why == "" else why, "enabled": why == ""})
 			sub_sel = sub.size() - 1
 			_move(1)  # first usable one
 		"Party":
 			var hero: Hero = r["hero"]
 			sub_title = hero.hero_name
-			sub = [{"id": "lead", "label": "Take control", "right": "",
+			sub = [{"id": "lead", "label": tr("Take control"), "right": "",
 				"enabled": not hero.dead and not hero.controlled}]
 			for style in Hero.AI_STYLES:
-				sub.append({"id": "ai:" + style, "label": "AI: " + _style_name(style),
-					"right": "current" if style == hero.ai_style else "", "enabled": true})
+				sub.append({"id": "ai:" + style, "label": tr("AI: ") + _style_name(style),
+					"right": Loc.t("current") if style == hero.ai_style else "", "enabled": true})
 			sub_sel = 0 if sub[0]["enabled"] else 1 + Hero.AI_STYLES.keys().find(hero.ai_style)
 		"Techs":
 			_tech_sub(r["hero"])
@@ -369,16 +369,16 @@ func _pick_row(i: int) -> void:
 ## The Techs tab's short list for one hero: choose by hold length or always one tech (known ones;
 ## the rest show the weapon level that teaches them), then orders for an ally (scripts/ally_techs.gd).
 func _tech_sub(hero: Hero) -> void:
-	sub_title = "%s: %s Lv %d" % [hero.hero_name, Skills.weapon_name(hero.hero_id), Skills.weapon_level(hero.hero_id)]
+	sub_title = tr("%s: %s Lv %d") % [hero.hero_name, Skills.weapon_name(hero.hero_id), Skills.weapon_level(hero.hero_id)]
 	sub = []
 	var picked := Skills.pick(hero.hero_id)
 	var known := Skills.known_techs(hero.hero_id).size()
-	sub.append({"id": "pick:", "label": "By hold length", "right": "current" if picked == "" else "", "enabled": known > 0})
+	sub.append({"id": "pick:", "label": tr("By hold length"), "right": Loc.t("current") if picked == "" else "", "enabled": known > 0})
 	for t in Skills.all_techs(hero.hero_id):
 		var lvl := int(t.get("level", 1))
 		var ok := lvl <= known
 		sub.append({"id": "pick:" + str(t["id"]), "label": str(t.get("name", "?")),
-			"right": ("current" if picked == t["id"] else "%.1f s" % Techs.charge_time(t)) if ok else "Lv %d" % lvl, "enabled": ok,
+			"right": (tr("current") if picked == t["id"] else tr("%s s") % Loc.dec(Techs.charge_time(t))) if ok else tr("Lv %d") % lvl, "enabled": ok,
 			"desc": str(t.get("desc", ""))})
 	sub_sel = 0
 	for i in sub.size():
@@ -387,11 +387,11 @@ func _tech_sub(hero: Hero) -> void:
 	if known > 0:
 		var why := AllyTechs.order_blocker(hero)
 		var next := Techs.charge_options(hero)
-		var tname := str(next.back().get("name", "tech")) if not picked.is_empty() or next.size() == 1 else "best tech"
-		sub.append({"id": "tech_now", "label": "Unleash " + tname, "right": why if why != "" else AllyTechs.state_text(hero), "enabled": why == ""})
+		var tname := str(next.back().get("name", "tech")) if not picked.is_empty() or next.size() == 1 else tr("best tech")
+		sub.append({"id": "tech_now", "label": tr("Unleash ") + tname, "right": why if why != "" else AllyTechs.state_text(hero), "enabled": why == ""})
 		for m in AllyTechs.MODES:
-			sub.append({"id": "tech:" + m, "label": "On its own: " + str(AllyTechs.MODE_NAMES[m]),
-				"right": "current" if m == AllyTechs.mode_of(hero) else "", "enabled": true})
+			sub.append({"id": "tech:" + m, "label": tr("On its own: ") + str(AllyTechs.MODE_NAMES[m]),
+				"right": Loc.t("current") if m == AllyTechs.mode_of(hero) else "", "enabled": true})
 
 
 ## Second press: the choice from the short list.
@@ -412,7 +412,7 @@ func _pick_sub(i: int) -> void:
 	elif id == "lead":
 		var hero: Hero = r["hero"]
 		party.take_control(hero)
-		_say("You now control %s." % hero.hero_name)
+		_say(tr("You now control %s.") % hero.hero_name)
 	elif id.begins_with("pick:"):
 		var hero: Hero = r["hero"]
 		var tid := id.substr(5)
@@ -420,20 +420,20 @@ func _pick_sub(i: int) -> void:
 		if hero.charging and not hero.ai_charging:
 			Techs.cancel(hero)
 		var t := Techs.find(tid)
-		_say(("%s will charge %s every time (%.1f s)." % [hero.hero_name, t.get("name", "?"), Techs.charge_time(t)]) if tid != ""
-			else "%s: hold Attack longer to reach stronger techs." % hero.hero_name)
+		_say((tr("%s will charge %s every time (%s s).") % [hero.hero_name, t.get("name", "?"), Loc.dec(Techs.charge_time(t))]) if tid != ""
+			else tr("%s: hold Attack longer to reach stronger techs.") % hero.hero_name)
 	elif id == "tech_now":
 		var hero: Hero = r["hero"]
 		AllyTechs.order(hero)
-		var tname := str(Techs.current(hero).get("name", "tech")) if not Skills.picked_tech(hero.hero_id).is_empty() else "the best tech it knows"
+		var tname := str(Techs.current(hero).get("name", "tech")) if not Skills.picked_tech(hero.hero_id).is_empty() else tr("the best tech it knows")
 		Fx.damage_number(hero.get_parent(), hero.global_position + Vector2(0, -26), tname + "!", Techs.color_of(hero))
-		_say("%s will unleash %s at the best target." % [hero.hero_name, tname] if hero.power >= 1.0
-			else "%s will unleash %s once the gauge is full." % [hero.hero_name, tname])
+		_say(tr("%s will unleash %s at the best target.") % [hero.hero_name, tname] if hero.power >= 1.0
+			else tr("%s will unleash %s once the gauge is full.") % [hero.hero_name, tname])
 	elif id.begins_with("tech:"):
 		var hero: Hero = r["hero"]
 		var mode := id.substr(5)
 		AllyTechs.set_mode(hero, mode)
-		_say("%s's tech: %s." % [hero.hero_name, AllyTechs.MODE_NAMES[mode]])
+		_say(tr("%s's tech: %s.") % [hero.hero_name, Loc.t(AllyTechs.MODE_NAMES[mode])])
 	elif id.begins_with("ai:"):
 		var hero: Hero = r["hero"]
 		var style := id.substr(3)
@@ -590,7 +590,7 @@ func _draw() -> void:
 		if i == tab:
 			draw_rect(r, Color(1, 0.82, 0.4, 0.14))
 			draw_rect(Rect2(r.position.x + 6, r.end.y - 2, r.size.x - 12, 2), GOLD)
-		var label: String = TABS[i]
+		var label: String = Loc.t(TABS[i])
 		var lw := font.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1, 11).x
 		_str(font, Vector2(r.position.x + (tw - lw) / 2.0, r.position.y + 16), label, 11, GOLD if i == tab else TEXT)
 	draw_line(Vector2(_panel.position.x, _panel.position.y + 24), Vector2(_panel.end.x, _panel.position.y + 24), Color(1, 1, 1, 0.12))
@@ -623,20 +623,20 @@ func _draw() -> void:
 	if note_t > 0.0:
 		_str(font, Vector2(x0, fy), note, 9, Color("9fe07a"))
 	else:
-		var hint := "Tap a tab or row.  Tap outside to close." if (party and party.touch_active()) or Prompts.touch() \
+		var hint := tr("Tap a tab or row.  Tap outside to close.") if (party and party.touch_active()) or Prompts.touch() \
 			else Prompts.help([["leftright", "tabs"], ["ui_accept", "pick"], ["ui_cancel", "back"], ["quick_menu", "close"]])
 		if sub_sel >= 0 and sub_sel < sub.size() and str(sub[sub_sel]["id"]).begins_with("ai:"):
 			hint = _style_desc(str(sub[sub_sel]["id"]).substr(3))  # what the highlighted AI preset does (issue #9)
 		elif sub_sel >= 0 and sub_sel < sub.size() and str(sub[sub_sel]["id"]).begins_with("tech:"):
 			hint = str(AllyTechs.MODE_DESC.get(str(sub[sub_sel]["id"]).substr(5), ""))
 		elif sub_sel >= 0 and sub_sel < sub.size() and str(sub[sub_sel]["id"]) == "tech_now":
-			hint = "Charges as soon as the gauge allows and fires at the best target in reach."
+			hint = tr("Charges as soon as the gauge allows and fires at the best target in reach.")
 		elif sub_sel >= 0 and sub_sel < sub.size() and str(sub[sub_sel]["id"]) == "pick:":
-			hint = "Hold Attack on a full gauge: each tech it knows is ready a little later than the last."
+			hint = tr("Hold Attack on a full gauge: each tech it knows is ready a little later than the last.")
 		elif sub_sel >= 0 and sub_sel < sub.size() and str(sub[sub_sel]["id"]).begins_with("pick:"):
-			hint = "Charges only this tech, ready after %.1f s of holding." % Techs.charge_time(Techs.find(str(sub[sub_sel]["id"]).substr(5)))
+			hint = tr("Charges only this tech, ready after %s s of holding.") % Loc.dec(Techs.charge_time(Techs.find(str(sub[sub_sel]["id"]).substr(5))))
 		_str(font, Vector2(x0, fy), hint, 8, DIM)
-	_str_right(font, x1, fy, "time slowed", 8, Color(0.7, 0.8, 1.0, 0.6 + 0.3 * sin(_t * 3.0)))
+	_str_right(font, x1, fy, tr("time slowed"), 8, Color(0.7, 0.8, 1.0, 0.6 + 0.3 * sin(_t * 3.0)))
 
 	# The short list a row opened, beside it.
 	_sub_rects.clear()

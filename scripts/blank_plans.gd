@@ -20,7 +20,7 @@ static var _data: Dictionary = {}
 
 static func data() -> Dictionary:
 	if _data.is_empty():
-		var parsed = JSON.parse_string(FileAccess.get_file_as_string(PATH))
+		var parsed = Loc.load_json(PATH)
 		_data = parsed if typeof(parsed) == TYPE_DICTIONARY else {"plans": [], "repeat_gap": [7, 10]}
 	return _data
 
@@ -41,7 +41,7 @@ static func from_save(d, today := 1) -> Dictionary:
 		return out
 	for e in d.get("pressure", []):
 		if typeof(e) == TYPE_DICTIONARY and e.has("pid"):
-			out["pressure"].append({"id": str(e.get("id", "")), "pid": str(e["pid"]), "label": str(e.get("label", "The Blank leans in")),
+			out["pressure"].append({"id": str(e.get("id", "")), "pid": str(e["pid"]), "label": str(e.get("label", Loc.t("The Blank leans in"))),
 				"per_day": int(e.get("per_day", 1)), "until": int(e.get("until", 0)), "counter": str(e.get("counter", ""))})
 	out["next"] = int(d.get("next", 0))
 	out["repeat_day"] = int(d.get("repeat_day", 0))
@@ -88,13 +88,13 @@ static func on(p: Dictionary, gov := "-") -> Array:
 			"governor":
 				if governed:
 					v = v / 2
-					note = COUNTER_TEXT["governor"]
+					note = Loc.t(COUNTER_TEXT["governor"])
 			"lamp":
 				if int(Empire.lamps.get(p["id"], 0)) > 0:
 					v = 0
-					note = COUNTER_TEXT["lamp"]
+					note = Loc.t(COUNTER_TEXT["lamp"])
 		if note == "" and COUNTER_HINT.has(e["counter"]):
-			note = COUNTER_HINT[e["counter"]]
+			note = Loc.t(COUNTER_HINT[e["counter"]])
 		out.append({"label": e["label"], "per_day": v, "days": left, "note": note})
 	return out
 
@@ -146,7 +146,7 @@ static func dawn() -> void:
 		return
 	add(pid, plan["label"], int(plan.get("per_day", 1)), int(plan.get("days", 3)), str(plan.get("counter", "")), plan["id"])
 	var p := t.find(pid)
-	Empire.notice.emit(str(plan.get("notice", "The Blank turns towards %s.")) % p["name"], p["owner"] == "you")
+	Empire.notice.emit(str(plan.get("notice", Loc.t("The Blank turns towards %s."))) % p["name"], p["owner"] == "you")
 
 
 static func _gap() -> int:

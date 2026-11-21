@@ -28,7 +28,7 @@ static func _load() -> Dictionary:
 	if _data.is_empty():
 		var f := FileAccess.open(PATH, FileAccess.READ)
 		if f:
-			var parsed = JSON.parse_string(f.get_as_text())
+			var parsed = Loc.data(JSON.parse_string(f.get_as_text()), f.get_path().get_file())
 			if parsed is Dictionary:
 				_data = parsed
 		_by_id = {}
@@ -310,7 +310,7 @@ static func fire(h: Hero, t: Dictionary = {}) -> void:
 	if int(t.get("ink", 0)) > 0:
 		for other in _allies(h, h.global_position, 120.0):
 			other.ink = minf(other.ink + float(t["ink"]), other.max_ink)
-			Fx.damage_number(parent, other.global_position + Vector2(0, -24), "+%d Ink" % int(t["ink"]), Color("6aa8ff"))
+			Fx.damage_number(parent, other.global_position + Vector2(0, -24), Loc.t("+%d Ink") % int(t["ink"]), Color("6aa8ff"))
 	var knives: Dictionary = t.get("knives", {})
 	if not knives.is_empty():
 		_throw(h, t, knives, dir)
@@ -358,7 +358,7 @@ static func pulse(h: Hero, t: Dictionary, b: Dictionary, state: Dictionary) -> v
 		var dealt := dmg
 		if float(p.get("execute", 0)) > 0.0 and float(enemy.hp) <= enemy.max_hp * float(p["execute"]):
 			dealt *= 2  # finishes off the wounded
-			Fx.damage_number(parent, enemy.global_position + Vector2(0, -26), "Finish!", col.lightened(0.4))
+			Fx.damage_number(parent, enemy.global_position + Vector2(0, -26), Loc.t("Finish!"), col.lightened(0.4))
 		var before := enemy.hp
 		# A pull (negative knock) drags towards the blast's centre; a push throws away from it.
 		if TreePerks.strike(h, enemy, dealt, center - dir * 4.0, knock, {}, "tech"):  # + skill tree (#25)
@@ -533,7 +533,7 @@ static func play(h: Hero, which: String, t: Dictionary = {}) -> void:
 	var p := AudioStreamPlayer.new()
 	p.stream = _sounds[which]
 	p.volume_db = -14.0 if which.ends_with(":tick") else -10.0
-	p.bus = "SFX"
+	p.bus = "SFX"  # no-tr: audio bus
 	h.add_child(p)
 	p.finished.connect(p.queue_free)
 	p.play()

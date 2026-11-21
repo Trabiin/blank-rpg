@@ -41,7 +41,7 @@ var page_h := 0.0  # height of the page's content, for scrolling
 var list_scroll := 0
 var history_filter := 0
 var can_go := true  # false mid-mission: the map is out of reach
-var go_note := "after the mission"
+var go_note := tr("after the mission")
 var closed_frame := -1
 var opened_frame := -1
 var read_t := 0.0  # how long the selected codex entry has been on screen
@@ -100,17 +100,17 @@ func _rebuild() -> void:
 			for q in Journal.quests():
 				if q["section"] != last:
 					last = q["section"]
-					_rows.append({"head": SECTION_NAMES.get(last, last)})
+					_rows.append({"head": Loc.t(SECTION_NAMES.get(last, last))})
 				q["kind"] = "quest"
 				_rows.append(q)
 			if _rows.is_empty():
-				_rows.append({"head": "Nothing to do. Suspicious."})
+				_rows.append({"head": tr("Nothing to do. Suspicious.")})
 		"people":
 			var last := ""
 			for p in Journal.people():
 				if p["group"] != last:
 					last = p["group"]
-					_rows.append({"head": GROUP_NAMES.get(last, last)})
+					_rows.append({"head": Loc.t(GROUP_NAMES.get(last, last))})
 				p["kind"] = "person"
 				_rows.append(p)
 		"codex":
@@ -119,7 +119,7 @@ func _rebuild() -> void:
 				if es.is_empty():
 					continue
 				var n := es.filter(func(e): return e["unlocked"]).size()
-				_rows.append({"head": "%s  %d/%d" % [Journal.CAT_NAMES[cat], n, es.size()]})
+				_rows.append({"head": "%s  %d/%d" % [Loc.t(Journal.CAT_NAMES[cat]), n, es.size()]})
 				for e in es:
 					e["kind"] = "codex"
 					_rows.append(e)
@@ -127,14 +127,14 @@ func _rebuild() -> void:
 			_rows.append({"kind": "filter"})
 			var chs := Journal.chapters_started()
 			if not chs.is_empty():
-				_rows.append({"head": "The story so far"})
+				_rows.append({"head": tr("The story so far")})
 				for i in range(chs.size() - 1, -1, -1):
 					var c: Dictionary = chs[i]
 					_rows.append({"kind": "chapter", "chapter": c, "title": c.get("title", "")})
 			var lg := Journal.log_entries(HISTORY_FILTERS[history_filter])
-			_rows.append({"head": "Missions and expeditions"})
+			_rows.append({"head": tr("Missions and expeditions")})
 			if lg.is_empty():
-				_rows.append({"kind": "empty", "title": "Nothing written down yet."})
+				_rows.append({"kind": "empty", "title": tr("Nothing written down yet.")})
 			for e in lg:
 				var row: Dictionary = e.duplicate()
 				row["entry_kind"] = e["kind"]
@@ -250,10 +250,10 @@ func _activate() -> void:
 
 func _go(target: Dictionary) -> void:
 	if target.is_empty():
-		_say("Nowhere on the map for this one.")
+		_say(tr("Nowhere on the map for this one."))
 		return
 	if not can_go:
-		_say("The map will have to wait until %s." % go_note)
+		_say(tr("The map will have to wait until %s.") % go_note)
 		return
 	close()
 	go.emit(target)
@@ -365,13 +365,13 @@ func _draw() -> void:
 	_tab_rects.clear()
 	_go_rect = Rect2()
 	_filter_rect = Rect2()
-	_text(Vector2(10, 20), "Journal", 18, Color("f3e3c3"), -1, UiSkin.TITLE_FONT)
+	_text(Vector2(10, 20), tr("Journal"), 18, Color("f3e3c3"), -1, UiSkin.TITLE_FONT)
 	var x := 86.0
 	var unread := Journal.unread_count()
 	for i in TABS.size():
-		var label: String = TAB_NAMES[TABS[i]]
+		var label: String = Loc.t(TAB_NAMES[TABS[i]])
 		if TABS[i] == "codex" and unread > 0:
-			label += " (%d new)" % unread
+			label += tr(" (%d new)") % unread
 		var w := _tw(label, BODY) + 18
 		var r := Rect2(x, 6, w, 16)
 		_tab_rects.append(r)
@@ -380,21 +380,21 @@ func _draw() -> void:
 		x += w + 6
 	var pk := Prompts.any_key(["clock_slower"])
 	if not Prompts.touch():
-		_text(Vector2(x + 2, 18), ("%s/%s tabs" % [pk, Prompts.any_key(["clock_faster"])]) if Prompts.pad() else "Q/E tabs", 8, DIM)
+		_text(Vector2(x + 2, 18), (tr("%s/%s tabs") % [pk, Prompts.any_key(["clock_faster"])]) if Prompts.pad() else tr("Q/E tabs"), 8, DIM)
 	var cr := _close_rect()
 	UiSkin.panel(self, cr, "button")
-	_text(cr.position + Vector2(9, 12), "Close", 9, Color(0.75, 0.72, 0.7))
+	_text(cr.position + Vector2(9, 12), tr("Close"), 9, Color(0.75, 0.72, 0.7))
 	_draw_list(vs)
 	_draw_page()
 	var help := []
 	match _tab_id():
 		"quests":
-			help = [["updown", "choose"], ["ui_accept", "show on map"], ["leftright", "list / page"], [["ui_cancel", "journal"], "close"]]
+			help = [["updown", "choose"], ["ui_accept", tr("show on map")], ["leftright", tr("list / page")], [["ui_cancel", "journal"], "close"]]
 		"history":
-			help = [["updown", "choose"], ["ui_accept", "read / filter"], ["leftright", "list / page"], [["ui_cancel", "journal"], "close"]]
+			help = [["updown", "choose"], ["ui_accept", tr("read / filter")], ["leftright", tr("list / page")], [["ui_cancel", "journal"], "close"]]
 		_:
-			help = [["updown", "choose"], ["leftright", "list / page"], [["ui_cancel", "journal"], "close"]]
-	_text(Vector2(10, vs.y - 7), Prompts.help(help, "Tap a row, tap again to act. Drag the page to scroll."), 7, Color(0.5, 0.48, 0.52))
+			help = [["updown", "choose"], ["leftright", tr("list / page")], [["ui_cancel", "journal"], "close"]]
+	_text(Vector2(10, vs.y - 7), Prompts.help(help, tr("Tap a row, tap again to act. Drag the page to scroll.")), 7, Color(0.5, 0.48, 0.52))
 	if flash_t > 0.0:
 		var a := clampf(flash_t / 0.4, 0.0, 1.0)
 		var w := _tw(flash, 9)
@@ -471,16 +471,16 @@ func _draw_row(row: Dictionary, rr: Rect2, on: bool) -> void:
 		"chapter":
 			var done := Journal.chapter_done(row["chapter"])
 			_text(p + Vector2(8, 11), str(row["title"]), 9, col, LIST_W - 50)
-			_text(p + Vector2(LIST_W - 44, 11), "done" if done else "now", 7, GOOD if done else Color("e8c06a"))
+			_text(p + Vector2(LIST_W - 44, 11), Loc.t("done") if done else Loc.t("now"), 7, GOOD if done else Color("e8c06a"))
 		"log":
 			var oc := _outcome_color(str(row.get("outcome", "")))
 			draw_rect(Rect2(p + Vector2(3, 4), Vector2(2, 7)), oc)
-			_text(p + Vector2(8, 11), ("Day %d" % int(row["day"])) if int(row["day"]) > 0 else "Earlier", 7, SOFT, 34)
+			_text(p + Vector2(8, 11), (tr("Day %d") % int(row["day"])) if int(row["day"]) > 0 else tr("Earlier"), 7, SOFT, 34)
 			_text(p + Vector2(42, 11), str(row["title"]), 8, col, LIST_W - 46)
 		"filter":
 			_filter_rect = rr
-			_text(p + Vector2(8, 11), "Showing: %s" % FILTER_NAMES[HISTORY_FILTERS[history_filter]], 8, col)
-			_text(p + Vector2(LIST_W - 42, 11), "change", 7, DIM)
+			_text(p + Vector2(8, 11), tr("Showing: %s") % Loc.t(FILTER_NAMES[HISTORY_FILTERS[history_filter]]), 8, col)
+			_text(p + Vector2(LIST_W - 42, 11), Loc.t("change"), 7, DIM)
 		"empty":
 			_text(p + Vector2(8, 11), str(row["title"]), 8, DIM)
 
@@ -521,15 +521,15 @@ func _blocks() -> Array:
 	match row.get("kind", ""):
 		"quest":
 			b.append(["title", row["title"]])
-			var st: String = {"open": "Open", "done": "Done", "blocked": "Waiting on something", "locked": "Not yet"}.get(row["state"], "")
-			b.append(["sub", "%s%s" % [row.get("sub", SECTION_NAMES.get(row["section"], "")), ("  ·  " + str(row["where"])) if str(row.get("where", "")) != "" else ""], INK_SOFT])
+			var st: String = {"open": tr("Open"), "done": tr("Done"), "blocked": tr("Waiting on something"), "locked": tr("Not yet")}.get(row["state"], "")
+			b.append(["sub", "%s%s" % [row.get("sub", Loc.t(SECTION_NAMES.get(row["section"], ""))), ("  ·  " + str(row["where"])) if str(row.get("where", "")) != "" else ""], INK_SOFT])
 			b.append(["sub", st, INK_GREEN if row["state"] == "done" else (INK_RED if row["state"] == "blocked" else INK)])
 			b.append(["gap"])
 			if str(row.get("text", "")) != "":
 				b.append(["para", row["text"], INK])
 			if str(row.get("next", "")) != "":
 				b.append(["gap"])
-				b.append(["head", "Next step" if row["state"] != "done" else "Where it stands"])
+				b.append(["head", tr("Next step") if row["state"] != "done" else tr("Where it stands")])
 				b.append(["para", row["next"], INK])
 			if not row.get("target", {}).is_empty():
 				b.append(["gap"])
@@ -538,7 +538,7 @@ func _blocks() -> Array:
 			b.append_array(_person_blocks(row))
 		"codex":
 			b.append(["title", row["title"]])
-			b.append(["sub", Journal.CAT_NAMES.get(row["cat"], ""), INK_SOFT])
+			b.append(["sub", Loc.t(Journal.CAT_NAMES.get(row["cat"], "")), INK_SOFT])
 			b.append(["gap"])
 			if not row["unlocked"]:
 				b.append(["para", row["hint"], INK_SOFT])
@@ -550,7 +550,7 @@ func _blocks() -> Array:
 		"chapter":
 			var c: Dictionary = row["chapter"]
 			b.append(["title", c.get("title", "")])
-			b.append(["sub", "Finished" if Journal.chapter_done(c) else "Where things stand", INK_SOFT])
+			b.append(["sub", tr("Finished") if Journal.chapter_done(c) else tr("Where things stand"), INK_SOFT])
 			b.append(["gap"])
 			for ptxt in Journal.paragraphs(c.get("recap", [])):
 				b.append(["para", ptxt, INK])
@@ -558,18 +558,18 @@ func _blocks() -> Array:
 			if not Journal.chapter_done(c):
 				var g := Story.current_goal()
 				if not g.is_empty():
-					b.append(["head", "What now"])
+					b.append(["head", tr("What now")])
 					b.append(["para", "%s%s" % [g["text"], (" (%s)" % g["hint"]) if str(g.get("hint", "")) != "" else ""], INK])
 		"log":
 			b.append(["title", row["title"]])
 			var where: String = Empire.territory().find(str(row.get("province", ""))).get("name", "")
-			b.append(["sub", "%s%s  ·  %s" % [("Day %d" % int(row["day"])) if int(row["day"]) > 0 else "Before the journal",  ("  ·  " + where) if where != "" else "", {"expedition": "Expedition report", "bond": "Between people", "faction": "Faction request"}.get(row.get("entry_kind", ""), "Mission")], INK_SOFT])
+			b.append(["sub", "%s%s  ·  %s" % [(tr("Day %d") % int(row["day"])) if int(row["day"]) > 0 else tr("Before the journal"),  ("  ·  " + where) if where != "" else "", {"expedition": tr("Expedition report"), "bond": tr("Between people"), "faction": tr("Faction request")}.get(row.get("entry_kind", ""), tr("Mission"))], INK_SOFT])
 			b.append(["gap"])
 			for l in row.get("lines", []):
 				b.append(["para", str(l), INK])
 		"filter":
-			b.append(["title", "History"])
-			b.append(["para", "Every chapter so far, retold, and every mission result and expedition report since the journal was started. %s to show only missions or only expeditions." % ("Tap this row" if Prompts.touch() else Prompts.confirm()), INK])
+			b.append(["title", tr("History")])
+			b.append(["para", tr("Every chapter so far, retold, and every mission result and expedition report since the journal was started. %s to show only missions or only expeditions.") % (tr("Tap this row") if Prompts.touch() else Prompts.confirm()), INK])
 	return b
 
 
@@ -595,22 +595,22 @@ func _person_blocks(row: Dictionary) -> Array:
 		b.append(["portrait", tex2, row["group"] == "lead"])  # a rumour is only a silhouette
 	b.append(["title", r.get("name", id)])
 	b.append(["sub", r.get("title", ""), INK_SOFT])
-	var tier: String = {"field": "Fights in the field", "core": "Close companion", "recruit": "Recruit"}.get(r.get("tier", ""), "")
+	var tier: String = {"field": tr("Fights in the field"), "core": tr("Close companion"), "recruit": tr("Recruit")}.get(r.get("tier", ""), "")
 	match row["group"]:
 		"roster":
-			var status := "%s. Now: %s." % [tier, Empire.role_label(id)]
+			var status := tr("%s. Now: %s.") % [tier, Empire.role_label(id)]
 			if int(Empire.recruits[id].get("injured", 0)) > 0:
-				status += " Hurt: out for %d more days." % int(Empire.recruits[id]["injured"])
+				status += tr(" Hurt: out for %d more days.") % int(Empire.recruits[id]["injured"])
 			b.append(["sub", status, INK])
 		"gate":
-			b.append(["sub", "Waiting at the south gate. Talk to them in town, or use Newcomers.", INK_GREEN])
+			b.append(["sub", tr("Waiting at the south gate. Talk to them in town, or use Newcomers."), INK_GREEN])
 		"lead":
-			b.append(["sub", "Not met yet: only a rumour.", INK_RED])
+			b.append(["sub", tr("Not met yet: only a rumour."), INK_RED])
 	b.append(["gap"])
 	if row["group"] == "lead":
 		b.append(["para", str(r.get("rumour", r.get("blurb", ""))), INK])
 		b.append(["gap"])
-		b.append(["head", "How to bring them in"])
+		b.append(["head", tr("How to bring them in")])
 		b.append(["para", Empire.hook_text(id), INK])
 		var hp := Empire.hook_progress(id)
 		if str(hp[0]) != "":
@@ -620,28 +620,28 @@ func _person_blocks(row: Dictionary) -> Array:
 	b.append(["gap"])
 	if Empire.recruits.has(id) and Empire.bond_cast().has(id):
 		var rank := Empire.bond_rank(id)
-		b.append(["fact", "Bond", "rank %d of %d, %s" % [rank, Empire.BOND_MAX, Empire.bond_rank_name(rank)]])
-		b.append(["fact", "Next", Empire.bond_next_text(id)])
+		b.append(["fact", tr("Bond"), tr("rank %d of %d, %s") % [rank, Empire.BOND_MAX, Empire.bond_rank_name(rank)]])
+		b.append(["fact", tr("Next"), Empire.bond_next_text(id)])
 	if not PartyPicker.hero_data(id).is_empty() and Empire.recruits.has(id):
-		b.append(["fact", "Level", "%d, %s" % [Progress.level(id), Skills.weapon_name(id)]])
+		b.append(["fact", tr("Level"), "%d, %s" % [Progress.level(id), Skills.weapon_name(id)]])
 	var traits := []
 	for t in r.get("traits", []):
 		var td: Dictionary = Empire.trait_data.get(t, {})
 		traits.append("%s (%s)" % [td.get("name", t), td.get("desc", "")] if td.has("desc") else td.get("name", t))
 	if not traits.is_empty():
-		b.append(["fact", "Traits", "; ".join(traits)])
+		b.append(["fact", tr("Traits"), "; ".join(traits)])
 	if row["group"] == "roster":  # what has happened to them: romance, friends and rivals, scars (issue #116)
 		for ff in Relationships.fate_facts(id):
 			b.append(["fact", ff[0], ff[1]])
 	b.append(["gap"])
 	var stats: Dictionary = r.get("stats", {})
 	for k in Empire.STAT_NAMES:
-		b.append(["bar", Empire.STAT_NAMES[k], int(stats.get(k, 0))])
+		b.append(["bar", Loc.t(Empire.STAT_NAMES[k]), int(stats.get(k, 0))])
 	if row["group"] == "gate":
 		var cost := Empire.cost_text(Empire.hire_cost(id))
 		if cost != "":
 			b.append(["gap"])
-			b.append(["fact", "Asks for", cost])
+			b.append(["fact", tr("Asks for"), cost])
 	return b
 
 
@@ -709,7 +709,7 @@ func _draw_page() -> void:
 				y += 5.0
 			"go":
 				y += 6.0
-				var label2 := "Show on map" if can_go else "Show on map (%s)" % go_note
+				var label2 := tr("Show on map") if can_go else tr("Show on map (%s)") % go_note
 				var k := "" if Prompts.touch() else Prompts.confirm()
 				if k != "" and focus == 0:
 					label2 += "  [%s]" % k

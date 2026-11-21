@@ -41,7 +41,7 @@ var last_notice := {}  # {"frame", "alert": bool}: the newest notice, for _retar
 static func inst() -> Alerts:
 	if not is_instance_valid(_inst):
 		_inst = Alerts.new()
-		_inst.name = "Alerts"
+		_inst.name = "Alerts"  # no-tr: node name
 		_inst.process_mode = Node.PROCESS_MODE_ALWAYS
 		var empire: Node = (Engine.get_main_loop() as SceneTree).root.get_node("Empire")
 		empire.add_child(_inst)
@@ -156,7 +156,7 @@ func scan() -> void:
 			if not known_missions.has(id):
 				var m: Dictionary = now[id]
 				var pname: String = Empire.territory().find(m.get("province", "")).get("name", "?")
-				var kind := "Story mission" if m.get("story", false) else "New mission"
+				var kind := tr("Story mission") if m.get("story", false) else tr("New mission")
 				add("%s: %s (%s)." % [kind, m.get("name", id), pname], false, {"province": m.get("province", ""), "mission": id})
 	known_missions = now
 	seeded = true

@@ -270,7 +270,7 @@ func _build_corner_ground() -> void:
 				key += "D" if _is_dirt(clampi(c.x, 0, size_tiles.x - 1), clampi(c.y, 0, size_tiles.y - 1)) else "G"
 			var blend := ResourceLoader.exists(folder + "cobbles.png")
 			if blend:
-				key = "GGGG"  # the textured layer below paints the paved part
+				key = "GGGG"  # the textured layer below paints the paved part  # no-tr: tile key
 			var i := keys.find(key)
 			var alt := rng.randi() % 4 if i == 0 else 0
 			layer.set_cell(Vector2i(x, y), 0, Vector2i(i % 4, i / 4), alt)
@@ -379,4 +379,4 @@ func _draw_words(canvas: Node2D) -> void:
 	for i in 40:
 		var p := Vector2(rng.randf_range(blank_x - 300.0, blank_x + 20.0), rng.randf_range(20, h - 20))
 		var fade := clampf((p.x - (blank_x - 300.0)) / 300.0, 0.0, 1.0)
-		canvas.draw_string(font, p, WORDS[rng.randi() % WORDS.size()], HORIZONTAL_ALIGNMENT_LEFT, -1, 6, Color(0.2, 0.2, 0.22, 0.12 + 0.4 * fade))
+		canvas.draw_string(font, p, Loc.t(WORDS[rng.randi() % WORDS.size()]), HORIZONTAL_ALIGNMENT_LEFT, -1, 6, Color(0.2, 0.2, 0.22, 0.12 + 0.4 * fade))

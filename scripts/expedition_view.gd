@@ -150,7 +150,7 @@ func _pick(i: int) -> void:
 	match row["kind"]:
 		"job":
 			if not row["enabled"]:
-				_say("Can't: %s." % row["note"])
+				_say(tr("Can't: %s.") % row["note"])
 				return
 			job_id = row["id"]
 			squad = []
@@ -158,43 +158,43 @@ func _pick(i: int) -> void:
 		"out":
 			var e := Empire.expedition_running(row["id"])
 			if not e.is_empty():
-				_say("Back in %s." % Empire.job_left_text(e))
+				_say(tr("Back in %s.") % Empire.job_left_text(e))
 		"reports":
 			if row["enabled"]:
 				_go("reports")
 			else:
-				_say("No reports yet. Send a squad out first.")
+				_say(tr("No reports yet. Send a squad out first."))
 		"person":
 			var id: String = row["id"]
 			if id in squad:
 				squad.erase(id)
 			elif not row["enabled"]:
-				_say("Can't: %s." % row["note"])
+				_say(tr("Can't: %s.") % row["note"])
 			elif squad.size() >= Empire.SQUAD_MAX:
-				_say("A squad is at most %d people." % Empire.SQUAD_MAX)
+				_say(tr("A squad is at most %d people.") % Empire.SQUAD_MAX)
 			else:
 				squad.append(id)
 		"send":
 			var why := _send_blocker()
 			if why != "":
-				_say("Can't send: %s." % why)
+				_say(tr("Can't send: %s.") % why)
 				return
 			var j := Empire.job(job_id)
 			var names := squad.map(func(id): return Empire.short_name(id))
 			if Empire.send_expedition(job_id, squad):
 				_go("board")
-				_say("%s set off: %s. Back in %s." % [" and ".join(names) if names.size() <= 2 else ", ".join(names), j["name"], Empire.job_days_text(job_id)])
+				_say(tr("%s set off: %s. Back in %s.") % [tr(" and ").join(names) if names.size() <= 2 else ", ".join(names), j["name"], Empire.job_days_text(job_id)])
 
 
 func _send_blocker() -> String:
 	if squad.size() < Empire.SQUAD_MIN:
-		return "pick at least %d people" % Empire.SQUAD_MIN
+		return tr("pick at least %d people") % Empire.SQUAD_MIN
 	var why := Empire.job_blocker(job_id)
 	if why != "":
 		return why
 	var cost := Empire.expedition_cost(job_id, squad.size())
 	if not Empire.can_afford(cost):
-		return "not enough Supplies for rations (%d)" % int(cost["supplies"])
+		return tr("not enough Supplies for rations (%d)") % int(cost["supplies"])
 	return ""
 
 
@@ -257,7 +257,7 @@ func _draw() -> void:
 	UiSkin.screen(self, vs)
 	var cr := _close_rect()
 	UiSkin.panel(self, cr, "button")
-	_text(cr.position + Vector2(9, 12), "Close" if page == "board" else "Back", 9, Color(0.75, 0.72, 0.7))
+	_text(cr.position + Vector2(9, 12), tr("Close") if page == "board" else tr("Back"), 9, Color(0.75, 0.72, 0.7))
 	_row_rects.clear()
 	match page:
 		"board":
@@ -274,23 +274,23 @@ func _draw() -> void:
 
 
 func _draw_board(vs: Vector2) -> void:
-	_text(Vector2(8, 20), "Expeditions", 15, Color("f3efe4"))
+	_text(Vector2(8, 20), tr("Expeditions"), 15, Color("f3efe4"))
 	var gh := Empire.level_of("guildhall")
-	var sub := "Guildhall level %d: up to %d squad%s out at once (%d out now). Squads of %d to %d. Supplies pay the rations." % [
+	var sub := tr("Guildhall level %d: up to %d squad%s out at once (%d out now). Squads of %d to %d. Supplies pay the rations.") % [
 		gh, Empire.expedition_slots(), "" if Empire.expedition_slots() == 1 else "s", Empire.expeditions.size(), Empire.SQUAD_MIN, Empire.SQUAD_MAX]
 	if gh > 0 and Empire.expeditions.size() >= Empire.expedition_slots():
-		sub = "All squads are out (%d/%d). Wait for them, or upgrade the Guildhall%s to send more at once." % [Empire.expeditions.size(), Empire.expedition_slots(), Prompts.tag("buildings")]
+		sub = tr("All squads are out (%d/%d). Wait for them, or upgrade the Guildhall%s to send more at once.") % [Empire.expeditions.size(), Empire.expedition_slots(), Prompts.tag("buildings")]
 	if gh <= 0:
-		sub = "Expeditions run from the Guildhall. Build it first on the Buildings screen%s." % Prompts.tag("buildings")
+		sub = tr("Expeditions run from the Guildhall. Build it first on the Buildings screen%s.") % Prompts.tag("buildings")
 	_text(Vector2(8, 34), sub, 8, GOLD if gh > 0 else BAD)
 	var cols := [14.0, 214.0, 280.0, 318.0, 360.0]
 	var hc := Color(0.55, 0.53, 0.56)
 	var y := 52.0
-	_text(Vector2(cols[0], y - 4), "Job", 8, hc)
-	_text(Vector2(cols[1], y - 4), "Kind", 8, hc)
-	_text(Vector2(cols[2], y - 4), "Days", 8, hc)
-	_text(Vector2(cols[3], y - 4), "Danger", 8, hc)
-	_text(Vector2(cols[4], y - 4), "Pays", 8, hc)
+	_text(Vector2(cols[0], y - 4), tr("Job"), 8, hc)
+	_text(Vector2(cols[1], y - 4), tr("Kind"), 8, hc)
+	_text(Vector2(cols[2], y - 4), tr("Days"), 8, hc)
+	_text(Vector2(cols[3], y - 4), tr("Danger"), 8, hc)
+	_text(Vector2(cols[4], y - 4), tr("Pays"), 8, hc)
 	for i in _rows.size():
 		var row: Dictionary = _rows[i]
 		var rr := Rect2(8, y, vs.x - 16, ROW_H - 2)
@@ -302,17 +302,17 @@ func _draw_board(vs: Vector2) -> void:
 				var e := Empire.expedition_running(row["id"])
 				var j := Empire.job(row["id"])
 				var names := ", ".join(e["squad"].map(func(id): return Empire.short_name(id)))
-				_text(base + Vector2(6, 0), "OUT", 8, GOLD)
+				_text(base + Vector2(6, 0), tr("OUT"), 8, GOLD)
 				_text(base + Vector2(30, 0), j["name"], 9, GOLD if on else TEXT, cols[1] - 40)
 				_text(base + Vector2(cols[1] - 8, 0), names, 8, SOFT, 180)
 				var bx := Rect2(rr.position + Vector2(cols[4] + 60, 5), Vector2(110, 5))
 				_bar(bx, Empire.job_progress(e), Color(0.85, 0.7, 0.35))
-				_text(Vector2(bx.end.x + 6, base.y), "back in " + Empire.job_left_text(e), 8, SOFT)
+				_text(Vector2(bx.end.x + 6, base.y), tr("back in ") + Empire.job_left_text(e), 8, SOFT)
 			"job":
 				var j := Empire.job(row["id"])
 				var col := TEXT if row["enabled"] else DIM
 				_text(base + Vector2(cols[0] - 8, 0), j["name"], 9, GOLD if on and row["enabled"] else col, cols[1] - cols[0] - 4)
-				_text(base + Vector2(cols[1] - 8, 0), j["kind"], 8, col if row["enabled"] else DIM)
+				_text(base + Vector2(cols[1] - 8, 0), tr(j["kind"]), 8, col if row["enabled"] else DIM)
 				_text(base + Vector2(cols[2] - 8, 0), Empire.job_days_text(row["id"]).get_slice(" ", 0), 9, col)
 				_danger_pips(base + Vector2(cols[3] - 8, 0), int(j["danger"]))
 				var full: bool = row["note"].begins_with("all squads")  # same for every job: say it once, up top
@@ -321,12 +321,12 @@ func _draw_board(vs: Vector2) -> void:
 				_text(base + Vector2(cols[4] - 8, 0), pays, 8, pcol, vs.x - cols[4] - 12)
 			"reports":
 				var unread := Empire.unread_reports()
-				var label := "Reports (%d)" % Empire.reports.size()
+				var label := tr("Reports (%d)") % Empire.reports.size()
 				if unread > 0:
-					label += "  %d new" % unread
+					label += tr("  %d new") % unread
 				_text(base + Vector2(6, 0), label, 9, (GOLD if on else (GOLD if unread > 0 else TEXT)) if row["enabled"] else DIM)
 				if not row["enabled"]:
-					_text(base + Vector2(cols[1] - 8, 0), "nothing yet: squads write home when they get back", 8, DIM)
+					_text(base + Vector2(cols[1] - 8, 0), tr("nothing yet: squads write home when they get back"), 8, DIM)
 		y += ROW_H
 	# Details for the highlighted row
 	y += 6
@@ -343,32 +343,32 @@ func _draw_board(vs: Vector2) -> void:
 		y += _wrap(Vector2(14, y + 8), j["blurb"], vs.x - 28, 8, Color(0.78, 0.76, 0.74))
 		var wants := []
 		for k in j["stats"]:
-			wants.append(Empire.STAT_NAMES[k] + ("" if float(j["stats"][k]) >= 1.0 else " (counts half)"))
-		var line := "Wants: %s.   Takes %s%s.   Rations: %d Supplies a person.   Danger: %s." % [", ".join(wants), Empire.job_days_text(row["id"]),
-			" (Waystations)" if Empire.has_research("log_waystations") else "", int(j["rations"]), Empire.DANGER_NAMES[int(j["danger"])]]
+			wants.append(Loc.t(Empire.STAT_NAMES[k]) + ("" if float(j["stats"][k]) >= 1.0 else tr(" (counts half)")))
+		var line := tr("Wants: %s.   Takes %s%s.   Rations: %d Supplies a person.   Danger: %s.") % [", ".join(wants), Empire.job_days_text(row["id"]),
+			tr(" (Waystations)") if Empire.has_research("log_waystations") else "", int(j["rations"]), Loc.t(Empire.DANGER_NAMES[int(j["danger"])])]
 		_text(Vector2(14, y + 14), line, 8, Color("cfe0b0"))
-		_text(Vector2(14, y + 26), "Pays: %s.%s" % [Empire.reward_text(row["id"]), "" if row["note"] == "" else "   Can't yet: %s." % row["note"]], 8,
+		_text(Vector2(14, y + 26), tr("Pays: %s.%s") % [Empire.reward_text(row["id"]), "" if row["note"] == "" else tr("   Can't yet: %s.") % row["note"]], 8,
 			Color("e8d9a8") if row["note"] == "" else BAD)
 	elif row["kind"] == "reports" and not Empire.reports.is_empty():
 		var r: Dictionary = Empire.reports[0]
-		_text(Vector2(14, y), "Latest: Day %d, %s" % [int(r["day"]), r["title"]], 9, GOLD)
-	_text(Vector2(8, vs.y - 10), Prompts.help([["updown", "choose"], ["ui_accept", "pick"], [["ui_cancel", "expeditions"], "close"]], "Tap a row to pick"), 7, Color(0.5, 0.48, 0.52))
+		_text(Vector2(14, y), tr("Latest: Day %d, %s") % [int(r["day"]), r["title"]], 9, GOLD)
+	_text(Vector2(8, vs.y - 10), Prompts.help([["updown", "choose"], ["ui_accept", "pick"], [["ui_cancel", "expeditions"], "close"]], tr("Tap a row to pick")), 7, Color(0.5, 0.48, 0.52))
 
 
 func _draw_squad(vs: Vector2) -> void:
 	var j := Empire.job(job_id)
-	_text(Vector2(8, 20), "Pick a squad: " + j["name"], 13, Color("f3efe4"))
+	_text(Vector2(8, 20), tr("Pick a squad: ") + j["name"], 13, Color("f3efe4"))
 	var wants := []
 	for k in j["stats"]:
-		wants.append(Empire.STAT_NAMES[k] + ("" if float(j["stats"][k]) >= 1.0 else " (half)"))
-	_text(Vector2(8, 34), "Wants %s.  %d to %d people.  %s, %s danger." % [", ".join(wants), Empire.SQUAD_MIN, Empire.SQUAD_MAX,
-		Empire.job_days_text(job_id), Empire.DANGER_NAMES[int(j["danger"])].to_lower()], 8, GOLD)
+		wants.append(Loc.t(Empire.STAT_NAMES[k]) + ("" if float(j["stats"][k]) >= 1.0 else tr(" (half)")))
+	_text(Vector2(8, 34), tr("Wants %s.  %d to %d people.  %s, %s danger.") % [", ".join(wants), Empire.SQUAD_MIN, Empire.SQUAD_MAX,
+		Empire.job_days_text(job_id), Loc.t(Empire.DANGER_NAMES[int(j["danger"])]).to_lower()], 8, GOLD)
 	var lw := 300.0
 	var y := 52.0
 	var hc := Color(0.55, 0.53, 0.56)
-	_text(Vector2(26, y - 4), "Who", 8, hc)
-	_text(Vector2(124, y - 4), "Adds", 8, hc)
-	_text(Vector2(160, y - 4), "Doing now", 8, hc)
+	_text(Vector2(26, y - 4), tr("Who"), 8, hc)
+	_text(Vector2(124, y - 4), tr("Adds"), 8, hc)
+	_text(Vector2(160, y - 4), tr("Doing now"), 8, hc)
 	for i in _rows.size():
 		var row: Dictionary = _rows[i]
 		var rr := Rect2(8, y, lw, ROW_H - 2)
@@ -377,7 +377,7 @@ func _draw_squad(vs: Vector2) -> void:
 		var base := rr.position + Vector2(0, 11)
 		if row["kind"] == "send":
 			var why := _send_blocker()
-			var label := "Send squad (%d/%d)" % [squad.size(), Empire.SQUAD_MAX]
+			var label := tr("Send squad (%d/%d)") % [squad.size(), Empire.SQUAD_MAX]
 			_text(base + Vector2(10, 0), label, 9, (GOLD if on else Color("f3e3b0")) if why == "" else DIM)
 			if why != "":
 				_text(base + Vector2(120, 0), why, 8, Color(0.6, 0.45, 0.42), lw - 126)
@@ -399,9 +399,9 @@ func _draw_squad(vs: Vector2) -> void:
 	# Right side: chance and why
 	var x := lw + 20
 	var w := vs.x - x - 10
-	_text(Vector2(x, 60), "Success chance", 9, Color(0.75, 0.72, 0.7))
+	_text(Vector2(x, 60), tr("Success chance"), 9, Color(0.75, 0.72, 0.7))
 	if squad.is_empty():
-		_wrap(Vector2(x, 78), "Tick people on the left (%s). The chance and every reason behind it show up here as you pick." % Prompts.confirm(), w, 8, SOFT)
+		_wrap(Vector2(x, 78), tr("Tick people on the left (%s). The chance and every reason behind it show up here as you pick.") % Prompts.confirm(), w, 8, SOFT)
 	else:
 		var odds := Empire.expedition_odds(job_id, squad)
 		var c := int(odds["chance"])
@@ -412,24 +412,24 @@ func _draw_squad(vs: Vector2) -> void:
 		for why in odds["why"]:
 			yy += _wrap(Vector2(x, yy), ("+ " if why[1] else "- ") + why[0], w, 8, Color("cfe0b0") if why[1] else BAD) + 1
 		if squad.size() < Empire.SQUAD_MIN:
-			yy += _wrap(Vector2(x, yy), "Needs at least %d people to go." % Empire.SQUAD_MIN, w, 8, BAD)
+			yy += _wrap(Vector2(x, yy), tr("Needs at least %d people to go.") % Empire.SQUAD_MIN, w, 8, BAD)
 		yy += 6
 		var cost := Empire.expedition_cost(job_id, squad.size())
-		_text(Vector2(x, yy + 6), "Rations: %d Supplies (you have %d)" % [int(cost["supplies"]), int(Empire.res["supplies"])], 8,
+		_text(Vector2(x, yy + 6), tr("Rations: %d Supplies (you have %d)") % [int(cost["supplies"]), int(Empire.res["supplies"])], 8,
 			Color("e8d9a8") if Empire.can_afford(cost) else BAD)
-		_text(Vector2(x, yy + 18), "On success: %s" % Empire.reward_text(job_id), 8, Color("e8d9a8"), w)
-		_text(Vector2(x, yy + 30), "Failing pays a quarter and hurts people. Danger: %s." % Empire.DANGER_NAMES[int(j["danger"])], 8, SOFT, w)
+		_text(Vector2(x, yy + 18), tr("On success: %s") % Empire.reward_text(job_id), 8, Color("e8d9a8"), w)
+		_text(Vector2(x, yy + 30), tr("Failing pays a quarter and hurts people. Danger: %s.") % Loc.t(Empire.DANGER_NAMES[int(j["danger"])]), 8, SOFT, w)
 		var leaving := []
 		for id in squad:
 			if Empire.role_of(id) != "idle":
 				leaving.append("%s (%s)" % [Empire.short_name(id), Empire.role_label(id)])
 		if not leaving.is_empty():
-			_wrap(Vector2(x, yy + 38), "Leaves their job while away: " + ", ".join(leaving), w, 8, Color(0.85, 0.7, 0.55))
-	_text(Vector2(8, vs.y - 10), Prompts.help([["updown", "choose"], ["ui_accept", "tick / send"], ["ui_cancel", "back"]], "Tap people to tick them, then tap Send   Close: back"), 7, Color(0.5, 0.48, 0.52))
+			_wrap(Vector2(x, yy + 38), tr("Leaves their job while away: ") + ", ".join(leaving), w, 8, Color(0.85, 0.7, 0.55))
+	_text(Vector2(8, vs.y - 10), Prompts.help([["updown", "choose"], ["ui_accept", tr("tick / send")], ["ui_cancel", "back"]], tr("Tap people to tick them, then tap Send   Close: back")), 7, Color(0.5, 0.48, 0.52))
 
 
 func _draw_reports(vs: Vector2) -> void:
-	_text(Vector2(8, 20), "Expedition reports", 15, Color("f3efe4"))
+	_text(Vector2(8, 20), tr("Expedition reports"), 15, Color("f3efe4"))
 	var lw := 220.0
 	var y := 40.0
 	for i in _rows.size():
@@ -438,7 +438,7 @@ func _draw_reports(vs: Vector2) -> void:
 		_row_rects.append(rr)
 		var on := _row_box(i, rr)
 		var col: Color = {"great": GOOD, "success": Color("cfe0b0"), "fail": BAD}.get(r.get("outcome", ""), TEXT)
-		_text(rr.position + Vector2(6, 11), "Day %d" % int(r["day"]), 8, SOFT)
+		_text(rr.position + Vector2(6, 11), tr("Day %d") % int(r["day"]), 8, SOFT)
 		_text(rr.position + Vector2(40, 11), Empire.job(r["job"]).get("name", r["title"]), 8, GOLD if on else col, lw - 46)
 		y += ROW_H
 	if _rows.is_empty():
@@ -451,7 +451,7 @@ func _draw_reports(vs: Vector2) -> void:
 	var yy := 50.0
 	yy += _wrap(Vector2(x, yy), r["title"], w, 11, ink) + 2
 	var squad_names := ", ".join(r.get("squad", []).map(func(id): return Empire.recruit(id).get("name", id)))
-	_text(Vector2(x, yy + 2), "Day %d.  Squad: %s.  Odds were %d%%." % [int(r["day"]), squad_names, int(r.get("chance", 0))], 8, Color(0.4, 0.36, 0.34), w)
+	_text(Vector2(x, yy + 2), tr("Day %d.  Squad: %s.  Odds were %d%%.") % [int(r["day"]), squad_names, int(r.get("chance", 0))], 8, Color(0.4, 0.36, 0.34), w)
 	yy += 14
 	for line in r["lines"]:
 		var lc := ink
@@ -462,4 +462,4 @@ func _draw_reports(vs: Vector2) -> void:
 		elif line.find("joins your roster") >= 0:
 			lc = Color(0.15, 0.4, 0.15)
 		yy += _wrap(Vector2(x, yy + 4), line, w, 9, lc) + 5
-	_text(Vector2(8, vs.y - 10), Prompts.help([["updown", "choose report"], ["ui_cancel", "back"]], "Tap a report to read it   Close: back"), 7, Color(0.5, 0.48, 0.52))
+	_text(Vector2(8, vs.y - 10), Prompts.help([["updown", tr("choose report")], ["ui_cancel", "back"]], tr("Tap a report to read it   Close: back")), 7, Color(0.5, 0.48, 0.52))

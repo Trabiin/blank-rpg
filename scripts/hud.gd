@@ -63,7 +63,7 @@ func _draw_ability_bar(hero: Hero, vs: Vector2) -> void:
 	var w := 94.0 if has_icons else 84.0
 	var x := vs.x - 8.0 - n * (w + 4.0) + 4.0
 	var y := vs.y - 38.0
-	_text(Vector2(x, y - 4), "Ink %d / %d" % [floori(hero.ink), int(hero.max_ink)], 8, INK_COL)
+	_text(Vector2(x, y - 4), tr("Ink %d / %d") % [floori(hero.ink), int(hero.max_ink)], 8, INK_COL)
 	for i in n:
 		var a: Dictionary = hero.abilities[i]
 		var why := Abilities.blocker(hero, i)
@@ -85,9 +85,9 @@ func _draw_ability_bar(hero: Hero, vs: Vector2) -> void:
 		var kw := ThemeDB.fallback_font.get_string_size(k, HORIZONTAL_ALIGNMENT_LEFT, -1, 9).x
 		_text(Vector2(x + 8 + ox + kw, y + 10), str(a.get("name", "")), 8, txt_col, false)
 		var cost_col := INK_COL if why != "ink" else Color("ff6b6b")
-		_text(Vector2(x + 4 + ox, y + 22), "%d Ink" % int(a.get("cost", 0)), 8, cost_col, false)
+		_text(Vector2(x + 4 + ox, y + 22), tr("%d Ink") % int(a.get("cost", 0)), 8, cost_col, false)
 		if cd > 0.0:
-			_text(Vector2(x + 44 + ox, y + 22), "%.1fs" % cd, 8, Color(0.8, 0.8, 0.85), false)
+			_text(Vector2(x + 44 + ox, y + 22), Loc.dec(cd) + "s", 8, Color(0.8, 0.8, 0.85), false)
 		x += w + 4.0
 
 
@@ -114,12 +114,12 @@ func _draw() -> void:
 			draw_texture_rect(face, Rect2(x + 3, y + 6, 20, 20), false, Color(0.45, 0.45, 0.45) if hero.dead else Color.WHITE)
 			x += fw
 		var name_col := Color(0.6, 0.6, 0.6) if hero.dead else Color.WHITE
-		_text(Vector2(x + 5, y + 10), hero.hero_name + ("  (down)" if hero.dead else ""), 9, name_col, false)
+		_text(Vector2(x + 5, y + 10), hero.hero_name + (tr("  (down)") if hero.dead else ""), 9, name_col, false)
 		var pct := int(round(hero.power * 100.0))
 		var pcol := Color("ffd166") if pct >= 100 else Color(0.8, 0.8, 0.85)
 		if not hero.charge_ready:  # a ready charged tech shows TECH here instead
 			_text(Vector2(x + 82, y + 10), "%d%%" % pct, 9, pcol, false)
-		_text(Vector2(x + 58, y + 10), "Lv%d" % Progress.level(hero.hero_id), 8, Color(0.75, 0.72, 0.6), false)
+		_text(Vector2(x + 58, y + 10), tr("Lv%d") % Progress.level(hero.hero_id), 8, Color(0.75, 0.72, 0.6), false)
 		# XP sliver along the top edge of the panel
 		draw_rect(Rect2(x, y, 112.0 * Progress.xp_fraction(hero.hero_id), 1), Color("b9a0e8"))
 		# HP bar
@@ -139,7 +139,7 @@ func _draw() -> void:
 				draw_rect(Rect2(sx - 1, y + 19, 2, 6), Color(str(st[1].get("color", "ffffff"))).lightened(0.4) if lit else Color(0, 0, 0, 0.7))
 			if hero.charge_ready:
 				UiSkin.draw_icon(self, "tech_" + hero.hero_id, Rect2(x + 99, y + 2, 10, 10))
-				_text(Vector2(x + 80, y + 10), "TECH", 9, tcol.lightened(0.3), false)
+				_text(Vector2(x + 80, y + 10), tr("TECH"), 9, tcol.lightened(0.3), false)
 		# Ink (abilities, issue #7)
 		if hero.max_ink > 0.0:
 			draw_rect(Rect2(x + 5, y + 25, 102, 3), Color(0, 0, 0, 0.6))
@@ -151,7 +151,7 @@ func _draw() -> void:
 	# Mission name and objective, top-left
 	_text(Vector2(8, 14), party.mission.get("name", party.area.area_name), 10, Color(0.9, 0.88, 0.8))
 	var done: bool = party.objective.done()
-	_text(Vector2(8, 26), party.objective.text() + ("  done" if done else ""), 9, Color("9fd3a8") if done else Color("ffd166"))
+	_text(Vector2(8, 26), party.objective.text() + (tr("  done") if done else ""), 9, Color("9fd3a8") if done else Color("ffd166"))
 	var yy0 := 38.0
 	var found := Missions.res_text(party.found)
 	var gear_found: Array = party.found_items.map(func(i): return Progress.item(i).get("name", i))
@@ -159,11 +159,11 @@ func _draw() -> void:
 		found = (found + ", " if found != "" else "") + ", ".join(gear_found)
 	if found != "":
 		var lit: bool = party.found_flash > 0.0
-		_text(Vector2(8, yy0), "Found: " + found, 8, Color("ffe7a3") if lit else Color(0.75, 0.75, 0.75))
+		_text(Vector2(8, yy0), tr("Found: ") + found, 8, Color("ffe7a3") if lit else Color(0.75, 0.75, 0.75))
 		yy0 += 12.0
 	var perks: Array = party.boosts.get("lines", [])
 	if not perks.is_empty():
-		_text(Vector2(8, yy0), "Research: " + ", ".join(perks), 8, Color("d7b8f0"))
+		_text(Vector2(8, yy0), tr("Research: ") + ", ".join(perks), 8, Color("d7b8f0"))
 
 	if banter_t > 0.0:
 		var a := clampf(banter_t / 0.4, 0.0, 1.0)
@@ -181,13 +181,13 @@ func _draw() -> void:
 		var pad := Prompts.pad()
 		var abil := "%s %s %s %s" % [Prompts.key("ability_1"), Prompts.key("ability_2"), Prompts.key("ability_3"), Prompts.key("ability_4")]
 		var lines_h := [
-			"Move: " + ("left stick / D-pad" if pad else "WASD / arrows"),
-			"Attack: %s, hold when full: tech" % Prompts.key("attack"),
-			"Swap hero: " + Prompts.key("swap"),
-			"Pause: " + Prompts.key("pause"),
-			"Abilities: " + abil,
-			"Quick menu: " + Prompts.key("quick_menu"),
-			"" if pad else "F1: show or hide this",
+			tr("Move: ") + (tr("left stick / D-pad") if pad else tr("WASD / arrows")),
+			tr("Attack: %s, hold when full: tech") % Prompts.key("attack"),
+			tr("Swap hero: ") + Prompts.key("swap"),
+			tr("Pause: ") + Prompts.key("pause"),
+			tr("Abilities: ") + abil,
+			tr("Quick menu: ") + Prompts.key("quick_menu"),
+			"" if pad else tr("F1: show or hide this"),
 		]
 		for li in lines_h.size():
 			_text(Vector2(vs.x - 150, 96 + 11 * li), lines_h[li], 8, Color(1, 1, 1, a2))  # clear of the banter panel

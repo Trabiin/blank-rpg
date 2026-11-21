@@ -215,14 +215,14 @@ func _pick_tech(i: int) -> void:
 		return
 	var t: Dictionary = all[i]
 	if int(t.get("level", 1)) > Skills.weapon_level(id):
-		_say("%s learns %s at %s level %d." % [PartyPicker.short_of(id), t.get("name", "?"), Skills.weapon_name(id), int(t.get("level", 1))])
+		_say(tr("%s learns %s at %s level %d.") % [PartyPicker.short_of(id), t.get("name", "?"), Skills.weapon_name(id), int(t.get("level", 1))])
 		return
 	if Skills.pick(id) == t["id"]:
 		Skills.set_pick(id, "")
-		_say("%s chooses by hold length again." % PartyPicker.short_of(id))
+		_say(tr("%s chooses by hold length again.") % PartyPicker.short_of(id))
 	else:
 		Skills.set_pick(id, str(t["id"]))
-		_say("%s will always charge %s." % [PartyPicker.short_of(id), t.get("name", "?")])
+		_say(tr("%s will always charge %s.") % [PartyPicker.short_of(id), t.get("name", "?")])
 
 
 func _say(s: String) -> void:
@@ -239,7 +239,7 @@ func _start_pick() -> void:
 	pick_i = 1 if ch.size() > 1 else 0
 	if ch.size() <= 1 and cur == "":
 		picking = false
-		_say("No spare %s for %s. The shop%s or missions have more." % [Progress.SLOT_NAMES[_slot()].to_lower(), PartyPicker.short_of(_hero_id()), Prompts.tag("swap")])
+		_say(tr("No spare %s for %s. The shop%s or missions have more.") % [Loc.t(Progress.SLOT_NAMES[_slot()]).to_lower(), PartyPicker.short_of(_hero_id()), Prompts.tag("swap")])
 
 
 func _equip(i: int) -> void:
@@ -254,14 +254,14 @@ func _equip(i: int) -> void:
 		return
 	var before := Progress.bonus(id)
 	if not Progress.equip(id, _slot(), item_id):
-		_say("Can't: %s." % Progress.wear_blocker(id, item_id))
+		_say(tr("Can't: %s.") % Progress.wear_blocker(id, item_id))
 		return
 	_apply_live(id, before)
 	picking = false
 	if item_id == "":
-		_say("%s took off the %s." % [PartyPicker.short_of(id), Progress.item(cur)["name"]])
+		_say(tr("%s took off the %s.") % [PartyPicker.short_of(id), Progress.item(cur)["name"]])
 	else:
-		_say("%s now uses the %s." % [PartyPicker.short_of(id), Progress.item(item_id)["name"]])
+		_say(tr("%s now uses the %s.") % [PartyPicker.short_of(id), Progress.item(item_id)["name"]])
 
 
 ## On a mission, the hero standing in the field changes too.
@@ -283,14 +283,14 @@ func _shop_pick(i: int) -> void:
 	if kind == "buy":
 		var why := Progress.shop_blocker(k)
 		if why != "":
-			_say("Can't: %s." % why)
+			_say(tr("Can't: %s.") % why)
 			return
 		Progress.buy(k)
-		_say("Bought the %s for %d Gilt. It's in the bag: equip it on the Equip tab." % [it["name"], int(it["price"])])
+		_say(tr("Bought the %s for %d Gilt. It's in the bag: equip it on the Equip tab.") % [it["name"], int(it["price"])])
 	else:
 		var price := Progress.sell_price(k)
 		Progress.sell(k)
-		_say("Sold the %s for %d Gilt." % [it["name"], price])
+		_say(tr("Sold the %s for %d Gilt.") % [it["name"], price])
 		shop_i = clampi(shop_i, 0, maxi(_shop_rows().size() - 1, 0))
 
 
@@ -385,42 +385,42 @@ func _draw() -> void:
 	UiSkin.screen(self, vs)
 	var cr := _close_rect()
 	UiSkin.panel(self, cr, "button")
-	_text(cr.position + Vector2(9, 12), "Close", 9, Color(0.75, 0.72, 0.7))
-	_text(Vector2(8, 20), "Party gear", 15, PAPER)
+	_text(cr.position + Vector2(9, 12), tr("Close"), 9, Color(0.75, 0.72, 0.7))
+	_text(Vector2(8, 20), tr("Party gear"), 15, PAPER)
 	# Tabs
 	_tab_rects.clear()
 	var tx := 100.0
 	for t in _tabs():
-		var label: String = {"equip": "Equip", "skills": "Skills", "tree": _tree_label()}.get(t, Progress.data().get("shop_name", "Shop"))
+		var label: String = {"equip": tr("Equip"), "skills": tr("Skills"), "tree": _tree_label()}.get(t, Progress.data().get("shop_name", tr("Shop")))
 		var w := font.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1, 9).x + 14
 		var r := Rect2(tx, 8, w, 15)
 		_tab_rects[t] = r
 		_box(r, tab == t)
 		_text(r.position + Vector2(7, 11), label, 9, GOLD if tab == t else SOFT)
 		tx += w + 4
-	_text(Vector2(tx + 8, 19), "Gilt: %d" % int(Empire.res.get("gilt", 0)), 9, GOLD)
+	_text(Vector2(tx + 8, 19), tr("Gilt: %d") % int(Empire.res.get("gilt", 0)), 9, GOLD)
 	_hero_rects.clear()
 	_slot_rects.clear()
 	_pick_rects.clear()
 	_shop_rects.clear()
 	_tech_rects.clear()
 	if _ids.is_empty():
-		_text(Vector2(8, 50), "No field heroes on the roster.", 10, BAD)
+		_text(Vector2(8, 50), tr("No field heroes on the roster."), 10, BAD)
 		return
 	if tab == "skills":
 		_draw_skills(vs)
-		_text(Vector2(8, vs.y - 8), Prompts.help([["leftright", "hero"], ["updown", "tech"], ["ui_accept", "always charge it"], ["swap", "tab"], [["ui_cancel", "gear"], "close"]], "Tap a hero, tap a tech twice to always charge it"), 7, Color(0.5, 0.48, 0.52))
+		_text(Vector2(8, vs.y - 8), Prompts.help([["leftright", "hero"], ["updown", "tech"], ["ui_accept", tr("always charge it")], ["swap", "tab"], [["ui_cancel", "gear"], "close"]], tr("Tap a hero, tap a tech twice to always charge it")), 7, Color(0.5, 0.48, 0.52))
 	elif tab == "equip":
 		_draw_equip(vs)
-		var help := Prompts.help([["leftright", "hero"], ["updown", "slot"], ["ui_accept", "change"], [["ui_cancel", "gear"], "close"]], "Tap a hero, tap a slot twice to change it")
+		var help := Prompts.help([["leftright", "hero"], ["updown", "slot"], ["ui_accept", "change"], [["ui_cancel", "gear"], "close"]], tr("Tap a hero, tap a slot twice to change it"))
 		if picking:
-			help = Prompts.help([["updown", "choose"], ["ui_accept", "put it on"], ["ui_cancel", "back"]], "Tap gear twice to put it on")
+			help = Prompts.help([["updown", "choose"], ["ui_accept", tr("put it on")], ["ui_cancel", "back"]], tr("Tap gear twice to put it on"))
 		if not picking:
-			help += "   " + Prompts.help([["swap", "skills"]], "Tap the Skills tab")
+			help += "   " + Prompts.help([["swap", "skills"]], tr("Tap the Skills tab"))
 		_text(Vector2(8, vs.y - 8), help, 7, Color(0.5, 0.48, 0.52))
 	else:
 		_draw_shop(vs)
-		_text(Vector2(8, vs.y - 8), Prompts.help([["updown", "choose"], ["ui_accept", "buy / sell"], ["swap", "tab"], [["ui_cancel", "gear"], "close"]], "Tap an item twice to buy or sell"), 7, Color(0.5, 0.48, 0.52))
+		_text(Vector2(8, vs.y - 8), Prompts.help([["updown", "choose"], ["ui_accept", tr("buy / sell")], ["swap", "tab"], [["ui_cancel", "gear"], "close"]], tr("Tap an item twice to buy or sell")), 7, Color(0.5, 0.48, 0.52))
 	if flash_t > 0.0:
 		var a := clampf(flash_t / 0.4, 0.0, 1.0)
 		var fw := font.get_string_size(flash, HORIZONTAL_ALIGNMENT_LEFT, -1, 9).x
@@ -431,7 +431,7 @@ func _draw() -> void:
 ## "Tree", or "Tree (2)" when that many heroes have a node they could learn right now.
 func _tree_label() -> String:
 	var n := SkillTree.unspent_ids().filter(func(id): return id in _ids).size()
-	return "Tree (%d)" % n if n > 0 else "Tree"
+	return tr("Tree (%d)") % n if n > 0 else tr("Tree")
 
 
 func _draw_equip(vs: Vector2) -> void:
@@ -449,7 +449,7 @@ func _draw_chips(vs: Vector2) -> void:
 		_hero_rects.append(r)
 		_box(r, i == hero_i)
 		_text(r.position + Vector2(5, 10), PartyPicker.short_of(id), 9, GOLD if i == hero_i else TEXT, cw - 30)
-		_text_r(r.position + Vector2(cw - 4, 10), "Lv%d" % Progress.level(id), 8, SOFT)
+		_text_r(r.position + Vector2(cw - 4, 10), tr("Lv%d") % Progress.level(id), 8, SOFT)
 		_bar(Rect2(r.position + Vector2(5, 15), Vector2(cw - 10, 3)), Progress.xp_fraction(id), XP_COL)
 		if Empire.role_of(id) == "party":
 			draw_circle(r.position + Vector2(cw - 5, 19), 1.5, GOOD)
@@ -463,14 +463,14 @@ func _draw_equip_body(vs: Vector2) -> void:
 	UiSkin.panel(self, left, "ledger")
 	var y := left.position.y + 16
 	_text(Vector2(16, y), Empire.recruit(id).get("name", PartyPicker.short_of(id)), 12, PAPER, 200)
-	_text_r(Vector2(left.end.x - 8, y), "Level %d" % Progress.level(id), 10, GOLD)
+	_text_r(Vector2(left.end.x - 8, y), tr("Level %d") % Progress.level(id), 10, GOLD)
 	y += 12
 	var need := Progress.xp_to_next(Progress.level(id))
-	var xp_line := "Max level" if need <= 0 else "XP %d / %d to level %d" % [int(Progress.hero(id)["xp"]), need, Progress.level(id) + 1]
+	var xp_line := tr("Max level") if need <= 0 else tr("XP %d / %d to level %d") % [int(Progress.hero(id)["xp"]), need, Progress.level(id) + 1]
 	_text(Vector2(16, y), xp_line, 8, XP_COL)
-	var where_line := "In the party" if Empire.role_of(id) == "party" else "On the bench"
+	var where_line := tr("In the party") if Empire.role_of(id) == "party" else tr("On the bench")
 	if Empire.role_of(id) != "party" and Empire.level_of("barracks") > 0:
-		where_line += ": Barracks drill, +%d XP a day" % Progress.barracks_xp()
+		where_line += tr(": Barracks drill, +%d XP a day") % Progress.barracks_xp()
 	_text_r(Vector2(left.end.x - 8, y), where_line, 8, SOFT)
 	y += 4
 	_bar(Rect2(16, y, left.size.x - 16, 3), Progress.xp_fraction(id), XP_COL)
@@ -491,7 +491,7 @@ func _draw_equip_body(vs: Vector2) -> void:
 		var k: String = rows[j]
 		var sx := 16.0 + (j % 2) * col_w
 		var sy := y + (j / 2) * 12.0
-		_text(Vector2(sx, sy), Progress.STAT_NAMES[k], 8, SOFT)
+		_text(Vector2(sx, sy), Loc.t(Progress.STAT_NAMES[k]), 8, SOFT)
 		var val := _stat_shown(k, now[k])
 		_text_r(Vector2(sx + col_w - 44, sy), val, 9, TEXT)
 		if not preview.is_empty():
@@ -515,15 +515,15 @@ func _draw_equip_body(vs: Vector2) -> void:
 		var ix := 8.0  # text starts after the item's icon, when it has one
 		if iid != "" and UiSkin.draw_icon(self, iid, Rect2(r.position + Vector2(7, 3), Vector2(20, 20))):
 			ix = 31.0
-		_text(r.position + Vector2(ix, 10), Progress.SLOT_NAMES[s].to_upper(), 7, SLOT_COLORS[s])
+		_text(r.position + Vector2(ix, 10), Loc.t(Progress.SLOT_NAMES[s]).to_upper(), 7, SLOT_COLORS[s])
 		if iid == "":
-			_text(r.position + Vector2(8, 21), "(nothing)", 9, DIM)
+			_text(r.position + Vector2(8, 21), tr("(nothing)"), 9, DIM)
 		else:
 			_text(r.position + Vector2(ix, 21), Progress.item(iid)["name"], 9, GOLD if i == slot_i else TEXT, 128 - ix)
 			_text(r.position + Vector2(130, 21), Progress.item_text(iid), 8, GOOD if Progress.item(iid).get("stats", {}).size() > 0 else DIM, r.size.x - 134)
 		var spare := Progress.options(id, s).size()
 		if spare > 0:
-			_text_r(r.position + Vector2(r.size.x - 6, 10), "%d spare" % spare, 7, GOOD)
+			_text_r(r.position + Vector2(r.size.x - 6, 10), tr("%d spare") % spare, 7, GOOD)
 		y += 30
 
 	# Right side: the pick list, or about the highlighted slot
@@ -533,7 +533,7 @@ func _draw_equip_body(vs: Vector2) -> void:
 	UiSkin.panel(self, right, "ledger")
 	var ry := right.position.y + 16
 	if picking:
-		_text(Vector2(rx + 8, ry), "%s for %s" % [Progress.SLOT_NAMES[_slot()], PartyPicker.short_of(id)], 10, PAPER)
+		_text(Vector2(rx + 8, ry), tr("%s for %s") % [Loc.t(Progress.SLOT_NAMES[_slot()]), PartyPicker.short_of(id)], 10, PAPER)
 		ry += 8
 		var ch := _choices()
 		for i in ch.size():
@@ -542,7 +542,7 @@ func _draw_equip_body(vs: Vector2) -> void:
 			_box(r, i == pick_i)
 			var k: String = ch[i]
 			if k == "":
-				_text(r.position + Vector2(6, 14), "Take it off" if str(g.get(_slot(), "")) != "" else "(leave empty)", 9, SOFT)
+				_text(r.position + Vector2(6, 14), tr("Take it off") if str(g.get(_slot(), "")) != "" else tr("(leave empty)"), 9, SOFT)
 			else:
 				var px := 26.0 if UiSkin.draw_icon(self, k, Rect2(r.position + Vector2(5, 3), Vector2(16, 16))) else 6.0
 				_text(r.position + Vector2(px, 9), Progress.item(k)["name"], 9, GOLD if i == pick_i else TEXT)
@@ -553,10 +553,10 @@ func _draw_equip_body(vs: Vector2) -> void:
 			_wrap(Vector2(rx + 8, ry + 10), Progress.item(ch[pick_i]).get("blurb", ""), rw - 16, 8, Color(0.78, 0.76, 0.74))
 	else:
 		var iid := str(g.get(_slot(), ""))
-		_text(Vector2(rx + 8, ry), Progress.SLOT_NAMES[_slot()], 10, SLOT_COLORS[_slot()])
+		_text(Vector2(rx + 8, ry), Loc.t(Progress.SLOT_NAMES[_slot()]), 10, SLOT_COLORS[_slot()])
 		ry += 14
 		if iid == "":
-			_text(Vector2(rx + 8, ry), "Nothing worn.", 9, DIM)
+			_text(Vector2(rx + 8, ry), tr("Nothing worn."), 9, DIM)
 		else:
 			UiSkin.draw_icon(self, iid, Rect2(rx + rw - 42, ry - 26, 32, 32))
 			_text(Vector2(rx + 8, ry), Progress.item(iid)["name"], 11, PAPER)
@@ -566,18 +566,18 @@ func _draw_equip_body(vs: Vector2) -> void:
 			ry += _wrap(Vector2(rx + 8, ry + 8), Progress.item(iid).get("blurb", ""), rw - 16, 8, Color(0.78, 0.76, 0.74))
 		ry += 18
 		var spare := Progress.options(id, _slot()).size()
-		_text(Vector2(rx + 8, ry), ("%s to swap: %d spare that fit." % [Prompts.confirm(), spare]) if spare > 0 else
-			(Prompts.confirm() + " to take it off." if iid != "" else "No spare gear for this slot."), 8, GOLD if spare > 0 else SOFT, rw - 16)
+		_text(Vector2(rx + 8, ry), (tr("%s to swap: %d spare that fit.") % [Prompts.confirm(), spare]) if spare > 0 else
+			(Prompts.confirm() + tr(" to take it off.") if iid != "" else tr("No spare gear for this slot.")), 8, GOLD if spare > 0 else SOFT, rw - 16)
 		ry += 18
-		_text(Vector2(rx + 8, ry), "Levels", 8, Color(0.75, 0.72, 0.7))
+		_text(Vector2(rx + 8, ry), tr("Levels"), 8, Color(0.75, 0.72, 0.7))
 		ry += 2
 		var gr := Progress.growth(id)
 		var parts := []
 		for k in Progress.STAT_ORDER:
 			if gr.has(k) and float(gr[k]) > 0.0:
 				var v := float(gr[k])
-				parts.append(("+%d %s" % [int(v), Progress.STAT_NAMES[k]]) if v >= 1.0 else ("+1 %s every %d levels" % [Progress.STAT_NAMES[k], int(round(1.0 / v))]))
-		ry += _wrap(Vector2(rx + 8, ry + 9), "Each level: " + ", ".join(parts) + ". XP comes from every enemy the party drops, shared by all three, plus a bonus for finishing the job. On missions the Barracks and research add their bonuses on top of these numbers.", rw - 16, 8, SOFT)
+				parts.append(("+%d %s" % [int(v), Loc.t(Progress.STAT_NAMES[k])]) if v >= 1.0 else (tr("+1 %s every %d levels") % [Loc.t(Progress.STAT_NAMES[k]), int(round(1.0 / v))]))
+		ry += _wrap(Vector2(rx + 8, ry + 9), tr("Each level: ") + ", ".join(parts) + tr(". XP comes from every enemy the party drops, shared by all three, plus a bonus for finishing the job. On missions the Barracks and research add their bonuses on top of these numbers."), rw - 16, 8, SOFT)
 
 
 func _stat_shown(k: String, v) -> String:
@@ -602,11 +602,11 @@ func _draw_shop(vs: Vector2) -> void:
 		var kind: String = rows[i][0]
 		var k: String = rows[i][1]
 		var it := Progress.item(k)
-		var head: String = Progress.SLOT_NAMES.get(it["slot"], "") if kind == "buy" else "sell"
+		var head: String = Loc.t(Progress.SLOT_NAMES.get(it["slot"], "")) if kind == "buy" else tr("sell")
 		if head != last:
 			last = head
 			y += 10
-			_text(Vector2(10, y - 2), ("SELL SPARE GEAR (half price)" if kind == "sell" else head.to_upper() + "S"), 7,
+			_text(Vector2(10, y - 2), (tr("SELL SPARE GEAR (half price)") if kind == "sell" else head.to_upper() + "S"), 7,
 				SOFT if kind == "sell" else SLOT_COLORS.get(it["slot"], TEXT))
 		var r := Rect2(8, y, lw, row_h - 2)
 		_shop_rects.append(r)
@@ -618,12 +618,12 @@ func _draw_shop(vs: Vector2) -> void:
 		var nx := 20.0 if UiSkin.draw_icon(self, k, Rect2(r.position + Vector2(5, 0), Vector2(12, 12)), Color(1, 1, 1, 0.45) if locked else Color.WHITE) else 6.0
 		_text(r.position + Vector2(nx, 9), it["name"], 8, col, 116 - nx)
 		var owner := str(it.get("hero", ""))
-		_text(r.position + Vector2(118, 9), PartyPicker.short_of(owner) if owner != "" else "anyone", 7, DIM if locked else SOFT, 50)
+		_text(r.position + Vector2(118, 9), PartyPicker.short_of(owner) if owner != "" else Loc.t("anyone"), 7, DIM if locked else SOFT, 50)
 		_text(r.position + Vector2(170, 9), Progress.item_text(k), 7, DIM if locked else GOOD, 110)
 		if kind == "buy":
 			var have := Progress.count(k) + Progress.worn_by(k).size()
 			if have > 0:
-				_text_r(r.position + Vector2(lw - 46, 9), "have %d" % have, 7, SOFT)
+				_text_r(r.position + Vector2(lw - 46, 9), tr("have %d") % have, 7, SOFT)
 			_text_r(r.position + Vector2(lw - 6, 9), "%d G" % int(it["price"]), 8, DIM if locked else (GOLD if why == "" else BAD))
 		else:
 			_text_r(r.position + Vector2(lw - 46, 9), "x%d" % Progress.count(k), 7, SOFT)
@@ -643,7 +643,7 @@ func _draw_shop(vs: Vector2) -> void:
 	_text(Vector2(rx + 8, ry), it2["name"], 11, PAPER, rw - 50)
 	ry += 12
 	var owner2 := str(it2.get("hero", ""))
-	_text(Vector2(rx + 8, ry), "%s, %s" % [Progress.SLOT_NAMES[it2["slot"]], ("for " + PartyPicker.short_of(owner2)) if owner2 != "" else "anyone can wear it"], 8, SLOT_COLORS.get(it2["slot"], TEXT))
+	_text(Vector2(rx + 8, ry), "%s, %s" % [Loc.t(Progress.SLOT_NAMES[it2["slot"]]), (tr("for ") + PartyPicker.short_of(owner2)) if owner2 != "" else tr("anyone can wear it")], 8, SLOT_COLORS.get(it2["slot"], TEXT))
 	ry += 12
 	_text(Vector2(rx + 8, ry), Progress.item_text(k2), 8, GOOD, rw - 16)
 	ry += 4
@@ -651,7 +651,7 @@ func _draw_shop(vs: Vector2) -> void:
 	# Compared with what each hero who could wear it has on now
 	var who := _ids.filter(func(id): return Progress.wear_blocker(id, k2) == "")
 	if not who.is_empty():
-		_text(Vector2(rx + 8, ry + 8), "Compared with what they wear now", 8, Color(0.75, 0.72, 0.7))
+		_text(Vector2(rx + 8, ry + 8), tr("Compared with what they wear now"), 8, Color(0.75, 0.72, 0.7))
 		ry += 10
 		for id in who:
 			var now := Progress.stats(id)
@@ -660,17 +660,17 @@ func _draw_shop(vs: Vector2) -> void:
 			for k in ["hp", "damage", "power_rate", "speed", "reach", "guard", "ink", "heal"]:
 				var diff := float(then[k]) - float(now[k])
 				if absf(diff) > 0.001:
-					parts.append("%s%s %s" % ["+" if diff > 0 else "-", _stat_shown(k, absf(diff)).trim_prefix("+"), Progress.STAT_NAMES[k]])
+					parts.append("%s%s %s" % ["+" if diff > 0 else "-", _stat_shown(k, absf(diff)).trim_prefix("+"), Loc.t(Progress.STAT_NAMES[k])])
 			ry += 10
 			var cur := str(Progress.gear(id).get(it2["slot"], ""))
-			var line := "%s: %s" % [PartyPicker.short_of(id), ", ".join(parts) if not parts.is_empty() else "same as now"]
+			var line := "%s: %s" % [PartyPicker.short_of(id), ", ".join(parts) if not parts.is_empty() else tr("same as now")]
 			_text(Vector2(rx + 8, ry + 2), line, 8, TEXT if cur != k2 else SOFT, rw - 16)
 	ry += 20
 	if kind2 == "buy":
 		var why2 := Progress.shop_blocker(k2)
-		_text(Vector2(rx + 8, ry), ("%s to buy for %d Gilt." % [Prompts.confirm(), int(it2["price"])]) if why2 == "" else ("Can't buy: %s." % why2), 8, GOLD if why2 == "" else BAD, rw - 16)
+		_text(Vector2(rx + 8, ry), (tr("%s to buy for %d Gilt.") % [Prompts.confirm(), int(it2["price"])]) if why2 == "" else (tr("Can't buy: %s.") % why2), 8, GOLD if why2 == "" else BAD, rw - 16)
 	else:
-		_text(Vector2(rx + 8, ry), "%s to sell one for %d Gilt." % [Prompts.confirm(), Progress.sell_price(k2)], 8, GOLD, rw - 16)
+		_text(Vector2(rx + 8, ry), tr("%s to sell one for %d Gilt.") % [Prompts.confirm(), Progress.sell_price(k2)], 8, GOLD, rw - 16)
 
 
 # ---------------------------------------------------------------- skills tab (issue #24)
@@ -684,20 +684,20 @@ func _draw_skills(vs: Vector2) -> void:
 	var left := Rect2(8, 62, 300, vs.y - 62 - 18)
 	UiSkin.panel(self, left, "ledger")
 	var y := left.position.y + 16
-	_text(Vector2(16, y), "%s skill" % Skills.weapon_name(id), 12, PAPER, 200)
-	_text_r(Vector2(left.end.x - 8, y), "Level %d / %d" % [wl, Skills.max_level()], 10, GOLD)
+	_text(Vector2(16, y), tr("%s skill") % Skills.weapon_name(id), 12, PAPER, 200)
+	_text_r(Vector2(left.end.x - 8, y), tr("Level %d / %d") % [wl, Skills.max_level()], 10, GOLD)
 	y += 12
 	var need := Skills.weapon_to_next(wl)
-	_text(Vector2(16, y), "Mastered" if need <= 0 else "%d / %d to level %d" % [int(Skills.weapon(id).get("xp", 0)), need, wl + 1], 8, XP_COL)
+	_text(Vector2(16, y), tr("Mastered") if need <= 0 else tr("%d / %d to level %d") % [int(Skills.weapon(id).get("xp", 0)), need, wl + 1], 8, XP_COL)
 	var drill := ""
 	if Empire.role_of(id) != "party" and Empire.level_of("barracks") > 0:
-		drill = ("Barracks drill +%d a day" % Skills.barracks_points()) if wl < Skills.barracks_cap() else "Drilled as far as the Barracks can"
+		drill = (tr("Barracks drill +%d a day") % Skills.barracks_points()) if wl < Skills.barracks_cap() else tr("Drilled as far as the Barracks can")
 	_text_r(Vector2(left.end.x - 8, y), drill, 8, SOFT)
 	y += 4
 	_bar(Rect2(16, y, left.size.x - 16, 3), Skills.weapon_fraction(id), XP_COL)
 	y += 8
 	var sk: Dictionary = Progress.data().get("skills", {})
-	y += _wrap(Vector2(16, y + 8), "Landed full-power swings +%d, techs that land +%d. Each level teaches a tech; hold Attack longer on a full gauge to reach the later ones." % [int(sk.get("swing", 2)), int(sk.get("tech", 4))], left.size.x - 20, 7, DIM) + 4
+	y += _wrap(Vector2(16, y + 8), tr("Landed full-power swings +%d, techs that land +%d. Each level teaches a tech; hold Attack longer on a full gauge to reach the later ones.") % [int(sk.get("swing", 2)), int(sk.get("tech", 4))], left.size.x - 20, 7, DIM) + 4
 	var picked := Skills.pick(id)
 	for i in techs.size():
 		var t: Dictionary = techs[i]
@@ -709,11 +709,11 @@ func _draw_skills(vs: Vector2) -> void:
 		var col := Color(str(t.get("color", "ffffff")))
 		draw_rect(Rect2(r.position, Vector2(3, r.size.y)), col if known else DIM)
 		_text(r.position + Vector2(8, 9), str(t.get("name", "?")), 9, (GOLD if i == tech_i else TEXT) if known else DIM, 150)
-		_text(r.position + Vector2(8, 19), ("Ready after %.1f s" % Techs.charge_time(t)) if known else "Learned at level %d" % lvl, 7, SOFT if known else DIM)
-		var tag := "ALWAYS" if picked == t["id"] else ("LV %d" % lvl)
+		_text(r.position + Vector2(8, 19), (tr("Ready after %s s") % Loc.dec(Techs.charge_time(t))) if known else tr("Learned at level %d") % lvl, 7, SOFT if known else DIM)
+		var tag := tr("ALWAYS") if picked == t["id"] else (tr("LV %d") % lvl)
 		_text_r(r.position + Vector2(r.size.x - 6, 9), tag, 7, GOOD if picked == t["id"] else (col.lightened(0.2) if known else DIM))
 		y += 25
-	_text(Vector2(16, y + 6), "Charging: " + ("always %s" % Techs.find(picked).get("name", "?") if picked != "" else "by hold length"), 8, GOLD)
+	_text(Vector2(16, y + 6), tr("Charging: ") + (tr("always %s") % Techs.find(picked).get("name", "?") if picked != "" else tr("by hold length")), 8, GOLD)
 
 	# Right: the highlighted tech, then the Ink colours.
 	var rx := 320.0
@@ -726,14 +726,14 @@ func _draw_skills(vs: Vector2) -> void:
 		var known2 := int(t2.get("level", 1)) <= wl
 		var col2 := Color(str(t2.get("color", "ffffff")))
 		_text(Vector2(rx + 8, ry), str(t2.get("name", "?")), 11, col2.lightened(0.3) if known2 else SOFT)
-		_text_r(Vector2(right.end.x - 8, ry), ("Known" if known2 else "Level %d" % int(t2.get("level", 1))), 8, GOOD if known2 else SOFT)
+		_text_r(Vector2(right.end.x - 8, ry), (tr("Known") if known2 else tr("Level %d") % int(t2.get("level", 1))), 8, GOOD if known2 else SOFT)
 		ry += 11
 		_text(Vector2(rx + 8, ry), tech_facts(t2), 7, GOLD, rw - 16)
 		ry += _wrap(Vector2(rx + 8, ry + 9), str(t2.get("desc", "")), rw - 16, 8, Color(0.82, 0.8, 0.76) if known2 else SOFT) + 10
 	draw_rect(Rect2(rx + 8, ry, rw - 16, 1), Color(0.63, 0.48, 0.31, 0.6))
 	ry += 12
-	_text(Vector2(rx + 8, ry), "Ink colours", 10, PAPER)
-	_text_r(Vector2(right.end.x - 8, ry), "spend Ink on a colour to train it", 7, DIM)
+	_text(Vector2(rx + 8, ry), tr("Ink colours"), 10, PAPER)
+	_text_r(Vector2(right.end.x - 8, ry), tr("spend Ink on a colour to train it"), 7, DIM)
 	ry += 6
 	var used := Skills.colors_of(id)
 	var abil := Abilities.for_ids(PartyPicker.hero_data(id).get("abilities", []), id)
@@ -743,10 +743,10 @@ func _draw_skills(vs: Vector2) -> void:
 		var cc := Skills.ink_color(c)
 		draw_rect(Rect2(rx + 8, ry + 3, 6, 6), cc if on else Color(cc, 0.35))
 		_text(Vector2(rx + 18, ry + 9), Skills.ink_name(c), 8, TEXT if on else DIM)
-		_text(Vector2(rx + 52, ry + 9), "Lv %d" % lv, 8, GOLD if on else DIM)
+		_text(Vector2(rx + 52, ry + 9), tr("Lv %d") % lv, 8, GOLD if on else DIM)
 		_bar(Rect2(rx + 76, ry + 5, 46, 2), Skills.ink_fraction(id, c), cc if on else Color(cc, 0.3))
 		var mine := abil.filter(func(a): return str(a.get("ink", "")) == c)
-		var line := ", ".join(mine.map(func(a): return "%s (tier %d)" % [a.get("name", "?"), int(a.get("tier", 1))])) if on else str(Skills.ink_info(c).get("desc", ""))
+		var line := ", ".join(mine.map(func(a): return tr("%s (tier %d)") % [a.get("name", "?"), int(a.get("tier", 1))])) if on else str(Skills.ink_info(c).get("desc", ""))
 		_text(Vector2(rx + 128, ry + 9), line, 7, TEXT if on else DIM, rw - 136)
 		ry += 12
 		if on:
@@ -755,43 +755,43 @@ func _draw_skills(vs: Vector2) -> void:
 				var cut := Skills.cooldown_cut(lv)
 				var bits := []
 				if cut > 0.0:
-					bits.append("cooldown -%d%%" % int(round(cut * 100.0)))
+					bits.append(tr("cooldown -%d%%") % int(round(cut * 100.0)))
 				if nxt != "":
-					bits.append("next " + nxt)
+					bits.append(tr("next ") + nxt)
 				if not bits.is_empty():
 					_text(Vector2(rx + 128, ry + 6), "%s: %s" % [a.get("name", "?"), "; ".join(bits)], 7, SOFT, rw - 136)
 					ry += 9
 	ry += 4
-	_wrap(Vector2(rx + 8, ry + 8), "Every colour: tier 2 abilities at level 2, tier 3 at level 4; shorter cooldowns at 3 and 5.", rw - 16, 7, DIM)
+	_wrap(Vector2(rx + 8, ry + 8), tr("Every colour: tier 2 abilities at level 2, tier 3 at level 4; shorter cooldowns at 3 and 5."), rw - 16, 7, DIM)
 
 
 ## One line of hard numbers for a tech: "x2.4 damage, all round, 3 hits, stuns 1 s".
 static func tech_facts(t: Dictionary) -> String:
 	var parts := []
 	if float(t.get("mult", 0)) > 0.0:
-		parts.append("x%s damage" % _n(t["mult"]))
+		parts.append(Loc.t("x%s damage") % _n(t["mult"]))
 	var k: Dictionary = t.get("knives", {})
 	if not k.is_empty():
-		parts.append("%d knives x%s" % [int(k.get("count", 1)), _n(k.get("mult", 1))])
+		parts.append(Loc.t("%d knives x%s") % [int(k.get("count", 1)), _n(k.get("mult", 1))])
 	if float(t.get("mult", 0)) > 0.0:
-		parts.append("all round" if float(t.get("arc", 90)) >= 179.0 else ("a line" if float(t.get("arc", 90)) <= 12.0 else "in front"))
+		parts.append(Loc.t("all round") if float(t.get("arc", 90)) >= 179.0 else (Loc.t("a line") if float(t.get("arc", 90)) <= 12.0 else Loc.t("in front")))
 	if int(t.get("hits", 1)) > 1:
-		parts.append("%d hits" % int(t["hits"]))
+		parts.append(Loc.t("%d hits") % int(t["hits"]))
 	if int(t.get("chain", 1)) > 1:
-		parts.append("%d in a row" % int(t["chain"]))
+		parts.append(Loc.t("%d in a row") % int(t["chain"]))
 	if (t.get("spread", []) as Array).size() > 1:
-		parts.append("%d lines" % (t["spread"] as Array).size())
+		parts.append(Loc.t("%d lines") % (t["spread"] as Array).size())
 	if float(t.get("knock", 0)) < 0.0:
-		parts.append("pulls in")
+		parts.append(Loc.t("pulls in"))
 	var stun := maxf(float(t.get("stun", 0)), float(t.get("last", {}).get("stun", 0)))
 	if stun > 0.0:
-		parts.append("stuns %s s" % _n(stun))
+		parts.append(Loc.t("stuns %s s") % _n(stun))
 	if float(t.get("mark", 0)) > 0.0:
-		parts.append("Audits %s s" % _n(t["mark"]))
+		parts.append(Loc.t("Audits %s s") % _n(t["mark"]))
 	if float(t.get("delay", 0)) > 0.0:
-		parts.append("goes off after %s s" % _n(t["delay"]))
+		parts.append(Loc.t("goes off after %s s") % _n(t["delay"]))
 	if int(t.get("heal", 0)) > 0:
-		parts.append("heals %d" % int(t["heal"]))
+		parts.append(Loc.t("heals %d") % int(t["heal"]))
 	return ", ".join(parts)
 
 

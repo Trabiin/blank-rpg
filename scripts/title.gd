@@ -29,18 +29,18 @@ func _ready() -> void:
 	var latest := Saves.latest_slot()
 	var items := []
 	if latest != "":
-		items.append({"id": "continue", "label": "Continue", "detail": Saves.describe(latest)})
-	items.append({"id": "new", "label": "New Game"})
-	items.append({"id": "load", "label": "Load Game", "enabled": latest != "", "note": "(no saves yet)"})
-	items.append({"id": "options", "label": "Options", "detail": "speed, difficulty, sound, controls"})
-	items.append({"id": "report", "label": "Report a bug", "detail": "or send feedback"})
+		items.append({"id": "continue", "label": tr("Continue"), "detail": Saves.describe(latest)})
+	items.append({"id": "new", "label": tr("New Game")})
+	items.append({"id": "load", "label": tr("Load Game"), "enabled": latest != "", "note": tr("(no saves yet)")})
+	items.append({"id": "options", "label": tr("Options"), "detail": tr("speed, difficulty, sound, controls")})
+	items.append({"id": "report", "label": tr("Report a bug"), "detail": tr("or send feedback")})
 	items.append_array(Survey.menu_items())  # playtest builds only (issue #168)
-	items.append({"id": "credits", "label": "Credits"})
+	items.append({"id": "credits", "label": tr("Credits")})
 	if DisplaySettings.is_desktop():  # a browser tab is closed by the browser (issue #145)
-		items.append({"id": "quit", "label": "Quit"})
+		items.append({"id": "quit", "label": tr("Quit")})
 	# Testing shortcuts live one level down, and only in builds that ask for them (test_shortcuts_on).
 	if test_shortcuts_on():
-		items.append({"id": "tests", "label": "Test shortcuts", "detail": "jump straight to the town or the Auditor"})
+		items.append({"id": "tests", "label": tr("Test shortcuts"), "detail": tr("jump straight to the town or the Auditor")})
 	menu.setup("", items)
 	menu.chosen.connect(_on_choice)
 
@@ -56,7 +56,7 @@ func _ready() -> void:
 	credits.dim = 0.92
 	credits.title_size = 16
 	add_child(credits)
-	credits.setup("Credits", [{"id": "back", "label": "Back"}], _credit_lines())
+	credits.setup(tr("Credits"), [{"id": "back", "label": tr("Back")}], _credit_lines())
 	credits.chosen.connect(_close_credits)
 
 	_show_save_notices()
@@ -73,7 +73,7 @@ func _show_save_notices() -> void:
 	notice.dim = 0.85
 	notice.top = 0.25
 	add_child(notice)
-	notice.setup("About your saves", [{"id": "ok", "label": "OK"}], "\n\n".join(notes))
+	notice.setup(tr("About your saves"), [{"id": "ok", "label": tr("OK")}], "\n\n".join(notes))
 	menu.visible = false
 	notice.chosen.connect(func(_id):
 		notice.queue_free()
@@ -89,18 +89,18 @@ func _offer_report() -> void:
 		return
 	var prev: Dictionary = Diag.previous
 	var n := int(prev.get("errors", 0))
-	var what := "Last Ink closed unexpectedly last time." if prev.get("crashed", false) \
-		else "Last Ink ran into %d error%s last time." % [n, "" if n == 1 else "s"]
+	var what := tr("Last Ink closed unexpectedly last time.") if prev.get("crashed", false) \
+		else tr("Last Ink ran into %d error%s last time.") % [n, "" if n == 1 else "s"]
 	var offer := InkMenu.new()
 	offer.dim = 0.85
 	offer.top = 0.28
 	add_child(offer)
-	offer.setup("Sorry about that", [
-		{"id": "send", "label": "Send report", "detail": "you see everything before it goes"},
-		{"id": "logs", "label": "Download the logs" if OS.has_feature("web") else "Open log folder"},
-		{"id": "later", "label": "Not now"},
-		{"id": "mute", "label": "Don't ask again", "detail": "until the next update"},
-	], what + " A report with the log from then helps fix it.")
+	offer.setup(tr("Sorry about that"), [
+		{"id": "send", "label": tr("Send report"), "detail": tr("you see everything before it goes")},
+		{"id": "logs", "label": tr("Download the logs") if OS.has_feature("web") else tr("Open log folder")},
+		{"id": "later", "label": tr("Not now")},
+		{"id": "mute", "label": tr("Don't ask again"), "detail": tr("until the next update")},
+	], what + tr(" A report with the log from then helps fix it."))
 	menu.visible = false
 	Diag.previous = {}  # asked once per launch
 	offer.chosen.connect(_on_offer.bind(offer, prev))
@@ -149,7 +149,7 @@ func _on_choice(id: String) -> void:
 		"continue":
 			Saves.load_and_play(Saves.latest_slot())
 		"load":
-			slots.setup("Load which save?", Saves.slot_items(false))
+			slots.setup(tr("Load which save?"), Saves.slot_items(false))
 			menu.visible = false
 			slots.visible = true
 		"command":
@@ -187,20 +187,20 @@ func _on_choice(id: String) -> void:
 			_open_survey()
 		"error_test":  # issue #146: something for the next launch's report offer to find
 			push_error("Test error from the title screen's test shortcuts (issue #146).")
-			Diag.toast("Logged a test error. Restart the game to see the report offer.")
+			Diag.toast(tr("Logged a test error. Restart the game to see the report offer."))
 		"credits":
 			menu.visible = false
 			credits.visible = true
 		"quit":
 			get_tree().quit()
 		"tests":
-			slots.setup("Test shortcuts", [
-				{"id": "command", "label": "Hollowmark", "detail": "a fresh town and the Command Table"},
-				{"id": "boss_test", "label": "Boss: The Auditor", "detail": "fresh level 6 party, straight into the fight"},
-				{"id": "heroes_test", "label": "New heroes", "detail": "fresh town with Ottoline, Jessamy, Odile and Fauvette already hired"},
-				{"id": "map_test", "label": "Whole map", "detail": "Command Table with every region open, and coin to claim land"},
-				{"id": "error_test", "label": "Log a test error", "detail": "the next launch offers to send a report"},
-				{"id": "back", "label": "Back"}])
+			slots.setup(tr("Test shortcuts"), [
+				{"id": "command", "label": tr("Hollowmark"), "detail": tr("a fresh town and the Command Table")},
+				{"id": "boss_test", "label": tr("Boss: The Auditor"), "detail": tr("fresh level 6 party, straight into the fight")},
+				{"id": "heroes_test", "label": tr("New heroes"), "detail": tr("fresh town with Ottoline, Jessamy, Odile and Fauvette already hired")},
+				{"id": "map_test", "label": tr("Whole map"), "detail": tr("Command Table with every region open, and coin to claim land")},
+				{"id": "error_test", "label": tr("Log a test error"), "detail": tr("the next launch offers to send a report")},
+				{"id": "back", "label": tr("Back")}])
 			menu.visible = false
 			slots.visible = true
 
@@ -264,7 +264,7 @@ static func test_shortcuts_on() -> bool:
 
 ## Builds the credits text from CREDITS.md so there is one source of truth.
 func _credit_lines() -> String:
-	var lines := ["Design, code and story: Ojon and Claude", ""]
+	var lines := [tr("Design, code and story: Ojon and Claude"), ""]
 	var f := FileAccess.open("res://CREDITS.md", FileAccess.READ)
 	if f:
 		while not f.eof_reached():
@@ -277,7 +277,7 @@ func _credit_lines() -> String:
 				lines.append("%s  -  %s  (%s)" % [asset, cols[1].strip_edges(), cols[3].strip_edges()])
 	lines.append("")
 	lines.append_array(ai_use_lines())
-	lines.append("Made with Godot Engine")
+	lines.append(tr("Made with Godot Engine"))
 	return "\n".join(lines)
 
 
@@ -348,7 +348,7 @@ func _draw_key_art(vs: Vector2) -> void:
 func _draw_logo(vs: Vector2) -> void:
 	var font := ThemeDB.fallback_font
 	var logo_font: Font = UiSkin.TITLE_FONT  # the heading face, as on every screen title
-	var logo := "Last Ink"  # blackletter capitals are hard to read, so title case
+	var logo := tr("Last Ink")  # blackletter capitals are hard to read, so title case
 	var fs := 72
 	var w := logo_font.get_string_size(logo, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
 	var c := Vector2(vs.x * 0.5, vs.y * 0.24)
@@ -368,7 +368,7 @@ func _draw_logo(vs: Vector2) -> void:
 		var top: float = base.y - foot
 		draw_rect(Rect2(dx - 1, top, 2, dl), Color("ece6da"))
 		draw_rect(Rect2(dx - 1.5, top + dl, 3, 2), Color("ece6da"))
-	var tag := "Reality is being eaten. You were spat back out."
+	var tag := tr("Reality is being eaten. You were spat back out.")
 	var tw := font.get_string_size(tag, HORIZONTAL_ALIGNMENT_LEFT, -1, 10).x
 	draw_string(font, Vector2(c.x - tw / 2.0, c.y + 30), tag, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color(0.75, 0.72, 0.7))
 

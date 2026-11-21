@@ -153,7 +153,7 @@ func _ready() -> void:
 	pause_menu = InkMenu.new()
 	pause_menu.visible = false
 	menu_layer.add_child(pause_menu)
-	pause_menu.setup("Paused", _pause_items(), "")
+	pause_menu.setup(tr("Paused"), _pause_items(), "")
 	pause_menu.chosen.connect(_on_pause_choice)
 	slot_menu = InkMenu.new()
 	slot_menu.visible = false
@@ -297,11 +297,11 @@ func _on_enemy_died(_e: Actor) -> void:
 		var item := Satchel.roll_drop()  # field items go straight into the satchel, or home if it's full
 		if item != "":
 			if Satchel.add(item):
-				hud.say("Found: %s (quick menu)." % Satchel.item(item).get("name", item), 2.0)
+				hud.say(tr("Found: %s (quick menu).") % Satchel.item(item).get("name", item), 2.0)
 			else:
 				found[item] = int(found.get(item, 0)) + 1
 				found_flash = 1.5
-				hud.say("Found: %s. The satchel is full: it goes to the stores." % Satchel.item(item).get("name", item), 2.5)
+				hud.say(tr("Found: %s. The satchel is full: it goes to the stores.") % Satchel.item(item).get("name", item), 2.5)
 		var mats := Armory.roll_mats(Journal.kind_of(_e), mission)  # Forge materials (issue #112)
 		for k in mats:
 			found[k] = int(found.get(k, 0)) + int(mats[k])
@@ -320,7 +320,7 @@ func _on_enemy_died(_e: Actor) -> void:
 			found_items.append(drop)
 			found_flash = 1.5
 			Fx.damage_number(entities, _e.global_position + Vector2(0, -24), Progress.item(drop)["name"], Color("ffe7a3"))
-			hud.say("Found %s! It goes in the bag when you get home." % Progress.item(drop)["name"], 3.0)
+			hud.say(tr("Found %s! It goes in the bag when you get home.") % Progress.item(drop)["name"], 3.0)
 
 
 ## Shared XP for the whole party (issue #15). Level-ups take effect on the spot.
@@ -335,9 +335,9 @@ func _award_xp(amount: int) -> Array:
 				continue
 			Progress.apply_delta(hero, {}, up["gains"])
 			levels_gained[hero.hero_id] = up["level"]
-			Fx.damage_number(entities, hero.global_position + Vector2(0, -26), "LEVEL %d" % up["level"], Color("ffd166"))
+			Fx.damage_number(entities, hero.global_position + Vector2(0, -26), tr("LEVEL %d") % up["level"], Color("ffd166"))
 			Fx.burst(entities, hero.global_position + Vector2(0, -10), [Color("ffd166"), Color.WHITE], 18, 60.0)
-			hud.say("%s reached level %d: %s, +1 Skill Point (skill tree in the quick menu)" % [hero.hero_name, up["level"], Progress.gains_text(up["gains"])], 3.5)
+			hud.say(tr("%s reached level %d: %s, +1 Skill Point (skill tree in the quick menu)") % [hero.hero_name, up["level"], Progress.gains_text(up["gains"])], 3.5)
 	return ups
 
 
@@ -351,17 +351,17 @@ func skill_up(hero: Hero, kind: String, color: String, level: int) -> void:
 		var t := Skills.tech_at(hero.hero_id, level)
 		label = "%s %d" % [Skills.weapon_name(hero.hero_id).to_upper(), level]
 		col = Color(str(t.get("color", "ffd166")))
-		line = "%s's %s skill reached %d: learned %s. Hold Attack longer on a full gauge to reach it." % [
-			hero.hero_name, Skills.weapon_name(hero.hero_id), level, t.get("name", "a new tech")]
+		line = tr("%s's %s skill reached %d: learned %s. Hold Attack longer on a full gauge to reach it.") % [
+			hero.hero_name, Skills.weapon_name(hero.hero_id), level, t.get("name", tr("a new tech"))]
 		skills_gained.append("%s: %s %d (%s)" % [hero.hero_name, Skills.weapon_name(hero.hero_id), level, t.get("name", "")])
 	else:
-		label = "%s INK %d" % [Skills.ink_name(color).to_upper(), level]
+		label = tr("%s INK %d") % [Skills.ink_name(color).to_upper(), level]
 		col = Skills.ink_color(color)
 		var what := Skills.ink_level_text(level)
 		var names := hero.abilities.filter(func(a): return str(a.get("ink", "")) == color).map(func(a): return str(a.get("name", "")))
-		line = "%s's %s Ink reached %d%s." % [hero.hero_name, Skills.ink_name(color), level,
-			(": %s for %s" % [what, " and ".join(names)]) if what != "" and not names.is_empty() else ""]
-		skills_gained.append("%s: %s Ink %d" % [hero.hero_name, Skills.ink_name(color), level])
+		line = tr("%s's %s Ink reached %d%s.") % [hero.hero_name, Skills.ink_name(color), level,
+			(tr(": %s for %s") % [what, tr(" and ").join(names)]) if what != "" and not names.is_empty() else ""]
+		skills_gained.append(tr("%s: %s Ink %d") % [hero.hero_name, Skills.ink_name(color), level])
 	Fx.damage_number(entities, hero.global_position + Vector2(0, -34), label, col.lightened(0.3))
 	Fx.burst(entities, hero.global_position + Vector2(0, -10), [col, col.lightened(0.5), Color.WHITE], 20, 70.0)
 	Audio.sfx("levelup", 1.25)
@@ -393,19 +393,19 @@ func _on_hero_died(a: Actor) -> void:
 		return
 	if a == leader:
 		_set_leader(alive[0])
-		hud.say("%s is down! You now control %s." % [(a as Hero).hero_name, leader.hero_name], 3.0)
+		hud.say(tr("%s is down! You now control %s.") % [(a as Hero).hero_name, leader.hero_name], 3.0)
 
 
 func _show_game_over() -> void:
 	if ending:
 		return
 	var has_auto := Saves.exists("auto")
-	over_menu.setup("The party was erased.", [
-		{"id": "retry", "label": "Try again", "detail": "from the last autosave" if has_auto else "from the start of the area"},
-		{"id": "retreat", "label": "Limp back to Hollowmark", "detail": "end the mission and drop what you found"},
-		{"id": "load", "label": "Load game", "enabled": Saves.latest_slot() != ""},
-		{"id": "title", "label": "Quit to title"},
-	], "The Blank does not keep receipts.")
+	over_menu.setup(tr("The party was erased."), [
+		{"id": "retry", "label": tr("Try again"), "detail": tr("from the last autosave") if has_auto else tr("from the start of the area")},
+		{"id": "retreat", "label": tr("Limp back to Hollowmark"), "detail": tr("end the mission and drop what you found")},
+		{"id": "load", "label": tr("Load game"), "enabled": Saves.latest_slot() != ""},
+		{"id": "title", "label": tr("Quit to title")},
+	], tr("The Blank does not keep receipts."))
 	over_menu.visible = true
 
 
@@ -436,24 +436,24 @@ func set_paused(on: bool) -> void:
 	pause_menu.visible = on
 	slot_menu.visible = false
 	if on:
-		pause_menu.setup("Paused", _pause_items(), "")
+		pause_menu.setup(tr("Paused"), _pause_items(), "")
 		touch.release_all()
 
 
 func _pause_items() -> Array:
 	return [
-		{"id": "resume", "label": "Resume"},
-		{"id": "gear", "label": "Party gear", "detail": "levels and equipment"},
-		{"id": "journal", "label": "Journal", "detail": "quests, people, codex, history"},
-		{"id": "help", "label": "Help", "detail": "explainers, field notes and controls"},
-		{"id": "report", "label": "Report a bug", "detail": "or send feedback"},
+		{"id": "resume", "label": tr("Resume")},
+		{"id": "gear", "label": tr("Party gear"), "detail": tr("levels and equipment")},
+		{"id": "journal", "label": tr("Journal"), "detail": tr("quests, people, codex, history")},
+		{"id": "help", "label": tr("Help"), "detail": tr("explainers, field notes and controls")},
+		{"id": "report", "label": tr("Report a bug"), "detail": tr("or send feedback")},
 	] + Survey.menu_items() + [  # playtest builds only (issue #168)
-		{"id": "save", "label": "Save game"},
-		{"id": "load", "label": "Load game", "enabled": Saves.latest_slot() != "", "note": "(no saves yet)"},
-		{"id": "retreat", "label": "Retreat to Hollowmark", "detail": "end the mission, keep what you found"},
-		{"id": "restart", "label": "Restart mission"},
-		{"id": "options", "label": "Options"},
-		{"id": "title", "label": "Quit to title"},
+		{"id": "save", "label": tr("Save game")},
+		{"id": "load", "label": tr("Load game"), "enabled": Saves.latest_slot() != "", "note": tr("(no saves yet)")},
+		{"id": "retreat", "label": tr("Retreat to Hollowmark"), "detail": tr("end the mission, keep what you found")},
+		{"id": "restart", "label": tr("Restart mission")},
+		{"id": "options", "label": tr("Options")},
+		{"id": "title", "label": tr("Quit to title")},
 	]
 
 
@@ -514,7 +514,7 @@ func _open_slots(mode: String, from: InkMenu) -> void:
 	slot_mode = mode
 	_slot_return = from
 	from.visible = false
-	slot_menu.setup("Save to which slot?" if mode == "save" else "Load which save?", Saves.slot_items(mode == "save"))
+	slot_menu.setup(tr("Save to which slot?") if mode == "save" else tr("Load which save?"), Saves.slot_items(mode == "save"))
 	slot_menu.visible = true
 
 
@@ -529,7 +529,7 @@ func _on_slot_choice(id: String) -> void:
 	var ok := Saves.save(id, snapshot())
 	slot_menu.visible = false
 	_slot_return.visible = true
-	pause_menu.setup("Paused", _pause_items(), ("Saved to %s." % Saves.slot_label(id)) if ok else "Saving failed. Your browser may be blocking storage.")
+	pause_menu.setup(tr("Paused"), _pause_items(), (tr("Saved to %s.") % Saves.slot_label(id)) if ok else tr("Saving failed. Your browser may be blocking storage."))
 	pause_menu.selected = 0
 
 
@@ -584,7 +584,7 @@ func _apply_snapshot(d: Dictionary) -> void:
 	if li >= 0 and li < heroes.size() and not heroes[li].dead:
 		_set_leader(heroes[li])
 	autosave_t = AUTOSAVE_EVERY
-	hud.say("Loaded. The Blank kept your place.", 2.5)
+	hud.say(tr("Loaded. The Blank kept your place."), 2.5)
 
 
 ## Autosaves only when it is safe to drop back in: nobody down and no Nibbler close.
@@ -667,7 +667,7 @@ func _update_mission(delta: float) -> void:
 	objective.update(delta)
 	if objective.done():
 		ending = true
-		hud.say("Objective complete!", 2.0)
+		hud.say(tr("Objective complete!"), 2.0)
 		banter.event("mission_won", present())
 		get_tree().create_timer(1.6).timeout.connect(_show_results.bind("success"))
 	elif objective.failed():
@@ -698,23 +698,23 @@ func _progress_lines(r: Dictionary, outcome: String) -> void:
 	if outcome == "success":
 		var xp := Progress.mission_xp(mission)
 		_award_xp(xp)
-		lines.append("+%d XP each for finishing the job." % xp)
+		lines.append(tr("+%d XP each for finishing the job.") % xp)
 	if not levels_gained.is_empty():
 		var parts := []
 		for id in levels_gained:
-			parts.append("%s Lv %d" % [PartyPicker.short_of(id), levels_gained[id]])
-		lines.append("Level up: " + ", ".join(parts) + ".")
+			parts.append(tr("%s Lv %d") % [PartyPicker.short_of(id), levels_gained[id]])
+		lines.append(tr("Level up: ") + ", ".join(parts) + ".")
 	if not skills_gained.is_empty():
-		lines.append("Skills: " + ", ".join(skills_gained) + ".")
+		lines.append(tr("Skills: ") + ", ".join(skills_gained) + ".")
 		skills_gained = []
 	if not found_items.is_empty():
 		var names := found_items.map(func(i): return Progress.item(i)["name"])
 		if outcome == "wiped":
-			lines.append("Lost on the way: " + ", ".join(names) + ".")
+			lines.append(tr("Lost on the way: ") + ", ".join(names) + ".")
 		else:
 			for i in found_items:
 				Progress.add_item(i)
-			lines.append("Gear for the bag: " + ", ".join(names) + " (equip with K).")
+			lines.append(tr("Gear for the bag: ") + ", ".join(names) + tr(" (equip with K)."))
 		found_items = []
 	r["lines"] = lines
 
@@ -737,7 +737,7 @@ func _update_blank_contact(delta: float) -> void:
 				hero.invuln_t = 0.0
 				hero.take_hit(3, hero.global_position + Vector2(10, 0), 160.0)
 				if hero == leader:
-					hud.say("The Blank bites. It does not want you back. Yet.", 2.5)
+					hud.say(tr("The Blank bites. It does not want you back. Yet."), 2.5)
 	if blank_tick <= 0.0:
 		blank_tick = 0.6
 
@@ -758,7 +758,7 @@ func _update_revive(delta: float) -> void:
 			hero.revive_progress += delta * float(boosts["revive"]) * TreePerks.revive_mult(hero, heroes)  # + skill trees (#25)
 			if hero.revive_progress >= Hero.REVIVE_TIME:
 				hero.revive()
-				hud.say("%s is back on their feet." % hero.hero_name, 2.5)
+				hud.say(tr("%s is back on their feet.") % hero.hero_name, 2.5)
 		else:
 			hero.revive_progress = maxf(hero.revive_progress - delta, 0.0)
 

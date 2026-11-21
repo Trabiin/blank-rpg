@@ -93,15 +93,15 @@ static func mode_name(i: int = -1) -> String:
 	if i < 0:
 		i = mode
 	if not is_desktop():
-		return "Fullscreen" if i > 0 else "In the page"
-	return MODES[i]
+		return Loc.t("Fullscreen") if i > 0 else Loc.t("In the page")
+	return Loc.t(MODES[i])
 
 
 static func mode_info() -> String:
 	load_settings()
 	if not is_desktop():
-		return "Fill the screen with the game, or keep it in the page. Esc leaves fullscreen in a browser."
-	return MODE_INFO[mode] + "  Alt+Enter or F11 switches between windowed and fullscreen."
+		return Loc.t("Fill the screen with the game, or keep it in the page. Esc leaves fullscreen in a browser.")
+	return Loc.t(MODE_INFO[mode]) + Loc.t("  Alt+Enter or F11 switches between windowed and fullscreen.")
 
 
 ## Window sizes that fit on the screen the window is on (always at least the smallest).
@@ -120,13 +120,13 @@ static func size_name() -> String:
 	load_settings()
 	if mode != 0:
 		var s: Vector2i = DisplayServer.screen_get_size(DisplayServer.window_get_current_screen()) if DisplayServer.get_name() != "headless" else SIZES[size_i]
-		return "%d x %d (screen)" % [s.x, s.y]
+		return Loc.t("%d x %d (screen)") % [s.x, s.y]
 	return "%d x %d" % [SIZES[size_i].x, SIZES[size_i].y]
 
 
 static func fps_name() -> String:
 	load_settings()
-	return "Off" if FPS_CAPS[fps_i] == 0 else "%d fps" % FPS_CAPS[fps_i]
+	return Loc.t("Off") if FPS_CAPS[fps_i] == 0 else Loc.t("%d fps") % FPS_CAPS[fps_i]
 
 
 ## Steps one option by -1/+1 within what this platform offers, then applies and saves.
@@ -224,7 +224,7 @@ static func _ensure_watch() -> void:
 	if tree == null or tree.root == null:
 		return
 	_watch = DisplayWatch.new()
-	_watch.name = "DisplayWatch"
+	_watch.name = "DisplayWatch"  # no-tr: node name
 	tree.root.add_child.call_deferred(_watch)
 
 

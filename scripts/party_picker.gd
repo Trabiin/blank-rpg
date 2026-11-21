@@ -123,25 +123,25 @@ func _press(i: int) -> void:
 func _toggle(id: String) -> void:
 	var nm := short_of(id)
 	if not Empire.recruits.has(id):
-		_say("%s hasn't joined yet." % Empire.recruit(id)["name"])
+		_say(tr("%s hasn't joined yet.") % Empire.recruit(id)["name"])
 	elif Empire.recruit(id).get("locked_party", false):
-		_say("Ash always leads.")
+		_say(tr("Ash always leads."))
 	elif id == str(mission.get("force", "")):
-		_say("It's %s's fight: they're coming." % nm)  # personal missions (#113)
+		_say(tr("It's %s's fight: they're coming.") % nm)  # personal missions (#113)
 	elif Empire.role_of(id) == "party":
 		Empire.assign(id, "idle")
-		_say("%s stays in Hollowmark." % nm)
+		_say(tr("%s stays in Hollowmark.") % nm)
 	elif blocker(id) != "":
-		_say("%s can't come: %s." % [nm, blocker(id)])
+		_say(tr("%s can't come: %s.") % [nm, blocker(id)])
 	elif Empire.party_ids().size() >= Empire.PARTY_SIZE:
-		_say("The party is full. Leave someone behind first.")
+		_say(tr("The party is full. Leave someone behind first."))
 	elif Empire.assign(id, "party"):
-		_say("%s is in." % nm)
+		_say(tr("%s is in.") % nm)
 
 
 func _set_out() -> void:
 	if mission_party(mission).is_empty():
-		_say("Nobody can go.")
+		_say(tr("Nobody can go."))
 		return
 	visible = false
 	closed_frame = Engine.get_process_frames()
@@ -195,26 +195,26 @@ func _status(id: String) -> Array:
 		var how: Dictionary = Empire.recruit(id).get("join", {})
 		var where := ""
 		if how.get("type", "") == "rescue":
-			where = "Rescue job on the Expeditions board%s: " % Prompts.tag("expeditions") + str(Empire.job(how.get("job", "")).get("name", "?"))
-		return ["Not found yet. " + where, Color(0.45, 0.44, 0.47)]
+			where = tr("Rescue job on the Expeditions board%s: ") % Prompts.tag("expeditions") + str(Empire.job(how.get("job", "")).get("name", "?"))
+		return [tr("Not found yet. ") + where, Color(0.45, 0.44, 0.47)]
 	if Empire.recruit(id).get("locked_party", false):
-		return ["Leads the party", GOLD]
+		return [tr("Leads the party"), GOLD]
 	if id == str(mission.get("force", "")):
-		return ["Personal: it's their fight, they're coming", Color("f29bd0")]
+		return [tr("Personal: it's their fight, they're coming"), Color("f29bd0")]
 	if Empire.role_of(id) == "party":
-		return ["Coming along", Color("9fe07a")]
+		return [tr("Coming along"), Color("9fe07a")]
 	var b := blocker(id)
 	if b != "":
-		return ["Busy: %s  (R: Roster)" % b, Color("ff9b8a")]
-	return ["Ready, stays home unless picked", Color(0.75, 0.72, 0.7)]
+		return [tr("Busy: %s  (R: Roster)") % b, Color("ff9b8a")]
+	return [tr("Ready, stays home unless picked"), Color(0.75, 0.72, 0.7)]
 
 
 func _draw() -> void:
 	var vs := size
 	draw_rect(Rect2(Vector2.ZERO, vs), Color(0.05, 0.04, 0.07, 0.985))
-	_text(Vector2(LIST_X, 20), "Choose your party", 15, PAPER)
+	_text(Vector2(LIST_X, 20), tr("Choose your party"), 15, PAPER)
 	var party := mission_party(mission)
-	_text(Vector2(LIST_X + 148, 19), "%s   %d/%d" % [mission.get("name", "Mission"), party.size(), Empire.PARTY_SIZE], 9, Color(0.75, 0.7, 0.55))
+	_text(Vector2(LIST_X + 148, 19), "%s   %d/%d" % [mission.get("name", tr("Mission")), party.size(), Empire.PARTY_SIZE], 9, Color(0.75, 0.7, 0.55))
 
 	var ids := _ids()
 	_row_rects.clear()
@@ -248,11 +248,11 @@ func _draw() -> void:
 	var go_on := sel == ids.size()
 	draw_rect(_go_rect, Color(0.26, 0.2, 0.08) if go_on else Color(0.16, 0.13, 0.08))
 	draw_rect(_go_rect, GOLD, false, 2.0 if go_on else 1.0)
-	_text(_go_rect.position + Vector2(10, 15), "Set out with %d" % party.size(), 10, GOLD)
+	_text(_go_rect.position + Vector2(10, 15), tr("Set out with %d") % party.size(), 10, GOLD)
 	_back_rect = Rect2(LIST_X + 158, gy, 70, 22)
 	draw_rect(_back_rect, Color(0.1, 0.09, 0.12))
 	draw_rect(_back_rect, Color(0.3, 0.27, 0.33), false, 1.0)
-	_text(_back_rect.position + Vector2(12, 15), "Back", 9, Color(0.75, 0.72, 0.7))
+	_text(_back_rect.position + Vector2(12, 15), tr("Back"), 9, Color(0.75, 0.72, 0.7))
 
 	# Detail: how the highlighted hero fights
 	var x := DETAIL_X
@@ -262,11 +262,11 @@ func _draw() -> void:
 		var r := Empire.recruit(id)
 		var hd := hero_data(id)
 		_text(Vector2(x, 46), r["name"], 13, PAPER)
-		_text(Vector2(x, 58), "Weapon: " + str(hd.get("weapon", "?")), 9, Color("e8c66a"))
+		_text(Vector2(x, 58), tr("Weapon: ") + str(hd.get("weapon", "?")), 9, Color("e8c66a"))
 		var y := 70.0
-		for bar in [["HP", float(hd.get("hp", 40)), 70.0], ["Damage", float(hd.get("damage", 10)), 16.0],
-				["Reach", float(hd.get("reach", 20)), 30.0], ["Speed", float(hd.get("speed", 68)), 80.0],
-				["Recovery", float(hd.get("power_rate", 0.95)) * 100.0, 110.0]]:
+		for bar in [[tr("HP"), float(hd.get("hp", 40)), 70.0], [tr("Damage"), float(hd.get("damage", 10)), 16.0],
+				[tr("Reach"), float(hd.get("reach", 20)), 30.0], [tr("Speed"), float(hd.get("speed", 68)), 80.0],
+				[tr("Recovery"), float(hd.get("power_rate", 0.95)) * 100.0, 110.0]]:
 			_text(Vector2(x, y + 7), bar[0], 8, Color(0.72, 0.7, 0.72))
 			var bw := 120.0
 			draw_rect(Rect2(x + 52, y, bw, 7), Color(0.18, 0.16, 0.2))
@@ -275,25 +275,25 @@ func _draw() -> void:
 			y += 11
 		var style: Dictionary = _load().get("styles", {}).get(AllyAI.preset_id(str(hd.get("ai", "balanced"))), {})
 		y += 6
-		_text(Vector2(x, y + 8), "As an ally: " + str(style.get("name", "?")), 9, Color("8fa7e8"))
+		_text(Vector2(x, y + 8), tr("As an ally: ") + str(style.get("name", "?")), 9, Color("8fa7e8"))
 		y += _wrap(Vector2(x, y + 19), str(style.get("desc", "")), w, 8, Color(0.68, 0.66, 0.68)) + 14
 		y += _wrap(Vector2(x, y + 9), str(hd.get("special", "")), w, 8, Color("cfe0b0")) + 8
 		var kit := []
 		for a in Abilities.for_ids(hd.get("abilities", [])):
 			kit.append(str(a.get("name", "")))
 		var known := Skills.known_techs(id)
-		var kit_line := "Abilities: " + ", ".join(kit)
+		var kit_line := tr("Abilities: ") + ", ".join(kit)
 		if not known.is_empty():  # weapon skill (issue #24): the techs learned so far
-			kit_line += "   Techs (%s Lv %d): %s" % [Skills.weapon_name(id), Skills.weapon_level(id), ", ".join(known.map(func(t): return str(t.get("name", ""))))]
+			kit_line += tr("   Techs (%s Lv %d): %s") % [Skills.weapon_name(id), Skills.weapon_level(id), ", ".join(known.map(func(t): return str(t.get("name", ""))))]
 		y += _wrap(Vector2(x, y + 9), kit_line, w, 8, Color(0.78, 0.74, 0.86)) + 4
 		# Friends and rivals among the party (issue #116), as it would be with this hero in it.
 		var with_me := party.filter(func(p): return p != id) + [id]
 		for n in Relationships.notes(with_me, "party"):
 			if Empire.short_name(id) in str(n[0]):
-				y += _wrap(Vector2(x, y + 9), ("" if id in party else "If picked: ") + str(n[0]), w, 8, Color("9fe07a") if n[1] else Color("ff9b8a")) + 1
+				y += _wrap(Vector2(x, y + 9), ("" if id in party else tr("If picked: ")) + str(n[0]), w, 8, Color("9fe07a") if n[1] else Color("ff9b8a")) + 1
 	else:
-		_text(Vector2(x, 46), "Ready?", 13, PAPER)
-		_wrap(Vector2(x, 62), "The clock stops while you are out. Whoever stays home keeps working their post.", w, 8, Color(0.68, 0.66, 0.68))
+		_text(Vector2(x, 46), tr("Ready?"), 13, PAPER)
+		_wrap(Vector2(x, 62), tr("The clock stops while you are out. Whoever stays home keeps working their post."), w, 8, Color(0.68, 0.66, 0.68))
 
 	# The party, standing in a row
 	var py := vs.y - 76
@@ -308,9 +308,9 @@ func _draw() -> void:
 		if i < party.size():
 			_text(Vector2(cx - font.get_string_size(short_of(party[i]), HORIZONTAL_ALIGNMENT_LEFT, -1, 8).x / 2.0, py + 50), short_of(party[i]), 8, Color("ece6da"))
 		else:
-			draw_string(font, Vector2(cx - 30, py + 24), "empty", HORIZONTAL_ALIGNMENT_CENTER, 60, 8, Color(0.35, 0.33, 0.38))
+			draw_string(font, Vector2(cx - 30, py + 24), Loc.t("empty"), HORIZONTAL_ALIGNMENT_CENTER, 60, 8, Color(0.35, 0.33, 0.38))
 
-	var help := Prompts.help([["updown", "choose"], ["ui_accept", "pick or drop"], ["roster", "roster"], ["ui_cancel", "back"]], "Tap heroes to pick or drop them")
+	var help := Prompts.help([["updown", "choose"], ["ui_accept", tr("pick or drop")], ["roster", "roster"], ["ui_cancel", "back"]], tr("Tap heroes to pick or drop them"))
 	_text(Vector2(DETAIL_X, vs.y - 4), help, 7, Color(0.5, 0.48, 0.52))
 	if flash_t > 0.0:
 		var a := clampf(flash_t / 0.4, 0.0, 1.0)
@@ -359,7 +359,7 @@ static func _load() -> Dictionary:
 	if _data.is_empty():
 		var f := FileAccess.open(HEROES_FILE, FileAccess.READ)
 		if f:
-			var d = JSON.parse_string(f.get_as_text())
+			var d = Loc.data(JSON.parse_string(f.get_as_text()), f.get_path().get_file())
 			if d is Dictionary:
 				_data = d
 	return _data
@@ -383,23 +383,23 @@ static func look_colors(look: Dictionary) -> Dictionary:
 ## Why a joined field hero can't come right now ("" if they can).
 static func blocker(id: String) -> String:
 	if not Empire.recruits.has(id):
-		return "not joined"
+		return Loc.t("not joined")
 	if Empire.recruit(id).get("tier", "") != "field":
-		return "not a fighter"
+		return Loc.t("not a fighter")
 	var st: Dictionary = Empire.recruits[id]
 	if int(st.get("injured", 0)) > 0:
-		return "injured, %d days" % int(st["injured"])
+		return Loc.t("injured, %d days") % int(st["injured"])
 	match st.get("role", "idle"):
 		"idle", "party":
 			return ""
 		"expedition":
-			return "on an expedition"
+			return Loc.t("on an expedition")
 		"governor":
-			return "governing " + str(Empire.territory().find(st.get("target", "")).get("name", "a province"))
+			return Loc.t("governing ") + str(Empire.territory().find(st.get("target", "")).get("name", Loc.t("a province")))
 		"staff":
-			return "working the " + str(Empire.building(st.get("target", "")).get("name", "town"))
+			return Loc.t("working the ") + str(Empire.building(st.get("target", "")).get("name", "town"))
 		"envoy":
-			return "envoy to the " + str(Empire.faction(st.get("target", "")).get("short", "?"))
+			return Loc.t("envoy to the ") + str(Empire.faction(st.get("target", "")).get("short", "?"))
 		_:
 			return Empire.role_label(id).to_lower()
 

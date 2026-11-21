@@ -97,12 +97,12 @@ func close() -> void:
 
 
 func _rebuild() -> void:
-	_rows = [{"head": "Help"}, {"kind": "tips"}, {"kind": "controls"}]
+	_rows = [{"head": tr("Help")}, {"kind": "tips"}, {"kind": "controls"}]
 	for g in Help.GROUPS:
 		var ts := Help.topics().filter(func(t): return t.get("group", "") == g)
 		if ts.is_empty():
 			continue
-		_rows.append({"head": Help.GROUP_NAMES.get(g, g)})
+		_rows.append({"head": Loc.t(Help.GROUP_NAMES.get(g, g))})
 		for t in ts:
 			_rows.append({"kind": "topic", "id": t["id"]})
 	sel = clampi(sel, 0, _rows.size() - 1)
@@ -261,19 +261,19 @@ func _draw() -> void:
 	UiSkin.screen(self, vs)
 	_row_rects.clear()
 	_replay_rect = Rect2()
-	_text(Vector2(10, 20), "Help", 18, Color("f3e3c3"), -1, UiSkin.TITLE_FONT)
-	_text(Vector2(56, 19), "Everything the cast has explained, and the controls on this %s." % _device_word(), 8, SOFT)
+	_text(Vector2(10, 20), tr("Help"), 18, Color("f3e3c3"), -1, UiSkin.TITLE_FONT)
+	_text(Vector2(56, 19), tr("Everything the cast has explained, and the controls on this %s.") % _device_word(), 8, SOFT)
 	var cr := _close_rect()
 	UiSkin.panel(self, cr, "button")
-	_text(cr.position + Vector2(9, 12), "Close", 9, Color(0.75, 0.72, 0.7))
+	_text(cr.position + Vector2(9, 12), tr("Close"), 9, Color(0.75, 0.72, 0.7))
 	_draw_list(vs)
 	_draw_page()
-	var help := [["updown", "choose"], ["ui_accept", "replay / switch"], ["leftright", "list / page"], ["ui_cancel", "close"]]
-	_text(Vector2(10, vs.y - 6), Prompts.help(help, "Tap a row, tap it again to replay. Drag the page to scroll."), 7, Color(0.5, 0.48, 0.52))
+	var help := [["updown", "choose"], ["ui_accept", tr("replay / switch")], ["leftright", tr("list / page")], ["ui_cancel", "close"]]
+	_text(Vector2(10, vs.y - 6), Prompts.help(help, tr("Tap a row, tap it again to replay. Drag the page to scroll.")), 7, Color(0.5, 0.48, 0.52))
 
 
 func _device_word() -> String:
-	return {Prompts.KEYS: "keyboard", Prompts.PAD: "gamepad", Prompts.TOUCH: "touch screen"}.get(Prompts.device, "device")
+	return {Prompts.KEYS: Loc.t("keyboard"), Prompts.PAD: Loc.t("gamepad"), Prompts.TOUCH: tr("touch screen")}.get(Prompts.device, Loc.t("device"))
 
 
 func _draw_list(vs: Vector2) -> void:
@@ -297,11 +297,11 @@ func _draw_list(vs: Vector2) -> void:
 		var col := GOLD if on else TEXT
 		match row["kind"]:
 			"tips":
-				_text(rr.position + Vector2(8, 11), "Tips as things happen", 9, col, LIST_W - 40)
-				var st := "On" if Settings.tips_enabled() else "Off"
-				_text(rr.position + Vector2(LIST_W - _tw(st, 9) - 6, 11), st, 9, Color("9fd18b") if st == "On" else Color("ff9b8a"))
+				_text(rr.position + Vector2(8, 11), tr("Tips as things happen"), 9, col, LIST_W - 40)
+				var st := tr("On") if Settings.tips_enabled() else tr("Off")
+				_text(rr.position + Vector2(LIST_W - _tw(st, 9) - 6, 11), st, 9, Color("9fd18b") if Settings.tips_enabled() else Color("ff9b8a"))
 			"controls":
-				_text(rr.position + Vector2(8, 11), "Controls", 9, col, LIST_W - 12)
+				_text(rr.position + Vector2(8, 11), tr("Controls"), 9, col, LIST_W - 12)
 			"topic":
 				var t := Help.topic(row["id"])
 				var locked: bool = t.get("kind", "") == "unlock" and not _unlock_open(t)
@@ -317,31 +317,31 @@ func _blocks() -> Array:
 	var b := []
 	match row.get("kind", ""):
 		"tips":
-			b.append(["title", "Tips as things happen"])
-			b.append(["sub", "Now: " + ("on" if Settings.tips_enabled() else "off")])
+			b.append(["title", tr("Tips as things happen")])
+			b.append(["sub", tr("Now: on") if Settings.tips_enabled() else tr("Now: off")])
 			b.append(["gap"])
-			b.append(["para", "When on, the cast explains each screen of the Command Table the first time it opens, and speaks up the first time something new happens: a surge, an erased province, an injury, the Concord making trouble.", ""])
+			b.append(["para", tr("When on, the cast explains each screen of the Command Table the first time it opens, and speaks up the first time something new happens: a surge, an erased province, an injury, the Concord making trouble."), ""])
 			b.append(["gap"])
-			b.append(["para", "When off, they keep quiet. The story still opens the empire a piece at a time, and says so. Everything they would have said is here, and in the journal's codex under Help & tips.", ""])
+			b.append(["para", tr("When off, they keep quiet. The story still opens the empire a piece at a time, and says so. Everything they would have said is here, and in the journal's codex under Help & tips."), ""])
 			b.append(["gap"])
-			b.append(["replay", "Switch tips " + ("off" if Settings.tips_enabled() else "on")])
+			b.append(["replay", tr("Switch tips off") if Settings.tips_enabled() else tr("Switch tips on")])
 		"controls":
-			b.append(["title", "Controls"])
-			b.append(["sub", "As set up on this %s. Change keys and buttons in Options." % _device_word()])
+			b.append(["title", tr("Controls")])
+			b.append(["sub", tr("As set up on this %s. Change keys and buttons in Options.") % _device_word()])
 			if Prompts.touch():
 				for sec in TOUCH_CONTROLS:
 					b.append(["gap"])
-					b.append(["head", sec[0]])
+					b.append(["head", tr(sec[0])])
 					for l in sec[1]:
-						b.append(["para", l, ""])
+						b.append(["para", tr(l), ""])
 			else:
 				for sec in CONTROLS:
 					b.append(["gap"])
-					b.append(["head", sec[0]])
+					b.append(["head", tr(sec[0])])
 					for c in sec[1]:
 						var keys := _keys_text(c[1])
 						if keys != "":
-							b.append(["key", c[0], keys])
+							b.append(["key", tr(c[0]), keys])
 		"topic":
 			var t := Help.topic(row["id"])
 			var kind: String = t.get("kind", "")
@@ -351,27 +351,27 @@ func _blocks() -> Array:
 			b.append(["gap"])
 			if kind == "unlock" and not _unlock_open(t):
 				var note := Help.locked_note(str(t.get("screens", [""])[0]))
-				b.append(["head", "Not open yet" + ((": " + note) if note.begins_with("day") else "")])
+				b.append(["head", tr("Not open yet") + ((": " + note) if note.begins_with("day") else "")])
 				for l in Help.lines(t, "locked"):
 					b.append(["para", l[1], l[0]])
 			else:
 				for l in Help.lines(t):
 					b.append(["para", l[1], l[0]])
 			b.append(["gap"])
-			var when: String = {"screen": "Plays the first time the screen opens.", "unlock": "The story opens this in the first days of Act 1.",
-				"tip": "Said the first time it happens.", "manual": "Field notes."}.get(kind, "")
+			var when: String = {"screen": tr("Plays the first time the screen opens."), "unlock": tr("The story opens this in the first days of Act 1."),
+				"tip": tr("Said the first time it happens."), "manual": tr("Field notes.")}.get(kind, "")
 			if kind != "manual":
-				when += "  Heard already." if Help.seen(row["id"]) else "  Not heard yet."
+				when += tr("  Heard already.") if Help.seen(row["id"]) else tr("  Not heard yet.")
 			b.append(["sub", when])
 			b.append(["gap"])
-			b.append(["replay", "Hear it again" if Help.seen(row["id"]) or kind == "manual" else "Hear it now"])
+			b.append(["replay", tr("Hear it again") if Help.seen(row["id"]) or kind == "manual" else tr("Hear it now")])
 	return b
 
 
 ## "Up/Down", "1 / 2 / 3 / 4", "A"...: the keys for these actions on the device in use.
 func _keys_text(what) -> String:
 	if what is String and what == "move":
-		return "Stick / D-pad" if Prompts.pad() else "WASD / arrows"
+		return tr("Stick / D-pad") if Prompts.pad() else tr("WASD / arrows")
 	var seen := PackedStringArray()
 	for a in what:
 		var k := Prompts.key(a)

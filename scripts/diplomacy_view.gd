@@ -179,12 +179,12 @@ func _pick(i: int) -> void:
 		"deal":
 			var why := Empire.deal_blocker(fid, r["id"])
 			if why != "":
-				_say("Can't: %s." % why)
+				_say(tr("Can't: %s.") % why)
 				return
 			var promise := FactionAsks.pact_breaks(fid) if r["id"] == "trade" else {}
 			if not promise.is_empty() and _confirm != fid + ":trade":
 				_confirm = fid + ":trade"
-				_say("That breaks your promise to the %s. Press again to sign anyway." % Empire.faction(promise["faction"]).get("short", "?"))
+				_say(tr("That breaks your promise to the %s. Press again to sign anyway.") % Empire.faction(promise["faction"]).get("short", "?"))
 				return
 			_confirm = ""
 			var said := Empire.make_deal(fid, r["id"])
@@ -195,7 +195,7 @@ func _pick(i: int) -> void:
 		"offer":
 			var why2 := FactionAsks.accept_blocker(fid)
 			if why2 != "":
-				_say("Can't: %s." % why2)
+				_say(tr("Can't: %s.") % why2)
 				return
 			_say(FactionAsks.accept(fid))
 			_refresh(i)
@@ -209,7 +209,7 @@ func _pick(i: int) -> void:
 			if a.get("kind", "") == "deliver":
 				var why3 := FactionAsks.deliver_blocker(fid)
 				if why3 != "":
-					_say("Can't: %s." % why3)
+					_say(tr("Can't: %s.") % why3)
 					return
 				_say(FactionAsks.deliver(fid))
 				_refresh(i)
@@ -219,18 +219,18 @@ func _pick(i: int) -> void:
 			var cur := Empire.envoy_of(fid)
 			if cur != "":
 				Empire.assign(cur, "idle")
-				_say("%s is back from the %s." % [Empire.short_name(cur), fa["short"]])
+				_say(tr("%s is back from the %s.") % [Empire.short_name(cur), fa["short"]])
 			_go("list")
 		"person":
 			var why := _person_blocker(r["id"])
 			if why != "":
-				_say("Can't: %s." % why)
+				_say(tr("Can't: %s.") % why)
 				return
 			if Empire.envoy_of(fid) == r["id"]:
 				_go("list")
 				return
 			if Empire.assign(r["id"], "envoy", fid):
-				_say("%s goes to the %s: standing %+d a day." % [Empire.short_name(r["id"]), fa["short"], Empire.standing_rate(fid)])
+				_say(tr("%s goes to the %s: standing %+d a day.") % [Empire.short_name(r["id"]), fa["short"], Empire.standing_rate(fid)])
 				_go("list")
 
 
@@ -293,13 +293,13 @@ func _draw() -> void:
 	UiSkin.screen(self, vs)
 	var cr := _close_rect()
 	UiSkin.panel(self, cr, "button")
-	_text(cr.position + Vector2(9, 12), "Back" if page == "envoy" else "Close", 9, Color(0.75, 0.72, 0.7))
+	_text(cr.position + Vector2(9, 12), tr("Back") if page == "envoy" else tr("Close"), 9, Color(0.75, 0.72, 0.7))
 	_row_rects.clear()
 	if page == "envoy":
 		_draw_picker(vs)
 	else:
 		_draw_list(vs)
-	var help := Prompts.help([["updown", "choose"], ["ui_accept", "send"], ["ui_cancel", "back"]], "Tap an envoy, tap again to send   Close: back") if page == "envoy" else Prompts.help([["updown", "choose"], ["ui_accept", "act"], [["ui_cancel", "diplomacy"], "close"]], "Tap a row, tap again to act")
+	var help := Prompts.help([["updown", "choose"], ["ui_accept", "send"], ["ui_cancel", "back"]], tr("Tap an envoy, tap again to send   Close: back")) if page == "envoy" else Prompts.help([["updown", "choose"], ["ui_accept", "act"], [["ui_cancel", "diplomacy"], "close"]], tr("Tap a row, tap again to act"))
 	_text(Vector2(8, vs.y - 8), help, 7, Color(0.5, 0.48, 0.52))
 	if flash_t > 0.0:
 		var a := clampf(flash_t / 0.4, 0.0, 1.0)
@@ -309,14 +309,14 @@ func _draw() -> void:
 
 
 func _draw_list(vs: Vector2) -> void:
-	_text(Vector2(8, 20), "Diplomacy", 15, Color("f3efe4"))
+	_text(Vector2(8, 20), tr("Diplomacy"), 15, Color("f3efe4"))
 	var trouble := Empire.trouble_text()
-	var sub := "Post an envoy to win standing each day. Deals unlock as standing rises."
+	var sub := tr("Post an envoy to win standing each day. Deals unlock as standing rises.")
 	if Empire.intel_until > Empire.day:
-		sub = "Fresh intel: +1 day of surge warning for %d more day%s." % [Empire.intel_until - Empire.day, "" if Empire.intel_until - Empire.day == 1 else "s"]
+		sub = tr("Fresh intel: +1 day of surge warning for %d more day%s.") % [Empire.intel_until - Empire.day, "" if Empire.intel_until - Empire.day == 1 else "s"]
 	_text(Vector2(90, 20), sub, 8, GOLD)
 	if trouble != "":
-		_text(Vector2(8, 34), trouble + " Get them to Neutral (-9) to stop it.", 8, BAD)
+		_text(Vector2(8, 34), trouble + tr(" Get them to Neutral (-9) to stop it."), 8, BAD)
 	# Lay the list out first, then scroll so the selected row is on screen.
 	var top := 38.0
 	var bottom := vs.y - 22.0
@@ -368,29 +368,29 @@ func _draw_list(vs: Vector2) -> void:
 		match r["kind"]:
 			"envoy":
 				var env := Empire.envoy_of(fid)
-				_text(base, "Envoy", 8, SOFT)
+				_text(base, tr("Envoy"), 8, SOFT)
 				if env == "":
-					_text(base + Vector2(44, 0), "nobody posted", 9, GOLD if on else Color("e8a86a"))
+					_text(base + Vector2(44, 0), tr("nobody posted"), 9, GOLD if on else Color("e8a86a"))
 				else:
 					_text(base + Vector2(44, 0), Empire.recruit(env)["name"], 9, GOLD if on else TEXT, 150)
 					var hurt := int(Empire.recruits[env]["injured"]) > 0
 					_text_r(base + Vector2(LIST_W - 18, 0), "injured" if hurt else "%+d/day" % int(Empire.envoy_effect(env, fid)["drift"]), 8, BAD if hurt else GOOD)
 			"offer":
 				var o := FactionAsks.offer_of(fid)
-				_text(base, "Asks", 8, ASK)
+				_text(base, tr("Asks"), 8, ASK)
 				_text(base + Vector2(44, 0), o["name"], 9, GOLD if on else TEXT, LIST_W - 120)
-				_text_r(base + Vector2(LIST_W - 18, 0), "accept, %s" % _left(int(o["until"])), 8, ASK)
+				_text_r(base + Vector2(LIST_W - 18, 0), tr("accept, %s") % _left(int(o["until"])), 8, ASK)
 			"refuse":
 				var o2 := FactionAsks.offer_of(fid)
-				_text(base + Vector2(44, 0), "Refuse", 9, GOLD if on else SOFT)
-				_text_r(base + Vector2(LIST_W - 18, 0), "%+d standing" % int(o2.get("refuse", -2)), 8, BAD if int(o2.get("refuse", -2)) < 0 else SOFT)
+				_text(base + Vector2(44, 0), tr("Refuse"), 9, GOLD if on else SOFT)
+				_text_r(base + Vector2(LIST_W - 18, 0), tr("%+d standing") % int(o2.get("refuse", -2)), 8, BAD if int(o2.get("refuse", -2)) < 0 else SOFT)
 			"ask":
 				var a := FactionAsks.active_of(fid)
 				var can_hand: bool = a.get("kind", "") == "deliver" and FactionAsks.deliver_blocker(fid) == ""
-				_text(base, "Owed", 8, ASK)
+				_text(base, tr("Owed"), 8, ASK)
 				_text(base + Vector2(44, 0), a["name"], 9, GOLD if on else TEXT, LIST_W - 120)
 				var left := int(a["until"]) - Empire.day
-				_text_r(base + Vector2(LIST_W - 18, 0), "hand over" if can_hand else _left(int(a["until"])), 8, GOOD if can_hand else (BAD if left <= 1 else ASK))
+				_text_r(base + Vector2(LIST_W - 18, 0), tr("hand over") if can_hand else _left(int(a["until"])), 8, GOOD if can_hand else (BAD if left <= 1 else ASK))
 			_:
 				var k: String = r["id"]
 				var d := Empire.deal(fid, k)
@@ -403,22 +403,22 @@ func _draw_list(vs: Vector2) -> void:
 				var right := ""
 				var rc := SOFT
 				if active:
-					right = "active: %s/day" % Empire.output_text(d["daily"])
+					right = tr("active: %s/day") % Empire.output_text(d["daily"])
 					rc = GOOD
 				elif why == "" and k == "trade" and not FactionAsks.pact_breaks(fid).is_empty():
-					right = "breaks a promise"
+					right = tr("breaks a promise")
 					rc = BAD
 				elif why == "":
-					right = Empire.cost_text(d["cost"]) if d.has("cost") else "%d standing" % int(d.get("standing", 0))
+					right = Empire.cost_text(d["cost"]) if d.has("cost") else tr("%d standing") % int(d.get("standing", 0))
 					rc = GOLD
 				elif not Empire.at_least(fid, Empire.DEAL_TIER[k]):
 					right = Empire.tier_name(Empire.DEAL_TIER[k])
 					rc = DIM
 				elif why == "post an envoy first":
-					right = "needs envoy"
+					right = tr("needs envoy")
 					rc = Color("e8a86a")
 				else:
-					right = "not now"
+					right = tr("not now")
 					rc = DIM
 				_text_r(base + Vector2(LIST_W - 18, 0), right, 8, rc)
 	_draw_details(vs)
@@ -441,7 +441,7 @@ func _draw_head(fid: String, fa: Dictionary, y: float) -> void:
 ## "2 days left" / "last day" to a deadline day.
 func _left(until: int) -> String:
 	var d := until - Empire.day
-	return "last day" if d <= 1 else "%d days left" % d
+	return tr("last day") if d <= 1 else tr("%d days left") % d
 
 
 func _draw_details(vs: Vector2) -> void:
@@ -465,37 +465,37 @@ func _draw_details(vs: Vector2) -> void:
 		var summ := Empire.deal_summary(fid, k)
 		y += _wrap(Vector2(x, y + 9), summ.substr(0, 1).to_upper() + summ.substr(1) + ".", w, 8, GOLD) + 2
 		var need: String = Empire.DEAL_TIER[k]
-		_text(Vector2(x, y + 9), "Needs %s standing%s." % [Empire.tier_name(need), "" if k == "trade" else " and an envoy posted"] if need != "hostile" else "Any standing, with an envoy posted.", 8, SOFT, w)
+		_text(Vector2(x, y + 9), tr("Needs %s standing%s.") % [Empire.tier_name(need), "" if k == "trade" else tr(" and an envoy posted")] if need != "hostile" else tr("Any standing, with an envoy posted."), 8, SOFT, w)
 		y += 12
 		if k == "trade":
-			_text(Vector2(x, y + 9), "The pact holds while standing stays at %d or more." % Empire.trade_breaks, 8, SOFT, w)
+			_text(Vector2(x, y + 9), tr("The pact holds while standing stays at %d or more.") % Empire.trade_breaks, 8, SOFT, w)
 			y += 12
 		var why := Empire.deal_blocker(fid, k)
 		if k == "trade" and fid in Empire.pacts:
-			_text(Vector2(x, y + 9), "Active. Paying %s every dawn (see the ledger, L)." % Empire.output_text(d["daily"]), 8, GOOD, w)
+			_text(Vector2(x, y + 9), tr("Active. Paying %s every dawn (see the ledger, L).") % Empire.output_text(d["daily"]), 8, GOOD, w)
 		elif why != "":
-			y += _wrap(Vector2(x, y + 9), "Can't yet: %s." % why, w, 8, BAD)
+			y += _wrap(Vector2(x, y + 9), tr("Can't yet: %s.") % why, w, 8, BAD)
 		else:
-			_text(Vector2(x, y + 9), "Ready. %s to send." % Prompts.confirm(), 8, GOOD, w)
+			_text(Vector2(x, y + 9), tr("Ready. %s to send.") % Prompts.confirm(), 8, GOOD, w)
 		y += 22
 	elif r["kind"] in ["offer", "refuse", "ask"]:
 		y = _draw_ask(r, fid, x, y, w)
 	else:
 		_text(Vector2(x, y), fa["name"], 12, Color("f3efe4"), w)
 		y += 4
-		y += _wrap(Vector2(x, y + 9), "Wants: " + fa["wants"], w, 8, GOLD) + 2
+		y += _wrap(Vector2(x, y + 9), tr("Wants: ") + fa["wants"], w, 8, GOLD) + 2
 		y += _wrap(Vector2(x, y + 9), fa["blurb"], w, 8, Color(0.78, 0.76, 0.74)) + 6
 	# Standing and why it moves
 	var v := Empire.standing_of(fid)
 	var tier := Empire.tier_of(fid)
-	_text(Vector2(x, y), "Standing", 8, Color(0.75, 0.72, 0.7))
+	_text(Vector2(x, y), tr("Standing"), 8, Color(0.75, 0.72, 0.7))
 	_text_r(Vector2(x + w, y), "%s %+d" % [Empire.tier_name(tier), v], 9, TIER_COLORS[tier])
 	y += 4
 	_standing_bar(Rect2(x, y, w, 5), v)
 	y += 8
 	var srcs := Empire.standing_sources(fid)
 	if srcs.is_empty():
-		_text(Vector2(x, y + 9), "Not moving. Post an envoy (they respect %s)." % Empire.STAT_NAMES[fa["respects"]], 8, Color("e8a86a"), w)
+		_text(Vector2(x, y + 9), tr("Not moving. Post an envoy (they respect %s).") % Loc.t(Empire.STAT_NAMES[fa["respects"]]), 8, Color("e8a86a"), w)
 		y += 11
 	for s in srcs:
 		_text(Vector2(x, y + 9), "%+d" % int(s[1]), 8, GOOD if int(s[1]) > 0 else BAD)
@@ -507,17 +507,17 @@ func _draw_details(vs: Vector2) -> void:
 			y += 9
 	y += 6
 	var perk_col := GOOD if Empire.has_perk(fid) else DIM
-	y += _wrap(Vector2(x, y + 9), ("Friendly perk (on): " if Empire.has_perk(fid) else "At Friendly: ") + fa["perk"]["text"] + ".", w, 8, perk_col) + 6
+	y += _wrap(Vector2(x, y + 9), (tr("Friendly perk (on): ") if Empire.has_perk(fid) else tr("At Friendly: ")) + fa["perk"]["text"] + ".", w, 8, perk_col) + 6
 	# Lately
 	var log := Empire.diplo_log.filter(func(e): return e["faction"] == fid)
 	if not log.is_empty() and y < vs.y - 50:
-		_text(Vector2(x, y + 2), "Lately", 8, Color(0.75, 0.72, 0.7))
+		_text(Vector2(x, y + 2), tr("Lately"), 8, Color(0.75, 0.72, 0.7))
 		y += 4
 		for e in log.slice(0, 4):
 			if y > vs.y - 40:
 				break
 			var change := int(e.get("change", 0))
-			var line := "Day %d: %s%s" % [int(e["day"]), e["text"], "" if change == 0 else " (%+d)" % change]
+			var line := tr("Day %d: %s%s") % [int(e["day"]), e["text"], "" if change == 0 else " (%+d)" % change]
 			y += _wrap(Vector2(x, y + 9), line, w, 7, BAD if change < 0 or e.get("trouble", false) else SOFT) + 1
 
 
@@ -530,26 +530,26 @@ func _draw_ask(r: Dictionary, fid: String, x: float, y: float, w: float) -> floa
 	var short: String = Empire.faction(fid).get("short", fid)
 	_text(Vector2(x, y), a["name"], 12, Color("f3efe4"), w)
 	y += 4
-	_text(Vector2(x, y + 9), "%s request  ·  %s" % [short, FactionAsks.KIND_WORDS.get(a.get("kind", ""), "")], 8, ASK, w)
+	_text(Vector2(x, y + 9), tr("%s request  ·  %s") % [short, Loc.t(FactionAsks.KIND_WORDS.get(a.get("kind", ""), ""))], 8, ASK, w)
 	y += 12
 	y += _wrap(Vector2(x, y + 9), "\"%s\"" % a.get("text", ""), w, 8, Color(0.82, 0.8, 0.76)) + 4
 	y += _wrap(Vector2(x, y + 9), FactionAsks.task_text(a), w, 8, TEXT) + 2
-	y += _wrap(Vector2(x, y + 9), "Pays: %s." % FactionAsks.reward_text(a), w, 8, GOOD) + 1
-	y += _wrap(Vector2(x, y + 9), "Missing the deadline: %s." % FactionAsks.fail_text(a), w, 8, BAD) + 2
+	y += _wrap(Vector2(x, y + 9), tr("Pays: %s.") % FactionAsks.reward_text(a), w, 8, GOOD) + 1
+	y += _wrap(Vector2(x, y + 9), tr("Missing the deadline: %s.") % FactionAsks.fail_text(a), w, 8, BAD) + 2
 	if offered:
-		y += _wrap(Vector2(x, y + 9), "You get %s to do it once accepted. Answer within %s; refusing, or not answering, costs %d standing." % [FactionAsks._days(int(a.get("days", 5))), FactionAsks._days(int(a["until"]) - Empire.day), absi(int(a.get("refuse", -2)))], w, 8, SOFT) + 2
+		y += _wrap(Vector2(x, y + 9), tr("You get %s to do it once accepted. Answer within %s; refusing, or not answering, costs %d standing.") % [FactionAsks._days(int(a.get("days", 5))), FactionAsks._days(int(a["until"]) - Empire.day), absi(int(a.get("refuse", -2)))], w, 8, SOFT) + 2
 		var why := FactionAsks.accept_blocker(fid)
 		if r["kind"] == "refuse":
-			_text(Vector2(x, y + 9), "%s to refuse." % Prompts.confirm(), 8, BAD, w)
+			_text(Vector2(x, y + 9), tr("%s to refuse.") % Prompts.confirm(), 8, BAD, w)
 		elif why != "":
-			y += _wrap(Vector2(x, y + 9), "Can't accept: %s." % why, w, 8, BAD)
+			y += _wrap(Vector2(x, y + 9), tr("Can't accept: %s.") % why, w, 8, BAD)
 		else:
 			if a.get("kind", "") == "shun" and str(a.get("rival", "")) in Empire.pacts:
-				y += _wrap(Vector2(x, y + 9), "Accepting tears up your trade pact with the %s." % Empire.faction(str(a["rival"])).get("short", "?"), w, 8, BAD) + 1
-			_text(Vector2(x, y + 9), "%s to accept." % Prompts.confirm(), 8, GOOD, w)
+				y += _wrap(Vector2(x, y + 9), tr("Accepting tears up your trade pact with the %s.") % Empire.faction(str(a["rival"])).get("short", "?"), w, 8, BAD) + 1
+			_text(Vector2(x, y + 9), tr("%s to accept.") % Prompts.confirm(), 8, GOOD, w)
 	else:
 		var left := int(a["until"]) - Empire.day
-		_text(Vector2(x, y + 9), "Accepted on day %d, %s left (the deadline is dawn of day %d)." % [int(a["day"]), FactionAsks._days(left), int(a["until"])], 8, BAD if left <= 1 else SOFT, w)
+		_text(Vector2(x, y + 9), tr("Accepted on day %d, %s left (the deadline is dawn of day %d).") % [int(a["day"]), FactionAsks._days(left), int(a["until"])], 8, BAD if left <= 1 else SOFT, w)
 		y += 12
 		y += _wrap(Vector2(x, y + 9), FactionAsks.progress_text(fid), w, 8, GOLD)
 	return y + 18
@@ -557,8 +557,8 @@ func _draw_ask(r: Dictionary, fid: String, x: float, y: float, w: float) -> floa
 
 func _draw_picker(vs: Vector2) -> void:
 	var fa := Empire.faction(pick_faction)
-	_text(Vector2(8, 20), "Envoy to %s" % fa["name"], 13, FACTION_COLORS.get(pick_faction, TEXT))
-	_text(Vector2(8, 34), "They respect %s. Charm always helps. The envoy lives with them, away from Hollowmark." % Empire.STAT_NAMES[fa["respects"]], 8, GOLD)
+	_text(Vector2(8, 20), tr("Envoy to %s") % fa["name"], 13, FACTION_COLORS.get(pick_faction, TEXT))
+	_text(Vector2(8, 34), tr("They respect %s. Charm always helps. The envoy lives with them, away from Hollowmark.") % Loc.t(Empire.STAT_NAMES[fa["respects"]]), 8, GOLD)
 	var y := 44.0
 	for i in _rows.size():
 		var r: Dictionary = _rows[i]
@@ -571,21 +571,21 @@ func _draw_picker(vs: Vector2) -> void:
 		var base := rr.position + Vector2(6, 10)
 		if r["kind"] == "recall":
 			var cur := Empire.envoy_of(pick_faction)
-			_text(base, "Nobody (recall %s)" % Empire.short_name(cur) if cur != "" else "Nobody", 9, GOLD if on else SOFT)
+			_text(base, tr("Nobody (recall %s)") % Empire.short_name(cur) if cur != "" else tr("Nobody"), 9, GOLD if on else SOFT)
 		else:
 			var id: String = r["id"]
 			var why := _person_blocker(id)
 			var here := Empire.envoy_of(pick_faction) == id
 			var col := TEXT if why == "" else DIM
-			_text(base, Empire.recruit(id)["name"] + ("  (here now)" if here else ""), 9, GOLD if on and why == "" else col, 160)
+			_text(base, Empire.recruit(id)["name"] + (tr("  (here now)") if here else ""), 9, GOLD if on and why == "" else col, 160)
 			if why != "":
 				_text_r(base + Vector2(LIST_W - 12, 0), why, 8, DIM)
 			else:
 				var role := Empire.role_of(id)
 				if role != "idle" and not here:
-					var tag: String = Empire.ROLE_NAMES.get(role, role)
+					var tag: String = Loc.t(Empire.ROLE_NAMES.get(role, role))
 					if role == "envoy":
-						tag = "Envoy, %s" % Empire.faction(Empire.recruits[id]["target"]).get("short", "?")
+						tag = tr("Envoy, %s") % Empire.faction(Empire.recruits[id]["target"]).get("short", "?")
 					_text(base + Vector2(165, 0), tag, 7, Color("e8a86a"))
 				_text_r(base + Vector2(LIST_W - 12, 0), "%+d/day" % int(Empire.envoy_effect(id, pick_faction)["drift"]), 9, GOOD)
 		y += ROW_H + 2
@@ -599,9 +599,9 @@ func _draw_picker(vs: Vector2) -> void:
 	var yy := top + 14
 	var env := "" if r["kind"] == "recall" else String(r["id"])
 	if env == "":
-		_text(Vector2(x, yy), "No envoy", 12, Color("f3efe4"))
+		_text(Vector2(x, yy), tr("No envoy"), 12, Color("f3efe4"))
 		yy += 4
-		yy += _wrap(Vector2(x, yy + 9), "Nobody talks to the %s for you. Standing only moves through what you do, and you can't make deals." % fa["short"], w, 8, SOFT) + 6
+		yy += _wrap(Vector2(x, yy + 9), tr("Nobody talks to the %s for you. Standing only moves through what you do, and you can't make deals.") % fa["short"], w, 8, SOFT) + 6
 	else:
 		var rec := Empire.recruit(env)
 		_text(Vector2(x, yy), rec["name"], 12, Color("f3efe4"), w)
@@ -609,7 +609,7 @@ func _draw_picker(vs: Vector2) -> void:
 		var st: Dictionary = rec["stats"]
 		var parts := []
 		for k in ["might", "craft", "lore", "charm", "grit"]:
-			parts.append("%s %d" % [Empire.STAT_NAMES[k], int(st[k])])
+			parts.append("%s %d" % [Loc.t(Empire.STAT_NAMES[k]), int(st[k])])
 		_text(Vector2(x, yy), "   ".join(parts), 8, SOFT, w)
 		yy += 6
 		var traits := []
@@ -619,16 +619,16 @@ func _draw_picker(vs: Vector2) -> void:
 			_text(Vector2(x, yy + 8), ", ".join(traits), 8, Color("d7b8f0"), w)
 			yy += 10
 		yy += 6
-		_text(Vector2(x, yy + 8), "As envoy:", 8, Color(0.75, 0.72, 0.7))
+		_text(Vector2(x, yy + 8), tr("As envoy:"), 8, Color(0.75, 0.72, 0.7))
 		yy += 10
 		for wy in Empire.envoy_effect(env, pick_faction)["why"]:
 			yy += _wrap(Vector2(x, yy + 9), wy[0], w, 8, GOOD if wy[1] else BAD) + 1
 		var role := Empire.role_of(env)
 		if role != "idle" and Empire.envoy_of(pick_faction) != env:
-			yy += _wrap(Vector2(x, yy + 9), "Leaves their post: %s." % Empire.role_label(env), w, 8, Color("e8a86a")) + 1
+			yy += _wrap(Vector2(x, yy + 9), tr("Leaves their post: %s.") % Empire.role_label(env), w, 8, Color("e8a86a")) + 1
 		var cur := Empire.envoy_of(pick_faction)
 		if cur != "" and cur != env:
-			yy += _wrap(Vector2(x, yy + 9), "Replaces %s, who comes home idle." % Empire.short_name(cur), w, 8, SOFT) + 1
+			yy += _wrap(Vector2(x, yy + 9), tr("Replaces %s, who comes home idle.") % Empire.short_name(cur), w, 8, SOFT) + 1
 	yy += 8
 	var rate := Empire.standing_rate(pick_faction, env)
-	_text(Vector2(x, yy + 9), "Standing would move %+d a day (now %+d)." % [rate, Empire.standing_rate(pick_faction)], 9, GOOD if rate > 0 else BAD)
+	_text(Vector2(x, yy + 9), tr("Standing would move %+d a day (now %+d).") % [rate, Empire.standing_rate(pick_faction)], 9, GOOD if rate > 0 else BAD)

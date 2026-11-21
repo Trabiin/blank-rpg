@@ -95,10 +95,10 @@ func _rebuild() -> void:
 func _forge_rows() -> void:
 	var jobs := Armory.jobs()
 	if not jobs.is_empty():
-		rows.append({"head": "On the benches"})
+		rows.append({"head": tr("On the benches")})
 		for j in jobs:
 			rows.append({"kind": "job", "job": j})
-	rows.append({"head": "Weapons: upgrade to the next tier"})
+	rows.append({"head": tr("Weapons: upgrade to the next tier")})
 	for hero in Progress.field_ids():
 		var now := Armory.weapon_now(hero)
 		var r := Armory.upgrade_recipe(now) if now != "" else {}
@@ -110,7 +110,7 @@ func _forge_rows() -> void:
 		if groups.has(g):
 			groups[g].append(r)
 	for g in ["armor", "trinket", "item", "upgrade"]:
-		rows.append({"head": {"armor": "Armour", "trinket": "Trinkets", "item": "Field supplies", "upgrade": "Satchel"}[g]})
+		rows.append({"head": {"armor": tr("Armour"), "trinket": tr("Trinkets"), "item": tr("Field supplies"), "upgrade": tr("Satchel")}[g]})
 		var list: Array = groups[g]
 		list.sort_custom(func(a, b): return int(a["tier"]) < int(b["tier"]) if int(a["tier"]) != int(b["tier"]) else int(a["gilt"]) < int(b["gilt"]))
 		for r in list:
@@ -120,18 +120,18 @@ func _forge_rows() -> void:
 func _market_rows() -> void:
 	var stock := Armory.stock()
 	if not stock.is_empty():
-		rows.append({"head": "Stalls  (new stock in %d day%s)" % [Armory.days_to_rotation(), "" if Armory.days_to_rotation() == 1 else "s"]})
+		rows.append({"head": tr("Stalls  (new stock in %d day%s)") % [Armory.days_to_rotation(), "" if Armory.days_to_rotation() == 1 else "s"]})
 		for i in stock.size():
 			rows.append({"kind": "stall", "i": i, "stall": stock[i]})
 	var have := Armory.materials().keys().filter(func(k): return Armory.mat_count(k) > 0)
 	if not have.is_empty() and not stock.is_empty():
-		rows.append({"head": "Sell spare materials"})
+		rows.append({"head": tr("Sell spare materials")})
 		for k in have:
 			rows.append({"kind": "sell", "id": k})
 
 
 func _satchel_rows() -> void:
-	rows.append({"head": "Packed for every mission"})
+	rows.append({"head": tr("Packed for every mission")})
 	for id in Satchel.ids():
 		rows.append({"kind": "pack", "id": id})
 
@@ -155,61 +155,61 @@ func _act(i: int) -> void:
 		"weapon", "recipe":
 			var r: Dictionary = row["recipe"]
 			if r.is_empty():
-				_say("%s's weapon is as good as it gets." % PartyPicker.short_of(row.get("hero", "")))
+				_say(tr("%s's weapon is as good as it gets.") % PartyPicker.short_of(row.get("hero", "")))
 				return
 			var why := Armory.craft_blocker(r)
 			if why != "":
-				_say("Can't: %s." % why)
+				_say(tr("Can't: %s.") % why)
 				Audio.sfx("error")
 				return
 			var days := Armory.days_for(r)
 			Armory.start(r)
 			Audio.sfx("heavy", 1.2, -4.0)
-			_say("The smiths start on the %s. Ready %s." % [Armory.result_name(r["result"]), "at dawn" if days <= 1 else "in %d days" % days])
+			_say(tr("The smiths start on the %s. Ready %s.") % [Armory.result_name(r["result"]), tr("at dawn") if days <= 1 else tr("in %d days") % days])
 		"job":
 			var j: Dictionary = row["job"]
-			_say("%s: ready %s." % [Armory.result_name(j["result"]), Armory.job_eta(j)])
+			_say(tr("%s: ready %s.") % [Armory.result_name(j["result"]), Armory.job_eta(j)])
 		"stall":
 			var st: Dictionary = row["stall"]
 			var why2 := Armory.buy_blocker(int(row["i"]), st)
 			if why2 != "":
-				_say("Can't: %s." % why2)
+				_say(tr("Can't: %s.") % why2)
 				Audio.sfx("error")
 				return
 			var p := Armory.price(st["kind"], st["id"])
 			Armory.buy(int(row["i"]), st)
 			Audio.sfx("coin")
-			var where: String = {"items": "the stores (packed if there's room)", "materials": "the stores", "gear": "the bag: equip it with K"}[st["kind"]]
-			_say("Bought %s for %d Gilt. It goes to %s." % [Armory.stock_name(st["kind"], st["id"]), p, where])
+			var where: String = {"items": tr("the stores (packed if there's room)"), "materials": tr("the stores"), "gear": tr("the bag: equip it with K")}[st["kind"]]
+			_say(tr("Bought %s for %d Gilt. It goes to %s.") % [Armory.stock_name(st["kind"], st["id"]), p, where])
 		"sell":
 			var k: String = row["id"]
 			var gp := Armory.sell_price_mat(k)
 			if Armory.sell_mat(k):
 				Audio.sfx("coin")
-				_say("Sold a %s for %d Gilt." % [Armory.mat_name(k), gp])
+				_say(tr("Sold a %s for %d Gilt.") % [Armory.mat_name(k), gp])
 		"pack":
 			_buy_from_tobble(str(row["id"]))
 		"mat":
 			var uses := Armory.uses(str(row["id"]))
-			_say("%s goes into %d recipe%s at the Forge." % [Armory.mat_name(row["id"]), uses.size(), "" if uses.size() == 1 else "s"])
+			_say(tr("%s goes into %d recipe%s at the Forge.") % [Armory.mat_name(row["id"]), uses.size(), "" if uses.size() == 1 else "s"])
 	_rebuild()
 
 
 func _buy_from_tobble(id: String) -> void:
 	var it := Satchel.item(id)
 	if not it.get("stall", false):
-		_say("Tobble doesn't carry %s. Try the Market or the Forge." % it.get("name", id))
+		_say(tr("Tobble doesn't carry %s. Try the Market or the Forge.") % it.get("name", id))
 		return
 	var p := int(it.get("price", 10))
 	if int(Empire.res.get("gilt", 0)) < p:
-		_say("Can't: not enough Gilt.")
+		_say(tr("Can't: not enough Gilt."))
 		Audio.sfx("error")
 		return
 	Empire.res["gilt"] = int(Empire.res["gilt"]) - p
 	Armory.store(id)
 	Armory.restock(false)
 	Audio.sfx("coin")
-	_say("Bought %s from Tobble for %d Gilt. It's in the stores%s." % [it.get("name", id), p, " and packed" if Satchel.count(id) >= Armory.pack_of(id) and Armory.pack_of(id) > 0 else ""])
+	_say(tr("Bought %s from Tobble for %d Gilt. It's in the stores%s.") % [it.get("name", id), p, tr(" and packed") if Satchel.count(id) >= Armory.pack_of(id) and Armory.pack_of(id) > 0 else ""])
 
 
 func _pack_step(i: int, step: int) -> void:
@@ -219,7 +219,7 @@ func _pack_step(i: int, step: int) -> void:
 	var before := Armory.pack_of(id)
 	var now := Armory.set_pack(id, before + step)
 	if now == before and step > 0:
-		_say("No more room: %s." % ("the satchel is full" if Armory.pack_total() >= Armory.satchel_slots() else "carry at most %d" % Armory.carry(id)))
+		_say(tr("No more room: %s.") % (tr("the satchel is full") if Armory.pack_total() >= Armory.satchel_slots() else tr("carry at most %d") % Armory.carry(id)))
 	else:
 		Audio.sfx("ui_move")
 
@@ -330,12 +330,12 @@ func _draw() -> void:
 	UiSkin.screen(self, vs)
 	var cr := _close_rect()
 	UiSkin.panel(self, cr, "button")
-	_text(cr.position + Vector2(9, 12), "Close", 9, Color(0.75, 0.72, 0.7))
-	_text(Vector2(8, 20), "Forge & Market", 15, PAPER)
+	_text(cr.position + Vector2(9, 12), tr("Close"), 9, Color(0.75, 0.72, 0.7))
+	_text(Vector2(8, 20), tr("Forge & Market"), 15, PAPER)
 	_tab_rects.clear()
 	var tx := 128.0
 	for t in TABS:
-		var label: String = TAB_NAMES[t]
+		var label: String = Loc.t(TAB_NAMES[t])
 		var w := font.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1, 9).x + 14
 		var r := Rect2(tx, 8, w, 15)
 		_tab_rects[t] = r
@@ -358,44 +358,44 @@ func _draw() -> void:
 func _help() -> String:
 	match tab:
 		"satchel":
-			return Prompts.help([["updown", "item"], ["leftright", "pack fewer / more"], ["ui_accept", "buy from Tobble"], ["swap", "tab"], [["ui_cancel", "armory"], "close"]], "Tap - and + to pack, tap an item twice to buy it from Tobble")
+			return Prompts.help([["updown", "item"], ["leftright", tr("pack fewer / more")], ["ui_accept", tr("buy from Tobble")], ["swap", "tab"], [["ui_cancel", "armory"], "close"]], tr("Tap - and + to pack, tap an item twice to buy it from Tobble"))
 		"materials":
-			return Prompts.help([["updown", "material"], ["swap", "tab"], [["ui_cancel", "armory"], "close"]], "Tap a material")
+			return Prompts.help([["updown", "material"], ["swap", "tab"], [["ui_cancel", "armory"], "close"]], tr("Tap a material"))
 		"market":
-			return Prompts.help([["updown", "choose"], ["ui_accept", "buy / sell one"], ["swap", "tab"], [["ui_cancel", "armory"], "close"]], "Tap a stall twice to buy one")
-	return Prompts.help([["updown", "choose"], ["ui_accept", "forge it"], ["swap", "tab"], [["ui_cancel", "armory"], "close"]], "Tap a recipe twice to forge it")
+			return Prompts.help([["updown", "choose"], ["ui_accept", tr("buy / sell one")], ["swap", "tab"], [["ui_cancel", "armory"], "close"]], tr("Tap a stall twice to buy one"))
+	return Prompts.help([["updown", "choose"], ["ui_accept", tr("forge it")], ["swap", "tab"], [["ui_cancel", "armory"], "close"]], tr("Tap a recipe twice to forge it"))
 
 
 func _status_line() -> String:
 	match tab:
 		"forge":
 			if Armory.forge_level() <= 0:
-				return "No Forge yet. Plan one on the Buildings screen%s; a smith with good Craft runs it." % Prompts.tag("buildings")
+				return tr("No Forge yet. Plan one on the Buildings screen%s; a smith with good Craft runs it.") % Prompts.tag("buildings")
 			var fe := Armory.forge_effect()
-			return "Forge level %d: %s. Benches busy: %d/%d." % [Armory.forge_level(), fe["text"], Armory.jobs().size(), int(fe.get("benches", 0))]
+			return tr("Forge level %d: %s. Benches busy: %d/%d.") % [Armory.forge_level(), fe["text"], Armory.jobs().size(), int(fe.get("benches", 0))]
 		"market":
 			if Armory.market_level() <= 0:
-				return "No Market yet. Plan one on the Buildings screen%s; a charming trader runs it. Tobble's supplies are on the Satchel tab." % Prompts.tag("buildings")
-			return "Market level %d: %s." % [Armory.market_level(), Armory.market_effect()["text"]]
+				return tr("No Market yet. Plan one on the Buildings screen%s; a charming trader runs it. Tobble's supplies are on the Satchel tab.") % Prompts.tag("buildings")
+			return tr("Market level %d: %s.") % [Armory.market_level(), Armory.market_effect()["text"]]
 		"satchel":
 			var ups := (Armory.state()["upgrades"] as Array).map(func(u): return Armory.result_name(u))
-			return "Satchel: %d of %d slots packed%s. Free rations top up tonics, salts and draughts after every mission; the rest comes from the stores." % [
+			return tr("Satchel: %d of %d slots packed%s. Free rations top up tonics, salts and draughts after every mission; the rest comes from the stores.") % [
 				Armory.pack_total(), Armory.satchel_slots(), (" (" + ", ".join(ups) + ")") if not ups.is_empty() else ""]
-	return "Materials come from enemies, Raid caches and Salvage piles, and the Market. The Forge turns them into gear and supplies."
+	return tr("Materials come from enemies, Raid caches and Salvage piles, and the Market. The Forge turns them into gear and supplies.")
 
 
 func _row_label(row: Dictionary) -> Array:  # [icon id, name, right text, colour, right colour]
 	match str(row["kind"]):
 		"job":
 			var j: Dictionary = row["job"]
-			var who := (" for " + PartyPicker.short_of(j["hero"])) if str(j.get("hero", "")) != "" else ""
+			var who := (tr(" for ") + PartyPicker.short_of(j["hero"])) if str(j.get("hero", "")) != "" else ""
 			var n := "" if int(j["makes"]) <= 1 else " x%d" % int(j["makes"])
 			return [j["result"], Armory.result_name(j["result"]) + n + who, Armory.job_eta(j), TEXT, GOLD]
 		"weapon":
 			var r: Dictionary = row["recipe"]
 			var now := Armory.weapon_now(row["hero"])
 			if r.is_empty():
-				return [now, "%s: %s" % [PartyPicker.short_of(row["hero"]), Progress.item(now).get("name", "no weapon")], "top of the line", SOFT, DIM]
+				return [now, "%s: %s" % [PartyPicker.short_of(row["hero"]), Progress.item(now).get("name", tr("no weapon"))], tr("top of the line"), SOFT, DIM]
 			var why := Armory.craft_blocker(r)
 			return [r["result"], "%s: %s" % [PartyPicker.short_of(row["hero"]), Armory.result_name(r["result"])], _short_why(why, r), TEXT if why == "" else SOFT, GOOD if why == "" else DIM]
 		"recipe":
@@ -407,7 +407,7 @@ func _row_label(row: Dictionary) -> Array:  # [icon id, name, right text, colour
 			var st: Dictionary = row["stall"]
 			var left := Armory.stall_left(int(row["i"]), st)
 			var icon: String = st["id"]
-			return [icon, "%s  (%d left)" % [Armory.stock_name(st["kind"], st["id"]), left] if left > 0 else "%s  (sold out)" % Armory.stock_name(st["kind"], st["id"]),
+			return [icon, tr("%s  (%d left)") % [Armory.stock_name(st["kind"], st["id"]), left] if left > 0 else tr("%s  (sold out)") % Armory.stock_name(st["kind"], st["id"]),
 				"%d G" % Armory.price(st["kind"], st["id"]), TEXT if left > 0 else DIM, GOLD if Armory.buy_blocker(int(row["i"]), st) == "" else BAD]
 		"sell":
 			return [row["id"], "%s  x%d" % [Armory.mat_name(row["id"]), Armory.mat_count(row["id"])], "+%d G" % Armory.sell_price_mat(row["id"]), TEXT, GOOD]
@@ -417,20 +417,20 @@ func _row_label(row: Dictionary) -> Array:  # [icon id, name, right text, colour
 		"mat":
 			var k: String = row["id"]
 			var open := Armory.region_ok(str(Armory.mat(k).get("region", "")))
-			return [k, Armory.mat_name(k), "x%d" % Armory.mat_count(k) if open or Armory.mat_count(k) > 0 else "not found yet", TEXT if open else SOFT, MAT_COL if Armory.mat_count(k) > 0 else DIM]
+			return [k, Armory.mat_name(k), "x%d" % Armory.mat_count(k) if open or Armory.mat_count(k) > 0 else tr("not found yet"), TEXT if open else SOFT, MAT_COL if Armory.mat_count(k) > 0 else DIM]
 	return ["", "?", "", TEXT, TEXT]
 
 
 func _short_why(why: String, r: Dictionary) -> String:
 	if why == "":
 		var d := Armory.days_for(r)
-		return "%d G, %s" % [int(r["gilt"]), "1 day" if d <= 1 else "%d days" % d]
+		return "%d G, %s" % [int(r["gilt"]), tr("1 day") if d <= 1 else tr("%d days") % d]
 	if why.begins_with("needs materials from"):
-		return "Tier %d: later" % int(r["tier"])
+		return tr("Tier %d: later") % int(r["tier"])
 	if why.begins_with("needs a level"):
 		return why.trim_prefix("needs a ")
 	if why.begins_with("needs ") and why.contains("more"):
-		return "short of materials"
+		return tr("short of materials")
 	return why
 
 
@@ -442,7 +442,7 @@ func _draw_list(vs: Vector2) -> void:
 	var bottom := vs.y - 18.0
 	var per := int((bottom - top) / ROW_H)
 	if rows.is_empty():
-		var empty: String = {"forge": "Nothing to forge yet.", "market": "The Market has nothing out: it needs a trader at work." if Armory.market_level() > 0 else "",
+		var empty: String = {"forge": tr("Nothing to forge yet."), "market": tr("The Market has nothing out: it needs a trader at work.") if Armory.market_level() > 0 else "",
 			"satchel": "", "materials": ""}[tab]
 		_text(Vector2(12, top + 14), empty, 9, SOFT, LIST_W)
 		return
@@ -510,9 +510,9 @@ func _draw_pack_row(r: Rect2, i: int, on: bool, nx: float) -> void:
 	var in_bag := Satchel.count(id)
 	var pk_col := GOOD if packed > 0 and in_bag >= packed else (BAD if packed > in_bag else SOFT)
 	_text_r(r.position + Vector2(164, 9), "%d/%d" % [packed, Armory.carry(id)], 8, pk_col)
-	_text(r.position + Vector2(184, 9), "stores %d" % Armory.stored(id), 7, SOFT)
+	_text(r.position + Vector2(184, 9), tr("stores %d") % Armory.stored(id), 7, SOFT)
 	if it.get("stall", false):
-		_text_r(r.position + Vector2(LIST_W - 5, 9), "Tobble %d G" % int(it.get("price", 0)), 7, GOLD)
+		_text_r(r.position + Vector2(LIST_W - 5, 9), tr("Tobble %d G") % int(it.get("price", 0)), 7, GOLD)
 
 
 # ---------------------------------------------------------------- the detail panel
@@ -534,12 +534,12 @@ func _draw_detail(vs: Vector2) -> void:
 			if r.is_empty():
 				var now := Armory.weapon_now(row["hero"])
 				y = _item_head(now, x, y, w)
-				_wrap(Vector2(x, y + 4), "Tier %d, the last of %s's line. Nothing in the Inklands improves on it." % [Armory.tier_of(now), PartyPicker.short_of(row["hero"])], w, 8, SOFT)
+				_wrap(Vector2(x, y + 4), tr("Tier %d, the last of %s's line. Nothing in the Inklands improves on it.") % [Armory.tier_of(now), PartyPicker.short_of(row["hero"])], w, 8, SOFT)
 				return
 			y = _item_head(r["result"], x, y, w)
 			if r["kind"] == "weapon":
-				_text(Vector2(x, y), "From the %s (%s)" % [Progress.item(r["from"]).get("name", r["from"]),
-					"in %s's hands until it's done" % PartyPicker.short_of(r["hero"]) if Armory.weapon_now(r["hero"]) == r["from"] else "from the bag"], 7, SOFT, w)
+				_text(Vector2(x, y), tr("From the %s (%s)") % [Progress.item(r["from"]).get("name", r["from"]),
+					tr("in %s's hands until it's done") % PartyPicker.short_of(r["hero"]) if Armory.weapon_now(r["hero"]) == r["from"] else tr("from the bag")], 7, SOFT, w)
 				y += 11
 			y += _wrap(Vector2(x, y + 2), Armory.result_blurb(r["result"]), w, 8, Color(0.78, 0.76, 0.74)) + 6
 			y = _needs(r, x, y, w)
@@ -547,13 +547,13 @@ func _draw_detail(vs: Vector2) -> void:
 			y += 4
 			if why == "":
 				var d := Armory.days_for(r)
-				_text(Vector2(x, y + 8), "%s: forge it. Ready %s." % [_ok_word(), "at dawn" if d <= 1 else "in %d days" % d], 8, GOOD, w)
+				_text(Vector2(x, y + 8), tr("%s: forge it. Ready %s.") % [_ok_word(), tr("at dawn") if d <= 1 else tr("in %d days") % d], 8, GOOD, w)
 			else:
-				_wrap(Vector2(x, y + 8), "Can't yet: %s." % why, w, 8, BAD)
+				_wrap(Vector2(x, y + 8), tr("Can't yet: %s.") % why, w, 8, BAD)
 		"job":
 			var j: Dictionary = row["job"]
 			y = _item_head(j["result"], x, y, w)
-			_text(Vector2(x, y + 4), "On a bench. Ready %s." % Armory.job_eta(j), 8, GOLD, w)
+			_text(Vector2(x, y + 4), tr("On a bench. Ready %s.") % Armory.job_eta(j), 8, GOLD, w)
 			_wrap(Vector2(x, y + 18), Armory.result_blurb(j["result"]), w, 8, Color(0.78, 0.76, 0.74))
 		"stall":
 			var st: Dictionary = row["stall"]
@@ -563,28 +563,28 @@ func _draw_detail(vs: Vector2) -> void:
 				"items":
 					y = _item_head(st["id"], x, y, w)
 					y += _wrap(Vector2(x, y + 2), Armory.result_blurb(st["id"]), w, 8, Color(0.78, 0.76, 0.74)) + 4
-					_text(Vector2(x, y + 8), "In the satchel %d, in the stores %d." % [Satchel.count(st["id"]), Armory.stored(st["id"])], 8, SOFT, w)
+					_text(Vector2(x, y + 8), tr("In the satchel %d, in the stores %d.") % [Satchel.count(st["id"]), Armory.stored(st["id"])], 8, SOFT, w)
 				_:
 					y = _item_head(st["id"], x, y, w)
 					y += _wrap(Vector2(x, y + 2), Armory.result_blurb(st["id"]), w, 8, Color(0.78, 0.76, 0.74)) + 4
 			var why2 := Armory.buy_blocker(int(row["i"]), st)
-			_text(Vector2(x, box.end.y - 10), ("%s: buy one for %d Gilt." % [_ok_word(), Armory.price(st["kind"], st["id"])]) if why2 == "" else "Can't: %s." % why2, 8, GOOD if why2 == "" else BAD, w)
+			_text(Vector2(x, box.end.y - 10), (tr("%s: buy one for %d Gilt.") % [_ok_word(), Armory.price(st["kind"], st["id"])]) if why2 == "" else tr("Can't: %s.") % why2, 8, GOOD if why2 == "" else BAD, w)
 		"sell", "mat":
 			_mat_head(row["id"], x, y, w)
 			if row["kind"] == "sell":
-				_text(Vector2(x, box.end.y - 10), "%s: sell one for %d Gilt." % [_ok_word(), Armory.sell_price_mat(row["id"])], 8, GOOD, w)
+				_text(Vector2(x, box.end.y - 10), tr("%s: sell one for %d Gilt.") % [_ok_word(), Armory.sell_price_mat(row["id"])], 8, GOOD, w)
 		"pack":
 			var id: String = row["id"]
 			y = _item_head(id, x, y, w)
 			y += _wrap(Vector2(x, y + 2), Armory.result_blurb(id), w, 8, Color(0.78, 0.76, 0.74)) + 6
 			var it := Satchel.item(id)
-			var lines := ["Packed: %d (carry at most %d)." % [Armory.pack_of(id), Armory.carry(id)], "In the satchel now: %d. In the stores: %d." % [Satchel.count(id), Armory.stored(id)]]
+			var lines := [tr("Packed: %d (carry at most %d).") % [Armory.pack_of(id), Armory.carry(id)], tr("In the satchel now: %d. In the stores: %d.") % [Satchel.count(id), Armory.stored(id)]]
 			if int(it.get("start", 0)) > 0:
-				lines.append("Free rations: up to %d after every mission." % int(it["start"]))
+				lines.append(tr("Free rations: up to %d after every mission.") % int(it["start"]))
 			if it.get("stall", false):
-				lines.append("Tobble sells them: %d Gilt (%s)." % [int(it.get("price", 0)), _ok_word()])
+				lines.append(tr("Tobble sells them: %d Gilt (%s).") % [int(it.get("price", 0)), _ok_word()])
 			if Armory.forge_data().get("recipes", {}).has(id):
-				lines.append("The Forge makes them: %s." % Armory.mats_text(Armory.recipe(id)["mats"]))
+				lines.append(tr("The Forge makes them: %s.") % Armory.mats_text(Armory.recipe(id)["mats"]))
 			for l in lines:
 				_text(Vector2(x, y + 8), l, 8, SOFT, w)
 				y += 11
@@ -598,39 +598,39 @@ func _item_head(id: String, x: float, y: float, w: float) -> float:
 	var it := Progress.item(id)
 	if not it.is_empty():
 		var owner := str(it.get("hero", ""))
-		var what := "%s, tier %d, %s" % [{"weapon": "Weapon", "armor": "Armour", "trinket": "Trinket"}.get(it.get("slot", ""), "Gear"), int(it.get("tier", 1)),
-			("for " + PartyPicker.short_of(owner)) if owner != "" else "anyone can wear it"]
+		var what := tr("%s, tier %d, %s") % [{"weapon": tr("Weapon"), "armor": tr("Armour"), "trinket": tr("Trinket")}.get(it.get("slot", ""), tr("Gear")), int(it.get("tier", 1)),
+			(tr("for ") + PartyPicker.short_of(owner)) if owner != "" else tr("anyone can wear it")]
 		_text(Vector2(x, y), what, 8, SLOT_COLORS.get(it.get("slot", ""), TEXT), w - 36)
 		y += 11
 		y += _wrap(Vector2(x, y), Progress.item_text(id), w - 36, 8, GOOD)
 		var owned := Progress.count(id) + Progress.worn_by(id).size()
 		if owned > 0:
-			_text(Vector2(x, y + 9), "You have %d." % owned, 7, SOFT, w)
+			_text(Vector2(x, y + 9), tr("You have %d.") % owned, 7, SOFT, w)
 			y += 10
 	elif not Satchel.item(id).is_empty():
-		_text(Vector2(x, y), "Field item, used from the quick menu", 8, SLOT_COLORS["item"], w - 36)
+		_text(Vector2(x, y), tr("Field item, used from the quick menu"), 8, SLOT_COLORS["item"], w - 36)
 		y += 11
 	else:
-		_text(Vector2(x, y), "Satchel upgrade", 8, SLOT_COLORS["upgrade"], w - 36)
+		_text(Vector2(x, y), tr("Satchel upgrade"), 8, SLOT_COLORS["upgrade"], w - 36)
 		y += 11
 	return y + 4
 
 
 ## The materials and Gilt a recipe takes, each marked by whether you have enough.
 func _needs(r: Dictionary, x: float, y: float, w: float) -> float:
-	_text(Vector2(x, y + 8), "Takes", 8, Color(0.75, 0.72, 0.7))
+	_text(Vector2(x, y + 8), tr("Takes"), 8, Color(0.75, 0.72, 0.7))
 	y += 11
 	for k in r["mats"]:
 		var need := int(r["mats"][k])
 		var have := Armory.mat_count(k)
 		var open := Armory.region_ok(str(Armory.mat(k).get("region", "")))
 		UiSkin.draw_icon(self, k, Rect2(x, y, 10, 10))
-		var note := "" if open else "  (%s, later in the story)" % Armory.region_name(str(Armory.mat(k).get("region", "")))
+		var note := "" if open else tr("  (%s, later in the story)") % Armory.region_name(str(Armory.mat(k).get("region", "")))
 		_text(Vector2(x + 13, y + 8), "%s  %d/%d%s" % [Armory.mat_name(k), have, need, note], 8, GOOD if have >= need else (DIM if not open else BAD), w - 13)
 		y += 11
 	var g := int(r["gilt"])
 	UiSkin.draw_icon(self, "gilt", Rect2(x, y, 10, 10))
-	_text(Vector2(x + 13, y + 8), "%d Gilt" % g, 8, GOOD if int(Empire.res.get("gilt", 0)) >= g else BAD, w - 13)
+	_text(Vector2(x + 13, y + 8), tr("%d Gilt") % g, 8, GOOD if int(Empire.res.get("gilt", 0)) >= g else BAD, w - 13)
 	return y + 12
 
 
@@ -639,18 +639,18 @@ func _mat_head(k: String, x: float, y: float, w: float) -> float:
 	_text(Vector2(x, y), Armory.mat_name(k), 11, PAPER, w - 36)
 	y += 12
 	var m := Armory.mat(k)
-	_text(Vector2(x, y), "Material, tier %d, %s. You have %d." % [int(m.get("tier", 2)), Armory.region_name(str(m.get("region", ""))), Armory.mat_count(k)], 8, MAT_COL, w - 36)
+	_text(Vector2(x, y), tr("Material, tier %d, %s. You have %d.") % [int(m.get("tier", 2)), Armory.region_name(str(m.get("region", ""))), Armory.mat_count(k)], 8, MAT_COL, w - 36)
 	y += 6
 	y += _wrap(Vector2(x, y + 8), str(m.get("blurb", "")), w, 8, Color(0.78, 0.76, 0.74)) + 6
 	var src := Armory.sources(k)
-	y += _wrap(Vector2(x, y + 8), "Found on: " + (", ".join(src) if not src.is_empty() else "nothing you can reach yet"), w, 8, SOFT) + 4
+	y += _wrap(Vector2(x, y + 8), tr("Found on: ") + (", ".join(src) if not src.is_empty() else tr("nothing you can reach yet")), w, 8, SOFT) + 4
 	var uses := Armory.uses(k).map(func(u): return Armory.result_name(u))
 	if uses.size() > 8:
-		uses = uses.slice(0, 8) + ["and %d more" % (Armory.uses(k).size() - 8)]
-	y += _wrap(Vector2(x, y + 8), "Makes: " + ", ".join(uses), w, 8, SOFT)
+		uses = uses.slice(0, 8) + [tr("and %d more") % (Armory.uses(k).size() - 8)]
+	y += _wrap(Vector2(x, y + 8), tr("Makes: ") + ", ".join(uses), w, 8, SOFT)
 	return y
 
 
 ## What to press to act on this device: "Enter", "A", "Tap twice" (issue #115).
 func _ok_word() -> String:
-	return "Tap twice" if Prompts.touch() else Prompts.confirm()
+	return tr("Tap twice") if Prompts.touch() else Prompts.confirm()

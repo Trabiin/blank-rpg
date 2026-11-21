@@ -39,7 +39,7 @@ static var _help = null  # the onboarding Help class script, false when this bui
 static func _load() -> void:
 	if not _asks.is_empty():
 		return
-	var parsed = JSON.parse_string(FileAccess.get_file_as_string("res://data/factions.json"))
+	var parsed = Loc.load_json("res://data/factions.json")
 	if typeof(parsed) != TYPE_DICTIONARY:
 		return
 	_rules = parsed.get("ask_rules", {})
@@ -253,50 +253,50 @@ static func _watched(a: Dictionary) -> Array:
 static func offer_blocker(a: Dictionary) -> String:
 	var fid: String = a["faction"]
 	if not Empire.at_least(fid, str(a.get("tier", "hostile"))):
-		return "needs %s standing" % Empire.tier_name(str(a.get("tier", "hostile")))
+		return Loc.t("needs %s standing") % Empire.tier_name(str(a.get("tier", "hostile")))
 	if a.has("below") and Empire.at_least(fid, str(a["below"])):
-		return "only below %s" % Empire.tier_name(str(a["below"]))
+		return Loc.t("only below %s") % Empire.tier_name(str(a["below"]))
 	var ended = state()["ended"].get(a["id"], null)
 	if ended != null:
 		if int(a.get("repeat", 0)) <= 0:
-			return "asked once already"
+			return Loc.t("asked once already")
 		if Empire.day < int(ended) + int(a["repeat"]):
-			return "asked recently"
+			return Loc.t("asked recently")
 	match str(a.get("kind", "")):
 		"expedition":
 			if Empire.level_of("guildhall") <= 0:
-				return "no Guildhall to send a squad from"
+				return Loc.t("no Guildhall to send a squad from")
 			var j := Empire.job(str(a.get("job", "")))
 			if j.is_empty():
-				return "no such job"
+				return Loc.t("no such job")
 			if Empire.territory().find(str(j.get("province", ""))).get("owner", "") == "erased":
-				return "the place is erased"
+				return Loc.t("the place is erased")
 		"raid":
 			var tg := str(a.get("target", ""))
 			if Empire.at_least(tg, "friendly"):
-				return "the %s are friends" % Empire.faction(tg).get("short", tg)
+				return Loc.t("the %s are friends") % Empire.faction(tg).get("short", tg)
 			if raid_targets(tg).is_empty():
-				return "no %s land next to yours" % Empire.faction(tg).get("short", tg)
+				return Loc.t("no %s land next to yours") % Empire.faction(tg).get("short", tg)
 		"salvage":
 			if _salvage_spots(a).is_empty():
-				return "nothing to salvage"
+				return Loc.t("nothing to salvage")
 		"fray":
 			var ps := near_home(fid)
 			if ps.is_empty():
-				return "none of your land is next to theirs"
+				return Loc.t("none of your land is next to theirs")
 			for pid in ps:
 				if int(Empire.territory().find(pid)["fray"]) > int(a.get("max", 40)) - 10:
-					return "your land there is already too frayed"
+					return Loc.t("your land there is already too frayed")
 		"lamp":
 			var ps2 := near_home(fid)
 			if ps2.is_empty():
-				return "none of your land is next to theirs"
+				return Loc.t("none of your land is next to theirs")
 			for pid in ps2:
 				if int(Empire.lamps.get(pid, 0)) > 0 or Empire.lamp_jobs.has(pid):
-					return "a lamp already burns there"
+					return Loc.t("a lamp already burns there")
 		"shun":
 			if not Empire.faction_data.has(str(a.get("rival", ""))):
-				return "no such rival"
+				return Loc.t("no such rival")
 	return ""
 
 
@@ -312,7 +312,7 @@ static func offer(fid: String, id: String) -> bool:
 	var days := int(rules().get("offer_days", 3))
 	state()["offers"][fid] = {"id": id, "day": Empire.day, "until": Empire.day + days}
 	var fa := Empire.faction(fid)
-	_say("The %s ask a favour: %s. Answer in Diplomacy%s within %d days." % [fa.get("short", fid), a["name"], Prompts.tag("diplomacy"), days],
+	_say(Loc.t("The %s ask a favour: %s. Answer in Diplomacy%s within %d days.") % [fa.get("short", fid), a["name"], Prompts.tag("diplomacy"), days],
 		false, {"view": "diplomacy"})
 	return true
 
@@ -343,9 +343,9 @@ static func _diplomacy_open() -> bool:
 static func accept_blocker(fid: String) -> String:
 	var o := offer_of(fid)
 	if o.is_empty():
-		return "nothing on offer"
+		return Loc.t("nothing on offer")
 	if not active_of(fid).is_empty():
-		return "you already owe the %s a favour" % Empire.faction(fid).get("short", fid)
+		return Loc.t("you already owe the %s a favour") % Empire.faction(fid).get("short", fid)
 	return ""
 
 
@@ -360,15 +360,15 @@ static func accept(fid: String) -> String:
 		row["provinces"] = near_home(fid)
 	state()["active"][fid] = row
 	var fa := Empire.faction(fid)
-	var said := "Accepted: %s. %s left." % [a["name"], _days(int(a.get("days", 5)))]
+	var said := Loc.t("Accepted: %s. %s left.") % [a["name"], _days(int(a.get("days", 5)))]
 	if a["kind"] == "shun":
 		var rival := str(a["rival"])
 		if rival in Empire.pacts:
 			Empire.pacts.erase(rival)
-			Empire.change_standing(rival, int(a.get("rival_hit", -4)), "You broke off the trade pact for the %s" % fa.get("short", fid), true)
-			_log_diplo(rival, "Trade pact torn up: you promised the %s" % fa.get("short", fid), 0)
-			said += " Your trade pact with the %s is torn up." % Empire.faction(rival).get("short", rival)
-	_log_diplo(fid, "Accepted their request: " + a["name"], 0)
+			Empire.change_standing(rival, int(a.get("rival_hit", -4)), Loc.t("You broke off the trade pact for the %s") % fa.get("short", fid), true)
+			_log_diplo(rival, Loc.t("Trade pact torn up: you promised the %s") % fa.get("short", fid), 0)
+			said += Loc.t(" Your trade pact with the %s is torn up.") % Empire.faction(rival).get("short", rival)
+	_log_diplo(fid, Loc.t("Accepted their request: ") + a["name"], 0)
 	return said
 
 
@@ -377,7 +377,7 @@ static func refuse(fid: String) -> String:
 	if o.is_empty():
 		return ""
 	_close_offer(fid, "refused")
-	return "Refused: %s." % o["name"]
+	return Loc.t("Refused: %s.") % o["name"]
 
 
 static func _close_offer(fid: String, outcome: String) -> void:
@@ -385,7 +385,7 @@ static func _close_offer(fid: String, outcome: String) -> void:
 	state()["offers"].erase(fid)
 	state()["ended"][o["id"]] = Empire.day
 	_schedule(fid, _range("gap", [3, 5]))
-	var why := "Refused their request" if outcome == "refused" else "Ignored their request"
+	var why := Loc.t("Refused their request") if outcome == "refused" else Loc.t("Ignored their request")
 	var hit := int(o.get("refuse", -2))
 	_log(fid, o["id"], outcome)
 	if hit != 0:
@@ -398,9 +398,9 @@ static func _close_offer(fid: String, outcome: String) -> void:
 static func deliver_blocker(fid: String) -> String:
 	var a := active_of(fid)
 	if a.is_empty() or a["kind"] != "deliver":
-		return "nothing to hand over"
+		return Loc.t("nothing to hand over")
 	if not Empire.can_afford(a.get("cost", {})):
-		return "not enough " + Empire._missing(a.get("cost", {}))
+		return Loc.t("not enough ") + Empire._missing(a.get("cost", {}))
 	return ""
 
 
@@ -409,7 +409,7 @@ static func deliver(fid: String) -> String:
 		return ""
 	var a := active_of(fid)
 	Empire.spend(a.get("cost", {}))
-	return _complete(fid, "Handed over %s." % Empire.cost_text(a.get("cost", {})))
+	return _complete(fid, Loc.t("Handed over %s.") % Empire.cost_text(a.get("cost", {})))
 
 
 # ---------------------------------------------------------------- the clock
@@ -424,14 +424,14 @@ static func dawn() -> void:
 		var o := offer_of(fid)
 		if not o.is_empty() and Empire.day >= int(o["until"]):
 			_close_offer(fid, "lapsed")
-			Empire.notice.emit("The %s took your silence as a no: %s." % [Empire.faction(fid).get("short", fid), o["name"]], true)
+			Empire.notice.emit(Loc.t("The %s took your silence as a no: %s.") % [Empire.faction(fid).get("short", fid), o["name"]], true)
 		var a := active_of(fid)
 		if not a.is_empty():
 			if Empire.day >= int(a["until"]):
 				_deadline(fid)
 			elif int(a["until"]) - Empire.day <= int(rules().get("warn_days", 1)) and not a.get("warned", false):
 				st["active"][fid]["warned"] = true
-				_say("%s left on the %s's request: %s." % [_days(int(a["until"]) - Empire.day), Empire.faction(fid).get("short", fid), a["name"]],
+				_say(Loc.t("%s left on the %s's request: %s.") % [_days(int(a["until"]) - Empire.day), Empire.faction(fid).get("short", fid), a["name"]],
 					true, target(fid))
 		if not st["offers"].has(fid) and not st["active"].has(fid):
 			if int(st["next"].get(fid, 0)) <= 0:
@@ -449,15 +449,15 @@ static func _deadline(fid: String) -> void:
 	var a := active_of(fid)
 	match str(a["kind"]):
 		"fray":
-			_complete(fid, "Held every acre at %d Fray or less." % int(a.get("max", 40)))
+			_complete(fid, Loc.t("Held every acre at %d Fray or less.") % int(a.get("max", 40)))
 			return
 		"shun":
-			_complete(fid, "Kept your word: no pact with the %s." % Empire.faction(str(a["rival"])).get("short", "?"))
+			_complete(fid, Loc.t("Kept your word: no pact with the %s.") % Empire.faction(str(a["rival"])).get("short", "?"))
 			return
 		"expedition":
 			if not Empire.expedition_running(str(a.get("job", ""))).is_empty():
 				return  # the squad is still out: their report settles it
-	_fail(fid, "The deadline passed.")
+	_fail(fid, Loc.t("The deadline passed."))
 
 
 ## Every frame the clock runs (cheap: at most one ask per faction). Things that can happen any time.
@@ -472,21 +472,21 @@ static func check() -> void:
 			"lamp":
 				for pid in _watched(a):
 					if int(Empire.lamps.get(pid, 0)) > 0:
-						_complete(fid, "A Wardlamp burns in %s." % Empire.territory().find(pid)["name"])
+						_complete(fid, Loc.t("A Wardlamp burns in %s.") % Empire.territory().find(pid)["name"])
 						break
 			"fray":
 				var watched: Array = a.get("provinces", [])
 				for pid in watched:
 					var p := Empire.territory().find(pid)
 					if p.get("owner", "") == "erased":
-						_fail(fid, "%s was erased." % p.get("name", "?"))
+						_fail(fid, Loc.t("%s was erased.") % p.get("name", "?"))
 						break
 					if p.get("owner", "") == "you" and int(p["fray"]) > int(a.get("max", 40)):
-						_fail(fid, "%s frayed past %d." % [p["name"], int(a.get("max", 40))])
+						_fail(fid, Loc.t("%s frayed past %d.") % [p["name"], int(a.get("max", 40))])
 						break
 			"shun":
 				if str(a["rival"]) in Empire.pacts:
-					_fail(fid, "You signed a trade pact with the %s." % Empire.faction(str(a["rival"])).get("short", "?"))
+					_fail(fid, Loc.t("You signed a trade pact with the %s.") % Empire.faction(str(a["rival"])).get("short", "?"))
 
 
 # ---------------------------------------------------------------- missions and expeditions
@@ -506,7 +506,7 @@ static func on_mission(m: Dictionary, outcome: String, dry := false) -> Array:
 			hit = not a.get("near", true) or str(m.get("province", "")) in near_home(fid, true)
 		if not hit:
 			continue
-		lines.append("The %s's request is done: %s. %s" % [Empire.faction(fid).get("short", fid), a["name"], reward_text(a) + "."])
+		lines.append(Loc.t("The %s's request is done: %s. %s") % [Empire.faction(fid).get("short", fid), a["name"], reward_text(a) + "."])
 		if not dry:
 			_complete(fid, "", true)
 	return lines
@@ -522,13 +522,13 @@ static func on_expedition(jid: String, success: bool) -> Array:
 	var fid: String = ask(id)["faction"]
 	var a := active_of(fid)
 	if success:
-		lines.append("The %s's request is done: %s." % [Empire.faction(fid).get("short", fid), reward_text(a)])
+		lines.append(Loc.t("The %s's request is done: %s.") % [Empire.faction(fid).get("short", fid), reward_text(a)])
 		_complete(fid, "", true)
 	elif Empire.day >= int(a["until"]):
-		lines.append("The deadline for the %s's request has passed." % Empire.faction(fid).get("short", fid))
-		_fail(fid, "The squad came back empty-handed after the deadline.")
+		lines.append(Loc.t("The deadline for the %s's request has passed.") % Empire.faction(fid).get("short", fid))
+		_fail(fid, Loc.t("The squad came back empty-handed after the deadline."))
 	else:
-		lines.append("The %s still want it done: %s left to try again." % [Empire.faction(fid).get("short", fid), _days(int(a["until"]) - Empire.day)])
+		lines.append(Loc.t("The %s still want it done: %s left to try again.") % [Empire.faction(fid).get("short", fid), _days(int(a["until"]) - Empire.day)])
 	return lines
 
 
@@ -557,8 +557,8 @@ static func _complete(fid: String, why := "", quiet := false) -> String:
 	var paid := _pay(fid, a)
 	var short: String = Empire.faction(fid).get("short", fid)
 	var text := "%s%s" % [(why + " ") if why != "" else "", str(a.get("done_text", ""))]
-	_log_diplo(fid, "Request done: %s" % a["name"], 0)
-	var line := "The %s's request is done: %s.%s" % [short, a["name"], (" " + paid + ".") if paid != "" else ""]
+	_log_diplo(fid, Loc.t("Request done: %s") % a["name"], 0)
+	var line := Loc.t("The %s's request is done: %s.%s") % [short, a["name"], (" " + paid + ".") if paid != "" else ""]
 	if not quiet:
 		_say(line, false, {"view": "diplomacy"})
 	return text.strip_edges()
@@ -573,23 +573,23 @@ static func _fail(fid: String, why: String) -> void:
 	var bits := []
 	var short: String = Empire.faction(fid).get("short", fid)
 	if int(f.get("standing", 0)) != 0:
-		Empire.change_standing(fid, int(f["standing"]), "Failed their request: %s" % a["name"], true)
-		bits.append("%s standing %+d" % [short, int(f["standing"])])
+		Empire.change_standing(fid, int(f["standing"]), Loc.t("Failed their request: %s") % a["name"], true)
+		bits.append(Loc.t("%s standing %+d") % [short, int(f["standing"])])
 	if int(f.get("fine", 0)) > 0:
 		var g := mini(int(f["fine"]), int(Empire.res["gilt"]))
 		Empire.res["gilt"] -= g
 		if g > 0:
-			bits.append("they took %d Gilt" % g)
+			bits.append(Loc.t("they took %d Gilt") % g)
 	if f.get("trouble", false) and fid == "concord":
 		Empire.next_trouble_day = mini(Empire.next_trouble_day, Empire.day + 1)
-		bits.append("expect trouble at dawn")
+		bits.append(Loc.t("expect trouble at dawn"))
 	if f.has("hex"):
 		for pid in near_home(fid):
 			_effect("hex", fid, pid, int(f["hex"].get("per_day", 2)), int(f["hex"].get("days", 3)))
 		if not near_home(fid).is_empty():
-			bits.append("a hex on your land by their home (+%d Fray a day for %d days, a Wardlamp burns it off)" % [int(f["hex"].get("per_day", 2)), int(f["hex"].get("days", 3))])
-	_log_diplo(fid, "Failed their request: %s. %s" % [a["name"], why], 0, true)
-	_say("The %s's request failed: %s. %s%s" % [short, a["name"], why, (" " + ", ".join(bits).substr(0, 1).to_upper() + ", ".join(bits).substr(1) + ".") if not bits.is_empty() else ""],
+			bits.append(Loc.t("a hex on your land by their home (+%d Fray a day for %d days, a Wardlamp burns it off)") % [int(f["hex"].get("per_day", 2)), int(f["hex"].get("days", 3))])
+	_log_diplo(fid, Loc.t("Failed their request: %s. %s") % [a["name"], why], 0, true)
+	_say(Loc.t("The %s's request failed: %s. %s%s") % [short, a["name"], why, (" " + ", ".join(bits).substr(0, 1).to_upper() + ", ".join(bits).substr(1) + ".") if not bits.is_empty() else ""],
 		true, {"view": "diplomacy"})
 
 
@@ -605,12 +605,12 @@ static func _pay(fid: String, a: Dictionary) -> String:
 	var rw: Dictionary = a.get("reward", {})
 	var bits := []
 	if int(rw.get("standing", 0)) != 0:
-		Empire.change_standing(fid, int(rw["standing"]), "Request done: %s" % a["name"], true)
-		bits.append("%s standing %+d" % [Empire.faction(fid).get("short", fid), int(rw["standing"])])
+		Empire.change_standing(fid, int(rw["standing"]), Loc.t("Request done: %s") % a["name"], true)
+		bits.append(Loc.t("%s standing %+d") % [Empire.faction(fid).get("short", fid), int(rw["standing"])])
 	for k in RES_ORDER:
 		if int(rw.get(k, 0)) != 0:
 			Empire.gain(k, int(rw[k]))
-			bits.append("+%d %s" % [int(rw[k]), Empire.RES_NAMES[k]])
+			bits.append("+%d %s" % [int(rw[k]), Loc.t(Empire.RES_NAMES[k])])
 	var mats: Dictionary = rw.get("mats", {})
 	for m in mats:
 		if Armory.is_mat(str(m)):
@@ -632,9 +632,9 @@ static func _pay(fid: String, a: Dictionary) -> String:
 	if rid != "" and not Empire.recruits.has(rid) and not Empire.visitors.has(rid) and Empire.recruit_data.has(rid):
 		Empire.visitors[rid] = Empire.day
 		var r := Empire.recruit(rid)
-		Empire.notice.emit("%s, %s, is waiting at Hollowmark's south gate. Talk to them in town, or open Newcomers%s." % [r["name"], r.get("title", ""), Prompts.tag("newcomers")], false)
+		Empire.notice.emit(Loc.t("%s, %s, is waiting at Hollowmark's south gate. Talk to them in town, or open Newcomers%s.") % [r["name"], r.get("title", ""), Prompts.tag("newcomers")], false)
 		Empire.lead_arrived.emit(rid)
-		bits.append("%s comes to Hollowmark" % r["name"])
+		bits.append(Loc.t("%s comes to Hollowmark") % r["name"])
 	return ", ".join(bits)
 
 
@@ -657,11 +657,11 @@ static func fray_sources(p: Dictionary) -> Array:
 		var left := int(e["until"]) - Empire.day
 		var short: String = Empire.faction(e["faction"]).get("short", e["faction"])
 		if e["kind"] == "ward":
-			out.append(["%s wards (%dd)" % [short, left], int(e["per_day"])])
+			out.append([Loc.t("%s wards (%dd)") % [short, left], int(e["per_day"])])
 		elif int(Empire.lamps.get(p["id"], 0)) > 0:
-			out.append(["%s hex (%dd, burnt off by Wardlamp)" % [short, left], 0])
+			out.append([Loc.t("%s hex (%dd, burnt off by Wardlamp)") % [short, left], 0])
 		else:
-			out.append(["%s hex (%dd, a Wardlamp burns it off)" % [short, left], int(e["per_day"])])
+			out.append([Loc.t("%s hex (%dd, a Wardlamp burns it off)") % [short, left], int(e["per_day"])])
 	return out
 
 
@@ -669,19 +669,19 @@ static func fray_sources(p: Dictionary) -> Array:
 
 static func _days(n: int) -> String:
 	if n <= 0:
-		return "less than a day"
-	return "%d day%s" % [n, "" if n == 1 else "s"]
+		return Loc.t("less than a day")
+	return Loc.t("%d day%s") % [n, "" if n == 1 else "s"]
 
 
 static func boon_text(fid: String, b: Dictionary) -> String:
 	var days := int(b.get("days", 5))
 	match str(b.get("kind", "")):
 		"intel":
-			return "+1 day of surge warning for %d days" % days
+			return Loc.t("+1 day of surge warning for %d days") % days
 		"truce":
-			return "no Concord trouble for %d days" % days
+			return Loc.t("no Concord trouble for %d days") % days
 		"ward":
-			return "your land by the %s's home frays %d less a day for %d days" % [Empire.faction(fid).get("short", fid), absi(int(b.get("per_day", -1))), days]
+			return Loc.t("your land by the %s's home frays %d less a day for %d days") % [Empire.faction(fid).get("short", fid), absi(int(b.get("per_day", -1))), days]
 	return ""
 
 
@@ -690,17 +690,17 @@ static func reward_text(a: Dictionary) -> String:
 	var rw: Dictionary = a.get("reward", {})
 	var bits := []
 	if int(rw.get("standing", 0)) != 0:
-		bits.append("%+d standing" % int(rw["standing"]))
+		bits.append(Loc.t("%+d standing") % int(rw["standing"]))
 	for k in RES_ORDER:
 		if int(rw.get(k, 0)) != 0:
-			bits.append("+%d %s" % [int(rw[k]), Empire.RES_NAMES[k]])
+			bits.append("+%d %s" % [int(rw[k]), Loc.t(Empire.RES_NAMES[k])])
 	var mats: Dictionary = rw.get("mats", {})
 	for m in mats:
 		bits.append("+%d %s" % [int(mats[m]), Armory.mat_name(str(m))])
 	if rw.has("boon"):
 		bits.append(boon_text(a["faction"], rw["boon"]))
 	if str(rw.get("recruit", "")) != "" and not Empire.recruits.has(str(rw["recruit"])):
-		bits.append("someone new comes to Hollowmark")
+		bits.append(Loc.t("someone new comes to Hollowmark"))
 	return ", ".join(bits)
 
 
@@ -709,14 +709,14 @@ static func fail_text(a: Dictionary) -> String:
 	var f: Dictionary = a.get("fail", {})
 	var bits := []
 	if int(f.get("standing", 0)) != 0:
-		bits.append("%+d standing" % int(f["standing"]))
+		bits.append(Loc.t("%+d standing") % int(f["standing"]))
 	if int(f.get("fine", 0)) > 0:
-		bits.append("they take %d Gilt" % int(f["fine"]))
+		bits.append(Loc.t("they take %d Gilt") % int(f["fine"]))
 	if f.get("trouble", false):
-		bits.append("Concord trouble at the next dawn")
+		bits.append(Loc.t("Concord trouble at the next dawn"))
 	if f.has("hex"):
-		bits.append("a hex: +%d Fray a day for %d days on your land by their home" % [int(f["hex"].get("per_day", 2)), int(f["hex"].get("days", 3))])
-	return ", ".join(bits) if not bits.is_empty() else "nothing but their opinion of you"
+		bits.append(Loc.t("a hex: +%d Fray a day for %d days on your land by their home") % [int(f["hex"].get("per_day", 2)), int(f["hex"].get("days", 3))])
+	return ", ".join(bits) if not bits.is_empty() else Loc.t("nothing but their opinion of you")
 
 
 ## What the ask wants you to do, in one sentence.
@@ -725,19 +725,19 @@ static func task_text(a: Dictionary) -> String:
 	match str(a.get("kind", "")):
 		"expedition":
 			var j := Empire.job(str(a.get("job", "")))
-			return "Send a squad on \"%s\" from the Guildhall%s (%s)." % [j.get("name", "?"), Prompts.tag("expeditions"), Empire.territory().find(str(j.get("province", ""))).get("name", "?")]
+			return Loc.t("Send a squad on \"%s\" from the Guildhall%s (%s).") % [j.get("name", "?"), Prompts.tag("expeditions"), Empire.territory().find(str(j.get("province", ""))).get("name", "?")]
 		"raid":
-			return "Win a Raid on %s land from the territory map." % Empire.faction(str(a["target"])).get("short", "?")
+			return Loc.t("Win a Raid on %s land from the territory map.") % Empire.faction(str(a["target"])).get("short", "?")
 		"salvage":
-			return "Win a Salvage mission %s." % ("next to the %s's home" % Empire.faction(fid).get("short", fid) if a.get("near", true) else "anywhere")
+			return Loc.t("Win a Salvage mission %s.") % (Loc.t("next to the %s's home") % Empire.faction(fid).get("short", fid) if a.get("near", true) else Loc.t("anywhere"))
 		"fray":
-			return "Keep every province of yours next to %s at %d Fray or less until the deadline." % [Empire.territory().find(str(Empire.faction(fid).get("province", ""))).get("name", "?"), int(a.get("max", 40))]
+			return Loc.t("Keep every province of yours next to %s at %d Fray or less until the deadline.") % [Empire.territory().find(str(Empire.faction(fid).get("province", ""))).get("name", "?"), int(a.get("max", 40))]
 		"lamp":
-			return "Light a Wardlamp in a province of yours next to %s (Command Table)." % Empire.territory().find(str(Empire.faction(fid).get("province", ""))).get("name", "?")
+			return Loc.t("Light a Wardlamp in a province of yours next to %s (Command Table).") % Empire.territory().find(str(Empire.faction(fid).get("province", ""))).get("name", "?")
 		"deliver":
-			return "Hand over %s from Diplomacy before the deadline." % Empire.cost_text(a.get("cost", {}))
+			return Loc.t("Hand over %s from Diplomacy before the deadline.") % Empire.cost_text(a.get("cost", {}))
 		"shun":
-			return "Hold no trade pact with the %s until the deadline." % Empire.faction(str(a["rival"])).get("short", "?")
+			return Loc.t("Hold no trade pact with the %s until the deadline.") % Empire.faction(str(a["rival"])).get("short", "?")
 	return ""
 
 
@@ -752,38 +752,38 @@ static func progress_text(fid: String) -> String:
 			var jid := str(a.get("job", ""))
 			var e := Empire.expedition_running(jid)
 			if not e.is_empty():
-				return "A squad is out on it, due back on day %d." % int(ceil(float(e["finish"])))
+				return Loc.t("A squad is out on it, due back on day %d.") % int(ceil(float(e["finish"])))
 			var why := Empire.job_blocker(jid)
-			return "On the Guildhall board now." if why == "" else "Can't send it yet: %s." % why
+			return Loc.t("On the Guildhall board now.") if why == "" else Loc.t("Can't send it yet: %s.") % why
 		"raid":
 			var t := target(fid)
 			if t.has("mission"):
-				return "A raid is on offer at %s right now." % Empire.territory().find(t["province"]).get("name", "?")
+				return Loc.t("A raid is on offer at %s right now.") % Empire.territory().find(t["province"]).get("name", "?")
 			var rt := raid_targets(str(a["target"]))
 			if rt.is_empty():
-				return "No %s land borders yours right now." % Empire.faction(str(a["target"])).get("short", "?")
-			return "No raid on offer this minute; chances open every few days at %s." % Empire.territory().find(rt[0]).get("name", "?")
+				return Loc.t("No %s land borders yours right now.") % Empire.faction(str(a["target"])).get("short", "?")
+			return Loc.t("No raid on offer this minute; chances open every few days at %s.") % Empire.territory().find(rt[0]).get("name", "?")
 		"salvage":
 			var t2 := target(fid)
 			if t2.has("mission"):
-				return "A salvage run is on offer at %s right now." % Empire.territory().find(t2["province"]).get("name", "?")
-			return "No salvage run on offer this minute; they open every few days on frayed land."
+				return Loc.t("A salvage run is on offer at %s right now.") % Empire.territory().find(t2["province"]).get("name", "?")
+			return Loc.t("No salvage run on offer this minute; they open every few days on frayed land.")
 		"fray":
 			var parts := []
 			for pid in _watched(a):
 				var p := Empire.territory().find(pid)
 				parts.append("%s %d" % [p["name"], int(p["fray"])])
-			return ("Fray now: %s (line: %d). Holds for %s more." % [", ".join(parts), int(a.get("max", 40)), _days(left)]) if not parts.is_empty() else "None of your land is next to theirs any more."
+			return (Loc.t("Fray now: %s (line: %d). Holds for %s more.") % [", ".join(parts), int(a.get("max", 40)), _days(left)]) if not parts.is_empty() else Loc.t("None of your land is next to theirs any more.")
 		"lamp":
 			for pid in _watched(a):
 				if Empire.lamp_jobs.has(pid):
-					return "A lamp is going up in %s." % Empire.territory().find(pid)["name"]
-			return "No lamp lit or going up yet."
+					return Loc.t("A lamp is going up in %s.") % Empire.territory().find(pid)["name"]
+			return Loc.t("No lamp lit or going up yet.")
 		"deliver":
 			var why2 := deliver_blocker(fid)
-			return ("Ready to hand over. %s on it in Diplomacy." % Prompts.confirm()) if why2 == "" else "Can't hand it over yet: %s." % why2
+			return (Loc.t("Ready to hand over. %s on it in Diplomacy.") % Prompts.confirm()) if why2 == "" else Loc.t("Can't hand it over yet: %s.") % why2
 		"shun":
-			return "Promise kept so far. Holds for %s more." % _days(left)
+			return Loc.t("Promise kept so far. Holds for %s more.") % _days(left)
 	return ""
 
 
@@ -797,9 +797,9 @@ static func rows(fid: String) -> Array:
 	var where: String = Empire.territory().find(str(Empire.faction(fid).get("province", ""))).get("name", "")
 	var o := offer_of(fid)
 	if not o.is_empty():
-		out.append({"id": "ask_" + o["id"], "section": "factions", "title": "%s ask: %s" % [short, o["name"]], "state": "open",
+		out.append({"id": "ask_" + o["id"], "section": "factions", "title": Loc.t("%s ask: %s") % [short, o["name"]], "state": "open",
 			"text": str(o.get("text", "")), "where": where, "days": maxi(int(o["until"]) - Empire.day, 0),
-			"next": "Answer in Diplomacy%s. Do it for %s. Refusing costs %d standing; so does leaving it unanswered. %s" % [Prompts.tag("diplomacy"), reward_text(o), absi(int(o.get("refuse", -2))), task_text(o)],
+			"next": Loc.t("Answer in Diplomacy%s. Do it for %s. Refusing costs %d standing; so does leaving it unanswered. %s") % [Prompts.tag("diplomacy"), reward_text(o), absi(int(o.get("refuse", -2))), task_text(o)],
 			"target": {"view": "diplomacy"}})
 	var a := active_of(fid)
 	if not a.is_empty():
@@ -808,7 +808,7 @@ static func rows(fid: String) -> Array:
 		var tw: String = Empire.territory().find(tpid).get("name", where)
 		out.append({"id": "ask_" + a["id"], "section": "factions", "title": "%s: %s" % [short, a["name"]], "state": "open",
 			"text": str(a.get("text", "")), "where": tw, "days": maxi(int(a["until"]) - Empire.day, 0),
-			"next": "%s %s Pays %s. Missing it: %s." % [task_text(a), progress_text(fid), reward_text(a), fail_text(a)],
+			"next": Loc.t("%s %s Pays %s. Missing it: %s.") % [task_text(a), progress_text(fid), reward_text(a), fail_text(a)],
 			"target": t})
 	for e in state()["log"]:
 		if e["faction"] != fid or Empire.day - int(e["day"]) > 3 or not e["outcome"] in ["done", "failed"]:
@@ -819,7 +819,7 @@ static func rows(fid: String) -> Array:
 		out.append({"id": "ask_%s_%d" % [e["id"], int(e["day"])], "section": "factions", "title": "%s: %s" % [short, d["name"]],
 			"state": "done" if e["outcome"] == "done" else "blocked", "text": str(d.get("done_text" if e["outcome"] == "done" else "fail_text", "")),
 			"where": where, "days": -1, "target": {},
-			"next": ("Done on day %d." if e["outcome"] == "done" else "Failed on day %d.") % int(e["day"])})
+			"next": (Loc.t("Done on day %d.") if e["outcome"] == "done" else Loc.t("Failed on day %d.")) % int(e["day"])})
 	return out
 
 

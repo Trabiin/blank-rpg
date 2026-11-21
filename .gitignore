@@ -2,3 +2,4 @@
 build/
 export_credentials.cfg
 tools/__pycache__/
+locale/messages.pot

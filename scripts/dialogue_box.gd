@@ -196,13 +196,13 @@ func _draw() -> void:
 		draw_colored_polygon(PackedVector2Array([tip, tip + Vector2(-3, -7), tip + Vector2(0, -10), tip + Vector2(3, -7)]), INK)
 		draw_line(tip + Vector2(0, -2), tip + Vector2(0, -6), Color("d6cdba"), 1.0)
 	# Speed and skip, small, under the box (they are also on Tab and Esc).
-	var sp := "Text: %s" % Dialogue.speed_name()
+	var sp := tr("Text: %s") % Dialogue.speed_name()
 	var sw := font.get_string_size(sp, HORIZONTAL_ALIGNMENT_LEFT, -1, 7).x
 	_speed_rect = Rect2(box.position.x, box.end.y + 1, sw + 10, 9)
 	draw_string(font, _speed_rect.position + Vector2(4, 7), sp, HORIZONTAL_ALIGNMENT_LEFT, -1, 7, Color(0.62, 0.6, 0.64))
 	_skip_rect = Rect2(_speed_rect.end.x + 4, box.end.y + 1, 30, 9)
-	draw_string(font, _skip_rect.position + Vector2(4, 7), "Skip", HORIZONTAL_ALIGNMENT_LEFT, -1, 7, Color(0.62, 0.6, 0.64))
-	var hint := Prompts.help([["ui_accept", "next"], ["swap", "text speed"], ["ui_cancel", "skip"]], "Tap: next")
+	draw_string(font, _skip_rect.position + Vector2(4, 7), tr("Skip"), HORIZONTAL_ALIGNMENT_LEFT, -1, 7, Color(0.62, 0.6, 0.64))
+	var hint := Prompts.help([["ui_accept", "next"], ["swap", tr("text speed")], ["ui_cancel", "skip"]], tr("Tap: next"))
 	draw_string(font, Vector2(vs.x - font.get_string_size(hint, HORIZONTAL_ALIGNMENT_LEFT, -1, 7).x - 14, vs.y - 2), hint,
 		HORIZONTAL_ALIGNMENT_LEFT, -1, 7, Color(0.5, 0.48, 0.52))
 

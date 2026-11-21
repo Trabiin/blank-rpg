@@ -144,7 +144,7 @@ static func battle_speed() -> float:
 
 
 static func battle_speed_name() -> String:
-	return "%sx" % str(battle_speed()).trim_suffix(".0") if battle_speed() != 1.0 else "1x (normal)"
+	return "%sx" % str(battle_speed()).trim_suffix(".0") if battle_speed() != 1.0 else Loc.t("1x (normal)")
 
 
 ## Puts Engine.time_scale where it belongs right now. slow = the quick menu's slow motion factor.
@@ -277,18 +277,18 @@ const PAD_BUTTONS := {
 
 static func pad_text(pad: Dictionary) -> String:
 	if pad.has("b"):
-		return PAD_BUTTONS.get(int(pad["b"]), "Button %d" % int(pad["b"]))
+		return Loc.t(PAD_BUTTONS.get(int(pad["b"]), Loc.t("Button %d") % int(pad["b"])))
 	if pad.has("a"):
 		var ax := int(pad["a"])
 		var neg: bool = float(pad.get("v", 1.0)) < 0.0
 		match ax:
-			JOY_AXIS_TRIGGER_LEFT: return "LT"
-			JOY_AXIS_TRIGGER_RIGHT: return "RT"
-			JOY_AXIS_LEFT_X: return "L stick left" if neg else "L stick right"
-			JOY_AXIS_LEFT_Y: return "L stick up" if neg else "L stick down"
-			JOY_AXIS_RIGHT_X: return "R stick left" if neg else "R stick right"
-			JOY_AXIS_RIGHT_Y: return "R stick up" if neg else "R stick down"
-		return "Axis %d" % ax
+			JOY_AXIS_TRIGGER_LEFT: return Loc.t("LT")
+			JOY_AXIS_TRIGGER_RIGHT: return Loc.t("RT")
+			JOY_AXIS_LEFT_X: return Loc.t("L stick left") if neg else Loc.t("L stick right")
+			JOY_AXIS_LEFT_Y: return Loc.t("L stick up") if neg else Loc.t("L stick down")
+			JOY_AXIS_RIGHT_X: return Loc.t("R stick left") if neg else Loc.t("R stick right")
+			JOY_AXIS_RIGHT_Y: return Loc.t("R stick up") if neg else Loc.t("R stick down")
+		return Loc.t("Axis %d") % ax
 	return "-"
 
 
