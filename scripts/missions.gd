@@ -18,7 +18,7 @@ static var _data: Array = []
 
 static func all() -> Array:
 	if _data.is_empty():
-		var parsed = JSON.parse_string(FileAccess.get_file_as_string(PATH))
+		var parsed = Loc.load_json(PATH)
 		if typeof(parsed) == TYPE_DICTIONARY:
 			_data = parsed.get("missions", [])
 	return _data
@@ -46,10 +46,10 @@ static func personal_state(who: String) -> String:
 ## What kind of mission this is, for the briefing: "Story", "Boss", "Patrol", "Defense", "Raid"...
 static func type_name(m: Dictionary) -> String:
 	if m.has("type"):
-		return MissionTypes.TYPE_NAMES.get(m["type"], str(m["type"]).capitalize())
+		return Loc.t(MissionTypes.TYPE_NAMES.get(m["type"], str(m["type"]).capitalize()))
 	if m.get("objective", {}).get("kind", "") == "boss":
-		return "Boss"
-	return "Story" if m.get("story", false) else "Patrol"
+		return Loc.t("Boss")
+	return Loc.t("Story") if m.get("story", false) else Loc.t("Patrol")
 
 
 ## How dangerous it is, 1 (light) to 5 (deadly): the mission's own "threat", else a guess from the land.
@@ -71,7 +71,7 @@ static func threat_text(m: Dictionary) -> String:
 static func reward_text(m: Dictionary) -> String:
 	var fixed := res_text(m.get("rewards", {}))
 	if m.has("reward_text"):
-		return str(m["reward_text"]) + ((", plus " + fixed + " on success") if fixed != "" else "")
+		return str(m["reward_text"]) + ((Loc.t(", plus ") + fixed + Loc.t(" on success")) if fixed != "" else "")
 	return fixed
 
 
@@ -146,7 +146,7 @@ static func res_text(d: Dictionary) -> String:
 	var parts := []
 	for k in ["gilt", "supplies", "ink", "renown", "insight"]:
 		if int(d.get(k, 0)) != 0:
-			parts.append("%d %s" % [int(d[k]), Empire.RES_NAMES.get(k, k)])
+			parts.append("%d %s" % [int(d[k]), Loc.t(Empire.RES_NAMES.get(k, k))])
 	var other := Armory.found_text(d)  # Forge materials and field items (issue #112)
 	if other != "":
 		parts.append(other)
@@ -181,8 +181,8 @@ static func settle(m: Dictionary, outcome: String, found: Dictionary, stats: Dic
 	var md := m.duplicate(true)
 	md["info"] = stats.get("info", {})  # how it went (caches taken, the alarm), for the type's effects (#113)
 	return {
-		"outcome": outcome, "title": OUTCOME_TITLES.get(outcome, outcome),
-		"mission": m.get("id", ""), "name": m.get("name", "Mission"),
+		"outcome": outcome, "title": Loc.t(OUTCOME_TITLES.get(outcome, outcome)),
+		"mission": m.get("id", ""), "name": m.get("name", Loc.t("Mission")),
 		"province": p.get("name", ""), "province_id": p.get("id", ""),
 		"fray": fray, "fray_now": int(p.get("fray", 0)),
 		"found": found.duplicate(), "pay": pay,
@@ -229,7 +229,7 @@ static func apply(result: Dictionary) -> void:
 static func go_home(result: Dictionary) -> void:
 	apply(result)
 	Saves.pending = {}
-	Saves.save("auto", {"scene": Saves.HUB_SCENE, "area_name": "Hollowmark"})
+	Saves.save("auto", {"scene": Saves.HUB_SCENE, "area_name": Loc.t("Hollowmark")})
 	var tree := Engine.get_main_loop() as SceneTree
 	tree.paused = false
 	tree.change_scene_to_file(Saves.HUB_SCENE)

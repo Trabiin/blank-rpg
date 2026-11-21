@@ -26,7 +26,7 @@ static func data() -> Dictionary:
 	if _data.is_empty():
 		var f := FileAccess.open("res://data/enemies.json", FileAccess.READ)
 		if f:
-			_data = JSON.parse_string(f.get_as_text())
+			_data = Loc.data(JSON.parse_string(f.get_as_text()), f.get_path().get_file())
 	return _data
 
 

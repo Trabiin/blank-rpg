@@ -93,23 +93,23 @@ func _pick(i: int) -> void:
 	var n := Empire.research_node(id)
 	match Empire.research_state(id):
 		"done":
-			_say("Already known: %s." % n["effect"])
+			_say(tr("Already known: %s.") % n["effect"])
 		"active":
 			Empire.shelve_research()
-			_say("Set aside %s. Progress is kept; %s again to resume." % [n["name"], Prompts.confirm()])
+			_say(tr("Set aside %s. Progress is kept; %s again to resume.") % [n["name"], Prompts.confirm()])
 		_:
 			var why := Empire.research_blocker(id)
 			if why != "":
-				_say("Can't: %s." % why)
+				_say(tr("Can't: %s.") % why)
 				return
 			var prev := Empire.research_active
 			var resumed: bool = id in Empire.research_paid
 			if Empire.start_research(id):
-				var msg := ("Resumed %s." if resumed else "Started %s.") % n["name"]
+				var msg := (tr("Resumed %s.") if resumed else tr("Started %s.")) % n["name"]
 				if prev != "":
-					msg += " %s is set aside, progress kept." % Empire.research_node(prev)["name"]
+					msg += tr(" %s is set aside, progress kept.") % Empire.research_node(prev)["name"]
 				if float(Empire.research_pace()["pace"]) <= 0.0:
-					msg += " Stalled until someone works the Scriptorium."
+					msg += tr(" Stalled until someone works the Scriptorium.")
 				_say(msg)
 
 
@@ -177,27 +177,27 @@ func _draw() -> void:
 	UiSkin.screen(self, vs)
 	var cr := _close_rect()
 	UiSkin.panel(self, cr, "button")
-	_text(cr.position + Vector2(9, 12), "Close", 9, Color(0.75, 0.72, 0.7))
+	_text(cr.position + Vector2(9, 12), tr("Close"), 9, Color(0.75, 0.72, 0.7))
 	_row_rects.clear()
 
-	_text(Vector2(8, 20), "Research", 15, Color("f3efe4"))
+	_text(Vector2(8, 20), tr("Research"), 15, Color("f3efe4"))
 	var daily := int(Empire.current_effect("scriptorium").get("insight", 0))
-	_text(Vector2(84, 20), "Insight: %d banked, +%d a day" % [int(Empire.res.get("insight", 0)), daily], 9, INSIGHT)
+	_text(Vector2(84, 20), tr("Insight: %d banked, +%d a day") % [int(Empire.res.get("insight", 0)), daily], 9, INSIGHT)
 	var pace := Empire.research_pace()
 	var p := float(pace["pace"])
 	var sub := ""
 	var sub_col := GOLD
 	if Empire.level_of("scriptorium") <= 0:
-		sub = "Research happens in the Scriptorium. Build it first on the Buildings screen%s." % Prompts.tag("buildings")
+		sub = tr("Research happens in the Scriptorium. Build it first on the Buildings screen%s.") % Prompts.tag("buildings")
 		sub_col = BAD
 	elif p <= 0.0:
-		sub = "Nobody is working the Scriptorium, so study is stalled. Give it a researcher (B, or R for the roster)."
+		sub = tr("Nobody is working the Scriptorium, so study is stalled. Give it a researcher (B, or R for the roster).")
 		sub_col = BAD
 	elif Empire.research_active == "":
-		sub = "Nothing being studied. Pick a node and press %s. Study pace: %d%%." % [Prompts.confirm(), int(round(p * 100))]
+		sub = tr("Nothing being studied. Pick a node and press %s. Study pace: %d%%.") % [Prompts.confirm(), int(round(p * 100))]
 	else:
 		var a := Empire.research_node(Empire.research_active)
-		sub = "Studying %s: done in %s at %d%% pace." % [a["name"], Empire.research_left_text(Empire.research_active), int(round(p * 100))]
+		sub = tr("Studying %s: done in %s at %d%% pace.") % [a["name"], Empire.research_left_text(Empire.research_active), int(round(p * 100))]
 	_text(Vector2(8, 34), sub, 8, sub_col)
 
 	# The list, grouped by branch
@@ -237,19 +237,19 @@ func _draw() -> void:
 		_text(base + Vector2(nx, 0), n["name"], 9, GOLD if on and state != "locked" else col, 148 - nx)
 		match state:
 			"done":
-				_text(base + Vector2(150, 0), "known", 8, GOOD)
+				_text(base + Vector2(150, 0), Loc.t("known"), 8, GOOD)
 			"active", "shelved":
 				var bx := Rect2(rr.position + Vector2(150, 4), Vector2(90, 5))
 				_bar(bx, Empire.research_fraction(id), GOLD if state == "active" else SOFT)
-				_text(Vector2(bx.end.x + 6, base.y), Empire.research_left_text(id) if state == "active" else "set aside", 8, SOFT)
+				_text(Vector2(bx.end.x + 6, base.y), Empire.research_left_text(id) if state == "active" else tr("set aside"), 8, SOFT)
 			_:
 				var cost: Dictionary = n["cost"]
 				_text(base + Vector2(150, 0), Empire.cost_text(cost), 8, (INSIGHT if Empire.can_afford(cost) else BAD) if state != "locked" else DIM)
-				_text_r(base + Vector2(LIST_W - 6, 0), "%d day%s" % [int(n["days"]), "" if int(n["days"]) == 1 else "s"], 8, SOFT if state != "locked" else DIM)
+				_text_r(base + Vector2(LIST_W - 6, 0), tr("%d day%s") % [int(n["days"]), "" if int(n["days"]) == 1 else "s"], 8, SOFT if state != "locked" else DIM)
 		y += ROW_H
 
 	_draw_details(vs)
-	_text(Vector2(8, vs.y - 8), Prompts.help([["updown", "choose"], ["ui_accept", "study / set aside"], [["ui_cancel", "research"], "close"]], "Tap a node, tap again to study it"), 7, Color(0.5, 0.48, 0.52))
+	_text(Vector2(8, vs.y - 8), Prompts.help([["updown", "choose"], ["ui_accept", tr("study / set aside")], [["ui_cancel", "research"], "close"]], tr("Tap a node, tap again to study it")), 7, Color(0.5, 0.48, 0.52))
 	if flash_t > 0.0:
 		var a := clampf(flash_t / 0.4, 0.0, 1.0)
 		var w := font.get_string_size(flash, HORIZONTAL_ALIGNMENT_LEFT, -1, 9).x
@@ -282,26 +282,26 @@ func _draw_details(vs: Vector2) -> void:
 	var state := Empire.research_state(id)
 	match state:
 		"done":
-			_text(Vector2(x, y + 8), "Known. Already working for you.", 9, GOOD)
+			_text(Vector2(x, y + 8), tr("Known. Already working for you."), 9, GOOD)
 		"active", "shelved":
-			_text(Vector2(x, y + 8), "Studying now" if state == "active" else "Set aside (paid for, progress kept)", 9, GOLD if state == "active" else SOFT)
+			_text(Vector2(x, y + 8), tr("Studying now") if state == "active" else tr("Set aside (paid for, progress kept)"), 9, GOLD if state == "active" else SOFT)
 			y += 14
 			_bar(Rect2(x, y, w, 6), Empire.research_fraction(id), GOLD if state == "active" else SOFT)
 			y += 8
-			_text(Vector2(x, y + 8), "%d%% done. %s" % [int(Empire.research_fraction(id) * 100),
-				("Done in " + Empire.research_left_text(id) + ".") if state == "active" else Prompts.confirm() + " to resume."], 8, SOFT, w)
+			_text(Vector2(x, y + 8), tr("%d%% done. %s") % [int(Empire.research_fraction(id) * 100),
+				(tr("Done in ") + Empire.research_left_text(id) + ".") if state == "active" else Prompts.confirm() + tr(" to resume.")], 8, SOFT, w)
 		_:
 			var cost: Dictionary = n["cost"]
-			_text(Vector2(x, y + 8), "Costs %s, paid when you start." % Empire.cost_text(cost), 8, INSIGHT if Empire.can_afford(cost) else BAD, w)
+			_text(Vector2(x, y + 8), tr("Costs %s, paid when you start.") % Empire.cost_text(cost), 8, INSIGHT if Empire.can_afford(cost) else BAD, w)
 			y += 12
-			_text(Vector2(x, y + 8), "Study: %d day%s at 100%% pace." % [int(n["days"]), "" if int(n["days"]) == 1 else "s"], 8, SOFT, w)
+			_text(Vector2(x, y + 8), tr("Study: %d day%s at 100%% pace.") % [int(n["days"]), "" if int(n["days"]) == 1 else "s"], 8, SOFT, w)
 			var why := Empire.research_blocker(id)
 			if why != "":
 				y += 12
-				_text(Vector2(x, y + 8), "Can't yet: %s." % why, 8, BAD, w)
+				_text(Vector2(x, y + 8), tr("Can't yet: %s.") % why, 8, BAD, w)
 	y += 22
 	# Who sets the pace
-	_text(Vector2(x, y), "Study pace", 8, Color(0.75, 0.72, 0.7))
+	_text(Vector2(x, y), tr("Study pace"), 8, Color(0.75, 0.72, 0.7))
 	var pace := Empire.research_pace()
 	_text_r(Vector2(x + w, y), "%d%%" % int(round(float(pace["pace"]) * 100)), 9, GOOD if float(pace["pace"]) > 0.0 else BAD)
 	y += 2

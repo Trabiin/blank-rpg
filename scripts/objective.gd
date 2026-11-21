@@ -84,30 +84,30 @@ func text() -> String:
 		return inner.text() if _inner_ready else ""
 	match kind:
 		_:
-			return "%s  %d/%d" % [data.get("label", "Objective"), progress, target]
+			return "%s  %d/%d" % [data.get("label", tr("Objective")), progress, target]
 
 
 ## For the briefing on the map.
 static func describe(objective: Dictionary) -> String:
 	match objective.get("kind", "kills"):
 		"kills":
-			return "%s (%d)" % [objective.get("label", "Disperse Nibblers"), int(objective.get("count", 10))]
+			return "%s (%d)" % [objective.get("label", Loc.t("Disperse Nibblers")), int(objective.get("count", 10))]
 		"defense":
-			return "Hold the wardstone for %d seconds" % int(objective.get("seconds", 75))
+			return Loc.t("Hold the wardstone for %d seconds") % int(objective.get("seconds", 75))
 		"reclaim":
-			return "Break the Blot"
+			return Loc.t("Break the Blot")
 		"rescue":
-			return "Find %s and bring them back" % Empire.short_name(objective.get("who", ""))
+			return Loc.t("Find %s and bring them back") % Empire.short_name(objective.get("who", ""))
 		"boss":
-			return objective.get("label", "Defeat the boss")
+			return objective.get("label", Loc.t("Defeat the boss"))
 		"raid":
-			return "Take at least %d of %d caches and get out before the garrison comes" % [int(objective.get("need", 3)), (objective.get("caches", []) as Array).size()]
+			return Loc.t("Take at least %d of %d caches and get out before the garrison comes") % [int(objective.get("need", 3)), (objective.get("caches", []) as Array).size()]
 		"salvage":
-			return "Pull at least %d of %d piles out of the white's edge and get back" % [int(objective.get("need", 3)), (objective.get("caches", []) as Array).size()]
+			return Loc.t("Pull at least %d of %d piles out of the white's edge and get back") % [int(objective.get("need", 3)), (objective.get("caches", []) as Array).size()]
 		"script":
-			return objective.get("label", "See it through")
+			return objective.get("label", Loc.t("See it through"))
 		_:
-			return objective.get("label", "Objective")
+			return objective.get("label", Loc.t("Objective"))
 
 
 ## Why it failed, for the results screen ("" when it did not).

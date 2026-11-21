@@ -10,7 +10,7 @@ static var _data := {}
 
 static func data() -> Dictionary:
 	if _data.is_empty():
-		var parsed = JSON.parse_string(FileAccess.get_file_as_string("res://data/items.json"))
+		var parsed = Loc.load_json("res://data/items.json")
 		_data = parsed.get("items", {}) if typeof(parsed) == TYPE_DICTIONARY else {}
 	return _data
 
@@ -92,7 +92,7 @@ static func can_target(id: String, h: Hero) -> bool:
 ## Why the item can't be used on anyone right now, or "" if it can.
 static func blocker(id: String, heroes: Array) -> String:
 	if count(id) <= 0:
-		return "none left"
+		return Loc.t("none left")
 	var it := item(id)
 	if str(it.get("target", "")) == "throw":
 		var leader: Hero = null
@@ -100,23 +100,23 @@ static func blocker(id: String, heroes: Array) -> String:
 			if (h as Hero).controlled and not (h as Hero).dead:
 				leader = h
 		if leader == null:
-			return "nobody to throw it"
+			return Loc.t("nobody to throw it")
 		if not it.get("throw", {}).get("self", false) and Status.nearest_enemy(leader, float(it.get("range", 160))) == null:
-			return "no enemy in range"
+			return Loc.t("no enemy in range")
 		return ""
 	for h in heroes:
 		if can_target(id, h):
 			return ""
 	match str(it.get("target", "hurt")):
 		"hurt":
-			return "everyone is at full HP"
+			return Loc.t("everyone is at full HP")
 		"downed":
-			return "nobody is down"
+			return Loc.t("nobody is down")
 		"ink":
-			return "everyone's Ink is full"
+			return Loc.t("everyone's Ink is full")
 		"cure":
-			return "nobody needs it"
-	return "nobody can use it"
+			return Loc.t("nobody needs it")
+	return Loc.t("nobody can use it")
 
 
 ## Uses one item on `h` (ignored for party and thrown items). Returns a line for the menu, or "" if
@@ -137,7 +137,7 @@ static func use(id: String, h: Hero, heroes: Array) -> String:
 		if caught < 0:
 			return ""
 		_spend(id)
-		return "%s: %s." % [str(it.get("name", id)), "caught %d" % caught if caught > 0 else "nothing caught"]
+		return "%s: %s." % [str(it.get("name", id)), Loc.t("caught %d") % caught if caught > 0 else Loc.t("nothing caught")]
 	var targets: Array = heroes.filter(func(x): return can_target(id, x)) if tgt == "party" else [h]
 	targets = targets.filter(func(x): return x != null and can_target(id, x))
 	if targets.is_empty():
@@ -163,7 +163,7 @@ static func use(id: String, h: Hero, heroes: Array) -> String:
 			Status.apply(hero, str(it["buff"].get("id", "")), float(it["buff"].get("time", 20)))
 		Fx.burst(hero.get_parent(), hero.global_position + Vector2(0, -10), [Color("9fbf6a"), Color("dff5b0")], 10, 40.0)
 	_spend(id)
-	var who := "the party" if targets.size() > 1 else (targets[0] as Hero).hero_name
+	var who := Loc.t("the party") if targets.size() > 1 else (targets[0] as Hero).hero_name
 	return "%s: %s." % [str(it.get("name", id)), who]
 
 

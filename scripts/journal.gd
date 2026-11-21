@@ -32,7 +32,7 @@ static var _data := {}
 
 static func data() -> Dictionary:
 	if _data.is_empty():
-		var parsed = JSON.parse_string(FileAccess.get_file_as_string(PATH))
+		var parsed = Loc.load_json(PATH)
 		_data = parsed if typeof(parsed) == TYPE_DICTIONARY else {}
 	return _data
 
@@ -128,16 +128,16 @@ static func record_mission(r: Dictionary) -> void:
 		lines.append(str(r["objective"]))
 	var pay := Missions.res_text(r.get("pay", {}))
 	if pay != "":
-		lines.append("Brought home: %s." % pay)
+		lines.append(Loc.t("Brought home: %s.") % pay)
 	for l in r.get("lines", []):
 		lines.append(str(l))
-	record({"day": Empire.day, "kind": "mission", "title": str(r.get("name", "Mission")), "outcome": str(r.get("outcome", "")),
+	record({"day": Empire.day, "kind": "mission", "title": str(r.get("name", Loc.t("Mission"))), "outcome": str(r.get("outcome", "")),
 		"lines": lines, "province": str(r.get("province_id", ""))})
 
 
 ## An expedition came home (Empire._resolve_expedition): its report, kept for good.
 static func record_expedition(rep: Dictionary) -> void:
-	record({"day": int(rep.get("day", Empire.day)), "kind": "expedition", "title": str(rep.get("title", "Expedition")),
+	record({"day": int(rep.get("day", Empire.day)), "kind": "expedition", "title": str(rep.get("title", Loc.t("Expedition"))),
 		"outcome": str(rep.get("outcome", "")), "lines": rep.get("lines", []),
 		"province": str(Empire.job(str(rep.get("job", ""))).get("province", ""))})
 
@@ -266,13 +266,13 @@ static func story_quests() -> Array:
 			next = Prompts.fill(str(g.get("hint", "")))
 			var why := _story_blocker(g.get("done", {}))
 			if why != "" and next != "":
-				next += ". For now: " + why + "."
+				next += Loc.t(". For now: ") + why + "."
 		out.append({"id": "story_%d" % i, "section": "story", "title": str(g.get("text", "")), "state": "done" if done else "open",
-			"sub": ch.get("title", "Main story"), "text": "", "next": next, "target": target, "where": _where(target), "days": -1})
+			"sub": ch.get("title", Loc.t("Main story")), "text": "", "next": next, "target": target, "where": _where(target), "days": -1})
 	if not Story.active() and out.is_empty():
-		out.append({"id": "story_none", "section": "story", "title": "Hold the Marches", "state": "open",
-			"text": "This campaign began before the story was written in, so Chapter 1 was skipped.",
-			"next": "Claim land, keep the Blank back and grow the town from the Command Table.", "target": {}, "where": "", "days": -1})
+		out.append({"id": "story_none", "section": "story", "title": Loc.t("Hold the Marches"), "state": "open",
+			"text": Loc.t("This campaign began before the story was written in, so Chapter 1 was skipped."),
+			"next": Loc.t("Claim land, keep the Blank back and grow the town from the Command Table."), "target": {}, "where": "", "days": -1})
 	return out
 
 
@@ -288,7 +288,7 @@ static func _story_blocker(done: Dictionary) -> String:
 				return why
 		var after: String = m.get("after", "")
 		if after != "" and not Missions.cleared(after):
-			return "clear %s first" % Missions.find(after).get("name", after)
+			return Loc.t("clear %s first") % Missions.find(after).get("name", after)
 	return ""
 
 
@@ -312,32 +312,32 @@ static func personal_quests() -> Array:
 		row["where"] = p.get("name", "")
 		if Empire.personal_done(id):
 			row["state"] = "done"
-			row["next"] = "Done. %s" % Empire.bond_next_text(id) if rank < Empire.BOND_MAX else "Done, and the bond is as deep as it goes."
+			row["next"] = Loc.t("Done. %s") % Empire.bond_next_text(id) if rank < Empire.BOND_MAX else Loc.t("Done, and the bond is as deep as it goes.")
 			row["target"] = {"view": "bonds"} if Empire.bond_next_scene(id) > 0 else {}
 		elif rank < 4:
 			row["state"] = "locked"
-			row["next"] = "Opens at bond rank 4 with %s (now rank %d). Chat in town, give them a role they like, take them along." % [name, rank]
+			row["next"] = Loc.t("Opens at bond rank 4 with %s (now rank %d). Chat in town, give them a role they like, take them along.") % [name, rank]
 			row["target"] = {"view": "bonds"}
 		elif Empire.personal_lost(id) != "":
 			row["state"] = "blocked"
-			row["next"] = "%s has been erased. Reclaim it to bring this back." % Empire.personal_lost(id)
+			row["next"] = Loc.t("%s has been erased. Reclaim it to bring this back.") % Empire.personal_lost(id)
 			row["target"] = {"province": pid}
 		elif not m.is_empty():
 			var listed := _offered(pid, pj)
-			var why := str(listed.get("blocker", "")) if not listed.is_empty() else "not on the map right now"
+			var why := str(listed.get("blocker", "")) if not listed.is_empty() else Loc.t("not on the map right now")
 			row["state"] = "open" if why == "" else "blocked"
-			var along := ("with %s in the party" if PersonalMissions.is_field(id) else "with %s along as an escort to keep alive") % name
-			row["next"] = ("Play it from %s on the territory map, %s." % [row["where"], along]) if why == "" else "Can't start yet: %s." % why
+			var along := (Loc.t("with %s in the party") if PersonalMissions.is_field(id) else Loc.t("with %s along as an escort to keep alive")) % name
+			row["next"] = (Loc.t("Play it from %s on the territory map, %s.") % [row["where"], along]) if why == "" else Loc.t("Can't start yet: %s.") % why
 			row["target"] = {"province": pid, "mission": pj}
 		elif not Empire.expedition_running(pj).is_empty():
-			row["next"] = "Under way. The squad is due back on day %d." % int(ceil(float(Empire.expedition_running(pj)["finish"])))
+			row["next"] = Loc.t("Under way. The squad is due back on day %d.") % int(ceil(float(Empire.expedition_running(pj)["finish"])))
 			row["target"] = {"view": "expeditions"}
 		else:
 			var why := Empire.job_blocker(pj)
 			if Empire.level_of("guildhall") <= 0:
-				why = "build the Guildhall first"
+				why = Loc.t("build the Guildhall first")
 			row["state"] = "open" if why == "" else "blocked"
-			row["next"] = ("Send %s on it from the Guildhall board." % name) if why == "" else "Can't send it yet: %s." % why
+			row["next"] = (Loc.t("Send %s on it from the Guildhall board.") % name) if why == "" else Loc.t("Can't send it yet: %s.") % why
 			row["target"] = {"view": "expeditions"} if Empire.level_of("guildhall") > 0 else {"view": "buildings"}
 		out.append(row)
 	return out
@@ -362,31 +362,31 @@ static func faction_quests() -> Array:
 		var tier := Empire.tier_of(fid)
 		var v := Empire.standing_of(fid)
 		var row := {"id": "faction_" + fid, "section": "factions", "title": "%s: %s" % [f.get("short", fid), Empire.tier_name(tier)],
-			"state": "open", "text": "They want: %s" % f.get("wants", "?"), "next": "", "target": {"view": "diplomacy"},
+			"state": "open", "text": Loc.t("They want: %s") % f.get("wants", "?"), "next": "", "target": {"view": "diplomacy"},
 			"where": Empire.territory().find(f.get("province", "")).get("name", ""), "days": -1}
 		var nxt := _next_tier(tier)
 		var steps := []
 		if nxt == "":
-			steps.append("Allied. They would cede %s if asked." % row["where"] if f.has("deals") and f["deals"].has("cede") else "Allied.")
+			steps.append(Loc.t("Allied. They would cede %s if asked.") % row["where"] if f.has("deals") and f["deals"].has("cede") else Loc.t("Allied."))
 			row["state"] = "done"
 		else:
 			var opens := []
 			for k in Empire.DEAL_ORDER:
 				if Empire.DEAL_TIER.get(k, "") == nxt and f.get("deals", {}).has(k):
-					opens.append("\"%s\" (%s)" % [str(f["deals"][k].get("name", k)), DEAL_WORDS.get(k, k)])
+					opens.append("\"%s\" (%s)" % [str(f["deals"][k].get("name", k)), Loc.t(DEAL_WORDS.get(k, k))])
 			if nxt == "friendly" and f.has("perk"):
-				opens.append("their perk: " + str(f["perk"].get("text", "")))
-			steps.append("Next: %s at %d standing (now %d)." % [Empire.tier_name(nxt), Empire.tier_min(nxt), v])
+				opens.append(Loc.t("their perk: ") + str(f["perk"].get("text", "")))
+			steps.append(Loc.t("Next: %s at %d standing (now %d).") % [Empire.tier_name(nxt), Empire.tier_min(nxt), v])
 			if not opens.is_empty():
-				steps.append("That opens %s." % "; ".join(opens))
+				steps.append(Loc.t("That opens %s.") % "; ".join(opens))
 			var env := Empire.envoy_of(fid)
 			var rate := Empire.standing_rate(fid)
 			if env == "":
-				steps.append("Post an envoy with high %s (Roster)." % Empire.STAT_NAMES.get(f.get("respects", ""), "?"))
+				steps.append(Loc.t("Post an envoy with high %s (Roster).") % Loc.t(Empire.STAT_NAMES.get(f.get("respects", ""), "?")))
 			else:
-				steps.append("%s is your envoy: %+d a day." % [Empire.short_name(env), rate])
+				steps.append(Loc.t("%s is your envoy: %+d a day.") % [Empire.short_name(env), rate])
 			if f.get("deals", {}).has("gift"):
-				steps.append("A gift (%s) buys standing faster." % f["deals"]["gift"].get("name", "gift"))
+				steps.append(Loc.t("A gift (%s) buys standing faster.") % f["deals"]["gift"].get("name", "gift"))
 		if fid == "concord" and Empire.trouble_text() != "":
 			steps.append(Empire.trouble_text())
 			row["state"] = "blocked"
@@ -421,26 +421,26 @@ static func open_quests() -> Array:
 			var typ := str(m.get("type", ""))
 			if m.get("story", false) or typ == "personal":
 				continue
-			var row := {"id": "mission_" + str(m.get("id", "")), "section": "open", "title": str(m.get("name", "Mission")),
+			var row := {"id": "mission_" + str(m.get("id", "")), "section": "open", "title": str(m.get("name", Loc.t("Mission"))),
 				"state": "open" if str(m.get("blocker", "")) == "" else "blocked", "text": str(m.get("brief", "")),
 				"next": "", "target": {"province": p["id"], "mission": str(m.get("id", ""))}, "where": p["name"], "days": -1,
 				"type": typ if typ != "" else "patrol"}
 			if str(m.get("blocker", "")) != "":
-				row["next"] = "Can't start yet: %s." % m["blocker"]
+				row["next"] = Loc.t("Can't start yet: %s.") % m["blocker"]
 			if typ == "defense":
 				row["days"] = Empire.surge_days_left()
-				row["next"] = "Lands in %s if nobody holds the line. %s" % [_days(row["days"]), row["next"]]
+				row["next"] = Loc.t("Lands in %s if nobody holds the line. %s") % [_days(row["days"]), row["next"]]
 			elif m.has("until_day"):
 				row["days"] = maxi(int(m["until_day"]) - Empire.day, 0)
-				row["next"] = "Offered for %s more. %s" % [_days(row["days"]), row["next"]]
+				row["next"] = Loc.t("Offered for %s more. %s") % [_days(row["days"]), row["next"]]
 			elif row["next"] == "":
-				row["next"] = "Launch it from %s on the territory map." % p["name"]
+				row["next"] = Loc.t("Launch it from %s on the territory map.") % p["name"]
 			row["next"] = str(row["next"]).strip_edges()
 			(timed if row["days"] >= 0 else rest).append(row)
 		for e in BlankPlans.on(p):
 			var row2 := {"id": "plan_%s_%s" % [p["id"], e["label"]], "section": "open", "title": "%s: %s" % [p["name"], e["label"]],
-				"state": "blocked", "text": "The Blank is leaning on %s harder than its spread explains: +%d Fray a day." % [p["name"], int(e["per_day"])],
-				"next": "%s left.%s" % [_days(int(e["days"])), (" " + str(e["note"]) + ".") if str(e["note"]) != "" else ""],
+				"state": "blocked", "text": Loc.t("The Blank is leaning on %s harder than its spread explains: +%d Fray a day.") % [p["name"], int(e["per_day"])],
+				"next": Loc.t("%s left.%s") % [_days(int(e["days"])), (" " + str(e["note"]) + ".") if str(e["note"]) != "" else ""],
 				"target": {"province": p["id"]}, "where": p["name"], "days": int(e["days"]), "type": "plan"}
 			timed.append(row2)
 	timed.sort_custom(func(a, b): return int(a["days"]) < int(b["days"]))
@@ -451,8 +451,8 @@ static func open_quests() -> Array:
 
 static func _days(n: int) -> String:
 	if n <= 0:
-		return "less than a day"
-	return "%d day%s" % [n, "" if n == 1 else "s"]
+		return Loc.t("less than a day")
+	return Loc.t("%d day%s") % [n, "" if n == 1 else "s"]
 
 
 static func _where(target: Dictionary) -> String:
@@ -560,9 +560,9 @@ static func _codex_entry(c: Dictionary) -> Dictionary:
 	if not ok:
 		if c.has("region"):  # a locked region is still rumoured on the map, under the fog
 			var r := Empire.territory().region(c["region"])
-			e["hint"] = "Rumoured. %s (Chapter %d.)" % [r.get("hint", ""), int(r.get("chapter", 0))]
+			e["hint"] = Loc.t("Rumoured. %s (Chapter %d.)") % [r.get("hint", ""), int(r.get("chapter", 0))]
 		elif c.has("enemy") and c.get("cat", "") == "enemies":
-			e["hint"] = "Not met yet."
+			e["hint"] = Loc.t("Not met yet.")
 			e["title"] = "???"
 		return e
 	e["paras"].append(str(c.get("text", "")))
@@ -575,16 +575,16 @@ static func _codex_entry(c: Dictionary) -> Dictionary:
 		_ink_facts(str(c["ink"]), e)
 	elif c.has("region"):
 		var r := Empire.territory().region(c["region"])
-		e["facts"].append(["Mood", str(r.get("mood", ""))])
+		e["facts"].append([Loc.t("Mood"), str(r.get("mood", ""))])
 		var held := 0
 		var total := 0
 		for p in Empire.territory().provinces:
 			if p.get("region", "") == c["region"]:
 				total += 1
 				held += 1 if p["owner"] == "you" else 0
-		e["facts"].append(["Held", "%d of %d provinces" % [held, total]])
+		e["facts"].append([Loc.t("Held"), Loc.t("%d of %d provinces") % [held, total]])
 		if r.has("pressure"):
-			e["facts"].append(["Pressure", "%s: +%d Fray a day everywhere here" % [r["pressure"].get("label", ""), int(r["pressure"].get("per_day", 0))]])
+			e["facts"].append([Loc.t("Pressure"), Loc.t("%s: +%d Fray a day everywhere here") % [r["pressure"].get("label", ""), int(r["pressure"].get("per_day", 0))]])
 	return e
 
 
@@ -598,25 +598,25 @@ static func _province_entry(p: Dictionary) -> Dictionary:
 	e["paras"].append(str(p.get("blurb", "")))
 	e["paras"].append_array(paragraphs(data().get("provinces", {}).get(p["id"], [])))
 	var owner: String = p["owner"]
-	var who := "You" if owner == "you" else ("Erased" if owner == "erased" else ("Unclaimed" if owner == "free" else str(Empire.faction(owner).get("name", owner))))
-	e["facts"].append(["Held by", who])
+	var who := Loc.t("You") if owner == "you" else (Loc.t("Erased") if owner == "erased" else (Loc.t("Unclaimed") if owner == "free" else str(Empire.faction(owner).get("name", owner))))
+	e["facts"].append([Loc.t("Held by"), who])
 	if owner != "erased":
-		e["facts"].append(["Fray", "%d of 100" % int(p["fray"])])
+		e["facts"].append([Loc.t("Fray"), Loc.t("%d of 100") % int(p["fray"])])
 	var gov := Empire.governor_of(p["id"]) if owner == "you" else ""
 	if gov != "":
-		e["facts"].append(["Governor", Empire.short_name(gov)])
+		e["facts"].append([Loc.t("Governor"), Empire.short_name(gov)])
 	if p.has("favors"):
-		e["facts"].append(["Wants a governor with", "%s. %s" % [Empire.STAT_NAMES.get(p["favors"], p["favors"]), p.get("favors_why", "")]])
+		e["facts"].append([Loc.t("Wants a governor with"), "%s. %s" % [Loc.t(Empire.STAT_NAMES.get(p["favors"], p["favors"])), p.get("favors_why", "")]])
 	if not p.get("output", {}).is_empty():
-		e["facts"].append(["Yields a day", Missions.res_text(p["output"])])
+		e["facts"].append([Loc.t("Yields a day"), Missions.res_text(p["output"])])
 	if not p.get("sites", []).is_empty():
-		e["facts"].append(["Sites", ", ".join(p["sites"])])
+		e["facts"].append([Loc.t("Sites"), ", ".join(p["sites"])])
 	var r: Dictionary = EnemyKinds.data().get("rosters", {})
 	if r.has(p["id"]):
 		var names := []
 		for k in r[p["id"]]:
-			names.append(EnemyKinds.kind(k).get("plural", k) if seen_enemy(k) else "something unmet")
-		e["facts"].append(["Out there", ", ".join(_unique(names))])
+			names.append(EnemyKinds.kind(k).get("plural", k) if seen_enemy(k) else Loc.t("something unmet"))
+		e["facts"].append([Loc.t("Out there"), ", ".join(_unique(names))])
 	return e
 
 
@@ -632,19 +632,19 @@ static func _enemy_facts(c: Dictionary, e: Dictionary) -> void:
 	var kind := str(c["enemy"])
 	var k := EnemyKinds.kind(kind)
 	var beaten := meets(c["defeat"]) if c.has("defeat") else kills(kind) > 0
-	e["paras"].append("Habits: " + str(c.get("habits", "")))
+	e["paras"].append(Loc.t("Habits: ") + str(c.get("habits", "")))
 	if beaten:
-		e["paras"].append("Weakness: " + str(c.get("weakness", "")))
+		e["paras"].append(Loc.t("Weakness: ") + str(c.get("weakness", "")))
 	else:
-		e["paras"].append("Weakness: beat one to learn it.")
+		e["paras"].append(Loc.t("Weakness: beat one to learn it."))
 	if not k.is_empty():
-		e["facts"].append(["Toughness", "%d HP" % int(k.get("hp", 0))])
+		e["facts"].append([Loc.t("Toughness"), Loc.t("%d HP") % int(k.get("hp", 0))])
 		if k.has("damage"):
-			e["facts"].append(["Hits for", "about %d" % int(k["damage"])])
-		e["facts"].append(["Speed", "fast" if float(k.get("speed", 40)) >= 60 else ("quick" if float(k.get("speed", 40)) >= 44 else "slow")])
+			e["facts"].append([Loc.t("Hits for"), Loc.t("about %d") % int(k["damage"])])
+		e["facts"].append([Loc.t("Speed"), Loc.t("fast") if float(k.get("speed", 40)) >= 60 else (Loc.t("quick") if float(k.get("speed", 40)) >= 44 else Loc.t("slow"))])
 		if int(k.get("pack", 1)) > 1:
-			e["facts"].append(["Comes in", "packs of %d or so" % int(k["pack"])])
-		e["facts"].append(["Born of the Blank", "yes: pours out of surges and Blots too" if k.get("blank", false) else "no"])
+			e["facts"].append([Loc.t("Comes in"), Loc.t("packs of %d or so") % int(k["pack"])])
+		e["facts"].append([Loc.t("Born of the Blank"), Loc.t("yes: pours out of surges and Blots too") if k.get("blank", false) else Loc.t("no")])
 		var where := []
 		var rosters: Dictionary = EnemyKinds.data().get("rosters", {})
 		for pid in rosters:
@@ -653,31 +653,31 @@ static func _enemy_facts(c: Dictionary, e: Dictionary) -> void:
 				if not p.is_empty() and Empire.province_open(p):
 					where.append(p["name"])
 		if not where.is_empty():
-			e["facts"].append(["Found in", ", ".join(where)])
-	e["facts"].append(["Beaten", ("%d" % kills(kind)) if kills(kind) > 0 else ("yes" if beaten else "not yet")])
+			e["facts"].append([Loc.t("Found in"), ", ".join(where)])
+	e["facts"].append([Loc.t("Beaten"), ("%d" % kills(kind)) if kills(kind) > 0 else (Loc.t("yes") if beaten else Loc.t("not yet"))])
 
 
 static func _faction_facts(fid: String, e: Dictionary) -> void:
 	var f := Empire.faction(fid)
-	e["facts"].append(["Standing", "%d (%s)" % [Empire.standing_of(fid), Empire.tier_name(Empire.tier_of(fid))]])
-	e["facts"].append(["Wants", str(f.get("wants", ""))])
-	e["facts"].append(["Respects", "%s in an envoy" % Empire.STAT_NAMES.get(f.get("respects", ""), "?")])
-	e["facts"].append(["Home", str(Empire.territory().find(f.get("province", "")).get("name", "?"))])
+	e["facts"].append([Loc.t("Standing"), "%d (%s)" % [Empire.standing_of(fid), Empire.tier_name(Empire.tier_of(fid))]])
+	e["facts"].append([Loc.t("Wants"), str(f.get("wants", ""))])
+	e["facts"].append([Loc.t("Respects"), Loc.t("%s in an envoy") % Loc.t(Empire.STAT_NAMES.get(f.get("respects", ""), "?"))])
+	e["facts"].append([Loc.t("Home"), str(Empire.territory().find(f.get("province", "")).get("name", "?"))])
 	if f.has("perk"):
-		e["facts"].append(["As friends", str(f["perk"].get("text", ""))])
+		e["facts"].append([Loc.t("As friends"), str(f["perk"].get("text", ""))])
 
 
 static func _ink_facts(color: String, e: Dictionary) -> void:
 	var info: Dictionary = Abilities.data().get("inks", {}).get(color, {})
 	if info.has("desc"):
-		e["facts"].append(["Nature", str(info["desc"])])
+		e["facts"].append([Loc.t("Nature"), str(info["desc"])])
 	var users := []
 	for id in Empire.roster_ids():
 		for a in Abilities.for_ids(PartyPicker.hero_data(id).get("abilities", [])):
 			if str(a.get("ink", "")) == color:
 				users.append("%s (%s)" % [Empire.short_name(id), a.get("name", "")])
 	if not users.is_empty():
-		e["facts"].append(["In your hands", ", ".join(users)])
+		e["facts"].append([Loc.t("In your hands"), ", ".join(users)])
 
 
 static func ink_color(color: String) -> Color:

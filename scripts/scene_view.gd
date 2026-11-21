@@ -116,21 +116,21 @@ func _pick(i: int) -> void:
 func _finish() -> void:
 	_stage = "done"
 	if replay:
-		_outro = "Memory: %s" % _scene().get("title", "")
+		_outro = tr("Memory: %s") % _scene().get("title", "")
 		return
 	var perk := Empire.finish_bond_scene(id, rank, _picked)
 	if rank == Relationships.MOMENT:  # the romance question (issue #116)
 		if Relationships.romance_of(id) == "partner":
-			_outro = "%s and Ash: a romance.\nWhile it lasts: %s. %s" % [Empire.short_name(id), perk.get("name", ""), perk.get("desc", "")]
+			_outro = tr("%s and Ash: a romance.\nWhile it lasts: %s. %s") % [Empire.short_name(id), perk.get("name", ""), perk.get("desc", "")]
 		else:
-			_outro = "%s and Ash: friends, and that's settled." % Empire.short_name(id)
+			_outro = tr("%s and Ash: friends, and that's settled.") % Empire.short_name(id)
 		return
-	_outro = "%s is now %s.  Bond rank %d." % [Empire.short_name(id), Empire.bond_rank_name(Empire.bond_rank(id)), Empire.bond_rank(id)]
+	_outro = tr("%s is now %s.  Bond rank %d.") % [Empire.short_name(id), Empire.bond_rank_name(Empire.bond_rank(id)), Empire.bond_rank(id)]
 	if not perk.is_empty():
-		_outro += "\nPerk unlocked: %s. %s" % [perk["name"], perk["desc"]]
+		_outro += tr("\nPerk unlocked: %s. %s") % [perk["name"], perk["desc"]]
 	if rank == 4 and Empire.personal_job(id) != "":
 		var pd := PersonalMissions.def_for(id)
-		_outro += "\nPersonal mission on the Command Table: %s, at %s." % [pd.get("name", "?"), Empire.territory().find(pd.get("province", "")).get("name", "?")]
+		_outro += tr("\nPersonal mission on the Command Table: %s, at %s.") % [pd.get("name", "?"), Empire.territory().find(pd.get("province", "")).get("name", "?")]
 
 
 func _process(delta: float) -> void:
@@ -248,8 +248,8 @@ func _draw() -> void:
 	else:  # safety net only: tests/test_data.gd requires a portrait for everyone with a bond
 		Dialogue.draw_portrait(self, Rect2(24, 30, 150, vs.y - 30 - 102), id, "", 0.0 if them_lit else 0.55, true)
 	# Header: whose scene, which rank
-	var head := "%s  ·  %s: %s%s" % [Empire.short_name(id), "Between ranks 3 and 4" if rank == Relationships.MOMENT else "Bond rank %d" % rank,
-		sc.get("title", ""), "   (memory)" if replay else ""]
+	var head := "%s  ·  %s: %s%s" % [Empire.short_name(id), tr("Between ranks 3 and 4") if rank == Relationships.MOMENT else tr("Bond rank %d") % rank,
+		sc.get("title", ""), tr("   (memory)") if replay else ""]
 	var hw := font.get_string_size(head, HORIZONTAL_ALIGNMENT_LEFT, -1, 10).x
 	draw_rect(Rect2(vs.x - hw - 18, 5, hw + 12, 18), Color(0, 0, 0, 0.6))
 	draw_string(font, Vector2(vs.x - hw - 12, 18), head, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, accent.lightened(0.2))
@@ -279,7 +279,7 @@ func _draw() -> void:
 				var tip := box.end - Vector2(22, 14 - sin(Time.get_ticks_msec() / 220.0) * 1.5)
 				draw_colored_polygon(PackedVector2Array([tip, tip + Vector2(-3, -7), tip + Vector2(0, -10), tip + Vector2(3, -7)]), ink)
 		"choice":
-			draw_string(font, box.position + Vector2(30, 14), "Ash...", HORIZONTAL_ALIGNMENT_LEFT, -1, 9, UiSkin.PAGE_INK_SOFT)
+			draw_string(font, box.position + Vector2(30, 14), tr("Ash..."), HORIZONTAL_ALIGNMENT_LEFT, -1, 9, UiSkin.PAGE_INK_SOFT)
 			var opts: Array = sc.get("choice", [])
 			var y := box.position.y + 20
 			for i in opts.size():
@@ -293,8 +293,8 @@ func _draw() -> void:
 				y += 20
 		"done":
 			draw_multiline_string(font, box.position + Vector2(30, 22), _outro, HORIZONTAL_ALIGNMENT_LEFT, box.size.x - 52, 10, -1, Color("3f6a32"))
-	var hint := Prompts.help([["ui_accept", "next"], ["ui_cancel", "skip"]], "Tap: next") if _stage != "choice" \
-		else Prompts.help([["updown", "choose"], ["ui_accept", "pick"]], "Tap an answer")
+	var hint := Prompts.help([["ui_accept", "next"], ["ui_cancel", "skip"]], tr("Tap: next")) if _stage != "choice" \
+		else Prompts.help([["updown", "choose"], ["ui_accept", "pick"]], tr("Tap an answer"))
 	if _stage == "done":
-		hint = Prompts.help([["ui_accept", "close"]], "Tap to close")
+		hint = Prompts.help([["ui_accept", "close"]], tr("Tap to close"))
 	draw_string(font, Vector2(vs.x - font.get_string_size(hint, HORIZONTAL_ALIGNMENT_LEFT, -1, 7).x - 14, vs.y - 3), hint, HORIZONTAL_ALIGNMENT_LEFT, -1, 7, Color(0.5, 0.48, 0.52))

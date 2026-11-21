@@ -181,33 +181,33 @@ func _learn(node_id: String) -> void:
 	var n := SkillTree.node(node_id)
 	var why := SkillTree.blocker(id, node_id)
 	if why == "learned":
-		_say("%s already knows %s." % [PartyPicker.short_of(id), n.get("name", "")])
+		_say(tr("%s already knows %s.") % [PartyPicker.short_of(id), n.get("name", "")])
 		return
 	if why != "":
-		_say("Can't yet: %s." % why)
+		_say(tr("Can't yet: %s.") % why)
 		Audio.sfx("error")
 		return
 	var before := Progress.bonus(id)
 	SkillTree.learn(id, node_id)
 	_apply_live(id, before)
 	Audio.sfx("levelup")
-	_say("%s learned %s." % [PartyPicker.short_of(id), n.get("name", "")])
+	_say(tr("%s learned %s.") % [PartyPicker.short_of(id), n.get("name", "")])
 
 
 func _reset() -> void:
 	var id := hero_id()
 	var why := SkillTree.respec_blocker(id, where == "mission")
 	if why != "":
-		_say("Can't unlearn: %s." % why)
+		_say(tr("Can't unlearn: %s.") % why)
 		return
 	if _confirm_reset != id:
 		_confirm_reset = id
-		_say("Press again to unlearn %s's whole tree for %d Gilt." % [PartyPicker.short_of(id), SkillTree.respec_cost(id)])
+		_say(tr("Press again to unlearn %s's whole tree for %d Gilt.") % [PartyPicker.short_of(id), SkillTree.respec_cost(id)])
 		return
 	var cost := SkillTree.respec_cost(id)
 	SkillTree.respec(id)
 	_confirm_reset = ""
-	_say("%s's tree is blank again (%d Gilt). %d Skill Points to spend." % [PartyPicker.short_of(id), cost, SkillTree.points_free(id)])
+	_say(tr("%s's tree is blank again (%d Gilt). %d Skill Points to spend.") % [PartyPicker.short_of(id), cost, SkillTree.points_free(id)])
 	_start_on_hero()
 
 
@@ -281,24 +281,24 @@ func _draw() -> void:
 	UiSkin.screen(self, vs)
 	var cr := _close_rect()
 	UiSkin.panel(self, cr, "button")
-	_text(cr.position + Vector2(9, 12), "Close", 9, Color(0.75, 0.72, 0.7))
-	draw_string(UiSkin.TITLE_FONT, Vector2(8, 20), "Skill tree", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, PAPER)
+	_text(cr.position + Vector2(9, 12), tr("Close"), 9, Color(0.75, 0.72, 0.7))
+	draw_string(UiSkin.TITLE_FONT, Vector2(8, 20), tr("Skill tree"), HORIZONTAL_ALIGNMENT_LEFT, -1, 16, PAPER)
 	_hero_rects.clear()
 	_node_rects.clear()
 	_reset_rect = Rect2()
 	_learn_rect = Rect2()
 	if _ids.is_empty():
-		_text(Vector2(8, 50), "No field heroes with a skill tree yet.", 10, BAD)
+		_text(Vector2(8, 50), tr("No field heroes with a skill tree yet."), 10, BAD)
 		return
 	var id := hero_id()
-	_text(Vector2(100, 19), "Skill Points: %d free of %d" % [SkillTree.points_free(id), SkillTree.points_total(id)], 9, GOLD)
-	_text_r(Vector2(vs.x - 64, 19), "Gilt: %d" % int(Empire.res.get("gilt", 0)), 9, GOLD)
+	_text(Vector2(100, 19), tr("Skill Points: %d free of %d") % [SkillTree.points_free(id), SkillTree.points_total(id)], 9, GOLD)
+	_text_r(Vector2(vs.x - 64, 19), tr("Gilt: %d") % int(Empire.res.get("gilt", 0)), 9, GOLD)
 	_draw_chips(vs)
 	var split := minf(392.0, vs.x * 0.61)
 	_draw_tree(Rect2(8, 58, split - 12, vs.y - 58 - 16))
 	_draw_details(Rect2(split, 58, vs.x - split - 8, vs.y - 58 - 16))
 	var help := Prompts.help([["updown", "climb"], ["leftright", "branch"], ["ui_accept", "learn"], ["swap", "hero"], [["ui_cancel", "gear"], "close"]],
-		"Tap a node to look, tap again to learn; tap a hero to switch")
+		tr("Tap a node to look, tap again to learn; tap a hero to switch"))
 	_text(Vector2(8, vs.y - 5), help, 7, Color(0.5, 0.48, 0.52))
 	if flash_t > 0.0:
 		var a := clampf(flash_t / 0.4, 0.0, 1.0)
@@ -322,10 +322,10 @@ func _draw_chips(vs: Vector2) -> void:
 		if on:
 			draw_rect(r, GOLD, false, 1.0)
 		_text(r.position + Vector2(5, 10), PartyPicker.short_of(hid), 9, GOLD if on else TEXT, cw - 26)
-		_text_r(r.position + Vector2(cw - 4, 10), "Lv%d" % Progress.level(hid), 8, SOFT)
+		_text_r(r.position + Vector2(cw - 4, 10), tr("Lv%d") % Progress.level(hid), 8, SOFT)
 		var free := SkillTree.points_free(hid)
 		var spent := SkillTree.points_spent(hid)
-		_text(r.position + Vector2(5, 19), ("%d pt%s free" % [free, "" if free == 1 else "s"]) if free > 0 else "%d spent" % spent, 7, GOLD if free > 0 else DIM)
+		_text(r.position + Vector2(5, 19), (tr("%d pt%s free") % [free, "" if free == 1 else "s"]) if free > 0 else tr("%d spent") % spent, 7, GOLD if free > 0 else DIM)
 		if SkillTree.can_spend(hid):
 			draw_circle(r.position + Vector2(cw - 6, 17), 2.0 + 0.6 * sin(_t * 5.0), GOLD)
 		x += cw + 4
@@ -414,15 +414,15 @@ func _draw_node(id: String, node_id: String, r: Rect2) -> void:
 	_text(r.position + Vector2(8, r.size.y * 0.5 - 2), str(n.get("name", "?")), 9, name_col, r.size.x - 34)
 	var sub := ""
 	if known:
-		sub = "Learned"
+		sub = tr("Learned")
 	elif ready:
-		sub = "Learn: %d pt%s" % [SkillTree.cost(node_id), "" if SkillTree.cost(node_id) == 1 else "s"]
+		sub = tr("Learn: %d pt%s") % [SkillTree.cost(node_id), "" if SkillTree.cost(node_id) == 1 else "s"]
 	elif locked_gate:
 		sub = SkillTree.gate_text(id, node_id)
 	elif why.begins_with("holds"):
-		sub = "Other capstone held"
+		sub = tr("Other capstone held")
 	else:
-		sub = "%d pt%s" % [SkillTree.cost(node_id), "" if SkillTree.cost(node_id) == 1 else "s"]
+		sub = tr("%d pt%s") % [SkillTree.cost(node_id), "" if SkillTree.cost(node_id) == 1 else "s"]
 	_text(r.position + Vector2(8, r.size.y - 4), sub, 8, GOOD if known else (GOLD if ready else DIM), r.size.x - 22)
 	# Cost pips, top right.
 	for k in SkillTree.cost(node_id):
@@ -451,28 +451,28 @@ func _draw_details(area: Rect2) -> void:
 	UiSkin.panel(self, _reset_rect, "button", Color(1, 1, 1, 1.0 if rwhy == "" else 0.55))
 	if sel == RESET:
 		UiSkin.highlight(self, _reset_rect.grow(1.0), GOLD)
-	var rlabel := ("Unlearn all: %d Gilt" % SkillTree.respec_cost(id)) if not SkillTree.learned(id).is_empty() else "Unlearn all"
+	var rlabel := (tr("Unlearn all: %d Gilt") % SkillTree.respec_cost(id)) if not SkillTree.learned(id).is_empty() else tr("Unlearn all")
 	if _confirm_reset == id:
-		rlabel = "Press again: unlearn for %d Gilt" % SkillTree.respec_cost(id)
+		rlabel = tr("Press again: unlearn for %d Gilt") % SkillTree.respec_cost(id)
 	_text_c(_reset_rect.position + Vector2(w / 2.0, 11), rlabel, 8, (GOLD if sel == RESET else TEXT) if rwhy == "" else DIM, w - 8)
 	if sel == RESET:
-		_text(Vector2(x, y), "Unlearn the tree", 12, PAPER, w)
+		_text(Vector2(x, y), tr("Unlearn the tree"), 12, PAPER, w)
 		y += 14
-		y += _wrap(Vector2(x, y), "Every node %s has learned is forgotten and every Skill Point comes back, to spend another way. Costs %d Gilt, plus %d for each point spent." % [
+		y += _wrap(Vector2(x, y), tr("Every node %s has learned is forgotten and every Skill Point comes back, to spend another way. Costs %d Gilt, plus %d for each point spent.") % [
 			PartyPicker.short_of(id), int(SkillTree.data().get("respec", {}).get("base", 30)), int(SkillTree.data().get("respec", {}).get("per_point", 10))], w, 8, Color(0.82, 0.8, 0.76)) + 6
-		_text(Vector2(x, y), ("Ready: %d Gilt." % SkillTree.respec_cost(id)) if rwhy == "" else "Can't: %s." % rwhy, 8, GOLD if rwhy == "" else BAD, w)
+		_text(Vector2(x, y), (tr("Ready: %d Gilt.") % SkillTree.respec_cost(id)) if rwhy == "" else tr("Can't: %s.") % rwhy, 8, GOLD if rwhy == "" else BAD, w)
 		return
 	var n := SkillTree.node(sel)
 	if n.is_empty():
 		return
 	var inf := SkillTree.info(sel)
 	var col := _node_color(id, sel)
-	var branch_name := "Root" if int(inf["branch"]) < 0 else str(SkillTree.branches(id)[int(inf["branch"])].get("name", ""))
-	var tag := branch_name if int(inf["branch"]) < 0 else "%s, %s" % [branch_name, "capstone" if SkillTree.is_capstone(sel) else "step %d of 5" % int(inf["tier"])]
+	var branch_name := tr("Root") if int(inf["branch"]) < 0 else str(SkillTree.branches(id)[int(inf["branch"])].get("name", ""))
+	var tag := branch_name if int(inf["branch"]) < 0 else "%s, %s" % [branch_name, tr("capstone") if SkillTree.is_capstone(sel) else tr("step %d of 5") % int(inf["tier"])]
 	draw_string(UiSkin.TITLE_FONT, Vector2(x, y + 2), str(n.get("name", "?")), HORIZONTAL_ALIGNMENT_LEFT, w, 14, col.lightened(0.35))
 	y += 13
 	_text(Vector2(x, y), tag, 8, col.lightened(0.1), w)
-	_text_r(Vector2(area.end.x - 8, y), "%d Skill Point%s" % [SkillTree.cost(sel), "" if SkillTree.cost(sel) == 1 else "s"], 8, GOLD)
+	_text_r(Vector2(area.end.x - 8, y), tr("%d Skill Point%s") % [SkillTree.cost(sel), "" if SkillTree.cost(sel) == 1 else "s"], 8, GOLD)
 	y += 6
 	draw_rect(Rect2(x, y, w, 1), Color(0.63, 0.48, 0.31, 0.6))
 	y += 4
@@ -481,24 +481,24 @@ func _draw_details(area: Rect2) -> void:
 	if int(inf["branch"]) >= 0 and int(inf["tier"]) == 1:
 		y += _wrap(Vector2(x, y + 8), str(SkillTree.branches(id)[int(inf["branch"])].get("blurb", "")), w, 7, SOFT) + 6
 	if SkillTree.is_capstone(sel):
-		y += _wrap(Vector2(x, y + 8), "Capstone: a hero can hold only one. Unlearn the tree to switch.", w, 7, SOFT) + 6
+		y += _wrap(Vector2(x, y + 8), tr("Capstone: a hero can hold only one. Unlearn the tree to switch."), w, 7, SOFT) + 6
 	var gate := SkillTree.gate_text(id, sel)
 	if gate != "":
 		var met := SkillTree.gate_met(id, sel)
-		_text(Vector2(x, y + 8), ("Needs " if not met else "Unlocked by ") + gate, 8, GOOD if met else BAD, w)
+		_text(Vector2(x, y + 8), (tr("Needs ") if not met else tr("Unlocked by ")) + gate, 8, GOOD if met else BAD, w)
 		y += 12
 		if not met and id != "ash":
-			y += _wrap(Vector2(x, y + 7), "Bonds grow by fighting beside %s, talking in Hollowmark and giving them work they like%s." % [PartyPicker.short_of(id), Prompts.tag("bonds")], w, 7, DIM) + 4
+			y += _wrap(Vector2(x, y + 7), tr("Bonds grow by fighting beside %s, talking in Hollowmark and giving them work they like%s.") % [PartyPicker.short_of(id), Prompts.tag("bonds")], w, 7, DIM) + 4
 		elif not met:
-			y += _wrap(Vector2(x, y + 7), "Ash is written by the people around them: grow your bonds with the others%s." % Prompts.tag("bonds"), w, 7, DIM) + 4
+			y += _wrap(Vector2(x, y + 7), tr("Ash is written by the people around them: grow your bonds with the others%s.") % Prompts.tag("bonds"), w, 7, DIM) + 4
 	# Learn button.
 	var why := SkillTree.blocker(id, sel)
 	_learn_rect = Rect2(x, minf(y + 6, _reset_rect.position.y - 22), w, 16)
 	if why == "learned":
-		_text_c(_learn_rect.position + Vector2(w / 2.0, 11), "Learned", 9, GOOD, w)
+		_text_c(_learn_rect.position + Vector2(w / 2.0, 11), tr("Learned"), 9, GOOD, w)
 	else:
 		UiSkin.panel(self, _learn_rect, "button", Color(1, 1, 1, 1.0 if why == "" else 0.5))
-		var label := ("%s  Learn for %d" % [Prompts.confirm(), SkillTree.cost(sel)]) if why == "" else "Can't yet: " + why
+		var label := (tr("%s  Learn for %d") % [Prompts.confirm(), SkillTree.cost(sel)]) if why == "" else tr("Can't yet: ") + why
 		_text_c(_learn_rect.position + Vector2(w / 2.0, 11), label, 8, GOLD if why == "" else DIM, w - 8)
 	y = _learn_rect.end.y + 8
 	# The abilities this node changes, as they read with it (a preview until it is learned).
@@ -507,16 +507,16 @@ func _draw_details(area: Rect2) -> void:
 		var a := _ability_with(id, str(aid), sel)
 		if a.is_empty() or y > room - 24:
 			continue
-		_text(Vector2(x, y + 8), "%s %s" % [a.get("name", aid), "now" if why == "learned" else "with it"], 8, GOLD, w)
-		var facts := "%d Ink, %s s cooldown.  " % [int(a.get("cost", 0)), Abilities._num(a.get("cooldown", 1))]
+		_text(Vector2(x, y + 8), "%s %s" % [a.get("name", aid), Loc.t("now") if why == "learned" else tr("with it")], 8, GOLD, w)
+		var facts := tr("%d Ink, %s s cooldown.  ") % [int(a.get("cost", 0)), Abilities._num(a.get("cooldown", 1))]
 		y += 10
 		y += _wrap(Vector2(x, y + 8), facts + Abilities.desc_of(a), w, 7, Color(0.78, 0.76, 0.72)) + 4
 	if y < room - 30:
 		var names := SkillTree.learned(id).map(func(k): return str(SkillTree.node(k).get("name", k)))
 		draw_rect(Rect2(x, y + 2, w, 1), Color(0.63, 0.48, 0.31, 0.4))
-		_text(Vector2(x, y + 13), "Learned so far", 8, SOFT, w)
+		_text(Vector2(x, y + 13), tr("Learned so far"), 8, SOFT, w)
 		y += 14
-		_wrap(Vector2(x, y + 8), ", ".join(names) if not names.is_empty() else "Nothing yet.", w, 7, DIM if names.is_empty() else TEXT)
+		_wrap(Vector2(x, y + 8), ", ".join(names) if not names.is_empty() else tr("Nothing yet."), w, 7, DIM if names.is_empty() else TEXT)
 
 
 ## The ability as this hero would have it with node_id learned too (or as it is, once learned).

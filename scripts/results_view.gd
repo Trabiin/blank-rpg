@@ -112,39 +112,39 @@ func _draw() -> void:
 	_text_c(cx, y, sub, 9, DIM)
 	if result.get("first_clear", false):
 		y += 12.0
-		_text_c(cx, y, "First clear", 8, GOLD)
+		_text_c(cx, y, tr("First clear"), 8, GOLD)
 	y += 20.0
 	var x := panel.position.x + 18.0
 	var iw := w - 36.0
-	var obj_note := "done" if outcome == "success" else "not finished"
-	y = _row(x, y, iw, "Objective", "%s  (%s)" % [result.get("objective", ""), obj_note], PAPER if outcome == "success" else DIM)
+	var obj_note := "done" if outcome == "success" else tr("not finished")
+	y = _row(x, y, iw, tr("Objective"), "%s  (%s)" % [result.get("objective", ""), obj_note], PAPER if outcome == "success" else DIM)
 	var secs := int(result.get("time", 0.0))
-	y = _row(x, y, iw, "Time", "%d:%02d    Nibblers dispersed: %d" % [secs / 60, secs % 60, int(result.get("kills", 0))])
+	y = _row(x, y, iw, tr("Time"), tr("%d:%02d    Nibblers dispersed: %d") % [secs / 60, secs % 60, int(result.get("kills", 0))])
 	var found := Missions.res_text(result.get("found", {}))
 	if outcome == "wiped":
-		y = _row(x, y, iw, "Found", ("Dropped it all: " + found) if found != "" else "Nothing", Color("ff8f7a"))
+		y = _row(x, y, iw, tr("Found"), (tr("Dropped it all: ") + found) if found != "" else tr("Nothing"), Color("ff8f7a"))
 	else:
-		y = _row(x, y, iw, "Found", found if found != "" else "Nothing")
+		y = _row(x, y, iw, tr("Found"), found if found != "" else tr("Nothing"))
 	if outcome == "success":
 		var rew := Missions.res_text(result.get("rewards", {}))
 		if rew != "":
-			y = _row(x, y, iw, "Reward", rew)
+			y = _row(x, y, iw, tr("Reward"), rew)
 	var fray := int(result.get("fray", 0))
 	if fray != 0:
 		var now := int(result.get("fray_now", 0))
-		y = _row(x, y, iw, "Fray", "%s %d to %d (the Blank pulls back)" % [result["province"], now, clampi(now + fray, 0, 99)], Color("9fd3a8"))
+		y = _row(x, y, iw, tr("Fray"), tr("%s %d to %d (the Blank pulls back)") % [result["province"], now, clampi(now + fray, 0, 99)], Color("9fd3a8"))
 	for line in result.get("lines", []):
 		y = _row(x, y, iw, "", str(line))
 	# Total
 	y += 2.0
 	draw_line(Vector2(x, y - 9), Vector2(x + iw, y - 9), Color(1, 1, 1, 0.12), 1.0)
 	var pay := Missions.res_text(result.get("pay", {}))
-	y = _row(x, y + 4, iw, "Brought home", pay if pay != "" else "Nothing but bruises", GOLD if pay != "" else DIM)
+	y = _row(x, y + 4, iw, tr("Brought home"), pay if pay != "" else tr("Nothing but bruises"), GOLD if pay != "" else DIM)
 	# Button
 	var bw := 170.0
 	_btn = Rect2(cx - bw / 2.0, panel.end.y - 34.0, bw, 22.0)
 	var pulse := 0.5 + 0.5 * sin(_t * 4.0)
 	draw_rect(_btn, Color(0.22, 0.17, 0.08))
 	draw_rect(_btn, Color(GOLD, 0.6 + 0.4 * pulse), false, 1.0)
-	_text_c(cx, _btn.position.y + 15.0, "Return to Hollowmark", 10, GOLD)
+	_text_c(cx, _btn.position.y + 15.0, tr("Return to Hollowmark"), 10, GOLD)
 	_text_c(cx, panel.end.y + 14.0, Prompts.confirm(), 8, Color(0.75, 0.72, 0.66, 0.9))

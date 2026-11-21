@@ -22,7 +22,7 @@ static func data() -> Dictionary:
 	if _data.is_empty():
 		var f := FileAccess.open(FILE, FileAccess.READ)
 		if f:
-			var parsed = JSON.parse_string(f.get_as_text())
+			var parsed = Loc.data(JSON.parse_string(f.get_as_text()), f.get_path().get_file())
 			if typeof(parsed) == TYPE_DICTIONARY:
 				_data = parsed
 	return _data
@@ -194,7 +194,7 @@ static func gains_text(gains: Dictionary) -> String:
 	var parts := []
 	for k in STAT_ORDER:
 		if gains.has(k):
-			parts.append("+%s %s" % [stat_value(k, gains[k]), STAT_NAMES[k]])
+			parts.append("+%s %s" % [stat_value(k, gains[k]), Loc.t(STAT_NAMES[k])])
 	return ", ".join(parts)
 
 
@@ -208,8 +208,8 @@ static func dawn() -> void:
 	award(bench, int(data().get("barracks_xp", 6)) * lvl)
 	for up in Skills.drill_bench():
 		var t := Skills.tech_at(up["id"], up["level"])
-		Empire.notice.emit("Barracks drill: %s's %s skill reached %d and learned %s." % [
-			PartyPicker.short_of(up["id"]), Skills.weapon_name(up["id"]), up["level"], t.get("name", "a new tech")], false)
+		Empire.notice.emit(Loc.t("Barracks drill: %s's %s skill reached %d and learned %s.") % [
+			PartyPicker.short_of(up["id"]), Skills.weapon_name(up["id"]), up["level"], t.get("name", Loc.t("a new tech"))], false)
 
 
 static func barracks_xp() -> int:
@@ -311,12 +311,12 @@ static func apply_delta(h: Hero, before: Dictionary, after: Dictionary) -> void:
 static func wear_blocker(id: String, item_id: String) -> String:
 	var it := item(item_id)
 	if it.is_empty():
-		return "no such item"
+		return Loc.t("no such item")
 	if not it.get("slot", "") in SLOTS:
-		return "that is not gear"
+		return Loc.t("that is not gear")
 	var owner := str(it.get("hero", ""))
 	if owner != "" and owner != id:
-		return "only %s can use it" % PartyPicker.short_of(owner)
+		return Loc.t("only %s can use it") % PartyPicker.short_of(owner)
 	return ""
 
 
@@ -362,11 +362,11 @@ static func item_text(item_id: String) -> String:
 	for k in STAT_ORDER:
 		if st.has(k):
 			var v := float(st[k])
-			parts.append("%s%s %s" % ["+" if v > 0 else "-", stat_value(k, absf(v)), STAT_NAMES[k]])
+			parts.append("%s%s %s" % ["+" if v > 0 else "-", stat_value(k, absf(v)), Loc.t(STAT_NAMES[k])])
 	var perks := Armory.perks_text(item_id)  # build-defining trinkets (issue #112)
 	if perks != "":
 		parts.append(perks)
-	return ", ".join(parts) if not parts.is_empty() else "No bonus"
+	return ", ".join(parts) if not parts.is_empty() else Loc.t("No bonus")
 
 
 # ---------------------------------------------------------------- drops and shop
@@ -414,9 +414,9 @@ static func shop_blocker(item_id: String) -> String:
 	var it := item(item_id)
 	var need := str(it.get("needs", ""))
 	if need != "" and not Empire.has_research(need):
-		return "needs %s (research)" % Empire.research_node(need).get("name", need)
+		return Loc.t("needs %s (research)") % Empire.research_node(need).get("name", need)
 	if int(Empire.res.get("gilt", 0)) < int(it.get("price", 0)):
-		return "not enough Gilt"
+		return Loc.t("not enough Gilt")
 	return ""
 
 

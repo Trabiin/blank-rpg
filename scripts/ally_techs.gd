@@ -101,7 +101,7 @@ static func pick(h: Hero, preset: String, leader: Hero, slack: float) -> Diction
 static func interrupted(h: Hero, lost: int) -> void:
 	if h.ai_charging and not h.charge_ready and float(lost) >= h.max_hp * BREAK_HIT \
 			and preset_of(h) != "aggressive":
-		Fx.damage_number(h.get_parent(), h.global_position + Vector2(0, -26), "broken", Color(0.8, 0.8, 0.85))
+		Fx.damage_number(h.get_parent(), h.global_position + Vector2(0, -26), Loc.t("broken"), Color(0.8, 0.8, 0.85))
 		_give_up(h, 0.6)
 
 
@@ -115,27 +115,27 @@ static func order(h: Hero) -> void:
 ## Why an order can't be given now, or "" if it can.
 static func order_blocker(h: Hero) -> String:
 	if techs_of(h).is_empty():
-		return "no tech"
+		return Loc.t("no tech")
 	if h.dead:
-		return "down"
+		return Loc.t("down")
 	if h.controlled:
-		return "you: hold Attack"
+		return Loc.t("you: hold Attack")
 	if h.charging:
-		return "charging"
+		return Loc.t("charging")
 	return ""
 
 
 ## Short state for menus: "ready", "charging", "gauge 60%".
 static func state_text(h: Hero) -> String:
 	if techs_of(h).is_empty():
-		return "no tech"
+		return Loc.t("no tech")
 	if h.charging:
-		return "ready" if h.charge_ready else "charging"
+		return Loc.t("ready") if h.charge_ready else Loc.t("charging")
 	if h.ai_tech_order_t > 0.0:
-		return "ordered"
+		return Loc.t("ordered")
 	if h.power >= 1.0:
-		return "gauge full"
-	return "gauge %d%%" % int(h.power * 100.0)
+		return Loc.t("gauge full")
+	return Loc.t("gauge %d%%") % int(h.power * 100.0)
 
 
 ## Called from AllyAI.steer() for an ally. Returns true (and appends the move) while the tech has the

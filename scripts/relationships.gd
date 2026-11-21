@@ -25,7 +25,7 @@ static var _data := {}
 static func data() -> Dictionary:
 	if _data.is_empty():
 		var f := FileAccess.open("res://data/relationships.json", FileAccess.READ)
-		_data = JSON.parse_string(f.get_as_text()) if f else {}
+		_data = Loc.data(JSON.parse_string(f.get_as_text()), f.get_path().get_file()) if f else {}
 	return _data
 
 
@@ -96,7 +96,7 @@ static func moment_scene(id: String) -> Dictionary:
 	if cur != "" and cur != id:
 		for c in sc.get("choice", []):
 			if c.get("romance", false):
-				c["label"] = "%s   (ends it with %s)" % [c["label"], Empire.short_name(cur)]
+				c["label"] = Loc.t("%s   (ends it with %s)") % [c["label"], Empire.short_name(cur)]
 	return sc
 
 
@@ -119,14 +119,14 @@ static func decide(id: String, choice: Dictionary) -> Dictionary:
 	var st := _st()
 	if not choice.get("romance", false):
 		st["romance"][id] = "friends"
-		_history("%s and Ash: friends" % Empire.short_name(id), ["%s asked. Ash said no, kindly. They are friends, and it stays that way." % Empire.short_name(id)])
+		_history(Loc.t("%s and Ash: friends") % Empire.short_name(id), [Loc.t("%s asked. Ash said no, kindly. They are friends, and it stays that way.") % Empire.short_name(id)])
 		return {}
 	var cur := partner()
 	if cur != "" and cur != id:
 		end_romance(cur)
 	st["romance"][id] = "partner"
 	st["partner"] = id
-	_history("%s and Ash" % Empire.short_name(id), ["It's a romance. Everyone will guess. Nobody will be told."])
+	_history(Loc.t("%s and Ash") % Empire.short_name(id), [Loc.t("It's a romance. Everyone will guess. Nobody will be told.")])
 	return romance_cast()[id].get("perk", {})
 
 
@@ -139,8 +139,8 @@ static func end_romance(id: String) -> void:
 	if str(st["partner"]) == id:
 		st["partner"] = ""
 	Empire.bond_gain(id, int(data()["romance"].get("ended_bond", -6)), "", true)
-	Empire.notice.emit("%s heard about Ash's new romance. It's over between them." % Empire.short_name(id), true)
-	_history("%s and Ash: over" % Empire.short_name(id), ["Ash took up with someone else. %s found out the way everyone does: from everyone." % Empire.short_name(id)])
+	Empire.notice.emit(Loc.t("%s heard about Ash's new romance. It's over between them.") % Empire.short_name(id), true)
+	_history(Loc.t("%s and Ash: over") % Empire.short_name(id), [Loc.t("Ash took up with someone else. %s found out the way everyone does: from everyone.") % Empire.short_name(id)])
 
 
 ## The ex's piece, the first time Ash talks to them after it ended ([] when there is nothing to say).
@@ -182,16 +182,16 @@ static func status_text(id: String) -> String:
 	match romance_of(id):
 		"partner":
 			var pk: Dictionary = romance_cast()[id].get("perk", {})
-			return "Romance: with Ash. %s: %s" % [pk.get("name", ""), pk.get("desc", "")]
+			return Loc.t("Romance: with Ash. %s: %s") % [pk.get("name", ""), pk.get("desc", "")]
 		"ex":
-			return "Romance: over. Ash chose someone else."
+			return Loc.t("Romance: over. Ash chose someone else.")
 		"friends":
-			return "Romance: Ash said no. Friends, for good."
+			return Loc.t("Romance: Ash said no. Friends, for good.")
 	if Empire.bond_rank(id) < 3:
-		return "Romance: could become more, once you're close (after their rank 3 scene)."
+		return Loc.t("Romance: could become more, once you're close (after their rank 3 scene).")
 	if moment_ready(id):
-		return "Romance: they have something to ask Ash."
-	return "Romance: something's on their mind. Grow the bond a little more."
+		return Loc.t("Romance: they have something to ask Ash.")
+	return Loc.t("Romance: something's on their mind. Grow the bond a little more.")
 
 
 # ---------------------------------------------------------------- pairs
@@ -262,31 +262,31 @@ static func pct(f: float) -> String:
 static func effect_text(e: Dictionary) -> String:
 	var parts := []
 	if e.has("expedition"):
-		parts.append("expeditions %+d%%" % int(e["expedition"]))
+		parts.append(Loc.t("expeditions %+d%%") % int(e["expedition"]))
 	if e.has("building"):
-		parts.append("building output %+d" % int(e["building"]))
+		parts.append(Loc.t("building output %+d") % int(e["building"]))
 	var pe: Dictionary = e.get("party", {})
 	var pp := []
 	if pe.has("damage"):
-		pp.append("%+d damage" % int(pe["damage"]))
+		pp.append(Loc.t("%+d damage") % int(pe["damage"]))
 	if pe.has("hp"):
-		pp.append("%+d max HP" % int(pe["hp"]))
+		pp.append(Loc.t("%+d max HP") % int(pe["hp"]))
 	if pe.has("power_rate"):
-		pp.append("gauge %s %s" % [pct(float(pe["power_rate"])), "faster" if float(pe["power_rate"]) > 0 else "slower"])
+		pp.append(Loc.t("gauge %s %s") % [pct(float(pe["power_rate"])), Loc.t("faster") if float(pe["power_rate"]) > 0 else Loc.t("slower")])
 	if pe.has("revive"):
-		pp.append("revives %s faster" % pct(float(pe["revive"])))
+		pp.append(Loc.t("revives %s faster") % pct(float(pe["revive"])))
 	if pe.has("guard"):
-		pp.append("%s %s damage taken" % [pct(float(pe["guard"])), "less" if float(pe["guard"]) > 0 else "more"])
+		pp.append(Loc.t("%s %s damage taken") % [pct(float(pe["guard"])), Loc.t("less") if float(pe["guard"]) > 0 else Loc.t("more")])
 	if not pp.is_empty():
-		parts.append("in the party " + " and ".join(pp))
+		parts.append(Loc.t("in the party ") + Loc.t(" and ").join(pp))
 	if e.has("bond"):
-		parts.append("bond %+d a day" % int(e["bond"]))
+		parts.append(Loc.t("bond %+d a day") % int(e["bond"]))
 	return ", ".join(parts)
 
 
 ## "Rivals: Quill and Tobble (The bar tab)"
 static func pair_title(p: Dictionary) -> String:
-	return "%s: %s and %s (%s)" % [KINDS.get(p["kind"], "?"), Empire.short_name(p["ids"][0]), Empire.short_name(p["ids"][1]), p["name"]]
+	return Loc.t("%s: %s and %s (%s)") % [Loc.t(KINDS.get(p["kind"], "?")), Empire.short_name(p["ids"][0]), Empire.short_name(p["ids"][1]), p["name"]]
 
 
 ## Lines for an assign screen: [text, good] for every pair among `ids`, with what it does in `context`
@@ -327,7 +327,7 @@ static func expedition_mods(squad: Array) -> Array:
 	for p in pairs_among(squad):
 		var m := int(p["effects"].get("expedition", 0))
 		if m != 0:
-			out.append(["%s (%s and %s)" % [p["name"], Empire.short_name(p["ids"][0]), Empire.short_name(p["ids"][1])], m])
+			out.append([Loc.t("%s (%s and %s)") % [p["name"], Empire.short_name(p["ids"][0]), Empire.short_name(p["ids"][1])], m])
 	return out
 
 
@@ -391,8 +391,8 @@ static func _make_truce(p: Dictionary) -> void:
 	var ps: Dictionary = _st()["pairs"][p["key"]]
 	ps["truce"] = true
 	var t := pair_between(p["ids"][0], p["ids"][1])
-	Empire.notice.emit("%s and %s have made peace: %s. (Bonds: H)" % [Empire.short_name(p["ids"][0]), Empire.short_name(p["ids"][1]), t["name"]], false)
-	_history("%s and %s: %s" % [Empire.short_name(p["ids"][0]), Empire.short_name(p["ids"][1]), t["name"]], [t["text"], "From now on: " + effect_text(t["effects"]) + "."])
+	Empire.notice.emit(Loc.t("%s and %s have made peace: %s. (Bonds: H)") % [Empire.short_name(p["ids"][0]), Empire.short_name(p["ids"][1]), t["name"]], false)
+	_history(Loc.t("%s and %s: %s") % [Empire.short_name(p["ids"][0]), Empire.short_name(p["ids"][1]), t["name"]], [t["text"], Loc.t("From now on: ") + effect_text(t["effects"]) + "."])
 
 
 ## A banter exchange from a pair among `present` ([] if none), for the start of a mission.
@@ -411,7 +411,7 @@ static func banter_quote(squad: Array) -> String:
 	var ex := banter_for(squad)
 	if ex.is_empty():
 		return ""
-	return "On the road: " + " ".join(ex.map(func(l): return "%s: \"%s\"" % [Empire.short_name(str(l[0])), str(l[1])]))
+	return Loc.t("On the road: ") + " ".join(ex.map(func(l): return "%s: \"%s\"" % [Empire.short_name(str(l[0])), str(l[1])]))
 
 
 # ---------------------------------------------------------------- fates
@@ -484,14 +484,14 @@ static func fate_facts(id: String) -> Array:
 	var out := []
 	var f := fate(id)
 	if int(f["missions"]) > 0:
-		out.append(["Missions with Ash", "%d (%d won)" % [int(f["missions"]), int(f["wins"])]])
+		out.append([Loc.t("Missions with Ash"), Loc.t("%d (%d won)") % [int(f["missions"]), int(f["wins"])]])
 	if int(f["injuries"]) > 0:
-		out.append(["Badly hurt", "%d time%s" % [int(f["injuries"]), "" if int(f["injuries"]) == 1 else "s"]])
+		out.append([Loc.t("Badly hurt"), Loc.t("%d time%s") % [int(f["injuries"]), "" if int(f["injuries"]) == 1 else "s"]])
 	if can_romance(id) and romance_of(id) != "":
-		out.append(["With Ash", {"partner": "a romance", "ex": "it's over", "friends": "friends"}[romance_of(id)]])
+		out.append([Loc.t("With Ash"), {"partner": Loc.t("a romance"), "ex": Loc.t("it's over"), "friends": "friends"}[romance_of(id)]])
 	for pr in pairs_of(id):
 		if Empire.recruits.has(pr[1]):
-			out.append([KINDS.get(pr[0]["kind"], ""), "%s (%s)" % [Empire.short_name(pr[1]), pr[0]["name"]]])
+			out.append([Loc.t(KINDS.get(pr[0]["kind"], "")), "%s (%s)" % [Empire.short_name(pr[1]), pr[0]["name"]]])
 	return out
 
 

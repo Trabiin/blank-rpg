@@ -26,7 +26,7 @@ static var _data := {}
 
 static func data() -> Dictionary:
 	if _data.is_empty():
-		var parsed = JSON.parse_string(FileAccess.get_file_as_string(PATH))
+		var parsed = Loc.load_json(PATH)
 		if typeof(parsed) == TYPE_DICTIONARY:
 			_data = parsed
 	return _data
@@ -59,29 +59,29 @@ static func meets(c: Dictionary) -> bool:
 ## What is still missing ("" when every condition holds), for the briefing.
 static func blocker(c: Dictionary) -> String:
 	if c.get("active", false) and not active():
-		return "only in a story campaign"
+		return Loc.t("only in a story campaign")
 	for id in c.get("cleared", []):
 		if not Missions.cleared(id):
 			var m := Missions.find(id)
-			return "clear %s first" % m.get("name", id)
+			return Loc.t("clear %s first") % m.get("name", id)
 	for id in c.get("not_cleared", []):
 		if Missions.cleared(id):
-			return "already done"
+			return Loc.t("already done")
 	for id in c.get("seen", []):
 		if not Dialogue.is_seen("talk:" + id):
-			return "the story is not there yet"
+			return Loc.t("the story is not there yet")
 	for id in c.get("joined", []):
 		if not Empire.recruits.has(id):
-			return "%s has to join first" % Empire.recruit(id).get("name", id)
+			return Loc.t("%s has to join first") % Empire.recruit(id).get("name", id)
 	if int(Empire.res.get("renown", 0)) < int(c.get("renown", 0)):
-		return "needs %d Renown" % int(c["renown"])
+		return Loc.t("needs %d Renown") % int(c["renown"])
 	if held() < int(c.get("held", 0)):
-		return "hold %d provinces" % int(c["held"])
+		return Loc.t("hold %d provinces") % int(c["held"])
 	for pid in c.get("owns", []):
 		if Empire.territory().find(pid).get("owner", "") != "you":
-			return "take %s first" % Empire.territory().find(pid).get("name", pid)
+			return Loc.t("take %s first") % Empire.territory().find(pid).get("name", pid)
 	if Empire.day < int(c.get("day", 0)):
-		return "not before day %d" % int(c["day"])
+		return Loc.t("not before day %d") % int(c["day"])
 	return ""
 
 

@@ -67,7 +67,7 @@ func _init() -> void:
 func _read() -> Dictionary:
 	var f := FileAccess.open(DATA, FileAccess.READ)
 	assert(f != null, "Missing " + DATA)
-	return JSON.parse_string(f.get_as_text())
+	return Loc.data(JSON.parse_string(f.get_as_text()), f.get_path().get_file())
 
 
 ## Puts the changeable fields (owner, Fray) back to their starting values. Shapes stay.

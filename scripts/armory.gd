@@ -25,7 +25,7 @@ static var _market := {}
 
 
 static func _load(path: String) -> Dictionary:
-	var parsed = JSON.parse_string(FileAccess.get_file_as_string(path))
+	var parsed = Loc.load_json(path)
 	return parsed if typeof(parsed) == TYPE_DICTIONARY else {}
 
 
@@ -200,26 +200,26 @@ static func sources(id: String) -> Array:
 	for kind in en:
 		if (en[kind].get("table", {}) as Dictionary).has(id):
 			out.append(_kind_plural(kind))
-	var mt = JSON.parse_string(FileAccess.get_file_as_string("res://data/mission_types.json"))
+	var mt = Loc.load_json("res://data/mission_types.json")
 	if typeof(mt) == TYPE_DICTIONARY:
 		var fs: Dictionary = mt.get("raid", {}).get("factions", {})
 		for fid in fs:
 			if (fs[fid].get("cache", {}) as Dictionary).has(id):
-				out.append("%s raids" % Empire.faction(fid).get("short", fid.capitalize()))
+				out.append(Loc.t("%s raids") % Empire.faction(fid).get("short", fid.capitalize()))
 		if (mt.get("salvage", {}).get("pile", {}) as Dictionary).has(id):
-			out.append("Salvage piles")
+			out.append(Loc.t("Salvage piles"))
 	var rg: Dictionary = mats_data().get("regions", {})
 	for rid in rg:
 		if (rg[rid].get("table", {}) as Dictionary).has(id) and rid != "marches":
-			out.append("anything in %s" % Empire.territory().region(rid).get("name", rid))
+			out.append(Loc.t("anything in %s") % Empire.territory().region(rid).get("name", rid))
 	if _market_sells_mats() and region_ok(str(mat(id).get("region", ""))):
-		out.append("the Market")
+		out.append(Loc.t("the Market"))
 	return out
 
 
 static func _kind_plural(kind: String) -> String:
 	if kind == "auditor":
-		return "the Auditor"
+		return Loc.t("the Auditor")
 	return str(EnemyKinds.kind(kind).get("plural", kind.capitalize()))
 
 
@@ -378,26 +378,26 @@ static func perks_text(item_id: String) -> String:
 	for k in pk:
 		match k:
 			"immune":
-				parts.append("immune to %s" % " and ".join((pk[k] as Array).map(func(s): return Status.name_of(str(s)).to_lower())))
+				parts.append(Loc.t("immune to %s") % Loc.t(" and ").join((pk[k] as Array).map(func(s): return Status.name_of(str(s)).to_lower())))
 			"lifesteal":
-				parts.append("heals %d%% of swing damage" % int(round(float(pk[k]) * 100.0)))
+				parts.append(Loc.t("heals %d%% of swing damage") % int(round(float(pk[k]) * 100.0)))
 			"first_strike":
-				parts.append("first hit on each enemy x%s" % str(snappedf(float(pk[k]), 0.1)))
+				parts.append(Loc.t("first hit on each enemy x%s") % str(snappedf(float(pk[k]), 0.1)))
 			"ink_on_kill":
-				parts.append("+%d Ink when an enemy falls nearby" % int(pk[k]))
+				parts.append(Loc.t("+%d Ink when an enemy falls nearby") % int(pk[k]))
 			"gilt_on_kill":
-				parts.append("+%d Gilt when an enemy falls nearby" % int(pk[k]))
+				parts.append(Loc.t("+%d Gilt when an enemy falls nearby") % int(pk[k]))
 			"thorns":
-				parts.append("%d damage back to close attackers" % int(pk[k]))
+				parts.append(Loc.t("%d damage back to close attackers") % int(pk[k]))
 			"last_stand":
-				parts.append("below %d%% HP: x%s damage, +%d%% guard" % [int(round(float(pk[k].get("below", 0.3)) * 100.0)),
+				parts.append(Loc.t("below %d%% HP: x%s damage, +%d%% guard") % [int(round(float(pk[k].get("below", 0.3)) * 100.0)),
 					str(snappedf(float(pk[k].get("damage", 1.0)), 0.1)), int(round(float(pk[k].get("guard", 0.0)) * 100.0))])
 			"stun_on_full":
-				parts.append("full-power swings stun %ss" % str(snappedf(float(pk[k]), 0.1)))
+				parts.append(Loc.t("full-power swings stun %ss") % str(snappedf(float(pk[k]), 0.1)))
 			"tech_charge":
-				parts.append("techs charge %d%% faster" % int(round((1.0 - float(pk[k])) * 100.0)))
+				parts.append(Loc.t("techs charge %d%% faster") % int(round((1.0 - float(pk[k])) * 100.0)))
 			"revive_once":
-				parts.append("once a mission, back up at %d%% HP" % int(round(float(pk[k]) * 100.0)))
+				parts.append(Loc.t("once a mission, back up at %d%% HP") % int(round(float(pk[k]) * 100.0)))
 	return ", ".join(parts)
 
 
@@ -434,15 +434,15 @@ static func building_effect(id: String, level: int, staff: Array) -> Dictionary:
 	if id == "forge":
 		var spec := forge_spec(level)
 		if _working(staff).is_empty():
-			return {"tier": 0, "benches": 0, "craft": 0, "text": "Idle: needs a smith"}
+			return {"tier": 0, "benches": 0, "craft": 0, "text": Loc.t("Idle: needs a smith")}
 		var craft := craft_of(staff)
 		var cut := int(round((1.0 - float(forge_data().get("craft_base", 10)) / (float(forge_data().get("craft_base", 10)) + craft)) * 100.0))
 		return {"tier": int(spec["tier"]), "benches": int(spec["benches"]), "craft": craft,
-			"text": "Works gear up to tier %d, %d job%s at a time, %d%% faster for Craft %d" % [int(spec["tier"]), int(spec["benches"]),
+			"text": Loc.t("Works gear up to tier %d, %d job%s at a time, %d%% faster for Craft %d") % [int(spec["tier"]), int(spec["benches"]),
 				"" if int(spec["benches"]) == 1 else "s", cut, craft]}
 	if id == "market":
 		if _working(staff).is_empty():
-			return {"gilt": 0, "stalls": 0, "tier": 0, "discount": 0.0, "text": "Idle: needs a trader"}
+			return {"gilt": 0, "stalls": 0, "tier": 0, "discount": 0.0, "text": Loc.t("Idle: needs a trader")}
 		var cfg: Dictionary = market_data().get("market", {})
 		var inc: Dictionary = cfg.get("income", {})
 		var charm := 0
@@ -456,7 +456,7 @@ static func building_effect(id: String, level: int, staff: Array) -> Dictionary:
 		var disc := minf(float(cfg.get("discount", 0.01)) * charm, float(cfg.get("max_discount", 0.2)))
 		var lv := market_spec(level)
 		return {"gilt": gilt, "stalls": int(lv["stalls"]), "tier": int(lv["tier"]), "discount": disc,
-			"text": "+%d Gilt a day, %d stalls, prices -%d%%" % [gilt, int(lv["stalls"]), int(round(disc * 100.0))]}
+			"text": Loc.t("+%d Gilt a day, %d stalls, prices -%d%%") % [gilt, int(lv["stalls"]), int(round(disc * 100.0))]}
 	return {"text": ""}
 
 
@@ -572,34 +572,34 @@ static func reserved(item_id: String) -> int:
 ## Why this recipe can't be started right now, or "".
 static func craft_blocker(r: Dictionary) -> String:
 	if r.is_empty():
-		return "nothing to make"
+		return Loc.t("nothing to make")
 	if forge_level() <= 0:
-		return "build the Forge first"
+		return Loc.t("build the Forge first")
 	var fe := forge_effect()
 	if int(fe.get("benches", 0)) <= 0:
-		return "the Forge needs a smith"
+		return Loc.t("the Forge needs a smith")
 	if int(r["tier"]) > int(fe.get("tier", 0)):
-		return "needs a level %d Forge" % _forge_level_for(int(r["tier"]))
+		return Loc.t("needs a level %d Forge") % _forge_level_for(int(r["tier"]))
 	var closed := closed_regions(r)
 	if not closed.is_empty():
-		return "needs materials from %s" % " and ".join(closed.map(func(x): return region_name(x)))
+		return Loc.t("needs materials from %s") % Loc.t(" and ").join(closed.map(func(x): return region_name(x)))
 	if benches_free() <= 0:
-		return "every bench is busy"
+		return Loc.t("every bench is busy")
 	if r["kind"] == "upgrade" and (has_upgrade(r["result"]) or _queued(r["result"])):
-		return "already made"
+		return Loc.t("already made")
 	if r["kind"] == "weapon":
 		if reserved(r["from"]) > 0:
-			return "already on a bench"
+			return Loc.t("already on a bench")
 		if weapon_now(r["hero"]) != r["from"] and Progress.count(r["from"]) <= 0:
-			return "needs the %s" % Progress.item(r["from"]).get("name", r["from"])
+			return Loc.t("needs the %s") % Progress.item(r["from"]).get("name", r["from"])
 	var short := []
 	for k in r["mats"]:
 		if mat_count(k) < int(r["mats"][k]):
-			short.append("%d more %s" % [int(r["mats"][k]) - mat_count(k), mat_name(k)])
+			short.append(Loc.t("%d more %s") % [int(r["mats"][k]) - mat_count(k), mat_name(k)])
 	if not short.is_empty():
-		return "needs " + ", ".join(short)
+		return Loc.t("needs ") + ", ".join(short)
 	if int(Empire.res.get("gilt", 0)) < int(r["gilt"]):
-		return "not enough Gilt"
+		return Loc.t("not enough Gilt")
 	return ""
 
 
@@ -655,7 +655,7 @@ static func dawn() -> Array:
 		_finish(j)
 	if not done.is_empty():
 		var names := done.map(func(j): return result_name(j["result"]) + ("" if int(j["makes"]) <= 1 else " x%d" % int(j["makes"])))
-		Empire.notice.emit("The Forge finished: %s." % ", ".join(names), false)
+		Empire.notice.emit(Loc.t("The Forge finished: %s.") % ", ".join(names), false)
 	return done
 
 
@@ -701,7 +701,7 @@ static func result_blurb(id: String) -> String:
 ## "in 2 days" / "at dawn" for a job.
 static func job_eta(j: Dictionary) -> String:
 	var d := int(j["done"]) - Empire.day
-	return "at dawn" if d <= 1 else "in %d days" % d
+	return Loc.t("at dawn") if d <= 1 else Loc.t("in %d days") % d
 
 
 # ---------------------------------------------------------------- the Market
@@ -817,9 +817,9 @@ static func stock_name(kind: String, id: String) -> String:
 
 static func buy_blocker(i: int, stall: Dictionary) -> String:
 	if stall_left(i, stall) <= 0:
-		return "sold out"
+		return Loc.t("sold out")
 	if int(Empire.res.get("gilt", 0)) < price(stall["kind"], stall["id"]):
-		return "not enough Gilt"
+		return Loc.t("not enough Gilt")
 	return ""
 
 

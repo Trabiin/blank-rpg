@@ -7,7 +7,7 @@ extends Actor
 const SWING_TIME := 0.24
 const REVIVE_TIME := 2.5
 
-var hero_name := "Ash"
+var hero_name := tr("Ash")
 var hero_id := "ash"  # recruit id (data/recruits.json, data/heroes.json); banter speakers use it
 ## Paper doll: the shared body layer plus one outfit layer, both recolored in code.
 var outfit := "archer"
@@ -223,7 +223,7 @@ func _apply_hit() -> void:
 				hit_any = true
 				Status.swing_landed(self, enemy, dmg)  # trinket perks: first strike, lifesteal, stun (issue #112)
 	if hit_any and crit_next > 1.0:
-		Fx.damage_number(get_parent(), global_position + Vector2(0, -30), "Ambush!", Color("c9b8ff"))
+		Fx.damage_number(get_parent(), global_position + Vector2(0, -30), tr("Ambush!"), Color("c9b8ff"))
 		crit_next = 1.0
 		vanish_t = 0.0  # striking gives her away
 	if hit_any and swing_power >= 1.0:
@@ -241,7 +241,7 @@ func _adjust_damage(amount: int) -> int:
 		shield_hp -= soaked
 		amount -= soaked
 		if amount <= 0:
-			Fx.damage_number(get_parent(), global_position + Vector2(0, -16), "blocked", Color("9fd8ff"))
+			Fx.damage_number(get_parent(), global_position + Vector2(0, -16), Loc.t("blocked"), Color("9fd8ff"))
 			invuln_t = 0.3
 			return 0
 	amount = Status.adjust_incoming(self, amount)  # Iron Tea, the ward, Widow's Ribbon (issue #112)

@@ -39,7 +39,7 @@ static func can_send() -> bool:
 static func new_id() -> String:
 	var rng := RandomNumberGenerator.new()
 	rng.randomize()
-	return "LI-%08X" % (rng.randi() & 0x7fffffff)
+	return "LI-%08X" % (rng.randi() & 0x7fffffff)  # no-tr: report id
 
 
 ## The save the report would attach: the slot this game was loaded from or last saved to, else the newest.
@@ -95,7 +95,7 @@ static func shot_png(img: Image) -> PackedByteArray:
 static func tail(text: String, max_bytes: int) -> String:
 	if text.length() <= max_bytes:
 		return text
-	return "(earlier lines cut)\n" + text.right(max_bytes)
+	return "(earlier lines cut)\n" + text.right(max_bytes)  # no-tr: report for the developer
 
 
 ## The report as the JSON body the endpoint takes.
@@ -107,11 +107,11 @@ static func to_json(report: Dictionary) -> String:
 
 ## A plain-text summary: the top of report.txt in the zip and the first thing a triager reads.
 static func summary(report: Dictionary) -> String:
-	var lines := ["Last Ink %s report %s" % [report["kind"], report["id"]], "Created: " + str(report["created"]), ""]
-	lines.append(str(report["text"]) if str(report["text"]) != "" else "(no description)")
+	var lines := ["Last Ink %s report %s" % [report["kind"], report["id"]], "Created: " + str(report["created"]), ""]  # no-tr: report for the developer
+	lines.append(str(report["text"]) if str(report["text"]) != "" else "(no description)")  # no-tr: report for the developer
 	lines.append("")
 	if str(report["contact"]) != "":
-		lines.append("Contact: " + str(report["contact"]))
+		lines.append("Contact: " + str(report["contact"]))  # no-tr: report for the developer
 	for section in ["context", "system"]:
 		lines.append("[%s]" % section)
 		var d: Dictionary = report[section]
@@ -120,12 +120,12 @@ static func summary(report: Dictionary) -> String:
 		lines.append("")
 	var prev: Dictionary = report.get("previous_session", {})
 	if not prev.is_empty():
-		lines.append("[previous session]")
-		lines.append("crashed: %s, errors: %d, warnings: %d" % [prev.get("crashed", false), int(prev.get("errors", 0)), int(prev.get("warnings", 0))])
+		lines.append("[previous session]")  # no-tr: report for the developer
+		lines.append("crashed: %s, errors: %d, warnings: %d" % [prev.get("crashed", false), int(prev.get("errors", 0)), int(prev.get("warnings", 0))])  # no-tr: report for the developer
 		for s in prev.get("samples", []):
 			lines.append("  " + str(s))
 		lines.append("")
-	lines.append("Attached: " + (", ".join(report["attachments"].keys()) if not report["attachments"].is_empty() else "nothing"))
+	lines.append("Attached: " + (", ".join(report["attachments"].keys()) if not report["attachments"].is_empty() else "nothing"))  # no-tr: report for the developer
 	return "\n".join(lines)
 
 
@@ -191,15 +191,15 @@ static func save_zip(report: Dictionary) -> String:
 static func send(host: Node, report: Dictionary) -> Dictionary:
 	var cfg := config()
 	if not can_send():
-		return {"ok": false, "error": "no endpoint"}
+		return {"ok": false, "error": Loc.t("no endpoint")}
 	var body := to_json(report)
 	if body.to_utf8_buffer().size() > MAX_BODY:
-		return {"ok": false, "error": "too big"}
+		return {"ok": false, "error": Loc.t("too big")}
 	var http := HTTPRequest.new()
 	http.process_mode = Node.PROCESS_MODE_ALWAYS
 	http.timeout = float(cfg["timeout"])
 	host.add_child(http)
-	var err := http.request(str(cfg["endpoint"]), ["Content-Type: application/json"], HTTPClient.METHOD_POST, body)
+	var err := http.request(str(cfg["endpoint"]), ["Content-Type: application/json"], HTTPClient.METHOD_POST, body)  # no-tr: HTTP header
 	if err != OK:
 		http.queue_free()
 		return {"ok": false, "error": error_string(err)}
@@ -207,9 +207,9 @@ static func send(host: Node, report: Dictionary) -> Dictionary:
 	http.queue_free()
 	var code: int = res[1]
 	if res[0] != HTTPRequest.RESULT_SUCCESS:
-		return {"ok": false, "error": "network (%d)" % res[0]}
+		return {"ok": false, "error": Loc.t("network (%d)") % res[0]}
 	var reply = JSON.parse_string((res[3] as PackedByteArray).get_string_from_utf8())
 	if code < 200 or code >= 300 or typeof(reply) != TYPE_DICTIONARY or not reply.get("ok", false):
 		var why: String = str(reply.get("error", "")) if typeof(reply) == TYPE_DICTIONARY else ""
-		return {"ok": false, "error": "server said %d %s" % [code, why]}
+		return {"ok": false, "error": Loc.t("server said %d %s") % [code, why]}
 	return {"ok": true, "id": str(reply.get("id", report["id"]))}

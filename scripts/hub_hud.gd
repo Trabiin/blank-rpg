@@ -127,25 +127,25 @@ func _draw() -> void:
 	var vs := _vs()
 	# Top-left: where, when, how fast.
 	UiSkin.panel(self, Rect2(6, 6, 226, 38), "ledger")
-	_text(Vector2(13, 21), "Hollowmark", 10, Color("f3efe4"), false)
+	_text(Vector2(13, 21), tr("Hollowmark"), 10, Color("f3efe4"), false)
 	var spd: int = Empire.SPEEDS[Empire.speed]
-	var clock := "Day %d   %s   %s" % [Empire.day, Empire.clock_text(), "paused" if spd == 0 else "%dx" % spd]
+	var clock := tr("Day %d   %s   %s") % [Empire.day, Empire.clock_text(), Loc.t("paused") if spd == 0 else "%dx" % spd]
 	_text(Vector2(80, 21), clock, 9, Color(0.78, 0.75, 0.7) if spd > 0 else Color("ffb36b"), false)
 	var x := 13.0
 	for k in Empire.RESOURCES:
-		var s := "%s %d" % [Empire.RES_NAMES[k], int(Empire.res[k])]
+		var s := "%s %d" % [Loc.t(Empire.RES_NAMES[k]), int(Empire.res[k])]
 		var col := Color("ff9b8a") if k == "supplies" and Empire.hungry else Color(0.85, 0.83, 0.78)
 		if UiSkin.draw_icon(self, k, Rect2(x - 1, 25, 11, 11)):
 			x += 12.0
 		_text(Vector2(x, 34), s, 8, col, false)
 		x += font.get_string_size(s, HORIZONTAL_ALIGNMENT_LEFT, -1, 8).x + 10.0
-	_button(roster_rect(), ("Roster  " + Prompts.key("roster")).strip_edges())
-	_button(buildings_rect(), ("Buildings  " + Prompts.key("buildings")).strip_edges())
-	_button(menu_rect(), "Menu")
+	_button(roster_rect(), (tr("Roster  ") + Prompts.key("roster")).strip_edges())
+	_button(buildings_rect(), (tr("Buildings  ") + Prompts.key("buildings")).strip_edges())
+	_button(menu_rect(), tr("Menu"))
 
 	# What the attack button does right now.
 	if not hub.target.is_empty():
-		var key := "Tap" if hub.touch_active() else Prompts.key("attack")
+		var key := tr("Tap") if hub.touch_active() else Prompts.key("attack")
 		var r := _prompt_rect()
 		UiSkin.panel(self, r, "button")
 		var label := "%s:  %s" % [key, hub.target["label"]]
@@ -175,21 +175,21 @@ func _draw() -> void:
 	# The story goal, alerts and notices are drawn by the alert tray (alert_tray.gd, issue #22).
 	if help_t > 0.0 and not hub.touch_active():
 		var a4 := clampf(help_t, 0.0, 1.0)
-		_text(Vector2(vs.x - 236, 36), "Walk: WASD / arrows / stick", 8, Color(1, 1, 1, a4))
-		_text(Vector2(vs.x - 236, 47), "Talk / use: " + Prompts.key("attack"), 8, Color(1, 1, 1, a4))
+		_text(Vector2(vs.x - 236, 36), tr("Walk: WASD / arrows / stick"), 8, Color(1, 1, 1, a4))
+		_text(Vector2(vs.x - 236, 47), tr("Talk / use: ") + Prompts.key("attack"), 8, Color(1, 1, 1, a4))
 		if Prompts.pad():  # issue #23: the prompts follow the device in use
-			_text(Vector2(vs.x - 236, 58), "Clock: %s / %s   Menu: %s" % [Prompts.key("clock_slower"), Prompts.key("clock_faster"), Prompts.key("pause")], 8, Color(1, 1, 1, a4))
-			_text(Vector2(vs.x - 236, 69), "Roster %s  Buildings %s  Expeditions %s" % [Prompts.key("roster"), Prompts.key("buildings"), Prompts.key("expeditions")], 8, Color(1, 1, 1, a4))
-			_text(Vector2(vs.x - 236, 80), "Everything else: the Menu", 8, Color(1, 1, 1, a4))
+			_text(Vector2(vs.x - 236, 58), tr("Clock: %s / %s   Menu: %s") % [Prompts.key("clock_slower"), Prompts.key("clock_faster"), Prompts.key("pause")], 8, Color(1, 1, 1, a4))
+			_text(Vector2(vs.x - 236, 69), tr("Roster %s  Buildings %s  Expeditions %s") % [Prompts.key("roster"), Prompts.key("buildings"), Prompts.key("expeditions")], 8, Color(1, 1, 1, a4))
+			_text(Vector2(vs.x - 236, 80), tr("Everything else: the Menu"), 8, Color(1, 1, 1, a4))
 		else:  # read from the InputMap, so remapped keys show (issue #115)
-			_text(Vector2(vs.x - 236, 58), "Clock: %s-%s   Menu: %s   Journal: %s" % [Prompts.key("clock_speed_0"), Prompts.key("clock_speed_3"),
+			_text(Vector2(vs.x - 236, 58), tr("Clock: %s-%s   Menu: %s   Journal: %s") % [Prompts.key("clock_speed_0"), Prompts.key("clock_speed_3"),
 				Prompts.key("pause"), Prompts.key("journal")], 8, Color(1, 1, 1, a4))
 			var keys := PackedStringArray()
-			for a in [["roster", "Roster"], ["buildings", "Buildings"], ["research", "Research"], ["diplomacy", "Factions"], ["bonds", "Bonds"], ["newcomers", "Newcomers"]]:
+			for a in [["roster", tr("Roster")], ["buildings", tr("Buildings")], ["research", tr("Research")], ["diplomacy", tr("Factions")], ["bonds", tr("Bonds")], ["newcomers", tr("Newcomers")]]:
 				if Prompts.key(a[0]) != "" and Help.is_open(a[0]):
 					keys.append("%s %s" % [a[1], Prompts.key(a[0])])
 			_text(Vector2(vs.x - 236, 69), "  ".join(keys), 8, Color(1, 1, 1, a4))
-			_text(Vector2(vs.x - 236, 80), "F1: show or hide this   Help: in the Menu", 8, Color(1, 1, 1, a4))
+			_text(Vector2(vs.x - 236, 80), tr("F1: show or hide this   Help: in the Menu"), 8, Color(1, 1, 1, a4))
 
 
 func _wrap_lines(s: String, width: float, size: int) -> PackedStringArray:

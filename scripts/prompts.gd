@@ -87,14 +87,14 @@ static func _event_name(ev: InputEvent, dev: String) -> String:
 		return KEY_SHORT.get(s, s)
 	if dev == PAD and ev is InputEventJoypadButton:
 		if DPAD.has(ev.button_index):
-			return "D-pad " + str(DPAD[ev.button_index])
-		return str(PAD_NAMES[pad_style].get(ev.button_index, ""))
+			return Loc.t("D-pad ") + Loc.t(str(DPAD[ev.button_index]))
+		return Loc.t(str(PAD_NAMES[pad_style].get(ev.button_index, "")))
 	if dev == PAD and ev is InputEventJoypadMotion:
 		if ev.axis == JOY_AXIS_TRIGGER_LEFT:
 			return TRIGGERS[pad_style][0]
 		if ev.axis == JOY_AXIS_TRIGGER_RIGHT:
 			return TRIGGERS[pad_style][1]
-		return "Stick"
+		return Loc.t("Stick")
 	return ""
 
 
@@ -115,22 +115,22 @@ static func any_key(actions: Array) -> String:
 ## "Tap a row, tap it again to act")
 static func help(parts: Array, touch_text := "Tap to choose") -> String:
 	if device == TOUCH:
-		return touch_text
+		return Loc.t(touch_text)
 	var out := PackedStringArray()
 	for p in parts:
 		var what = p[0]
 		var label := ""
 		match what:
 			"updown":
-				label = "D-pad" if device == PAD else "Up/Down"
+				label = Loc.t("D-pad") if device == PAD else Loc.t("Up/Down")
 			"leftright":
-				label = "D-pad Left/Right" if device == PAD else "Left/Right"
+				label = Loc.t("D-pad Left/Right") if device == PAD else Loc.t("Left/Right")
 			"move":
-				label = "Stick" if device == PAD else "WASD"
+				label = Loc.t("Stick") if device == PAD else Loc.t("WASD")
 			_:
 				label = _keys_of(what if what is Array else [what])
 		if label != "":
-			out.append("%s %s" % [label, p[1]])
+			out.append(Loc.t("%s %s", "key and what it does") % [label, Loc.t(str(p[1]))])
 	return "   ".join(out)
 
 
@@ -147,7 +147,7 @@ static func _keys_of(actions: Array) -> String:
 
 ## "Enter" / "A" / "Tap": what to press to go on (story cards, results, prompts).
 static func confirm() -> String:
-	return "Tap" if device == TOUCH else key("ui_accept")
+	return Loc.t("Tap") if device == TOUCH else key("ui_accept")
 
 
 ## True for a left click or a finger touching down. Touch does not emulate the mouse in
@@ -200,19 +200,19 @@ static func _token(tok: String) -> String:
 				return ""
 			var k := key(arg)
 			if k == "" and device == PAD:
-				return " (via %s)" % key("pause")
+				return Loc.t(" (via %s)") % key("pause")
 			return "" if k == "" else " (%s)" % k
 		"key":
 			if device == TOUCH:
-				return "a tap"
+				return Loc.t("a tap")
 			var k := key(arg)
 			if k == "" and device == PAD:
-				return "the %s button" % key("pause")
+				return Loc.t("the %s button") % key("pause")
 			return k
 		"confirm":
 			return confirm()
 		"back":
-			return "the back button" if device == TOUCH else key("ui_cancel")
+			return Loc.t("the back button") if device == TOUCH else key("ui_cancel")
 		"dev":
 			var parts := arg.split("|")
 			var at := 1 if device == PAD else (2 if device == TOUCH else 0)

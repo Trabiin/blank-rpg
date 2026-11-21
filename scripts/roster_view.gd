@@ -107,7 +107,7 @@ func _current_option_index(opts: Array) -> int:
 func _assign(o: Dictionary) -> void:
 	var id: String = _ids()[sel]
 	if not o["enabled"]:
-		flash = "Can't: %s." % o["note"] if o["note"] != "" else "Can't do that right now."
+		flash = tr("Can't: %s.") % o["note"] if o["note"] != "" else tr("Can't do that right now.")
 	elif Empire.assign(id, o["role"], o["target"]):
 		flash = "%s: %s." % [Empire.recruit(id)["name"], Empire.role_label(id)]
 	flash_t = 2.5
@@ -157,11 +157,11 @@ func _draw() -> void:
 	UiSkin.screen(self, vs)
 	var ids := _ids()
 	var n := ids.size()
-	_text(Vector2(LIST_X, 20), "Roster", 15, Color("f3efe4"))
-	_text(Vector2(LIST_X + 64, 19), "%d people   upkeep %d Supplies a day   party %d/%d" % [n, n * Empire.UPKEEP_SUPPLIES, Empire.party_ids().size(), Empire.PARTY_SIZE], 9, Color(0.7, 0.68, 0.7))
+	_text(Vector2(LIST_X, 20), tr("Roster"), 15, Color("f3efe4"))
+	_text(Vector2(LIST_X + 64, 19), tr("%d people   upkeep %d Supplies a day   party %d/%d") % [n, n * Empire.UPKEEP_SUPPLIES, Empire.party_ids().size(), Empire.PARTY_SIZE], 9, Color(0.7, 0.68, 0.7))
 	var cr := _close_rect()
 	UiSkin.panel(self, cr, "button")
-	_text(cr.position + Vector2(9, 12), "Close", 9, Color(0.75, 0.72, 0.7))
+	_text(cr.position + Vector2(9, 12), tr("Close"), 9, Color(0.75, 0.72, 0.7))
 
 	# People list
 	_row_rects.clear()
@@ -198,11 +198,11 @@ func _draw() -> void:
 	var x := 236.0
 	_text(Vector2(x, 46), r["name"], 15, Color("f3efe4"))
 	_text(Vector2(x, 59), r["title"], 9, Color(0.75, 0.72, 0.7))
-	_text(Vector2(x + 120, 59), TIER_NAMES[r["tier"]], 9, TIER_COLORS[r["tier"]])
+	_text(Vector2(x + 120, 59), Loc.t(TIER_NAMES[r["tier"]]), 9, TIER_COLORS[r["tier"]])
 	var y := 76.0
 	for k in STAT_KEYS:
 		var v := int(r["stats"][k])
-		_text(Vector2(x, y + 7), STAT_NAMES[k], 9, Color(0.72, 0.7, 0.72))
+		_text(Vector2(x, y + 7), Loc.t(STAT_NAMES[k]), 9, Color(0.72, 0.7, 0.72))
 		for seg in 10:
 			var c := Color(0.85, 0.78, 0.6) if seg < v else Color(0.18, 0.16, 0.2)
 			draw_rect(Rect2(x + 44 + seg * 11, y, 9, 7), c)
@@ -222,13 +222,13 @@ func _draw() -> void:
 	if Empire.has_bond(id):
 		var br := Empire.bond_rank(id)
 		y += 6
-		_text(Vector2(x, y + 9), "Bond rank %d, %s%s" % [br, Empire.bond_rank_name(br), "  (wants a word: H)" if Empire.bond_next_scene(id) > 0 else ""], 8, Color("ff8fa3"))
+		_text(Vector2(x, y + 9), tr("Bond rank %d, %s%s") % [br, Empire.bond_rank_name(br), tr("  (wants a word: H)") if Empire.bond_next_scene(id) > 0 else ""], 8, Color("ff8fa3"))
 		y += 12
-		_wrap(Vector2(x, y + 9), "Likes " + Empire.bond_info(id).get("likes_text", "?") + ". Pink heart: a role they like. Grey: one they dislike.", 190, 7, Color(0.6, 0.58, 0.6))
+		_wrap(Vector2(x, y + 9), tr("Likes ") + Empire.bond_info(id).get("likes_text", "?") + tr(". Pink heart: a role they like. Grey: one they dislike."), 190, 7, Color(0.6, 0.58, 0.6))
 
 	# Detail: what they could do
-	_text(Vector2(OPT_X, 46), "Assign", 11, Color("f3efe4"))
-	_text(Vector2(OPT_X + 48, 46), "now: " + Empire.role_label(id), 8, Color(0.7, 0.68, 0.7))
+	_text(Vector2(OPT_X, 46), tr("Assign"), 11, Color("f3efe4"))
+	_text(Vector2(OPT_X + 48, 46), tr("now: ") + Empire.role_label(id), 8, Color(0.7, 0.68, 0.7))
 	var opts := _options()
 	_opt_rects.clear()
 	var oy := 56.0
@@ -257,7 +257,7 @@ func _draw() -> void:
 	var show: Dictionary = opts[opt if focus == 1 else current]
 	if show["preview"] != "":
 		_wrap(Vector2(OPT_X, oy + 12), show["preview"], size.x - OPT_X - 8, 8, Color("cfe0b0"))
-	var help := Prompts.help([["updown", "choose"], ["ui_accept", "assign"], ["ui_cancel", "back"]], "Tap a role to assign it") if focus == 1 else Prompts.help([["updown", "choose person"], ["ui_accept", "pick a role"], [["ui_cancel", "roster"], "close"]], "Tap a person, then tap a role")
+	var help := Prompts.help([["updown", "choose"], ["ui_accept", "assign"], ["ui_cancel", "back"]], tr("Tap a role to assign it")) if focus == 1 else Prompts.help([["updown", tr("choose person")], ["ui_accept", tr("pick a role")], [["ui_cancel", "roster"], "close"]], tr("Tap a person, then tap a role"))
 	_text(Vector2(OPT_X, vs.y - 10), help, 7, Color(0.5, 0.48, 0.52))
 	if flash_t > 0.0:
 		var a := clampf(flash_t / 0.4, 0.0, 1.0)

@@ -225,8 +225,8 @@ func _ready() -> void:
 
 func _on_day_passed(d: int) -> void:
 	_bake()  # the Blank moved: re-whiten the map
-	toast = "Day %d begins." % d
-	toast2 = "Supplies ran out. People are going hungry." if Empire.hungry else ""
+	toast = tr("Day %d begins.") % d
+	toast2 = tr("Supplies ran out. People are going hungry.") if Empire.hungry else ""
 	toast_t = 3.5 if toast2 == "" else 5.0
 
 
@@ -293,10 +293,10 @@ func _on_hollowmark_lost() -> void:
 
 
 func _show_lost() -> void:
-	over_menu.setup("Hollowmark has been erased.", [
-		{"id": "load", "label": "Load game", "enabled": Saves.latest_slot() != ""},
-		{"id": "title", "label": "Quit to title"},
-	], "No town, no table, no one left to write you down.")
+	over_menu.setup(tr("Hollowmark has been erased."), [
+		{"id": "load", "label": tr("Load game"), "enabled": Saves.latest_slot() != ""},
+		{"id": "title", "label": tr("Quit to title")},
+	], tr("No town, no table, no one left to write you down."))
 	over_menu.visible = true
 	get_tree().paused = true
 
@@ -306,7 +306,7 @@ func _on_over(id: String) -> void:
 		"load":
 			over_menu.visible = false
 			slot_mode = "load"
-			slot_menu.setup("Load which save?", Saves.slot_items(false))
+			slot_menu.setup(tr("Load which save?"), Saves.slot_items(false))
 			slot_menu.visible = true
 		"title":
 			get_tree().paused = false
@@ -321,25 +321,25 @@ func _on_ledger_settled(net: Dictionary) -> void:
 # ---------------------------------------------------------------- menu and saving
 
 func _menu_items(note := "") -> void:
-	menu.setup("Command", [
-		{"id": "resume", "label": "Resume"},
-		{"id": "town", "label": "Back to Hollowmark", "detail": "walk around town"},
-		{"id": "roster", "label": "Roster", "detail": Prompts.key("roster")},
-		{"id": "buildings", "label": "Buildings", "detail": Prompts.key("buildings")},
-		{"id": "expeditions", "label": "Expeditions", "detail": Prompts.key("expeditions"), "enabled": Help.is_open("expeditions"), "note": "(%s)" % Help.locked_note("expeditions")},
-		{"id": "research", "label": "Research", "detail": Prompts.key("research"), "enabled": Help.is_open("research"), "note": "(%s)" % Help.locked_note("research")},
-		{"id": "diplomacy", "label": "Diplomacy", "detail": Prompts.key("diplomacy"), "enabled": Help.is_open("diplomacy"), "note": "(%s)" % Help.locked_note("diplomacy")},
-		{"id": "bonds", "label": "Bonds", "detail": Prompts.key("bonds"), "enabled": Help.is_open("bonds"), "note": "(%s)" % Help.locked_note("bonds")},
-		{"id": "newcomers", "label": "Newcomers", "detail": Prompts.key("newcomers")},
-		{"id": "gear", "label": "Party gear & shop", "detail": Prompts.key("gear")},
-		{"id": "armory", "label": "Forge & Market", "detail": Prompts.key("armory")},
-		{"id": "journal", "label": "Journal", "detail": Prompts.key("journal")},
-		{"id": "help", "label": "Help", "detail": "explainers, tips and controls"},
-		{"id": "report", "label": "Report a bug", "detail": "or send feedback"},
-		{"id": "save", "label": "Save game"},
-		{"id": "load", "label": "Load game", "enabled": Saves.latest_slot() != "", "note": "(no saves yet)"},
-		{"id": "options", "label": "Options"},
-		{"id": "title", "label": "Quit to title"},
+	menu.setup(tr("Command"), [
+		{"id": "resume", "label": tr("Resume")},
+		{"id": "town", "label": tr("Back to Hollowmark"), "detail": tr("walk around town")},
+		{"id": "roster", "label": tr("Roster"), "detail": Prompts.key("roster")},
+		{"id": "buildings", "label": tr("Buildings"), "detail": Prompts.key("buildings")},
+		{"id": "expeditions", "label": tr("Expeditions"), "detail": Prompts.key("expeditions"), "enabled": Help.is_open("expeditions"), "note": "(%s)" % Help.locked_note("expeditions")},
+		{"id": "research", "label": tr("Research"), "detail": Prompts.key("research"), "enabled": Help.is_open("research"), "note": "(%s)" % Help.locked_note("research")},
+		{"id": "diplomacy", "label": tr("Diplomacy"), "detail": Prompts.key("diplomacy"), "enabled": Help.is_open("diplomacy"), "note": "(%s)" % Help.locked_note("diplomacy")},
+		{"id": "bonds", "label": tr("Bonds"), "detail": Prompts.key("bonds"), "enabled": Help.is_open("bonds"), "note": "(%s)" % Help.locked_note("bonds")},
+		{"id": "newcomers", "label": tr("Newcomers"), "detail": Prompts.key("newcomers")},
+		{"id": "gear", "label": tr("Party gear & shop"), "detail": Prompts.key("gear")},
+		{"id": "armory", "label": tr("Forge & Market"), "detail": Prompts.key("armory")},
+		{"id": "journal", "label": tr("Journal"), "detail": Prompts.key("journal")},
+		{"id": "help", "label": tr("Help"), "detail": tr("explainers, tips and controls")},
+		{"id": "report", "label": tr("Report a bug"), "detail": tr("or send feedback")},
+		{"id": "save", "label": tr("Save game")},
+		{"id": "load", "label": tr("Load game"), "enabled": Saves.latest_slot() != "", "note": tr("(no saves yet)")},
+		{"id": "options", "label": tr("Options")},
+		{"id": "title", "label": tr("Quit to title")},
 	], note)
 
 
@@ -372,7 +372,7 @@ func _on_menu(id: String) -> void:
 		"save", "load":
 			slot_mode = id
 			menu.visible = false
-			slot_menu.setup("Save to which slot?" if id == "save" else "Load which save?", Saves.slot_items(id == "save"))
+			slot_menu.setup(tr("Save to which slot?") if id == "save" else tr("Load which save?"), Saves.slot_items(id == "save"))
 			slot_menu.visible = true
 		"town":
 			_leave(Saves.HUB_SCENE)
@@ -420,12 +420,12 @@ func _on_slot(id: String) -> void:
 		return
 	var ok := Saves.save(id, snapshot())
 	slot_menu.visible = false
-	_menu_items(("Saved to %s." % Saves.slot_label(id)) if ok else "Saving failed. Your browser may be blocking storage.")
+	_menu_items((tr("Saved to %s.") % Saves.slot_label(id)) if ok else tr("Saving failed. Your browser may be blocking storage."))
 	menu.visible = true
 
 
 func snapshot() -> Dictionary:
-	return {"scene": Saves.COMMAND_SCENE, "area_name": "Command Table"}
+	return {"scene": Saves.COMMAND_SCENE, "area_name": tr("Command Table")}
 
 
 func autosave() -> void:
@@ -734,7 +734,7 @@ func owner_color(owner: String) -> Color:
 
 func owner_name(owner: String) -> String:
 	if OWNER_NAMES.has(owner):
-		return OWNER_NAMES[owner]
+		return Loc.t(OWNER_NAMES[owner])
 	return str(Empire.faction(owner).get("name", owner.capitalize()))
 
 
@@ -1053,32 +1053,32 @@ func _open_brief(m: Dictionary) -> void:
 	for line in _wrap_words(m.get("brief", ""), 64):
 		lines.append(line)
 	lines.append("")
-	lines.append("%s mission   ·   Threat %s" % [Missions.type_name(m), Missions.threat_text(m)])  # #113
-	lines.append("Objective: " + Objective.describe(m.get("objective", {})))
+	lines.append(tr("%s mission   ·   Threat %s") % [Missions.type_name(m), Missions.threat_text(m)])  # #113
+	lines.append(tr("Objective: ") + Objective.describe(m.get("objective", {})))
 	if m.has("force"):
-		lines.append("Personal: %s comes along, whoever else you pick." % Empire.short_name(m["force"]))
+		lines.append(tr("Personal: %s comes along, whoever else you pick.") % Empire.short_name(m["force"]))
 	elif m.has("escort"):
-		lines.append("Escort: %s can't fight. Keep them on their feet." % Empire.short_name(m["escort"]))
-	lines.append("Expect: " + EnemyKinds.names(m))
+		lines.append(tr("Escort: %s can't fight. Keep them on their feet.") % Empire.short_name(m["escort"]))
+	lines.append(tr("Expect: ") + EnemyKinds.names(m))
 	var rew := Missions.reward_text(m)
 	if rew != "":
-		lines.append("Reward: " + rew)
+		lines.append(tr("Reward: ") + rew)
 	if int(m.get("until_day", -1)) >= Empire.day:
 		var left := int(m["until_day"]) - Empire.day
-		lines.append("Offered today only." if left == 0 else "Offered for %d more day%s." % [left, "" if left == 1 else "s"])
+		lines.append(tr("Offered today only.") if left == 0 else tr("Offered for %d more day%s.") % [left, "" if left == 1 else "s"])
 	if int(m.get("fray", 0)) < 0:
-		lines.append("Pushes the Blank back: %d Fray in %s" % [int(m["fray"]), territory.find(m.get("province", "")).get("name", "")])
+		lines.append(tr("Pushes the Blank back: %d Fray in %s") % [int(m["fray"]), territory.find(m.get("province", "")).get("name", "")])
 	if m.has("cost_text"):
-		lines.append("Cost: " + m["cost_text"])
-	lines.append("The clock stops while you are away.")
+		lines.append(tr("Cost: ") + m["cost_text"])
+	lines.append(tr("The clock stops while you are away."))
 	var blocker: String = str(m.get("blocker", ""))
-	var items := [{"id": "go", "label": "Set out", "enabled": blocker == "", "note": "(%s)" % blocker}]
+	var items := [{"id": "go", "label": tr("Set out"), "enabled": blocker == "", "note": "(%s)" % blocker}]
 	# Other missions in the same province: switch the briefing to them.
 	var others := Missions.list_for_province(m.get("province", "")).filter(func(o): return o.get("id", "") != m.get("id", ""))
 	for o in others:
-		items.append({"id": "other:" + str(o["id"]), "label": "Instead: " + str(o["name"])})
-	items.append({"id": "back", "label": "Back"})
-	brief_menu.setup(m.get("name", "Mission"), items, "\n".join(lines))
+		items.append({"id": "other:" + str(o["id"]), "label": tr("Instead: ") + str(o["name"])})
+	items.append({"id": "back", "label": tr("Back")})
+	brief_menu.setup(m.get("name", tr("Mission")), items, "\n".join(lines))
 	brief_menu.visible = true
 	get_tree().paused = true
 
@@ -1246,54 +1246,54 @@ func _draw_overlay(c: CanvasItem) -> void:
 	_cv.draw_rect(_map_rect(), Color("2a2019"), false, 1.0)
 	_draw_zoom_buttons()
 	# Top bar
-	_text(MAP_ORIGIN + Vector2(6, 14), "THE INKLANDS", 10, Color(0.85, 0.82, 0.76, 0.8), 3)
+	_text(MAP_ORIGIN + Vector2(6, 14), tr("THE INKLANDS"), 10, Color(0.85, 0.82, 0.76, 0.8), 3)
 	_draw_resources()
 	_draw_clock()
 	var rb := _roster_button_rect()
 	UiSkin.panel(_cv, rb, "button")
-	_text_c(Vector2(rb.get_center().x, rb.position.y + 12), "Roster (%d)" % Empire.recruits.size() + _k("roster"), 9, Color(0.85, 0.82, 0.76))
+	_text_c(Vector2(rb.get_center().x, rb.position.y + 12), tr("Roster (%d)") % Empire.recruits.size() + _k("roster"), 9, Color(0.85, 0.82, 0.76))
 	var bb := _buildings_button_rect()
 	UiSkin.panel(_cv, bb, "button")
 	var busy := "" if Empire.construction.is_empty() else " *"
-	_text_c(Vector2(bb.get_center().x, bb.position.y + 12), "Buildings%s" % busy + _k("buildings"), 9, GOLD if busy != "" else Color(0.85, 0.82, 0.76))
+	_text_c(Vector2(bb.get_center().x, bb.position.y + 12), tr("Buildings%s") % busy + _k("buildings"), 9, GOLD if busy != "" else Color(0.85, 0.82, 0.76))
 	var tb := _town_button_rect()
 	UiSkin.panel(_cv, tb, "button")
-	_text_c(Vector2(tb.get_center().x, tb.position.y + 12), "To town", 9, Color(0.85, 0.82, 0.76))
+	_text_c(Vector2(tb.get_center().x, tb.position.y + 12), tr("To town"), 9, Color(0.85, 0.82, 0.76))
 	var eb := _expeditions_button_rect()
-	if not _draw_locked_button(eb, "Expeditions", "expeditions"):
+	if not _draw_locked_button(eb, tr("Expeditions"), "expeditions"):
 		UiSkin.panel(_cv, eb, "button")
 		var unread := Empire.unread_reports()
 		var out := Empire.expeditions.size()
-		var etext := "Expeditions"
+		var etext := tr("Expeditions")
 		if unread > 0:
-			etext = "Reports (%d)" % unread
+			etext = tr("Reports (%d)") % unread
 		elif out > 0:
-			etext = "Squads out: %d" % out
+			etext = tr("Squads out: %d") % out
 		_text_c(Vector2(eb.get_center().x, eb.position.y + 12), etext + _k("expeditions"), 9, GOLD if unread > 0 else Color(0.85, 0.82, 0.76))
 	var rsb := _research_button_rect()
-	if not _draw_locked_button(rsb, "Research", "research"):
+	if not _draw_locked_button(rsb, tr("Research"), "research"):
 		UiSkin.panel(_cv, rsb, "button")
-		var rtext := "Research"
+		var rtext := tr("Research")
 		var rcol := Color(0.85, 0.82, 0.76)
 		if Empire.research_active != "":
 			var stalled := float(Empire.research_pace()["pace"]) <= 0.0
-			rtext = "Research %d%%%s" % [int(Empire.research_fraction(Empire.research_active) * 100), " (stalled)" if stalled else ""]
+			rtext = tr("Research %d%%%s") % [int(Empire.research_fraction(Empire.research_active) * 100), tr(" (stalled)") if stalled else ""]
 			rcol = Color(1, 0.55, 0.5) if stalled else Color("d7b8f0")
 		_text_c(Vector2(rsb.get_center().x, rsb.position.y + 12), rtext + _k("research"), 9, rcol)
 	var db := _diplomacy_button_rect()
-	if not _draw_locked_button(db, "Diplomacy", "diplomacy"):
+	if not _draw_locked_button(db, tr("Diplomacy"), "diplomacy"):
 		UiSkin.panel(_cv, db, "button")
-		var dtext := "Diplomacy"
+		var dtext := tr("Diplomacy")
 		var dcol := Color(0.85, 0.82, 0.76)
 		if Empire.surge.get("id", "") != "" and Empire.surge.get("aid", "") == "" and Empire.territory().find(Empire.surge["id"]).get("owner", "") == "you" \
 				and Empire.faction_ids().any(func(f): return Empire.deal_blocker(f, "aid") == ""):
-			dtext = "Ask for aid!"
+			dtext = tr("Ask for aid!")
 			dcol = GOLD
 		_text_c(Vector2(db.get_center().x, db.position.y + 12), dtext + _k("diplomacy"), 9, dcol)
 	var jb := _journal_button_rect()
 	UiSkin.panel(_cv, jb, "button")
 	var jnew := Journal.unread_count() > 0
-	_text_c(Vector2(jb.get_center().x, jb.position.y + 12), "Journal%s" % (" *" if jnew else "") + _k("journal"), 9, GOLD if jnew else Color(0.85, 0.82, 0.76))
+	_text_c(Vector2(jb.get_center().x, jb.position.y + 12), tr("Journal%s") % (" *" if jnew else "") + _k("journal"), 9, GOLD if jnew else Color(0.85, 0.82, 0.76))
 	_draw_legend()
 	_draw_panel()
 	if toast_t > 0.0:
@@ -1304,7 +1304,7 @@ func _draw_overlay(c: CanvasItem) -> void:
 	if show_ledger or ledger_hover:
 		_draw_ledger()
 	if Empire.SPEEDS[Empire.speed] == 0:
-		_text_c(Vector2(_map_rect().get_center().x, MAP_ORIGIN.y + MAP_VIEW.y - 24), "TIME PAUSED", 11, Color(1, 1, 1, 0.55 + 0.25 * sin(t * 3.0)), 4)
+		_text_c(Vector2(_map_rect().get_center().x, MAP_ORIGIN.y + MAP_VIEW.y - 24), tr("TIME PAUSED"), 11, Color(1, 1, 1, 0.55 + 0.25 * sin(t * 3.0)), 4)
 	_cv = self
 
 
@@ -1326,7 +1326,7 @@ func _draw_locked_button(r: Rect2, label: String, screen: String) -> bool:
 
 
 func _draw_zoom_buttons() -> void:
-	var labels := ["+", "-", "All" if zoom_to > zoom_min() + 0.05 else "Back"]
+	var labels := ["+", "-", tr("All") if zoom_to > zoom_min() + 0.05 else tr("Back")]
 	for i in 3:
 		var r := _zoom_button_rect(i)
 		if i == 2:
@@ -1337,11 +1337,11 @@ func _draw_zoom_buttons() -> void:
 	var near := Rect2(_zoom_button_rect(0).position, Vector2(70, 15)).grow(4.0).has_point(get_local_mouse_position())
 	var a := 1.0 if near else clampf((9.0 - t) / 2.0, 0.0, 1.0)
 	if a > 0.0:
-		var hint := "Wheel or + / - to zoom, drag to pan"
+		var hint := tr("Wheel or + / - to zoom, drag to pan")
 		if Prompts.touch():
-			hint = "Pinch to zoom, drag to pan"
+			hint = tr("Pinch to zoom, drag to pan")
 		elif Prompts.pad():
-			hint = "Right stick pans, LT zooms"
+			hint = tr("Right stick pans, LT zooms")
 		_text(_zoom_button_rect(0).position + Vector2(0, 25), hint, 7, Color(0.9, 0.87, 0.8, 0.85 * a), 3)
 
 
@@ -1398,10 +1398,10 @@ func _draw_ledger() -> void:
 	_cv.draw_rect(r, Color(0.06, 0.05, 0.08, 0.95))
 	_cv.draw_rect(r, Color(0.45, 0.4, 0.48), false, 1.0)
 	var y := r.position.y + 14
-	_text(Vector2(r.position.x + 8, y), "Daily ledger", 10, Color("f3efe4"))
-	_text(Vector2(r.position.x + 150, y), "Gilt", 8, RES_COLORS["gilt"])
-	_text(Vector2(r.position.x + 182, y), "Supplies", 8, RES_COLORS["supplies"])
-	_text(Vector2(r.position.x + 226, y), "Ink", 8, RES_COLORS["ink"])
+	_text(Vector2(r.position.x + 8, y), tr("Daily ledger"), 10, Color("f3efe4"))
+	_text(Vector2(r.position.x + 150, y), tr("Gilt"), 8, RES_COLORS["gilt"])
+	_text(Vector2(r.position.x + 182, y), tr("Supplies"), 8, RES_COLORS["supplies"])
+	_text(Vector2(r.position.x + 226, y), tr("Ink"), 8, RES_COLORS["ink"])
 	y += 14
 	for line in lines:
 		_text(Vector2(r.position.x + 8, y), line["label"], 9, Color(0.85, 0.83, 0.78))
@@ -1416,13 +1416,13 @@ func _draw_ledger() -> void:
 		y += 13
 	_cv.draw_line(Vector2(r.position.x + 8, y - 8), Vector2(r.end.x - 8, y - 8), Color(0.3, 0.27, 0.33))
 	var net := Empire.daily_net()
-	_text(Vector2(r.position.x + 8, y + 3), "Each dawn", 9, Color("f3efe4"))
+	_text(Vector2(r.position.x + 8, y + 3), tr("Each dawn"), 9, Color("f3efe4"))
 	var cx2 := [150, 182, 226]
 	var ks2 := ["gilt", "supplies", "ink"]
 	for i in 3:
 		var v := int(net[ks2[i]])
 		_text(Vector2(r.position.x + cx2[i], y + 3), ("+%d" if v >= 0 else "%d") % v, 9, Color("9fd18b") if v > 0 else (Color("ff8a7a") if v < 0 else Color(0.6, 0.58, 0.6)))
-	_text(Vector2(r.position.x + 8, r.end.y - 6), "L / Back / tap the bar to toggle", 7, Color(0.5, 0.48, 0.52))
+	_text(Vector2(r.position.x + 8, r.end.y - 6), tr("L / Back / tap the bar to toggle"), 7, Color(0.5, 0.48, 0.52))
 
 
 func _draw_clock() -> void:
@@ -1434,7 +1434,7 @@ func _draw_clock() -> void:
 		_cv.draw_circle(Vector2(x + 2, 9), 3.5, Color("0e0b12"))
 	else:
 		_cv.draw_circle(Vector2(x, 10), 4.0, GOLD)
-	_text(Vector2(x + 9, 15), "Day %d" % Empire.day, 11, Color("ece6da"))
+	_text(Vector2(x + 9, 15), tr("Day %d") % Empire.day, 11, Color("ece6da"))
 	_text(Vector2(x + 58, 15), Empire.clock_text(), 9, Color(0.75, 0.72, 0.7))
 	_cv.draw_rect(Rect2(x + 92, 8, 100, 4), Color(0.18, 0.16, 0.2))
 	_cv.draw_rect(Rect2(x + 92, 8, 100 * Empire.day_t, 4), Color(0.75, 0.72, 0.68))
@@ -1443,12 +1443,12 @@ func _draw_clock() -> void:
 		var on := i == Empire.speed
 		_cv.draw_rect(r, Color(0.22, 0.17, 0.08) if on else Color(0.1, 0.09, 0.12))
 		_cv.draw_rect(r, GOLD if on else Color(0.3, 0.27, 0.33), false, 1.0)
-		var label := "II" if i == 0 else "%dx" % Empire.SPEEDS[i]
+		var label := "II" if i == 0 else "%dx" % Empire.SPEEDS[i]  # no-tr: pause symbol
 		_text_c(Vector2(r.get_center().x, r.position.y + 11), label, 9, GOLD if on else Color(0.75, 0.72, 0.7))
 	var mr := _menu_button_rect()
 	_cv.draw_rect(mr, Color(0.1, 0.09, 0.12))
 	_cv.draw_rect(mr, Color(0.3, 0.27, 0.33), false, 1.0)
-	_text_c(Vector2(mr.get_center().x, mr.position.y + 11), "Menu", 9, Color(0.75, 0.72, 0.7))
+	_text_c(Vector2(mr.get_center().x, mr.position.y + 11), tr("Menu"), 9, Color(0.75, 0.72, 0.7))
 
 
 func _draw_roads() -> void:
@@ -1537,7 +1537,7 @@ func _draw_labels() -> void:
 			var pulse := 0.5 + 0.5 * sin(t * 5.0)
 			_cv.draw_arc(pos + Vector2(0, -6), 14.0 + pulse * 3.0, 0, TAU, 32, Color(1, 0.35, 0.3, 0.5 + 0.4 * pulse), 2.0)
 			var dl := Empire.surge_days_left()
-			_text_c(pos + Vector2(0, 13), "Surge %s" % ("today" if dl <= 0 else "in %d day%s" % [dl, "" if dl == 1 else "s"]), 8, Color(1, 0.55, 0.5), 3)
+			_text_c(pos + Vector2(0, 13), tr("Surge %s") % (tr("today") if dl <= 0 else tr("in %d day%s") % [dl, "" if dl == 1 else "s"]), 8, Color(1, 0.55, 0.5), 3)
 		# Type missions on offer: Reclaim, Rescue, Raid, Salvage, Personal (Defense already shows as the surge ring).
 		var tags := []
 		for tm in MissionTypes.for_province(p["id"]):
@@ -1548,8 +1548,8 @@ func _draw_labels() -> void:
 			var tcol: Color = MissionTypes.TYPE_COLORS[tm["type"]]
 			if tm["blocker"] != "":
 				tcol = tcol.darkened(0.45)
-			_cv.draw_circle(pos + Vector2(-font.get_string_size(MissionTypes.TYPE_NAMES[tm["type"]], HORIZONTAL_ALIGNMENT_LEFT, -1, 8).x / 2.0 - 5, ty - 3), 2.0 + (0.6 * sin(t * 4.0) if tm["blocker"] == "" else 0.0), tcol)
-			_text_c(pos + Vector2(0, ty), MissionTypes.TYPE_NAMES[tm["type"]], 8, tcol, 3)
+			_cv.draw_circle(pos + Vector2(-font.get_string_size(Loc.t(MissionTypes.TYPE_NAMES[tm["type"]]), HORIZONTAL_ALIGNMENT_LEFT, -1, 8).x / 2.0 - 5, ty - 3), 2.0 + (0.6 * sin(t * 4.0) if tm["blocker"] == "" else 0.0), tcol)
+			_text_c(pos + Vector2(0, ty), Loc.t(MissionTypes.TYPE_NAMES[tm["type"]]), 8, tcol, 3)
 			ty += 10.0
 
 
@@ -1585,17 +1585,17 @@ func _draw_region_names() -> void:
 			continue
 		_text_c(pos, str(r["name"]).to_upper(), big, Color("f6f1e4"), 5)
 		var ch := int(r.get("chapter", 0))
-		var sub := ("Chapter %d" % ch) if ch > 0 else "Later in the story"
-		_text_c(pos + Vector2(0, 12), sub + "  ·  beyond the fog", 8, Color(0.25, 0.2, 0.16, 0.95), 0)
+		var sub := (tr("Chapter %d") % ch) if ch > 0 else tr("Later in the story")
+		_text_c(pos + Vector2(0, 12), sub + tr("  ·  beyond the fog"), 8, Color(0.25, 0.2, 0.16, 0.95), 0)
 
 
 ## A province under the fog: what the region is, what is rumoured there, and when the story opens it.
 func _draw_region_panel(r: Dictionary, x: float, w: float) -> void:
 	var y := 42.0
-	_text(Vector2(x, y), str(r.get("name", "Uncharted")), 15, Color("f3efe4"))
+	_text(Vector2(x, y), str(r.get("name", tr("Uncharted"))), 15, Color("f3efe4"))
 	y += 15
 	_cv.draw_rect(Rect2(x, y - 7, 7, 7), FOG)
-	_text(Vector2(x + 11, y), "Beyond the fog", 9, Color(0.8, 0.78, 0.74))
+	_text(Vector2(x + 11, y), tr("Beyond the fog"), 9, Color(0.8, 0.78, 0.74))
 	y += 20
 	_text(Vector2(x, y), str(r.get("mood", "")), 9, Color("e8d9a8"))
 	y += 16
@@ -1603,17 +1603,17 @@ func _draw_region_panel(r: Dictionary, x: float, w: float) -> void:
 	_cv.draw_multiline_string(font, Vector2(x, y), hint, HORIZONTAL_ALIGNMENT_LEFT, w, 9, -1, Color(0.85, 0.83, 0.78))
 	y += 13 * ceilf(font.get_string_size(hint, HORIZONTAL_ALIGNMENT_LEFT, -1, 9).x / w) + 10
 	var n: int = (r.get("provinces", []) as Array).size()
-	_text(Vector2(x, y), "Provinces", 9, Color(0.7, 0.68, 0.7))
-	_text(Vector2(x + 60, y), "%d, uncharted" % n, 9, Color(0.85, 0.83, 0.78))
+	_text(Vector2(x, y), tr("Provinces"), 9, Color(0.7, 0.68, 0.7))
+	_text(Vector2(x + 60, y), tr("%d, uncharted") % n, 9, Color(0.85, 0.83, 0.78))
 	y += 13
 	var ch := int(r.get("chapter", 0))
-	_text(Vector2(x, y), "Opens", 9, Color(0.7, 0.68, 0.7))
-	_text(Vector2(x + 60, y), ("with Chapter %d of the story" % ch) if ch > 0 else "later in the story", 9, Color(0.85, 0.83, 0.78))
+	_text(Vector2(x, y), tr("Opens"), 9, Color(0.7, 0.68, 0.7))
+	_text(Vector2(x + 60, y), (tr("with Chapter %d of the story") % ch) if ch > 0 else tr("later in the story"), 9, Color(0.85, 0.83, 0.78))
 	y += 18
-	_cv.draw_multiline_string(font, Vector2(x, y), "Nobody you could send has been past the fog. The Blank's work there waits until the story takes you in, and so does yours.",
+	_cv.draw_multiline_string(font, Vector2(x, y), tr("Nobody you could send has been past the fog. The Blank's work there waits until the story takes you in, and so does yours."),
 		HORIZONTAL_ALIGNMENT_LEFT, w, 9, -1, Color(0.62, 0.6, 0.62))
 	var pr := _play_rect()
-	_text_c(Vector2(pr.get_center().x, pr.position.y + 16), "No missions past the fog", 8, Color(0.45, 0.44, 0.47))
+	_text_c(Vector2(pr.get_center().x, pr.position.y + 16), tr("No missions past the fog"), 8, Color(0.45, 0.44, 0.47))
 
 
 func _draw_legend() -> void:
@@ -1622,7 +1622,7 @@ func _draw_legend() -> void:
 	for k in ["you", "free", "concord", "coven", "guild"]:
 		_cv.draw_rect(Rect2(x, y - 6, 6, 6), owner_color(k))
 		_cv.draw_rect(Rect2(x, y - 6, 6, 6), BORDER_COLOR, false, 1.0)
-		var label: String = {"you": "Yours", "free": "Unclaimed", "concord": "Concord", "coven": "Coven", "guild": "Guild"}[k]
+		var label: String = {"you": tr("Yours"), "free": tr("Unclaimed"), "concord": tr("Concord"), "coven": tr("Coven"), "guild": tr("Guild")}[k]
 		_text(Vector2(x + 9, y), label, 8, Color(0.85, 0.83, 0.78), 3)
 		x += 13 + font.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1, 8).x + 6
 
@@ -1646,15 +1646,15 @@ func _draw_panel() -> void:
 	_text(Vector2(x + 11, y), owner_name(owner), 9, Color(0.8, 0.78, 0.74))
 	if owner in Empire.faction_ids():
 		var tier := Empire.tier_of(owner)
-		_text(Vector2(x + 11, y + 11), "Standing: %s %+d   Diplomacy%s" % [Empire.tier_name(tier), Empire.standing_of(owner), Prompts.tag("diplomacy")], 8,
+		_text(Vector2(x + 11, y + 11), tr("Standing: %s %+d   Diplomacy%s") % [Empire.tier_name(tier), Empire.standing_of(owner), Prompts.tag("diplomacy")], 8,
 			Color("9fd18b") if Empire.has_perk(owner) else (Color("ff9b8a") if tier == "hostile" else Color(0.7, 0.68, 0.7)))
 		y += 10
 	y += 18
 
 	# Fray
 	var fray := int(p["fray"])
-	var state := "Safe" if fray < 25 else ("Fraying" if fray < 60 else ("Unravelling" if fray < 100 else "Erased"))
-	_text(Vector2(x, y), "Fray", 9, Color(0.7, 0.68, 0.7))
+	var state := tr("Safe") if fray < 25 else (tr("Fraying") if fray < 60 else (tr("Unravelling") if fray < 100 else tr("Erased")))
+	_text(Vector2(x, y), tr("Fray"), 9, Color(0.7, 0.68, 0.7))
 	_text(Vector2(x + 30, y), "%d / 100   %s" % [fray, state], 9, Color("f3efe4") if fray < 60 else Color("ff9b8a"))
 	y += 5
 	_cv.draw_rect(Rect2(x, y, w, 5), Color(0.15, 0.13, 0.17))
@@ -1665,8 +1665,8 @@ func _draw_panel() -> void:
 		var rcol := Color("ff8a7a") if rate > 0 else (Color("9fd18b") if rate < 0 else Color(0.7, 0.68, 0.7))
 		var eta := ""
 		if rate > 0:
-			eta = "   erased in ~%d days" % ceili((100.0 - fray) / rate)
-		_text(Vector2(x, y), "Per day: %s%d%s" % ["+" if rate > 0 else "", rate, eta], 9, rcol)
+			eta = tr("   erased in ~%d days") % ceili((100.0 - fray) / rate)
+		_text(Vector2(x, y), tr("Per day: %s%d%s") % ["+" if rate > 0 else "", rate, eta], 9, rcol)
 		y += 11
 		for src in Empire.fray_sources(p):
 			var v := int(src[1])
@@ -1674,7 +1674,7 @@ func _draw_panel() -> void:
 			_text(Vector2(x + 24, y), src[0], 8, Color(0.7, 0.68, 0.7))
 			y += 10
 		if Empire.surge.get("id", "") == p["id"]:
-			_text(Vector2(x, y + 1), "Surge gathering: +%d Fray when it lands" % Empire.surge_fray(), 8, Color(1, 0.55, 0.5))
+			_text(Vector2(x, y + 1), tr("Surge gathering: +%d Fray when it lands") % Empire.surge_fray(), 8, Color(1, 0.55, 0.5))
 			y += 11
 		y += 6
 	else:
@@ -1685,44 +1685,44 @@ func _draw_panel() -> void:
 	var parts := []
 	for k in ["gilt", "supplies", "ink"]:
 		if out.has(k):
-			parts.append("+%d %s" % [out[k], RES_NAMES[k]])
-	var out_label := "Lost output" if owner == "erased" else ("Output per day" if owner == "you" else "Would give")
+			parts.append("+%d %s" % [out[k], Loc.t(RES_NAMES[k])])
+	var out_label := tr("Lost output") if owner == "erased" else (tr("Output per day") if owner == "you" else tr("Would give"))
 	_text(Vector2(x, y), out_label, 9, Color(0.7, 0.68, 0.7))
 	y += 12
-	_text(Vector2(x, y), "   ".join(parts) if not parts.is_empty() else "nothing", 9, Color("e8d9a8") if owner != "erased" else Color(0.55, 0.54, 0.56))
+	_text(Vector2(x, y), "   ".join(parts) if not parts.is_empty() else Loc.t("nothing"), 9, Color("e8d9a8") if owner != "erased" else Color(0.55, 0.54, 0.56))
 	y += 17
 
 	# Governor and sites
-	_text(Vector2(x, y), "Governor", 9, Color(0.7, 0.68, 0.7))
+	_text(Vector2(x, y), tr("Governor"), 9, Color(0.7, 0.68, 0.7))
 	var gov := Empire.governor_of(p["id"])
 	var gov_text := "-"
 	var gov_col := Color(0.85, 0.83, 0.78)
 	if owner == "you":
 		if gov != "":
-			gov_text = "%s (%s fit)" % [Empire.recruit(gov)["name"], Empire.governor_fit(gov, p["id"])]
+			gov_text = tr("%s (%s fit)") % [Empire.recruit(gov)["name"], Empire.governor_fit(gov, p["id"])]
 		else:
-			gov_text = "none posted!"
+			gov_text = tr("none posted!")
 			gov_col = Color("ff9b8a")
 	elif owner == "free":
-		gov_text = "claim it to post one"
+		gov_text = tr("claim it to post one")
 	_text(Vector2(x + 52, y), gov_text, 9, gov_col)
 	_gov_button_y = y if _can_govern(selected) else -100.0
 	if _can_govern(selected):
 		y += 13
 		var fav: String = p.get("favors", "charm")
-		_text(Vector2(x, y), "Wants", 9, Color(0.7, 0.68, 0.7))
-		_text(Vector2(x + 52, y), "high %s" % Empire.STAT_NAMES[fav], 9, Color(0.85, 0.83, 0.78))
+		_text(Vector2(x, y), tr("Wants"), 9, Color(0.7, 0.68, 0.7))
+		_text(Vector2(x + 52, y), tr("high %s") % Loc.t(Empire.STAT_NAMES[fav]), 9, Color(0.85, 0.83, 0.78))
 		var gb := _governor_button_rect()
 		gb.position.y += 13  # sits beside the "Wants" line, under the name
 		_gov_button_y += 13
 		_cv.draw_rect(gb, Color(0.22, 0.17, 0.08))
 		_cv.draw_rect(gb, GOLD, false, 1.0)
-		var label := ("Claim" if owner == "free" else ("Change" if gov != "" else "Post one")) + "  G"
+		var label := (tr("Claim") if owner == "free" else (tr("Change") if gov != "" else tr("Post one"))) + "  G"
 		_text_c(Vector2(gb.get_center().x, gb.position.y + 10), label, 8, GOLD)
 	y += 13
 	var sites: Array = p.get("sites", [])
-	_text(Vector2(x, y), "Sites", 9, Color(0.7, 0.68, 0.7))
-	_text(Vector2(x + 52, y), ", ".join(sites) if not sites.is_empty() else "none left", 9, Color(0.85, 0.83, 0.78))
+	_text(Vector2(x, y), tr("Sites"), 9, Color(0.7, 0.68, 0.7))
+	_text(Vector2(x + 52, y), ", ".join(sites) if not sites.is_empty() else tr("none left"), 9, Color(0.85, 0.83, 0.78))
 	y += 13
 	var nb := []
 	var fogged := {}
@@ -1732,8 +1732,8 @@ func _draw_panel() -> void:
 			nb.append(q["name"])
 		elif not fogged.has(q["region"]):
 			fogged[q["region"]] = true
-			nb.append("the fog over %s" % territory.region_of(q).get("name", "?"))
-	_text(Vector2(x, y), "Borders", 9, Color(0.7, 0.68, 0.7))
+			nb.append(tr("the fog over %s") % territory.region_of(q).get("name", "?"))
+	_text(Vector2(x, y), tr("Borders"), 9, Color(0.7, 0.68, 0.7))
 	_cv.draw_multiline_string(font, Vector2(x + 52, y), ", ".join(nb), HORIZONTAL_ALIGNMENT_LEFT, w - 52, 9, -1, Color(0.85, 0.83, 0.78))
 	y += 13 * ceilf(font.get_string_size(", ".join(nb), HORIZONTAL_ALIGNMENT_LEFT, -1, 9).x / (w - 52)) + 8
 
@@ -1748,10 +1748,10 @@ func _draw_panel() -> void:
 		var blocked: bool = str(m.get("blocker", "")) != ""
 		_cv.draw_rect(r, Color(0.22, 0.17, 0.08) if not blocked else Color(0.12, 0.11, 0.13))
 		_cv.draw_rect(r, GOLD if not blocked else Color(0.45, 0.42, 0.4), false, 1.0)
-		var label: String = m["name"] if m.has("type") else "Play: " + m["name"]
-		_text_c(Vector2(r.get_center().x, r.position.y + 12), label + ("  (+%d more)" % more if more > 0 else ""), 9, GOLD if not blocked else Color(0.7, 0.67, 0.62))
-		var sub := ("Tap again" if Prompts.touch() else Prompts.key("ui_accept")) if not blocked else "Locked: " + str(m["blocker"])
+		var label: String = m["name"] if m.has("type") else tr("Play: ") + m["name"]
+		_text_c(Vector2(r.get_center().x, r.position.y + 12), label + (tr("  (+%d more)") % more if more > 0 else ""), 9, GOLD if not blocked else Color(0.7, 0.67, 0.62))
+		var sub := (tr("Tap again") if Prompts.touch() else Prompts.key("ui_accept")) if not blocked else tr("Locked: ") + str(m["blocker"])
 		_text_c(Vector2(r.get_center().x, r.position.y + 22), sub, 8, Color(0.75, 0.7, 0.55) if not blocked else Color(1, 0.6, 0.5))
 	else:
-		var note := "No missions here right now"
+		var note := tr("No missions here right now")
 		_text_c(Vector2(r.get_center().x, r.position.y + 16), note, 8, Color(0.45, 0.44, 0.47))

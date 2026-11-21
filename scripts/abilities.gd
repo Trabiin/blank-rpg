@@ -17,7 +17,7 @@ static func _load() -> Dictionary:
 	if _data.is_empty():
 		var f := FileAccess.open(PATH, FileAccess.READ)
 		if f:
-			var parsed = JSON.parse_string(f.get_as_text())
+			var parsed = Loc.data(JSON.parse_string(f.get_as_text()), f.get_path().get_file())
 			if parsed is Dictionary:
 				_data = parsed
 	return _data
@@ -76,9 +76,9 @@ static func desc_of(a: Dictionary) -> String:
 	v["guard_pct"] = int(round(float(a.get("guard", 0)) * 100.0))
 	v["heal_pct"] = int(round(float(a.get("heal_ratio", 0)) * 100.0))
 	v["mult_pct"] = int(round((float(a.get("mult", 1)) - 1.0) * 100.0))
-	v["stun_text"] = (" Stuns for %s s." % _num(a["stun"])) if float(a.get("stun", 0)) > 0.0 else ""
-	v["shield_text"] = (" Adds a %d-point shield for %s s." % [int(a["shield"]), _num(a.get("shield_time", 5))]) if int(a.get("shield", 0)) > 0 else ""
-	v["pierce_text"] = " They go straight through." if bool(a.get("pierce", false)) else ""
+	v["stun_text"] = (Loc.t(" Stuns for %s s.") % _num(a["stun"])) if float(a.get("stun", 0)) > 0.0 else ""
+	v["shield_text"] = (Loc.t(" Adds a %d-point shield for %s s.") % [int(a["shield"]), _num(a.get("shield_time", 5))]) if int(a.get("shield", 0)) > 0 else ""
+	v["pierce_text"] = Loc.t(" They go straight through.") if bool(a.get("pierce", false)) else ""
 	return str(a.get("desc", "")).format(v) + tree_text(a)
 
 
@@ -87,29 +87,29 @@ static func tree_text(a: Dictionary) -> String:
 	var parts := []
 	var kind := str(a.get("kind", ""))
 	if float(a.get("poison", 0)) > 0.0:
-		parts.append("Poisons what it hits for %s a second." % _num(a["poison"]))
+		parts.append(Loc.t("Poisons what it hits for %s a second.") % _num(a["poison"]))
 	if float(a.get("leech", 0)) > 0.0:
-		parts.append("Heals the user for %d%% of the damage." % int(round(float(a["leech"]) * 100.0)))
+		parts.append(Loc.t("Heals the user for %d%% of the damage.") % int(round(float(a["leech"]) * 100.0)))
 	if float(a.get("mark", 0)) > 0.0:
-		parts.append("Marks what it hits: +%d%% damage taken for %s s." % [int(round((float(a.get("mark_mult", 1.25)) - 1.0) * 100.0)), _num(a["mark"])])
+		parts.append(Loc.t("Marks what it hits: +%d%% damage taken for %s s.") % [int(round((float(a.get("mark_mult", 1.25)) - 1.0) * 100.0)), _num(a["mark"])])
 	if float(a.get("taunt", 0)) > 0.0:
-		parts.append("Everything hit goes for the user for %s s." % _num(a["taunt"]))
+		parts.append(Loc.t("Everything hit goes for the user for %s s.") % _num(a["taunt"]))
 	if int(a.get("ink_gift", 0)) > 0:
-		parts.append("Gives everyone healed %d Ink." % int(a["ink_gift"]))
+		parts.append(Loc.t("Gives everyone healed %d Ink.") % int(a["ink_gift"]))
 	if float(a.get("poison_area", 0)) > 0.0:
-		parts.append("Poisons every enemy in reach for %s a second." % _num(a["poison_area"]))
+		parts.append(Loc.t("Poisons every enemy in reach for %s a second.") % _num(a["poison_area"]))
 	if int(a.get("self_shield", 0)) > 0:
-		parts.append("Shields the user for %d." % int(a["self_shield"]))
+		parts.append(Loc.t("Shields the user for %d.") % int(a["self_shield"]))
 	if kind == "vanish" and int(a.get("heal", 0)) > 0:
-		parts.append("Heals her %d." % int(a["heal"]))
+		parts.append(Loc.t("Heals her %d.") % int(a["heal"]))
 	if float(a.get("ink_ratio", 0)) > 0.0:
-		parts.append("Allies also get %d%% of it as Ink." % int(round(float(a["ink_ratio"]) * 100.0)))
+		parts.append(Loc.t("Allies also get %d%% of it as Ink.") % int(round(float(a["ink_ratio"]) * 100.0)))
 	if kind == "mark" and int(a.get("damage", 0)) > 0:
-		parts.append("Hits each of them for %d." % int(a["damage"]))
+		parts.append(Loc.t("Hits each of them for %d.") % int(a["damage"]))
 	if kind == "mark" and float(a.get("stun", 0)) > 0.0:
-		parts.append("Stuns them for %s s." % _num(a["stun"]))
+		parts.append(Loc.t("Stuns them for %s s.") % _num(a["stun"]))
 	if kind == "parry" and bool(a.get("aoe", false)):
-		parts.append("The answer hits every enemy in reach.")
+		parts.append(Loc.t("The answer hits every enemy in reach."))
 	return "" if parts.is_empty() else " " + " ".join(parts)
 
 
@@ -128,7 +128,7 @@ static func next_tier_text(a: Dictionary) -> String:
 			for k in tiers[str(need)]:
 				var x = tiers[str(need)][k]
 				parts.append(k.replace("_", " ") if typeof(x) == TYPE_BOOL else "%s %s" % [k.replace("_", " "), _num(x)])
-			return "at %s %d: %s" % [Skills.ink_name(str(a.get("ink", ""))), need, ", ".join(parts)]
+			return Loc.t("at %s %d: %s") % [Skills.ink_name(str(a.get("ink", ""))), need, ", ".join(parts)]
 	return ""
 
 
@@ -209,7 +209,7 @@ static func _heal(h: Hero, a: Dictionary, parent: Node) -> void:
 		if int(a.get("ink_gift", 0)) > 0 and other.max_ink > 0.0:  # skill tree riders (issue #25)
 			other.ink = minf(other.ink + float(a["ink_gift"]), other.max_ink)
 			if other != h:
-				Fx.damage_number(parent, other.global_position + Vector2(0, -26), "+%d Ink" % int(a["ink_gift"]), Color("6aa8ff"))
+				Fx.damage_number(parent, other.global_position + Vector2(0, -26), Loc.t("+%d Ink") % int(a["ink_gift"]), Color("6aa8ff"))
 		Fx.burst(parent, other.global_position + Vector2(0, -10), [col, Color.WHITE], 10, 40.0)
 	if float(a.get("poison_area", 0)) > 0.0:
 		for e in h.get_tree().get_nodes_in_group("enemies"):
@@ -327,7 +327,7 @@ static func _drain(h: Hero, a: Dictionary, parent: Node) -> void:
 			Fx.damage_number(parent, other.global_position + Vector2(0, -18), "+%d" % amount, Color("9fe07a"))
 		if ink_back >= 1.0 and other.max_ink > 0.0:
 			other.ink = minf(other.ink + ink_back, other.max_ink)
-			Fx.damage_number(parent, other.global_position + Vector2(0, -26), "+%d Ink" % int(ink_back), Color("6aa8ff"))
+			Fx.damage_number(parent, other.global_position + Vector2(0, -26), Loc.t("+%d Ink") % int(ink_back), Color("6aa8ff"))
 
 
 static func _coin_trail(parent: Node, from: Vector2, to: Vector2, col: Color) -> void:
@@ -358,7 +358,7 @@ static func riposte(h: Hero, from: Vector2) -> void:
 	h.parry_t = 0.0
 	h.invuln_t = maxf(h.invuln_t, 0.4)
 	Fx.burst(parent, h.global_position + Vector2(0, -10), [color_of(a), Color.WHITE], 14, 70.0)
-	Fx.damage_number(parent, h.global_position + Vector2(0, -30), "Riposte!", color_of(a).lightened(0.3))
+	Fx.damage_number(parent, h.global_position + Vector2(0, -30), Loc.t("Riposte!"), color_of(a).lightened(0.3))
 	var best: Enemy = null
 	var best_d := float(a.get("reach", 60))
 	var others := []  # Bind and Answer (skill tree, issue #25): every enemy within reach is answered

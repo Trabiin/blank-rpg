@@ -76,48 +76,52 @@ func close() -> void:
 func _rebuild() -> void:
 	_rows = []
 	if page == "main":
-		_rows.append({"id": "battle_speed", "kind": "cycle", "label": "Battle speed", "value": Settings.battle_speed_name(),
-			"detail": "How fast fights run. The Command clock is not affected."})
-		_rows.append({"id": "difficulty", "kind": "cycle", "label": "Difficulty", "value": Settings.DIFFICULTIES[Settings.difficulty],
-			"detail": Settings.DIFFICULTY_INFO[Settings.difficulty] + "  Change it any time."})
-		_rows.append({"id": "text_speed", "kind": "cycle", "label": "Text speed", "value": Dialogue.speed_name(),
-			"detail": "Typewriter speed in conversations%s." % ((" (%s changes it there too)" % Prompts.key("swap")) if Prompts.key("swap") != "" else "")})
-		_rows.append({"id": "shake", "kind": "cycle", "label": "Screen shake", "value": Settings.SHAKES[Settings.shake_i],
-			"detail": "Camera shake on heavy hits and techs."})
-		_rows.append({"id": "tips", "kind": "cycle", "label": "Tips", "value": "On" if Settings.tips_enabled() else "Off",
-			"detail": "The cast explains each screen the first time it opens and speaks up when something new happens. Everything is also under Help in the menu."})
+		_rows.append({"id": "battle_speed", "kind": "cycle", "label": tr("Battle speed"), "value": Settings.battle_speed_name(),
+			"detail": tr("How fast fights run. The Command clock is not affected.")})
+		_rows.append({"id": "difficulty", "kind": "cycle", "label": tr("Difficulty"), "value": Loc.t(Settings.DIFFICULTIES[Settings.difficulty]),
+			"detail": Loc.t(Settings.DIFFICULTY_INFO[Settings.difficulty]) + tr("  Change it any time.")})
+		_rows.append({"id": "text_speed", "kind": "cycle", "label": tr("Text speed"), "value": Dialogue.speed_name(),
+			"detail": tr("Typewriter speed in conversations%s.") % ((tr(" (%s changes it there too)") % Prompts.key("swap")) if Prompts.key("swap") != "" else "")})
+		_rows.append({"id": "shake", "kind": "cycle", "label": tr("Screen shake"), "value": Loc.t(Settings.SHAKES[Settings.shake_i]),
+			"detail": tr("Camera shake on heavy hits and techs.")})
+		if Loc.languages().size() > 1:  # issue #143: only once a translation ships
+			var chosen := _language_choice()
+			_rows.append({"id": "language", "kind": "cycle", "label": tr("Language"), "value": Loc.language_name(chosen),
+				"detail": tr("Applies the next time the game starts.") if chosen != Loc.language() else ""})
+		_rows.append({"id": "tips", "kind": "cycle", "label": tr("Tips"), "value": tr("On") if Settings.tips_enabled() else tr("Off"),
+			"detail": tr("The cast explains each screen the first time it opens and speaks up when something new happens. Everything is also under Help in the menu.")})
 		for bus in Settings.BUSES:
-			var label: String = {"Master": "Master volume", "Music": "Music volume", "SFX": "Sound effects volume"}[bus]
+			var label: String = {"Master": tr("Master volume"), "Music": tr("Music volume"), "SFX": tr("Sound effects volume")}[bus]
 			_rows.append({"id": "vol:" + bus, "kind": "slider", "label": label, "value": "%d%%" % Settings.volumes[bus],
 				"level": Settings.volumes[bus], "detail": ""})
-		_rows.append({"id": "controls", "kind": "open", "label": "Controls", "value": "remap keys and buttons",
+		_rows.append({"id": "controls", "kind": "open", "label": tr("Controls"), "value": tr("remap keys and buttons"),
 			"detail": ""})
-		_rows.append({"id": "fx_page", "kind": "open", "label": "Visual effects", "value": "shadows, clouds, mist, lamps",
+		_rows.append({"id": "fx_page", "kind": "open", "label": tr("Visual effects"), "value": tr("shadows, clouds, mist, lamps"),
 			"detail": ""})
-		_rows.append({"id": "display_page", "kind": "open", "label": "Display",
-			"value": "window, size, vsync, frame cap" if DisplaySettings.is_desktop() else "fullscreen, scaling",
+		_rows.append({"id": "display_page", "kind": "open", "label": tr("Display"),
+			"value": tr("window, size, vsync, frame cap") if DisplaySettings.is_desktop() else tr("fullscreen, scaling"),
 			"detail": ""})
 		if DisplaySettings.is_desktop():  # issue #145
-			_rows.append({"id": "save_folder", "kind": "open", "label": "Save folder", "value": "open",
-				"detail": "Saves and settings live in %s" % _short_path(ProjectSettings.globalize_path("user://"))})
-		_rows.append({"id": "back", "kind": "button", "label": "Back", "value": "", "detail": ""})
+			_rows.append({"id": "save_folder", "kind": Loc.t("open"), "label": tr("Save folder"), "value": "open",
+				"detail": tr("Saves and settings live in %s") % _short_path(ProjectSettings.globalize_path("user://"))})
+		_rows.append({"id": "back", "kind": "button", "label": tr("Back"), "value": "", "detail": ""})
 	elif page == "display":
 		_display_rows()
 	elif page == "fx":
 		for f in Settings.FX:
 			var v := Settings.fx_value(f[0])
-			_rows.append({"id": "fx:" + f[0], "kind": "slider", "label": f[1], "value": "Off" if v == 0 else "%d%%" % v,
+			_rows.append({"id": "fx:" + f[0], "kind": "slider", "label": f[1], "value": tr("Off") if v == 0 else "%d%%" % v,
 				"level": v, "detail": f[3]})
-		_rows.append({"id": "fx_reset", "kind": "button", "label": "Reset effects", "value": "", "detail": ""})
-		_rows.append({"id": "fx_back", "kind": "button", "label": "Back", "value": "", "detail": ""})
+		_rows.append({"id": "fx_reset", "kind": "button", "label": tr("Reset effects"), "value": "", "detail": ""})
+		_rows.append({"id": "fx_back", "kind": "button", "label": tr("Back"), "value": "", "detail": ""})
 	else:
 		for a in Settings.REMAPPABLE:
 			var id: String = a[0]
 			if not InputMap.has_action(id):
 				continue
 			_rows.append({"id": id, "kind": "bind", "label": a[1], "key": Settings.key_name(id), "pad": Settings.pad_name(id)})
-		_rows.append({"id": "reset", "kind": "button", "label": "Reset to defaults", "value": "", "detail": ""})
-		_rows.append({"id": "controls_back", "kind": "button", "label": "Back", "value": "", "detail": ""})
+		_rows.append({"id": "reset", "kind": "button", "label": tr("Reset to defaults"), "value": "", "detail": ""})
+		_rows.append({"id": "controls_back", "kind": "button", "label": tr("Back"), "value": "", "detail": ""})
 	sel = clampi(sel, 0, _rows.size() - 1)
 
 
@@ -126,20 +130,20 @@ func _display_rows() -> void:
 	var D := DisplaySettings
 	D.load_settings()
 	var desk := D.is_desktop()
-	_rows.append({"id": "d:mode", "kind": "cycle", "label": "Window mode" if desk else "Fullscreen", "value": D.mode_name(),
+	_rows.append({"id": "d:mode", "kind": "cycle", "label": tr("Window mode") if desk else tr("Fullscreen"), "value": D.mode_name(),
 		"detail": D.mode_info()})
 	if desk:
-		_rows.append({"id": "d:size", "kind": "cycle", "label": "Window size", "value": D.size_name(),
-			"detail": "Size of the window in windowed mode." if D.mode == 0 else "Fullscreen uses the whole screen. Switch to Windowed to pick a size."})
-	_rows.append({"id": "d:scaling", "kind": "cycle", "label": "Scaling", "value": D.SCALINGS[D.scaling], "detail": D.SCALING_INFO[D.scaling]})
+		_rows.append({"id": "d:size", "kind": "cycle", "label": tr("Window size"), "value": D.size_name(),
+			"detail": tr("Size of the window in windowed mode.") if D.mode == 0 else tr("Fullscreen uses the whole screen. Switch to Windowed to pick a size.")})
+	_rows.append({"id": "d:scaling", "kind": "cycle", "label": tr("Scaling"), "value": Loc.t(D.SCALINGS[D.scaling]), "detail": Loc.t(D.SCALING_INFO[D.scaling])})
 	if desk:
-		_rows.append({"id": "d:vsync", "kind": "cycle", "label": "VSync", "value": "On" if D.vsync else "Off",
-			"detail": "Matches the screen's refresh rate so the picture never tears. Off can feel snappier but may tear."})
-		_rows.append({"id": "d:fps", "kind": "cycle", "label": "Frame cap", "value": D.fps_name(),
-			"detail": "Limits frames per second to keep laptops cool and quiet. Off = as fast as the machine goes."})
-	_rows.append({"id": "d:background", "kind": "cycle", "label": "In the background", "value": D.BACKGROUNDS[D.background],
-		"detail": D.BACKGROUND_INFO[D.background]})
-	_rows.append({"id": "display_back", "kind": "button", "label": "Back", "value": "", "detail": ""})
+		_rows.append({"id": "d:vsync", "kind": "cycle", "label": tr("VSync"), "value": tr("On") if D.vsync else tr("Off"),
+			"detail": tr("Matches the screen's refresh rate so the picture never tears. Off can feel snappier but may tear.")})
+		_rows.append({"id": "d:fps", "kind": "cycle", "label": tr("Frame cap"), "value": D.fps_name(),
+			"detail": tr("Limits frames per second to keep laptops cool and quiet. Off = as fast as the machine goes.")})
+	_rows.append({"id": "d:background", "kind": "cycle", "label": tr("In the background"), "value": Loc.t(D.BACKGROUNDS[D.background]),
+		"detail": Loc.t(D.BACKGROUND_INFO[D.background])})
+	_rows.append({"id": "display_back", "kind": "button", "label": tr("Back"), "value": "", "detail": ""})
 
 
 ## A long folder path shortened for the footer (the home folder becomes ~).
@@ -171,6 +175,11 @@ func _step(i: int, step: int) -> void:
 			Settings.shake_i = clampi(Settings.shake_i + step, 0, Settings.SHAKES.size() - 1)
 		"tips":  # issue #115
 			Settings.tips = step > 0
+		"language":  # issue #143
+			var langs := Loc.languages()
+			Loc.choose(langs[posmod(langs.find(_language_choice()) + step, langs.size())])
+			_rebuild()
+			return
 		_:
 			if id.begins_with("vol:"):
 				var bus := id.substr(4)
@@ -231,11 +240,11 @@ func _activate(i: int) -> void:
 					for f in Settings.FX:
 						Settings.fx[f[0]] = f[2]
 					Settings.save()
-					_say("Visual effects are back to the defaults.")
+					_say(tr("Visual effects are back to the defaults."))
 					_rebuild()
 				"reset":
 					Settings.reset_bindings()
-					_say("Controls are back to the defaults.")
+					_say(tr("Controls are back to the defaults."))
 					_rebuild()
 
 
@@ -253,7 +262,16 @@ func _value_index(id: String) -> int:
 		"text_speed": return Dialogue.speed_index()
 		"shake": return Settings.shake_i
 		"tips": return 1 if Settings.tips_enabled() else 0
+		"language": return Loc.languages().find(_language_choice())
 	return -1
+
+
+## The language saved for the next start (Loc.language() is the one running now).
+func _language_choice() -> String:
+	var cfg := ConfigFile.new()
+	cfg.load(Settings.PATH)
+	var code := str(cfg.get_value("options", "language", Loc.language()))
+	return code if code in Loc.languages() else Loc.language()
 
 
 func _back() -> void:
@@ -272,9 +290,9 @@ func _back() -> void:
 func _open_save_folder() -> void:
 	var path := ProjectSettings.globalize_path("user://")
 	if OS.shell_show_in_file_manager(path) != OK and OS.shell_open(path) != OK:
-		_say("Could not open it. The saves are in " + _short_path(path))
+		_say(tr("Could not open it. The saves are in ") + _short_path(path))
 		return
-	_say("Opened " + _short_path(path))
+	_say(tr("Opened ") + _short_path(path))
 
 
 func _say(s: String) -> void:
@@ -350,7 +368,7 @@ func _listen(event: InputEvent) -> void:
 	else:
 		return
 	if swapped != "":
-		_say("%s  (swapped with %s)" % [note, Settings.action_label(swapped)])
+		_say(tr("%s  (swapped with %s)") % [note, Settings.action_label(swapped)])
 	listening = ""
 	_rebuild()
 
@@ -411,10 +429,10 @@ func _draw() -> void:
 	draw_rect(_panel, Color(1, 1, 1, 0.18), false, 1.0)
 	var x0 := _panel.position.x + 24.0
 	var x1 := _panel.end.x - 14.0
-	_str(font, Vector2(x0 - 8, _panel.position.y + 22), {"main": "Options", "controls": "Controls", "fx": "Visual effects", "display": "Display"}[page], 16, Color("f3f1ea"))
+	_str(font, Vector2(x0 - 8, _panel.position.y + 22), {"main": tr("Options"), "controls": tr("Controls"), "fx": tr("Visual effects"), "display": tr("Display")}[page], 16, Color("f3f1ea"))
 	if page == "controls":
-		_str(font, Vector2(x1 - 168, _panel.position.y + 22), "Keyboard", 9, SOFT)
-		_str(font, Vector2(x1 - 70, _panel.position.y + 22), "Gamepad", 9, SOFT)
+		_str(font, Vector2(x1 - 168, _panel.position.y + 22), tr("Keyboard"), 9, SOFT)
+		_str(font, Vector2(x1 - 70, _panel.position.y + 22), tr("Gamepad"), 9, SOFT)
 
 	_row_rects.clear()
 	_left_rects.clear()
@@ -460,7 +478,7 @@ func _draw() -> void:
 				var kcol := col
 				if waiting:
 					var blink := Color(GOOD, 0.55 + 0.45 * sin(_t * 8.0))
-					_str(font, Vector2(x1 - 168, y + 14), "press a key or button...", 9, blink)
+					_str(font, Vector2(x1 - 168, y + 14), tr("press a key or button..."), 9, blink)
 				else:
 					_str(font, Vector2(x1 - 168, y + 14), str(r["key"]), 10, kcol)
 					_str(font, Vector2(x1 - 70, y + 14), str(r["pad"]), 10, kcol)
@@ -477,9 +495,9 @@ func _draw() -> void:
 	if note_t > 0.0:
 		_str(font, Vector2(x0 - 8, fy), note, 9, GOOD)
 	elif listening != "":
-		_str(font, Vector2(x0 - 8, fy), "Press the new key or gamepad input for %s.  Esc / Start: cancel." % Settings.action_label(listening), 9, SOFT)
+		_str(font, Vector2(x0 - 8, fy), tr("Press the new key or gamepad input for %s.  Esc / Start: cancel.") % Settings.action_label(listening), 9, SOFT)
 	elif detail != "":
 		_str(font, Vector2(x0 - 8, fy), detail, 9, SOFT)
-	var hint := "Up/Down: pick    Left/Right: change    X/B: back" if page != "controls" \
-		else "J/A: rebind (keyboard key or gamepad input)    X/B: back"
+	var hint := tr("Up/Down: pick    Left/Right: change    X/B: back") if page != "controls" \
+		else tr("J/A: rebind (keyboard key or gamepad input)    X/B: back")
 	_str(font, Vector2(x0 - 8, fy + 13), hint, 8, DIM)

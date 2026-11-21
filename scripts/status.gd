@@ -36,7 +36,7 @@ const REVIVE_DELAY := 2.0
 
 
 static func name_of(id: String) -> String:
-	return str(NAMES.get(id, id.capitalize()))
+	return Loc.t(str(NAMES.get(id, id.capitalize())))
 
 
 static func color_of(id: String) -> Color:
@@ -103,7 +103,7 @@ static func apply(t: Node, id: String, seconds: float, opts := {}) -> bool:
 		return false
 	if immune(t, id):
 		if t is Hero:
-			Fx.damage_number(t.get_parent(), (t as Node2D).global_position + Vector2(0, -26), "resisted", Color("d8d0c0"))
+			Fx.damage_number(t.get_parent(), (t as Node2D).global_position + Vector2(0, -26), Loc.t("resisted"), Color("d8d0c0"))
 		return false
 	if id == "stun" and t is Enemy:
 		(t as Enemy).stun(seconds)
@@ -367,7 +367,7 @@ static func _revive_check(h: Hero, delta: float) -> void:
 			if t <= 0.0:
 				h.revive()
 				h.hp = maxi(1, roundi(h.max_hp * float(Armory.perk(h.hero_id, "revive_once", 0.3))))
-				Fx.damage_number(h.get_parent(), h.global_position + Vector2(0, -28), "Signed again!", Color("ffe08a"))
+				Fx.damage_number(h.get_parent(), h.global_position + Vector2(0, -28), Loc.t("Signed again!"), Color("ffe08a"))
 		return
 	if float(Armory.perk(h.hero_id, "revive_once", 0.0)) > 0.0:
 		h.set_meta("signature_used", true)

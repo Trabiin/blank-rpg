@@ -20,7 +20,7 @@ static func data() -> Dictionary:
 	if _data.is_empty():
 		var f := FileAccess.open(FILE, FileAccess.READ)
 		if f:
-			var parsed = JSON.parse_string(f.get_as_text())
+			var parsed = Loc.data(JSON.parse_string(f.get_as_text()), f.get_path().get_file())
 			if typeof(parsed) == TYPE_DICTIONARY:
 				_data = parsed
 		_index()
@@ -155,10 +155,10 @@ static func other_capstone(id: String, node_id: String) -> String:
 static func gate_text(id: String, node_id: String) -> String:
 	var n := node(node_id)
 	if n.has("bond"):
-		return "%s bond: %s" % [PartyPicker.short_of(id), Empire.bond_rank_name(int(n["bond"]))]
+		return Loc.t("%s bond: %s") % [PartyPicker.short_of(id), Empire.bond_rank_name(int(n["bond"]))]
 	if n.has("bonds"):
 		var g: Array = n["bonds"]
-		return "%d bonds at %s or closer" % [int(g[1]), Empire.bond_rank_name(int(g[0]))]
+		return Loc.t("%d bonds at %s or closer") % [int(g[1]), Empire.bond_rank_name(int(g[0]))]
 	return ""
 
 
@@ -178,18 +178,18 @@ static func gate_met(id: String, node_id: String) -> bool:
 static func blocker(id: String, node_id: String) -> String:
 	var inf := info(node_id)
 	if inf.is_empty() or inf["hero"] != id:
-		return "not in this tree"
+		return Loc.t("not in this tree")
 	if knows(id, node_id):
 		return "learned"
 	var need := requires(node_id)
 	if need != "" and not knows(id, need):
-		return "learn %s first" % node(need).get("name", need)
+		return Loc.t("learn %s first") % node(need).get("name", need)
 	if is_capstone(node_id) and other_capstone(id, node_id) != "":
-		return "holds %s (one capstone per hero)" % node(other_capstone(id, node_id)).get("name", "")
+		return Loc.t("holds %s (one capstone per hero)") % node(other_capstone(id, node_id)).get("name", "")
 	if not gate_met(id, node_id):
-		return "needs " + gate_text(id, node_id)
+		return Loc.t("needs ") + gate_text(id, node_id)
 	if points_free(id) < cost(node_id):
-		return "needs %d Skill Point%s" % [cost(node_id), "" if cost(node_id) == 1 else "s"]
+		return Loc.t("needs %d Skill Point%s") % [cost(node_id), "" if cost(node_id) == 1 else "s"]
 	return ""
 
 
@@ -208,11 +208,11 @@ static func respec_cost(id: String) -> int:
 
 static func respec_blocker(id: String, on_mission := false) -> String:
 	if learned(id).is_empty():
-		return "nothing learned yet"
+		return Loc.t("nothing learned yet")
 	if on_mission:
-		return "only in Hollowmark or at the Command Table"
+		return Loc.t("only in Hollowmark or at the Command Table")
 	if int(Empire.res.get("gilt", 0)) < respec_cost(id):
-		return "needs %d Gilt" % respec_cost(id)
+		return Loc.t("needs %d Gilt") % respec_cost(id)
 	return ""
 
 

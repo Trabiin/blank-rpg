@@ -107,19 +107,19 @@ func _pick(i: int) -> void:
 	if row["kind"] == "recall":
 		var gov := Empire.governor_of(pid)
 		Empire.recall_governor(pid)
-		flash = "%s comes home. %s has no governor." % [Empire.recruit(gov)["name"], p["name"]]
+		flash = tr("%s comes home. %s has no governor.") % [Empire.recruit(gov)["name"], p["name"]]
 	elif not row["enabled"]:
 		var why: String = row["note"] if row["note"] != "" else _province_blocker()
-		flash = "Can't: %s." % why
+		flash = tr("Can't: %s.") % why
 		return
 	elif row["id"] == Empire.governor_of(pid):
 		close()
 		return
 	elif p["owner"] != "you":
 		if Empire.claim(pid, row["id"]):
-			flash = "Claimed %s. %s governs it." % [p["name"], Empire.recruit(row["id"])["name"]]
+			flash = tr("Claimed %s. %s governs it.") % [p["name"], Empire.recruit(row["id"])["name"]]
 	elif Empire.assign(row["id"], "governor", pid):
-		flash = "%s now governs %s." % [Empire.recruit(row["id"])["name"], p["name"]]
+		flash = tr("%s now governs %s.") % [Empire.recruit(row["id"])["name"], p["name"]]
 	var keep: String = row["id"]
 	_build_rows()
 	sel = 0
@@ -162,41 +162,41 @@ func _draw() -> void:
 	var p := _province()
 	UiSkin.screen(self, vs)
 	var claiming: bool = p["owner"] != "you"
-	_text(Vector2(8, 20), ("Claim " if claiming else "Govern ") + p["name"], 15, Color("f3efe4"))
+	_text(Vector2(8, 20), (tr("Claim ") if claiming else tr("Govern ")) + p["name"], 15, Color("f3efe4"))
 	var cr := _close_rect()
 	UiSkin.panel(self, cr, "button")
-	_text(cr.position + Vector2(9, 12), "Close", 9, Color(0.75, 0.72, 0.7))
+	_text(cr.position + Vector2(9, 12), tr("Close"), 9, Color(0.75, 0.72, 0.7))
 
 	# What this province wants, and where it stands now
 	var fav: String = p.get("favors", "charm")
-	_text(Vector2(8, 36), "Wants a governor with high %s." % Empire.STAT_NAMES[fav], 9, GOLD)
+	_text(Vector2(8, 36), tr("Wants a governor with high %s.") % Loc.t(Empire.STAT_NAMES[fav]), 9, GOLD)
 	_text(Vector2(8, 47), p.get("favors_why", ""), 8, Color(0.68, 0.66, 0.68))
 	var now := Empire.fray_rate(p)
 	var gov := Empire.governor_of(pid)
-	var status := "Fray %d   %s now" % [int(p["fray"]), _rate_text(now)]
+	var status := tr("Fray %d   %s now") % [int(p["fray"]), _rate_text(now)]
 	if p["owner"] == "you":
-		status += "   governor: %s" % (Empire.recruit(gov)["name"] if gov != "" else "none (Fray +%d, output -%d%%)" % [Empire.FRAY_UNGOVERNED, int(round((1.0 - Empire.UNGOVERNED_OUTPUT) * 100))])
+		status += tr("   governor: %s") % (Empire.recruit(gov)["name"] if gov != "" else tr("none (Fray +%d, output -%d%%)") % [Empire.FRAY_UNGOVERNED, int(round((1.0 - Empire.UNGOVERNED_OUTPUT) * 100))])
 	_text(Vector2(8, 61), status, 9, BAD if now > 0 else GOOD)
 	var block := _province_blocker()
 	if claiming:
 		var cost := Empire.claim_cost(pid)
 		var parts := []
 		for k in cost:
-			parts.append("%d %s" % [int(cost[k]), Empire.RES_NAMES[k]])
-		var line := "Claiming costs %s. Pick who goes to run it." % ", ".join(parts)
+			parts.append("%d %s" % [int(cost[k]), Loc.t(Empire.RES_NAMES[k])])
+		var line := tr("Claiming costs %s. Pick who goes to run it.") % ", ".join(parts)
 		if block != "":
-			line = "Can't claim: %s." % block
+			line = tr("Can't claim: %s.") % block
 		_text(Vector2(8, 74), line, 9, BAD if block != "" else Color("e8d9a8"))
 
 	# Column headers
 	var hx := [22.0, 128.0, 262.0, 330.0, 404.0]
 	var hy := LIST_Y - 4
 	var hc := Color(0.55, 0.53, 0.56)
-	_text(Vector2(hx[0], hy), "Who", 8, hc)
-	_text(Vector2(hx[1], hy), "Doing now", 8, hc)
-	_text(Vector2(hx[2], hy), "Fit", 8, hc)
-	_text(Vector2(hx[3], hy), "Fray there", 8, hc)
-	_text(Vector2(hx[4], hy), "Governor adds a day", 8, hc)
+	_text(Vector2(hx[0], hy), tr("Who"), 8, hc)
+	_text(Vector2(hx[1], hy), tr("Doing now"), 8, hc)
+	_text(Vector2(hx[2], hy), tr("Fit"), 8, hc)
+	_text(Vector2(hx[3], hy), tr("Fray there"), 8, hc)
+	_text(Vector2(hx[4], hy), tr("Governor adds a day"), 8, hc)
 
 	_row_rects.clear()
 	var y := LIST_Y
@@ -211,7 +211,7 @@ func _draw() -> void:
 			draw_rect(rr, GOLD, false, 1.0)
 		var base := rr.position + Vector2(0, minf(12.0, row_h - 3.0))
 		if row["kind"] == "recall":
-			_text(base + Vector2(hx[0] - 8, 0), "Recall %s (leave %s ungoverned)" % [Empire.recruit(gov)["name"], p["name"]], 9, GOLD if on else Color("ece6da"))
+			_text(base + Vector2(hx[0] - 8, 0), tr("Recall %s (leave %s ungoverned)") % [Empire.recruit(gov)["name"], p["name"]], 9, GOLD if on else Color("ece6da"))
 			_text(base + Vector2(hx[3] - 8, 0), _rate_text(Empire.fray_rate(p, "")), 9, BAD)
 		else:
 			var id: String = row["id"]
@@ -241,11 +241,11 @@ func _draw() -> void:
 				_text(Vector2(14, y + 8), ("+ " if w[1] else "- ") + w[0], 8, Color("cfe0b0") if w[1] else BAD)
 				y += 11
 			if row["id"] != gov and Empire.role_of(row["id"]) != "idle":
-				_text(Vector2(14, y + 8), "Leaves their current job: %s." % Empire.role_label(row["id"]), 8, Color(0.75, 0.72, 0.7))
+				_text(Vector2(14, y + 8), tr("Leaves their current job: %s.") % Empire.role_label(row["id"]), 8, Color(0.75, 0.72, 0.7))
 		else:
-			_text(Vector2(14, y + 8), "An ungoverned province frays %d faster a day and delivers %d%% less." % [Empire.FRAY_UNGOVERNED, int(round((1.0 - Empire.UNGOVERNED_OUTPUT) * 100))], 8, BAD)
+			_text(Vector2(14, y + 8), tr("An ungoverned province frays %d faster a day and delivers %d%% less.") % [Empire.FRAY_UNGOVERNED, int(round((1.0 - Empire.UNGOVERNED_OUTPUT) * 100))], 8, BAD)
 
-	_text(Vector2(8, vs.y - 10), Prompts.help([["updown", "choose"], ["ui_accept", "post"], [["ui_cancel", "govern"], "close"]], "Tap someone to post them"), 7, Color(0.5, 0.48, 0.52))
+	_text(Vector2(8, vs.y - 10), Prompts.help([["updown", "choose"], ["ui_accept", "post"], [["ui_cancel", "govern"], "close"]], tr("Tap someone to post them")), 7, Color(0.5, 0.48, 0.52))
 	if flash_t > 0.0:
 		var a := clampf(flash_t / 0.4, 0.0, 1.0)
 		_text(Vector2(240, vs.y - 10), flash, 9, Color(1, 0.9, 0.7, a))

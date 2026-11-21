@@ -40,7 +40,7 @@ static var card: Control  # the HelpCard in the running scene (set by the card i
 
 static func data() -> Dictionary:
 	if _data.is_empty():
-		var parsed = JSON.parse_string(FileAccess.get_file_as_string(PATH))
+		var parsed = Loc.load_json(PATH)
 		_data = parsed if typeof(parsed) == TYPE_DICTIONARY else {}
 	return _data
 
@@ -122,7 +122,7 @@ static func locked_note(screen: String) -> String:
 		return ""
 	var u := unlock_for(screen)
 	var d := _day_of(u.get("when", {}))
-	return "day %d" % d if d > 0 else "not yet"
+	return Loc.t("day %d") % d if d > 0 else Loc.t("not yet")
 
 
 ## The earliest day in a condition (looking inside "any"), or 0.
@@ -239,7 +239,7 @@ static func codex_entries() -> Array:
 				paras.append(l[1])
 			var who := voice(t)
 			out.append({"id": "help_" + str(t["id"]), "cat": "help", "title": str(t.get("title", t["id"])), "unlocked": true,
-				"new": false, "paras": paras, "facts": [["Told by", Dialogue.display_name(who)], ["Section", GROUP_NAMES.get(g, g)]],
+				"new": false, "paras": paras, "facts": [[Loc.t("Told by"), Dialogue.display_name(who)], [Loc.t("Section"), Loc.t(GROUP_NAMES.get(g, g))]],
 				"hint": "", "indent": 0})
 	return out
 
@@ -262,5 +262,5 @@ static func play_locked(screen: String, under: Node = null) -> bool:
 	if u.is_empty() or not is_instance_valid(card):
 		return false
 	var note := locked_note(screen)
-	return card.show_talk("%s: %s" % [str(u.get("title", "")).trim_suffix(" open").trim_suffix(" opens"), "from " + note if note.begins_with("day") else "not yet"],
+	return card.show_talk("%s: %s" % [str(u.get("title", "")).trim_suffix(" open").trim_suffix(" opens"), Loc.t("from ") + note if note.begins_with("day") else Loc.t("not yet")],
 		lines(u, "locked"), under)

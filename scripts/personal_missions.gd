@@ -16,7 +16,7 @@ static var _data := {}
 
 static func data() -> Dictionary:
 	if _data.is_empty():
-		var parsed = JSON.parse_string(FileAccess.get_file_as_string(PATH))
+		var parsed = Loc.load_json(PATH)
 		_data = parsed if parsed is Dictionary else {}
 	return _data
 
@@ -64,15 +64,15 @@ static func state(who: String) -> String:
 static func blocker(who: String) -> String:
 	var name := Empire.short_name(who)
 	if not Empire.recruits.has(who):
-		return "%s is not with you" % name
+		return Loc.t("%s is not with you") % name
 	if is_field(who):
 		var b := PartyPicker.blocker(who)
 		if b != "":
-			return "%s can't come: %s. Free them in the Roster first" % [name, b]
+			return Loc.t("%s can't come: %s. Free them in the Roster first") % [name, b]
 	elif Empire.role_of(who) == "expedition":
-		return "%s is away on an expedition" % name
+		return Loc.t("%s is away on an expedition") % name
 	elif int(Empire.recruits[who].get("injured", 0)) > 0:
-		return "%s is injured" % name
+		return Loc.t("%s is injured") % name
 	return ""
 
 
@@ -90,7 +90,7 @@ static func build(who: String) -> Dictionary:
 		m["force"] = who
 	else:
 		m["escort"] = who
-	var obj := {"kind": "script", "steps": d.get("steps", []), "label": d.get("label", "See it through")}
+	var obj := {"kind": "script", "steps": d.get("steps", []), "label": d.get("label", Loc.t("See it through"))}
 	if not is_field(who):
 		obj["escort"] = who
 	m["objective"] = obj
@@ -121,13 +121,13 @@ static func apply(m: Dictionary, outcome: String, dry := false) -> Array:
 		if not dry and Empire.has_bond(who):
 			Empire.bonds[who]["personal_done"] = true
 			Empire.bond_gain(who, 999, "", true)
-		lines.append("%s has something to tell Ash. (Bonds: H, or find them in Hollowmark.)" % name)
+		lines.append(Loc.t("%s has something to tell Ash. (Bonds: H, or find them in Hollowmark.)") % name)
 		var st: Dictionary = m.get("standing", {})
 		for fid in st:
 			if not dry:
 				Empire.change_standing(fid, int(st[fid]), str(m.get("name", "")), true)
-			lines.append("%s standing %+d." % [Empire.faction(fid).get("short", fid), int(st[fid])])
+			lines.append(Loc.t("%s standing %+d.") % [Empire.faction(fid).get("short", fid), int(st[fid])])
 	else:
-		lines.append("It isn't finished. %s is still waiting at %s when you are ready to go again." \
+		lines.append(Loc.t("It isn't finished. %s is still waiting at %s when you are ready to go again.") \
 			% [name, Empire.territory().find(m.get("province", "")).get("name", "?")])
 	return lines

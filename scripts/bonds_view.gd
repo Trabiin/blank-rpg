@@ -169,13 +169,13 @@ func _pick_scene(i: int) -> void:
 		"ready":
 			_play(id, int(rows[i]["rank"]), false)
 		_:
-			_say("Not yet. %s" % Empire.bond_next_text(id))
+			_say(tr("Not yet. %s") % Empire.bond_next_text(id))
 
 
 func _play(id: String, r: int, is_replay: bool) -> void:
 	var why := Empire.bond_scene_blocker(id)
 	if why != "" and not is_replay:
-		_say("Can't now: %s." % why)
+		_say(tr("Can't now: %s.") % why)
 		return
 	scene_view.play(id, r, is_replay)
 
@@ -274,18 +274,18 @@ func _draw() -> void:
 	UiSkin.screen(self, vs)
 	var cr := _close_rect()
 	UiSkin.panel(self, cr, "button")
-	_text(cr.position + Vector2(9, 12), "Close", 9, Color(0.75, 0.72, 0.7))
+	_text(cr.position + Vector2(9, 12), tr("Close"), 9, Color(0.75, 0.72, 0.7))
 	_row_rects.clear()
 	_row_index.clear()
 	_scene_rects.clear()
-	_text(Vector2(8, 20), "Bonds", 15, Color("f3efe4"))
+	_text(Vector2(8, 20), tr("Bonds"), 15, Color("f3efe4"))
 	var ready := Empire.bond_ready_ids().size()
-	var sub := "Chat once a day in Hollowmark, put people in roles they like, send them on jobs. Each rank has a scene."
-	_text(Vector2(62, 20), ("%d want%s a word with Ash." % [ready, "s" if ready == 1 else ""]) if ready > 0 else "", 9, HEART)
+	var sub := tr("Chat once a day in Hollowmark, put people in roles they like, send them on jobs. Each rank has a scene.")
+	_text(Vector2(62, 20), (tr("%d want%s a word with Ash.") % [ready, "s" if ready == 1 else ""]) if ready > 0 else "", 9, HEART)
 	_text(Vector2(8, 34), sub, 8, SOFT, vs.x - 16)
 	var ids := _ids()
 	if ids.is_empty():
-		_text(Vector2(8, 60), "Nobody close enough to Ash yet.", 10, TEXT)
+		_text(Vector2(8, 60), tr("Nobody close enough to Ash yet."), 10, TEXT)
 		return
 	var y := 44.0
 	var fits := maxi(int((vs.y - y - 22.0) / ROW_H), 1)
@@ -311,21 +311,21 @@ func _draw() -> void:
 		var ready_r := Empire.bond_next_scene(id)
 		var mood := Empire.role_mood(id)
 		if ready_r > 0:
-			_text(rr.position + Vector2(138, 25), "wants a word!", 8, HEART)
+			_text(rr.position + Vector2(138, 25), tr("wants a word!"), 8, HEART)
 		elif mood == "likes":
-			_text(rr.position + Vector2(138, 25), "happy in role", 8, GOOD)
+			_text(rr.position + Vector2(138, 25), tr("happy in role"), 8, GOOD)
 		elif mood == "dislikes":
-			_text(rr.position + Vector2(138, 25), "unhappy in role", 8, BAD)
+			_text(rr.position + Vector2(138, 25), tr("unhappy in role"), 8, BAD)
 		if Empire.talked_today(id):
-			_text(rr.position + Vector2(10, 29), "chatted today", 7, DIM)
+			_text(rr.position + Vector2(10, 29), tr("chatted today"), 7, DIM)
 		y += ROW_H
 	if scroll + fits < ids.size():
 		_scroll_arrow(Vector2(8 + LIST_W / 2, y + 1), false)
 	var missing := Empire.bond_cast().size() - ids.size()
 	if missing > 0 and scroll + fits >= ids.size():
-		_text(Vector2(10, y + 10), "%d more people Ash could get close to haven't joined yet." % missing, 7, DIM, LIST_W)
+		_text(Vector2(10, y + 10), tr("%d more people Ash could get close to haven't joined yet.") % missing, 7, DIM, LIST_W)
 	_draw_details(vs, ids[sel])
-	_text(Vector2(8, vs.y - 8), Prompts.help([["updown", "choose"], ["ui_accept", "talk / scenes"], ["leftright", "people / scenes"], [["ui_cancel", "bonds"], "close"]], "Tap a name, tap again to talk   Tap a scene twice to play it"), 7, Color(0.5, 0.48, 0.52))
+	_text(Vector2(8, vs.y - 8), Prompts.help([["updown", "choose"], ["ui_accept", tr("talk / scenes")], ["leftright", tr("people / scenes")], [["ui_cancel", "bonds"], "close"]], tr("Tap a name, tap again to talk   Tap a scene twice to play it")), 7, Color(0.5, 0.48, 0.52))
 	if flash_t > 0.0:
 		var a := clampf(flash_t / 0.4, 0.0, 1.0)
 		var w := font.get_string_size(flash, HORIZONTAL_ALIGNMENT_LEFT, -1, 9).x
@@ -345,52 +345,52 @@ func _draw_details(vs: Vector2, id: String) -> void:
 	var y := top + 14
 	_text(Vector2(x, y), "%s, %s" % [r["name"], r.get("title", "")], 11, Color("f3efe4"), w)
 	y += 12
-	var pts := "%d bond points" % Empire.bond_points(id)
+	var pts := tr("%d bond points") % Empire.bond_points(id)
 	if rank < Empire.BOND_MAX:
-		pts += " (rank %d at %d)" % [rank + 1, Empire.bond_threshold(rank + 1)]
-	_text(Vector2(x, y), "Rank %d, %s.  %s" % [rank, Empire.bond_rank_name(rank), pts], 8, HEART, w)
+		pts += tr(" (rank %d at %d)") % [rank + 1, Empire.bond_threshold(rank + 1)]
+	_text(Vector2(x, y), tr("Rank %d, %s.  %s") % [rank, Empire.bond_rank_name(rank), pts], 8, HEART, w)
 	y += 4
 	var nxt := Empire.bond_next_text(id)
 	y += _wrap(Vector2(x, y + 9), nxt, w, 8, HEART if Empire.bond_next_scene(id) > 0 else Color("e8d9a8")) + 4
 	# Likes and what they are doing now
-	y += _wrap(Vector2(x, y + 9), "Likes: %s." % info.get("likes_text", "?"), w, 8, Color("cfe0b0")) + 1
-	y += _wrap(Vector2(x, y + 9), "Dislikes: %s." % info.get("dislikes_text", "?"), w, 8, Color(0.85, 0.65, 0.6)) + 1
+	y += _wrap(Vector2(x, y + 9), tr("Likes: %s.") % info.get("likes_text", "?"), w, 8, Color("cfe0b0")) + 1
+	y += _wrap(Vector2(x, y + 9), tr("Dislikes: %s.") % info.get("dislikes_text", "?"), w, 8, Color(0.85, 0.65, 0.6)) + 1
 	var mood := Empire.role_mood(id)
 	var pts_cfg: Dictionary = Empire.bond_data["points"]
-	var now := "Now: %s" % Empire.role_label(id)
+	var now := tr("Now: %s") % Empire.role_label(id)
 	if mood == "likes":
-		now += ", which they like (+%d a day)." % int(pts_cfg["liked_role"])
+		now += tr(", which they like (+%d a day).") % int(pts_cfg["liked_role"])
 	elif mood == "dislikes":
-		now += ", which they dislike (%d a day)." % int(pts_cfg["disliked_role"])
+		now += tr(", which they dislike (%d a day).") % int(pts_cfg["disliked_role"])
 	else:
 		now += "."
 	y += _wrap(Vector2(x, y + 9), now, w, 8, GOOD if mood == "likes" else (BAD if mood == "dislikes" else SOFT)) + 6
 	# Perks
-	_text(Vector2(x, y + 8), "Perks", 9, Color(0.75, 0.72, 0.7))
+	_text(Vector2(x, y + 8), tr("Perks"), 9, Color(0.75, 0.72, 0.7))
 	y += 11
 	var perks: Dictionary = info.get("perks", {})
 	for k in perks:
 		var pk: Dictionary = perks[k]
 		var got := rank >= int(k)
-		y += _wrap(Vector2(x, y + 9), "%s Rank %s, %s: %s" % ["+" if got else "-", k, pk["name"], pk["desc"]], w, 8, GOOD if got else DIM) + 1
+		y += _wrap(Vector2(x, y + 9), tr("%s Rank %s, %s: %s") % ["+" if got else "-", k, pk["name"], pk["desc"]], w, 8, GOOD if got else DIM) + 1
 	var pj := Empire.personal_job(id)
 	if pj != "":
-		var state := "unlocks at rank 4"
+		var state := tr("unlocks at rank 4")
 		var col := DIM
 		if Empire.personal_done(id):
 			state = "done"
 			col = GOOD
 		elif Empire.personal_lost(id) != "":
-			state = "lost with %s, which the Blank erased. Reclaim it to bring the mission back" % Empire.personal_lost(id)
+			state = tr("lost with %s, which the Blank erased. Reclaim it to bring the mission back") % Empire.personal_lost(id)
 			col = BAD
 		elif rank >= 4:
 			var pd := PersonalMissions.def_for(id)
-			state = "waiting at %s on the Command Table" % Empire.territory().find(pd.get("province", "")).get("name", "?")
+			state = tr("waiting at %s on the Command Table") % Empire.territory().find(pd.get("province", "")).get("name", "?")
 			var why := PersonalMissions.blocker(id)
 			if why != "":
 				state += " (%s)" % why
 			col = GOLD
-		y += _wrap(Vector2(x, y + 9), "Personal mission, %s: %s." % [PersonalMissions.def_for(id).get("name", "?"), state], w, 8, col) + 1
+		y += _wrap(Vector2(x, y + 9), tr("Personal mission, %s: %s.") % [PersonalMissions.def_for(id).get("name", "?"), state], w, 8, col) + 1
 	# Romance, friends and rivals (issue #116)
 	var rs := Relationships.status_text(id)
 	if rs != "":
@@ -403,12 +403,12 @@ func _draw_details(vs: Vector2, id: String) -> void:
 	var bits := []
 	for k in ["friends", "truce", "rivals"]:
 		if not kin[k].is_empty():
-			bits.append("%s: %s" % [{"friends": "Gets on with", "truce": "Made peace with", "rivals": "Can't stand"}[k], ", ".join(kin[k])])
+			bits.append("%s: %s" % [{"friends": tr("Gets on with"), "truce": tr("Made peace with"), "rivals": tr("Can't stand")}[k], ", ".join(kin[k])])
 	if not bits.is_empty():
-		y += _wrap(Vector2(x, y + 9), ".  ".join(bits) + ".  (Posting them together matters: see Roster, Buildings, Expeditions, party.)", w, 8, Color("b9c4d8")) + 1
+		y += _wrap(Vector2(x, y + 9), ".  ".join(bits) + tr(".  (Posting them together matters: see Roster, Buildings, Expeditions, party.)"), w, 8, Color("b9c4d8")) + 1
 	y += 8
 	# Scenes
-	_text(Vector2(x, y + 8), "Scenes", 9, Color(0.75, 0.72, 0.7))
+	_text(Vector2(x, y + 8), tr("Scenes"), 9, Color(0.75, 0.72, 0.7))
 	y += 12
 	var rows := _scene_rows()
 	for i in rows.size():
@@ -426,7 +426,7 @@ func _draw_details(vs: Vector2, id: String) -> void:
 				label = "%s. %s" % [row.get("num", str(row["rank"])), row["title"]]
 				col = TEXT
 			"ready":
-				label = "%s. %s  (new: %s to play)" % [row.get("num", str(row["rank"])), row["title"], Prompts.confirm()]
+				label = tr("%s. %s  (new: %s to play)") % [row.get("num", str(row["rank"])), row["title"], Prompts.confirm()]
 				col = HEART
 			_:
 				label = "%s. ???" % row.get("num", str(row["rank"]))

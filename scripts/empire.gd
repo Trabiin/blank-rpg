@@ -239,42 +239,42 @@ func ledger() -> Array:
 		var keep := 1.0 - FRAY_OUTPUT_LOSS * float(p["fray"]) / 100.0
 		var notes := []
 		if keep < 0.99:
-			notes.append("-%d%% from Fray" % int(round((1.0 - keep) * 100.0)))
+			notes.append(tr("-%d%% from Fray") % int(round((1.0 - keep) * 100.0)))
 		var gov := governor_of(p["id"])
 		if gov == "":
 			keep *= UNGOVERNED_OUTPUT
-			notes.append("-%d%% no governor" % int(round((1.0 - UNGOVERNED_OUTPUT) * 100.0)))
+			notes.append(tr("-%d%% no governor") % int(round((1.0 - UNGOVERNED_OUTPUT) * 100.0)))
 		var line := {"label": p["name"], "note": ", ".join(notes)}
 		for k in RESOURCES:
 			line[k] = int(round(float(p.get("output", {}).get(k, 0)) * keep))
 		lines.append(line)
 		if gov != "":
 			var e := governor_effect(gov, p["id"])
-			lines.append({"label": "  Governor %s" % recruit(gov)["name"], "gilt": e["gilt"], "supplies": e["supplies"], "ink": e["ink"],
-				"note": "%s fit" % e["fit"].capitalize()})
+			lines.append({"label": tr("  Governor %s") % recruit(gov)["name"], "gilt": e["gilt"], "supplies": e["supplies"], "ink": e["ink"],
+				"note": tr("%s fit") % e["fit"].capitalize()})
 	var extra := held_count() - HOLD_FREE
 	if extra > 0:
-		lines.append({"label": "Garrisons and roads (%d past %d)" % [extra, HOLD_FREE], "gilt": -int(HOLD_UPKEEP["gilt"]) * extra,
+		lines.append({"label": tr("Garrisons and roads (%d past %d)") % [extra, HOLD_FREE], "gilt": -int(HOLD_UPKEEP["gilt"]) * extra,
 			"supplies": -int(HOLD_UPKEEP["supplies"]) * extra, "ink": 0, "note": ""})
 	var upkeep := UPKEEP_SUPPLIES * recruits.size()
-	lines.append({"label": "Upkeep (%d people)" % recruits.size(), "gilt": 0, "supplies": -upkeep, "ink": 0, "note": ""})
+	lines.append({"label": tr("Upkeep (%d people)") % recruits.size(), "gilt": 0, "supplies": -upkeep, "ink": 0, "note": ""})
 	var qm := current_effect("command_table")
 	if int(qm.get("upkeep_cut", 0)) > 0:
-		lines.append({"label": "  Quartermaster's savings", "gilt": 0, "supplies": mini(int(qm["upkeep_cut"]), upkeep), "ink": 0, "note": ""})
+		lines.append({"label": tr("  Quartermaster's savings"), "gilt": 0, "supplies": mini(int(qm["upkeep_cut"]), upkeep), "ink": 0, "note": ""})
 	if has_research("log_rations") and recruits.size() >= 4:
-		lines.append({"label": "  Ration tables", "gilt": 0, "supplies": recruits.size() / 4, "ink": 0, "note": "research"})
+		lines.append({"label": tr("  Ration tables"), "gilt": 0, "supplies": recruits.size() / 4, "ink": 0, "note": "research"})
 	var ink := current_effect("inkworks")
 	if int(ink.get("ink", 0)) > 0:
-		lines.append({"label": "Inkworks", "gilt": 0, "supplies": 0, "ink": int(ink["ink"]), "note": ""})
+		lines.append({"label": tr("Inkworks"), "gilt": 0, "supplies": 0, "ink": int(ink["ink"]), "note": ""})
 	var guild := current_effect("guildhall")
 	if int(guild.get("gilt", 0)) > 0:
-		lines.append({"label": "Guildhall contracts", "gilt": int(guild["gilt"]), "supplies": 0, "ink": 0, "note": ""})
+		lines.append({"label": tr("Guildhall contracts"), "gilt": int(guild["gilt"]), "supplies": 0, "ink": 0, "note": ""})
 	var market := current_effect("market")
 	if int(market.get("gilt", 0)) > 0:
-		lines.append({"label": "Market stalls", "gilt": int(market["gilt"]), "supplies": 0, "ink": 0, "note": ""})
+		lines.append({"label": tr("Market stalls"), "gilt": int(market["gilt"]), "supplies": 0, "ink": 0, "note": ""})
 	var ins := int(current_effect("scriptorium").get("insight", 0))
 	if ins > 0:
-		lines.append({"label": "Scriptorium", "gilt": 0, "supplies": 0, "ink": 0, "note": "+%d Insight" % ins})
+		lines.append({"label": tr("Scriptorium"), "gilt": 0, "supplies": 0, "ink": 0, "note": tr("+%d Insight") % ins})
 	_diplomacy_ledger(lines)
 	for b in bond_perk_lines():
 		lines.append(b)
@@ -323,37 +323,37 @@ func fray_sources(p: Dictionary, gov := "-") -> Array:
 		if t.provinces[n]["owner"] == "erased":
 			erased.append(t.provinces[n]["name"])
 	if not erased.is_empty():
-		out.append(["Borders erased land (%s)" % ", ".join(erased), FRAY_FIRST_ERASED_NEIGHBOR + FRAY_MORE_ERASED_NEIGHBORS * (erased.size() - 1)])
+		out.append([tr("Borders erased land (%s)") % ", ".join(erased), FRAY_FIRST_ERASED_NEIGHBOR + FRAY_MORE_ERASED_NEIGHBORS * (erased.size() - 1)])
 	if p.get("at_edge", false):
-		out.append(["Touches the Blank's edge", FRAY_AT_EDGE])
+		out.append([tr("Touches the Blank's edge"), FRAY_AT_EDGE])
 	if int(p.get("scar", 0)) > 0:
-		out.append(["Surge damage (%d more days)" % int(p["scar"]), SCAR_FRAY])
+		out.append([tr("Surge damage (%d more days)") % int(p["scar"]), SCAR_FRAY])
 	if float(p["fray"]) > 50.0:
-		out.append(["Unravelling feeds itself", FRAY_MOMENTUM])
+		out.append([tr("Unravelling feeds itself"), FRAY_MOMENTUM])
 	var press: Dictionary = t.region_of(p).get("pressure", {})
 	if int(press.get("per_day", 0)) != 0:
-		out.append([str(press.get("label", "The region frays")), int(press["per_day"])])
+		out.append([str(press.get("label", tr("The region frays"))), int(press["per_day"])])
 	if owner == "you":
 		if gov == "":
-			out.append(["No governor posted", FRAY_UNGOVERNED])
+			out.append([tr("No governor posted"), FRAY_UNGOVERNED])
 		else:
-			out.append(["Governed by %s" % recruit(gov)["name"], governor_effect(gov, p["id"])["fray"]])
-		out.append(["Tended by your people", FRAY_TENDED])
+			out.append([tr("Governed by %s") % recruit(gov)["name"], governor_effect(gov, p["id"])["fray"]])
+		out.append([tr("Tended by your people"), FRAY_TENDED])
 		if has_research("ward_margins"):
-			out.append(["Margin wards (research)", -1])
+			out.append([tr("Margin wards (research)"), -1])
 		if p["id"] == "hollowmark":
 			for pk in bond_perks_with("fray_home"):
-				out.append(["%s (%s's bond)" % [pk["name"], short_name(pk["id"])], -int(pk["effect"]["fray_home"])])
+				out.append([tr("%s (%s's bond)") % [pk["name"], short_name(pk["id"])], -int(pk["effect"]["fray_home"])])
 		if int(lamps.get(p["id"], 0)) > 0:
 			var lv := int(lamps[p["id"]])
 			var bright := has_research("ward_lampwright")
-			out.append(["Wardlamp (level %d%s)" % [lv, ", written" if bright else ""], lamp_fray(lv) - (1 if bright else 0)])
+			out.append([tr("Wardlamp (level %d%s)") % [lv, tr(", written") if bright else ""], lamp_fray(lv) - (1 if bright else 0)])
 		if has_perk("coven"):
 			var woods := t.find(faction("coven")["province"])
 			if not woods.is_empty() and woods["owner"] != "erased" and woods["index"] in t.neighbors[p["index"]]:
-				out.append(["Coven hedge-wards (Friendly)", -1])
+				out.append([tr("Coven hedge-wards (Friendly)"), -1])
 	elif owner == "free":
-		out.append(["Nobody holds it", FRAY_UNHELD])
+		out.append([tr("Nobody holds it"), FRAY_UNHELD])
 	out.append_array(FactionAsks.fray_sources(p))
 	out.append_array(BlankPlans.sources(p, gov if owner == "you" else "-"))
 	return out
@@ -397,7 +397,7 @@ func _erase(p: Dictionary) -> void:
 	var gov := governor_of(p["id"])
 	if gov != "":
 		recruits[gov] = {"role": "idle", "target": "", "injured": 3}
-		notice.emit("%s fled %s, hurt. Out of action for 3 days." % [recruit(gov)["name"], p["name"]], true)
+		notice.emit(tr("%s fled %s, hurt. Out of action for 3 days.") % [recruit(gov)["name"], p["name"]], true)
 	p["owner"] = "erased"
 	p["fray"] = 100
 	lamps.erase(p["id"])  # the lamp goes out with everything else
@@ -406,7 +406,7 @@ func _erase(p: Dictionary) -> void:
 	if surge.get("id", "") == p["id"]:
 		surge = {}
 		next_surge_day = day + rng.randi_range(SURGE_GAP[0], SURGE_GAP[1])
-	notice.emit("%s has been erased." % p["name"], was_yours)
+	notice.emit(tr("%s has been erased.") % p["name"], was_yours)
 	_react_near(p["id"], "erased_near")
 	if p["id"] == "hollowmark":
 		hollowmark_lost.emit()
@@ -422,7 +422,7 @@ func _update_surge() -> void:
 			var hit := surge_fray() / (2 if aid != "" else 1)
 			p["fray"] = mini(int(p["fray"]) + hit, 100)
 			p["scar"] = SURGE_SCAR_DAYS
-			notice.emit("The Blank surged into %s. +%d Fray%s." % [p["name"], hit, " (halved: the %s held the line)" % faction(aid)["short"] if aid != "" else ""], p["owner"] == "you")
+			notice.emit(tr("The Blank surged into %s. +%d Fray%s.") % [p["name"], hit, tr(" (halved: the %s held the line)") % faction(aid)["short"] if aid != "" else ""], p["owner"] == "you")
 		next_surge_day = day + rng.randi_range(SURGE_GAP[0], SURGE_GAP[1])
 	var warn := surge_warning_days()
 	if surge.is_empty() and day >= next_surge_day - warn:
@@ -442,7 +442,7 @@ func _update_surge() -> void:
 			next_surge_day = maxi(next_surge_day, day + warn)
 			var target: Dictionary = pool[rng.rand_weighted(PackedFloat32Array(weights))]
 			surge = {"id": target["id"], "day": next_surge_day}
-			notice.emit("The Blank is gathering against %s. Surge in %d days." % [target["name"], next_surge_day - day], target["owner"] == "you")
+			notice.emit(tr("The Blank is gathering against %s. Surge in %d days.") % [target["name"], next_surge_day - day], target["owner"] == "you")
 
 
 ## How hard a surge hits. The Long Watch takes the edge off.
@@ -465,7 +465,7 @@ func _load_recruit_data() -> void:
 	if not recruit_data.is_empty():
 		return
 	var f := FileAccess.open("res://data/recruits.json", FileAccess.READ)
-	var parsed = JSON.parse_string(f.get_as_text())
+	var parsed = Loc.data(JSON.parse_string(f.get_as_text()), f.get_path().get_file())
 	trait_data = parsed["traits"]
 	for r in parsed["recruits"]:
 		recruit_data[r["id"]] = r
@@ -517,11 +517,11 @@ func governor_effect(id: String, pid := "") -> Dictionary:
 	var why := []
 	var grit := int(st["grit"])
 	var fray := -(1 + grit / 4)
-	why.append(["Grit %d: holds the line, Fray %d a day" % [grit, fray], true])
+	why.append([tr("Grit %d: holds the line, Fray %d a day") % [grit, fray], true])
 	var gilt := int(st["charm"]) / 3
 	var supplies := int(st["craft"]) / 3
 	var ink := 0
-	why.append(["Charm %d: +%d Gilt, Craft %d: +%d Supplies" % [int(st["charm"]), gilt, int(st["craft"]), supplies], true])
+	why.append([tr("Charm %d: +%d Gilt, Craft %d: +%d Supplies") % [int(st["charm"]), gilt, int(st["craft"]), supplies], true])
 	var fit := "fair"
 	if not p.is_empty():
 		var fav: String = p.get("favors", "charm")
@@ -540,36 +540,36 @@ func governor_effect(id: String, pid := "") -> Dictionary:
 			else:
 				ink += extra
 			if extra != 0:
-				bonus.append("%+d %s" % [extra, RES_NAMES[k]])
+				bonus.append("%+d %s" % [extra, Loc.t(RES_NAMES[k])])
 		fray += FIT_FRAY[fit]
-		var label: String = {"good": "Good fit", "fair": "Fair fit", "poor": "Poor fit"}[fit]
+		var label: String = {"good": tr("Good fit"), "fair": tr("Fair fit"), "poor": tr("Poor fit")}[fit]
 		var tail := ""
 		if fit != "fair":
-			tail = ": %s, Fray %+d" % [", ".join(bonus), FIT_FRAY[fit]]
-		why.append(["%s (%s %d; %s wants %s)%s" % [label, STAT_NAMES[fav], int(st[fav]), p["name"], STAT_NAMES[fav], tail], fit != "poor"])
+			tail = tr(": %s, Fray %+d") % [", ".join(bonus), FIT_FRAY[fit]]
+		why.append([tr("%s (%s %d; %s wants %s)%s") % [label, Loc.t(STAT_NAMES[fav]), int(st[fav]), p["name"], Loc.t(STAT_NAMES[fav]), tail], fit != "poor"])
 	if has_trait(id, "stubborn"):
 		fray -= 1
-		why.append(["Stubborn: will not give an inch, Fray -1", true])
+		why.append([tr("Stubborn: will not give an inch, Fray -1"), true])
 	if has_trait(id, "coward"):
 		var c := 2 if not p.is_empty() and int(p["fray"]) >= 50 else 1
 		fray += c
-		why.append(["Coward: flinches%s, Fray +%d" % [" at the edge" if c > 1 else "", c], false])
+		why.append([tr("Coward: flinches%s, Fray +%d") % [tr(" at the edge") if c > 1 else "", c], false])
 	if has_trait(id, "greedy"):
 		gilt += 2
-		why.append(["Greedy: squeezes harder, +2 Gilt", true])
+		why.append([tr("Greedy: squeezes harder, +2 Gilt"), true])
 	if has_trait(id, "ink_sick") and not p.is_empty():
 		if int(p.get("output", {}).get("ink", 0)) > 0:
 			ink += 1
-			why.append(["Ink-sick: hears the spring, +1 Ink", true])
+			why.append([tr("Ink-sick: hears the spring, +1 Ink"), true])
 		if int(p["fray"]) >= 25:
 			fray += 1
-			why.append(["Ink-sick: the Blank smells them, Fray +1", false])
+			why.append([tr("Ink-sick: the Blank smells them, Fray +1"), false])
 	if has_trait(id, "ex_concord") and not p.is_empty():
 		var t := territory()
 		for n in t.neighbors[p["index"]]:
 			if t.provinces[n]["owner"] == "concord":
 				gilt += 1
-				why.append(["Ex-Concord: knows the toll forms next door, +1 Gilt", true])
+				why.append([tr("Ex-Concord: knows the toll forms next door, +1 Gilt"), true])
 				break
 	return {"fray": fray, "gilt": gilt, "supplies": supplies, "ink": ink, "fit": fit, "why": why}
 
@@ -583,9 +583,9 @@ func governor_score(id: String, pid: String) -> int:
 ## Why a recruit can't govern right now ("" = they can).
 func governor_blocker(id: String) -> String:
 	if recruit(id).get("locked_party", false):
-		return "Ash leads every mission"
+		return tr("Ash leads every mission")
 	if role_of(id) == "expedition":
-		return "away on an expedition"
+		return tr("away on an expedition")
 	if int(recruits[id]["injured"]) > 0:
 		return "injured"
 	return ""
@@ -611,19 +611,19 @@ func claim_blocker(pid: String) -> String:
 		return region_lock_text(p)
 	match p.get("owner", ""):
 		"you":
-			return "already yours"
+			return tr("already yours")
 		"erased":
-			return "Erased. Win its Reclaim mission and rewrite it first"
+			return tr("Erased. Win its Reclaim mission and rewrite it first")
 	if p.get("owner", "") in faction_ids():
 		var fa := faction(p["owner"])
 		if deal(p["owner"], "cede").is_empty() or str(fa.get("province", "")) != pid:
-			return "%s land. They will never hand it over" % fa["short"]
-		return "%s land. Reach Allied standing and ask for it%s" % [fa["short"], Prompts.tag("diplomacy")]
+			return tr("%s land. They will never hand it over") % fa["short"]
+		return tr("%s land. Reach Allied standing and ask for it%s") % [fa["short"], Prompts.tag("diplomacy")]
 	if not borders_yours(pid):
-		return "Too far. Claim the land in between first"
+		return tr("Too far. Claim the land in between first")
 	var miss := _missing(claim_cost(pid))
 	if miss != "":
-		return "Need " + miss
+		return tr("Need ") + miss
 	return ""
 
 
@@ -636,7 +636,7 @@ func claim(pid: String, gov: String) -> bool:
 	var p := territory().find(pid)
 	p["owner"] = "you"
 	assign(gov, "governor", pid)
-	notice.emit("%s is yours. %s governs it." % [p["name"], recruit(gov)["name"]], false)
+	notice.emit(tr("%s is yours. %s governs it.") % [p["name"], recruit(gov)["name"]], false)
 	_react_near(pid, "claim_near")
 	return true
 
@@ -657,39 +657,39 @@ func role_options(id: String) -> Array:
 	var out := []
 	if st["role"] == "expedition":
 		var e := expedition_running(st["target"])
-		var back := job_left_text(e) if not e.is_empty() else "soon"
-		out.append({"role": "expedition", "target": st["target"], "label": "On expedition: %s" % job(st["target"]).get("name", "?"),
-			"enabled": false, "note": "back in %s" % back, "preview": "Away from Hollowmark. Back in %s; nothing can be changed until then." % back})
+		var back := job_left_text(e) if not e.is_empty() else Loc.t("soon")
+		out.append({"role": "expedition", "target": st["target"], "label": tr("On expedition: %s") % job(st["target"]).get("name", "?"),
+			"enabled": false, "note": tr("back in %s") % back, "preview": tr("Away from Hollowmark. Back in %s; nothing can be changed until then.") % back})
 		return out
 	var hurt := int(st["injured"]) > 0
 	var locked: bool = r.get("locked_party", false)
-	out.append({"role": "idle", "target": "", "label": "Idle in Hollowmark", "enabled": not locked,
-		"note": "Ash always leads the party" if locked else "", "preview": "Rests. Still eats."})
+	out.append({"role": "idle", "target": "", "label": tr("Idle in Hollowmark"), "enabled": not locked,
+		"note": tr("Ash always leads the party") if locked else "", "preview": tr("Rests. Still eats.")})
 	var in_party := party_ids().size()
 	var can_fight: bool = r["tier"] == "field"
 	var party_note := ""
 	if not can_fight:
-		party_note = "not a fighter"
+		party_note = tr("not a fighter")
 	elif role_of(id) != "party" and in_party >= PARTY_SIZE:
-		party_note = "party is full (%d/%d)" % [in_party, PARTY_SIZE]
+		party_note = tr("party is full (%d/%d)") % [in_party, PARTY_SIZE]
 	elif hurt:
 		party_note = "injured"
 	var with_party := party_ids().filter(func(p): return p != id) + [id]
 	var party_pairs := Relationships.notes_text(with_party, "party")  # friends and rivals (issue #116)
-	out.append({"role": "party", "target": "", "label": "Party (%d/%d)" % [in_party, PARTY_SIZE],
-		"enabled": party_note == "" and not locked, "note": party_note, "preview": "Goes on missions with Ash." + ("\n" + party_pairs if party_pairs != "" else "")})
+	out.append({"role": "party", "target": "", "label": tr("Party (%d/%d)") % [in_party, PARTY_SIZE],
+		"enabled": party_note == "" and not locked, "note": party_note, "preview": tr("Goes on missions with Ash.") + ("\n" + party_pairs if party_pairs != "" else "")})
 	for p in territory().provinces:
 		if p["owner"] != "you":
 			continue
 		var e := governor_effect(id, p["id"])
 		var current := governor_of(p["id"])
-		var replaces := "" if current == "" or current == id else "  Replaces %s." % recruit(current)["name"]
+		var replaces := "" if current == "" or current == id else tr("  Replaces %s.") % recruit(current)["name"]
 		var reasons := []
 		for w in e["why"]:
 			reasons.append(w[0])
-		var preview := "%s: Fray %+d/day there (now %+d). Governor adds %s a day.%s\n%s" % [p["name"], fray_rate(p, id), fray_rate(p),
+		var preview := tr("%s: Fray %+d/day there (now %+d). Governor adds %s a day.%s\n%s") % [p["name"], fray_rate(p, id), fray_rate(p),
 			output_text(e), replaces, "\n".join(reasons)]
-		out.append({"role": "governor", "target": p["id"], "label": "Govern %s  (%s fit)" % [p["name"], e["fit"]],
+		out.append({"role": "governor", "target": p["id"], "label": tr("Govern %s  (%s fit)") % [p["name"], e["fit"]],
 			"enabled": not locked and not hurt, "note": "injured" if hurt else "", "preview": preview})
 	for bid in building_data:
 		var lv := level_of(bid)
@@ -701,34 +701,34 @@ func role_options(id: String) -> Array:
 		var full := not here and staff.size() >= slots_of(bid)
 		var note := ""
 		if locked:
-			note = "Ash leads the party"
+			note = tr("Ash leads the party")
 		elif hurt:
 			note = "injured"
 		elif full:
-			note = "full (%d/%d)" % [staff.size(), slots_of(bid)]
+			note = tr("full (%d/%d)") % [staff.size(), slots_of(bid)]
 		var with_me := staff.duplicate()
 		if not here:
 			with_me.append(id)
-		var preview := "%s: %s  (now: %s)" % [b["name"], building_effect(bid, lv, with_me)["text"], building_effect(bid, lv, staff)["text"]]
+		var preview := tr("%s: %s  (now: %s)") % [b["name"], building_effect(bid, lv, with_me)["text"], building_effect(bid, lv, staff)["text"]]
 		var staff_pairs := Relationships.notes_text(with_me, "building")  # friends and rivals (issue #116)
 		if staff_pairs != "":
 			preview += "\n" + staff_pairs
-		out.append({"role": "staff", "target": bid, "label": "Work the %s (%d/%d)" % [b["name"], staff.size(), slots_of(bid)],
+		out.append({"role": "staff", "target": bid, "label": tr("Work the %s (%d/%d)") % [b["name"], staff.size(), slots_of(bid)],
 			"enabled": note == "", "note": note, "preview": preview})
-	var expedition_note := ("send squads from the Expeditions screen" + Prompts.tag("expeditions")) if level_of("guildhall") > 0 else "needs a Guildhall"
+	var expedition_note := (tr("send squads from the Expeditions screen") + Prompts.tag("expeditions")) if level_of("guildhall") > 0 else tr("needs a Guildhall")
 	for fid in (faction_ids() if Help.is_open("diplomacy") else []):  # no envoys before the story opens Diplomacy (issue #115)
 		var fa := faction(fid)
 		var cur := envoy_of(fid)
-		var replaces := "" if cur == "" or cur == id else "  Replaces %s." % short_name(cur)
+		var replaces := "" if cur == "" or cur == id else tr("  Replaces %s.") % short_name(cur)
 		var reasons := []
 		for w in envoy_effect(id, fid)["why"]:
 			reasons.append(w[0])
-		var preview := "%s: standing %+d/day (now %+d). %s %d, %s.%s\n%s" % [fa["name"], standing_rate(fid, id), standing_rate(fid),
-			tier_name(tier_of(fid)), standing_of(fid), "they respect " + STAT_NAMES[fa["respects"]], replaces, "\n".join(reasons)]
-		var note := "Ash leads the party" if locked else ("injured" if hurt else "")
-		out.append({"role": "envoy", "target": fid, "label": "Envoy to the %s  (%+d/day)" % [fa["short"], int(envoy_effect(id, fid)["drift"])],
+		var preview := tr("%s: standing %+d/day (now %+d). %s %d, %s.%s\n%s") % [fa["name"], standing_rate(fid, id), standing_rate(fid),
+			tier_name(tier_of(fid)), standing_of(fid), tr("they respect ") + Loc.t(STAT_NAMES[fa["respects"]]), replaces, "\n".join(reasons)]
+		var note := tr("Ash leads the party") if locked else ("injured" if hurt else "")
+		out.append({"role": "envoy", "target": fid, "label": tr("Envoy to the %s  (%+d/day)") % [fa["short"], int(envoy_effect(id, fid)["drift"])],
 			"enabled": note == "", "note": note, "preview": preview})
-	out.append({"role": "expedition", "target": "", "label": ROLE_NAMES["expedition"], "enabled": false, "note": expedition_note, "preview": ""})
+	out.append({"role": "expedition", "target": "", "label": Loc.t(ROLE_NAMES["expedition"]), "enabled": false, "note": expedition_note, "preview": ""})
 	return out
 
 
@@ -756,25 +756,25 @@ func output_text(e: Dictionary) -> String:
 	var parts := []
 	for k in RESOURCES:
 		if int(e.get(k, 0)) != 0:
-			parts.append("%+d %s" % [int(e[k]), RES_NAMES[k]])
-	return ", ".join(parts) if not parts.is_empty() else "nothing"
+			parts.append("%+d %s" % [int(e[k]), Loc.t(RES_NAMES[k])])
+	return ", ".join(parts) if not parts.is_empty() else Loc.t("nothing")
 
 
 func role_label(id: String) -> String:
 	var st: Dictionary = recruits[id]
-	var label: String = ROLE_NAMES.get(st["role"], st["role"])
+	var label: String = Loc.t(ROLE_NAMES.get(st["role"], st["role"]))
 	if st["role"] == "governor":
-		label = "Governor of %s" % territory().find(st["target"]).get("name", "?")
+		label = tr("Governor of %s") % territory().find(st["target"]).get("name", "?")
 	elif st["role"] == "staff":
 		var b := building(st["target"])
-		label = "%s at the %s" % [b.get("staff_title", "Staff"), b.get("name", "?")]
+		label = tr("%s at the %s") % [b.get("staff_title", tr("Staff")), b.get("name", "?")]
 	elif st["role"] == "envoy":
-		label = "Envoy to the %s" % faction(st["target"]).get("short", "?")
+		label = tr("Envoy to the %s") % faction(st["target"]).get("short", "?")
 	elif st["role"] == "expedition":
 		var e := expedition_running(st["target"])
-		label = "Away: %s%s" % [job(st["target"]).get("name", "?"), (" (back in %s)" % job_left_text(e)) if not e.is_empty() else ""]
+		label = tr("Away: %s%s") % [job(st["target"]).get("name", "?"), (tr(" (back in %s)") % job_left_text(e)) if not e.is_empty() else ""]
 	if int(st["injured"]) > 0:
-		label += "  (injured, %d days)" % int(st["injured"])
+		label += tr("  (injured, %d days)") % int(st["injured"])
 	return label
 
 
@@ -800,7 +800,7 @@ func _load_expedition_data() -> void:
 	if not job_data.is_empty():
 		return
 	var f := FileAccess.open("res://data/expeditions.json", FileAccess.READ)
-	var parsed = JSON.parse_string(f.get_as_text())
+	var parsed = Loc.data(JSON.parse_string(f.get_as_text()), f.get_path().get_file())
 	for j in parsed["jobs"]:
 		job_data[j["id"]] = j
 
@@ -834,31 +834,31 @@ func job_blocker(jid: String) -> String:
 	var needs: Dictionary = j.get("needs", {})
 	var gh := level_of("guildhall")
 	if gh <= 0:
-		return "build the Guildhall first" + Prompts.tag("buildings")
+		return tr("build the Guildhall first") + Prompts.tag("buildings")
 	if gh < int(needs.get("guildhall", 1)):
-		return "needs Guildhall level %d" % int(needs["guildhall"])
+		return tr("needs Guildhall level %d") % int(needs["guildhall"])
 	var p := territory().find(j["province"])
 	if needs.get("erased", false):
 		if p.get("owner", "") != "erased":
-			return "only once %s is erased" % p.get("name", "?")
+			return tr("only once %s is erased") % p.get("name", "?")
 	elif p.get("owner", "") == "erased":
-		return "%s has been erased" % p.get("name", "?")
+		return tr("%s has been erased") % p.get("name", "?")
 	if not expedition_running(jid).is_empty():
-		return "a squad is already out on it"
+		return tr("a squad is already out on it")
 	if int(job_ready.get(jid, 0)) > day:
 		var d := int(job_ready[jid]) - day
-		return "nothing new there for %d day%s" % [d, "" if d == 1 else "s"]
+		return tr("nothing new there for %d day%s") % [d, "" if d == 1 else "s"]
 	if expeditions.size() >= expedition_slots():
-		return "all squads are out (%d/%d). Upgrade the Guildhall for more" % [expeditions.size(), expedition_slots()]
+		return tr("all squads are out (%d/%d). Upgrade the Guildhall for more") % [expeditions.size(), expedition_slots()]
 	return ""
 
 
 ## Why a recruit can't join a squad ("" = they can).
 func squad_blocker(id: String) -> String:
 	if recruit(id).get("locked_party", false):
-		return "Ash leads every mission"
+		return tr("Ash leads every mission")
 	if role_of(id) == "expedition":
-		return "already away"
+		return tr("already away")
 	if int(recruits[id]["injured"]) > 0:
 		return "injured"
 	return ""
@@ -876,7 +876,7 @@ func job_days(jid: String) -> float:
 func job_days_text(jid: String) -> String:
 	var d := job_days(jid)
 	var s := str(int(d)) if is_equal_approx(d, roundf(d)) else ("%.2f" % d).rstrip("0")
-	return "%s day%s" % [s, "" if is_equal_approx(d, 1.0) else "s"]
+	return tr("%s day%s") % [s, "" if is_equal_approx(d, 1.0) else "s"]
 
 
 func expedition_cost(jid: String, n: int) -> Dictionary:
@@ -909,56 +909,56 @@ func expedition_odds(jid: String, squad: Array) -> Dictionary:
 	var chance := 50.0 + (strength - target) * EXPEDITION_PER_POINT
 	var stat_names := []
 	for k in j["stats"]:
-		stat_names.append(STAT_NAMES[k] + ("" if float(j["stats"][k]) >= 1.0 else " (half)"))
-	why.append(["Squad %s: %d vs %d needed" % [" + ".join(stat_names), int(round(strength)), int(target)], strength >= target])
+		stat_names.append(Loc.t(STAT_NAMES[k]) + ("" if float(j["stats"][k]) >= 1.0 else tr(" (half)")))
+	why.append([tr("Squad %s: %d vs %d needed") % [" + ".join(stat_names), int(round(strength)), int(target)], strength >= target])
 	if squad.size() > 2:
-		why.append(["Extra hands: everyone past the strongest two counts half", true])
+		why.append([tr("Extra hands: everyone past the strongest two counts half"), true])
 	var danger := int(j["danger"])
 	for id in squad:
 		var n := short_name(id)
 		if has_trait(id, "coward") and danger >= 2:
 			chance -= 10
-			why.append(["%s is a Coward: bolts at the first noise, -10%%" % n, false])
+			why.append([tr("%s is a Coward: bolts at the first noise, -10%%") % n, false])
 		if has_trait(id, "stubborn") and danger >= 2:
 			chance += 5
-			why.append(["%s is Stubborn: will not turn back, +5%%" % n, true])
-		if has_trait(id, "night_owl") and j["kind"] in ["Scouting", "Rescue"]:
+			why.append([tr("%s is Stubborn: will not turn back, +5%%") % n, true])
+		if has_trait(id, "night_owl") and j["kind"] in ["Scouting", "Rescue"]:  # no-tr: expedition kinds are ids too
 			chance += 5
-			why.append(["%s is a Night Owl: moves by dark, +5%%" % n, true])
+			why.append([tr("%s is a Night Owl: moves by dark, +5%%") % n, true])
 		if has_trait(id, "bookish"):
 			if j["kind"] == "Scouting":
 				chance += 5
-				why.append(["%s is Bookish: draws a proper map, +5%%" % n, true])
+				why.append([tr("%s is Bookish: draws a proper map, +5%%") % n, true])
 			elif j["kind"] == "Escort":
 				chance -= 5
-				why.append(["%s is Bookish: reads through the ambush, -5%%" % n, false])
+				why.append([tr("%s is Bookish: reads through the ambush, -5%%") % n, false])
 		if has_trait(id, "contract") and j.get("reward", {}).has("gilt"):
 			chance += 5
-			why.append(["%s is Contracted: fights harder for coin, +5%%" % n, true])
+			why.append([tr("%s is Contracted: fights harder for coin, +5%%") % n, true])
 		if has_trait(id, "flirt") and j["kind"] == "Rescue":
 			chance += 5
-			why.append(["%s is a Flirt: rescues go smoother, +5%%" % n, true])
+			why.append([tr("%s is a Flirt: rescues go smoother, +5%%") % n, true])
 		if has_trait(id, "ink_sick") and needs.get("blank", false):
 			chance += 10
-			why.append(["%s is Ink-sick: can feel where the Blank is thin, +10%%" % n, true])
+			why.append([tr("%s is Ink-sick: can feel where the Blank is thin, +10%%") % n, true])
 		if has_trait(id, "ex_concord") and needs.get("concord", false):
 			chance += 10
-			why.append(["%s is Ex-Concord: knows the toll posts, +10%%" % n, true])
+			why.append([tr("%s is Ex-Concord: knows the toll posts, +10%%") % n, true])
 		if has_trait(id, "greedy") and j.get("reward", {}).has("gilt"):
-			why.append(["%s is Greedy: brings back 20%% more Gilt (and pockets some)" % n, true])
+			why.append([tr("%s is Greedy: brings back 20%% more Gilt (and pockets some)") % n, true])
 	if has_research("log_fieldmaps"):
 		chance += 10
-		why.append(["Field Maps (research), +10%", true])
+		why.append([tr("Field Maps (research), +10%"), true])
 	if has_perk("guild"):
 		chance += 10
-		why.append(["Guild scouts share the road (Friendly), +10%", true])
+		why.append([tr("Guild scouts share the road (Friendly), +10%"), true])
 	for pk in bond_perks_with("squad_odds"):
 		if pk["id"] in squad:
 			chance += int(pk["effect"]["squad_odds"])
-			why.append(["%s (%s's bond), +%d%%" % [pk["name"], short_name(pk["id"]), int(pk["effect"]["squad_odds"])], true])
+			why.append([tr("%s (%s's bond), +%d%%") % [pk["name"], short_name(pk["id"]), int(pk["effect"]["squad_odds"])], true])
 	for pk in bond_perks_with("all_odds"):
 		chance += int(pk["effect"]["all_odds"])
-		why.append(["%s (%s's bond), +%d%%" % [pk["name"], short_name(pk["id"]), int(pk["effect"]["all_odds"])], true])
+		why.append([tr("%s (%s's bond), +%d%%") % [pk["name"], short_name(pk["id"]), int(pk["effect"]["all_odds"])], true])
 	for pm in Relationships.expedition_mods(squad):  # friends and rivals on the same squad (issue #116)
 		chance += int(pm[1])
 		why.append(["%s, %+d%%" % [pm[0], int(pm[1])], int(pm[1]) > 0])
@@ -976,13 +976,13 @@ func reward_text(jid: String) -> String:
 			continue
 		var v = rw[k]
 		if typeof(v) == TYPE_ARRAY:
-			parts.append("+%d-%d %s" % [int(v[0]), int(v[1]), RES_NAMES[k]] if int(v[0]) != int(v[1]) else "+%d %s" % [int(v[0]), RES_NAMES[k]])
+			parts.append("+%d-%d %s" % [int(v[0]), int(v[1]), Loc.t(RES_NAMES[k])] if int(v[0]) != int(v[1]) else "+%d %s" % [int(v[0]), Loc.t(RES_NAMES[k])])
 		else:
-			parts.append("+%d %s" % [int(v), RES_NAMES[k]])
+			parts.append("+%d %s" % [int(v), Loc.t(RES_NAMES[k])])
 	if int(j.get("fray", 0)) != 0:
-		parts.append("%s Fray %d" % [territory().find(j["province"]).get("name", "?"), int(j["fray"])])
+		parts.append(tr("%s Fray %d") % [territory().find(j["province"]).get("name", "?"), int(j["fray"])])
 	if j.get("recruit", "") != "":
-		parts.append("%s joins" % recruit(j["recruit"])["name"])
+		parts.append(tr("%s joins") % recruit(j["recruit"])["name"])
 	return ", ".join(parts)
 
 
@@ -1014,7 +1014,7 @@ func _roll_amount(v) -> int:
 
 func _fill(s: String, squad: Array) -> String:
 	var names := squad.map(func(id): return short_name(id))
-	var all: String = ", ".join(names.slice(0, names.size() - 1)) + " and " + names[-1] if names.size() > 1 else names[0]
+	var all: String = ", ".join(names.slice(0, names.size() - 1)) + tr(" and ") + names[-1] if names.size() > 1 else names[0]
 	var b: String = names[1] if names.size() > 1 else names[0]
 	return s.replace("{lead}", names[0]).replace("{a}", names[0]).replace("{b}", b).replace("{squad}", all)
 
@@ -1040,7 +1040,7 @@ func _resolve_expedition(e: Dictionary) -> void:
 	var tales: Array = j["text"]["fail" if outcome == "fail" else "success"]
 	lines.append(_fill(tales[rng.randi_range(0, tales.size() - 1)], order))
 	if outcome == "great":
-		lines.append("A great haul: half again what anyone expected.")
+		lines.append(tr("A great haul: half again what anyone expected."))
 	# Loot
 	var mult: float = {"great": 1.5, "success": 1.0, "fail": 0.25}[outcome]
 	var loot := []
@@ -1055,27 +1055,27 @@ func _resolve_expedition(e: Dictionary) -> void:
 			amount = 0
 		if amount > 0:
 			gain(k, amount)
-			loot.append("+%d %s" % [amount, RES_NAMES[k]])
-	lines.append("Brought back: %s." % (", ".join(loot) if not loot.is_empty() else "nothing but stories"))
+			loot.append("+%d %s" % [amount, Loc.t(RES_NAMES[k])])
+	lines.append(tr("Brought back: %s.") % (", ".join(loot) if not loot.is_empty() else tr("nothing but stories")))
 	if outcome == "fail":
 		for fid in j.get("standing_fail", {}):
-			change_standing(fid, int(j["standing_fail"][fid]), j["name"] + " (failed)", true)
-			lines.append("%s standing %+d." % [faction(fid).get("short", fid), int(j["standing_fail"][fid])])
+			change_standing(fid, int(j["standing_fail"][fid]), j["name"] + tr(" (failed)"), true)
+			lines.append(tr("%s standing %+d.") % [faction(fid).get("short", fid), int(j["standing_fail"][fid])])
 	if outcome != "fail":
 		var p := territory().find(j["province"])
 		if int(j.get("fray", 0)) != 0 and not p.is_empty() and p["owner"] != "erased":
 			p["fray"] = clampi(int(p["fray"]) + int(j["fray"]), 0, 100)
-			lines.append("%s's Fray %+d." % [p["name"], int(j["fray"])])
+			lines.append(tr("%s's Fray %+d.") % [p["name"], int(j["fray"])])
 		for fid in j.get("standing", {}):
 			change_standing(fid, int(j["standing"][fid]), j["name"], true)
-			lines.append("%s standing %+d." % [faction(fid).get("short", fid), int(j["standing"][fid])])
+			lines.append(tr("%s standing %+d.") % [faction(fid).get("short", fid), int(j["standing"][fid])])
 		for id in squad:
 			if has_bond(id):
 				bond_gain(id, int(bond_data["points"]["expedition"]), "", true)
 		var rid: String = j.get("recruit", "")
 		if rid != "" and not recruits.has(rid) and recruit_data.has(rid):
 			recruits[rid] = {"role": "idle", "target": "", "injured": 0}
-			lines.append("%s joins your roster. Find them in Hollowmark or give them a job%s." % [recruit(rid)["name"], Prompts.tag("roster")])
+			lines.append(tr("%s joins your roster. Find them in Hollowmark or give them a job%s.") % [recruit(rid)["name"], Prompts.tag("roster")])
 	lines.append_array(FactionAsks.on_expedition(jid, outcome != "fail"))  # a faction's request (issue #131)
 	var road := Relationships.banter_quote(squad)  # friends and rivals on the road (issue #116)
 	if road != "":
@@ -1098,25 +1098,25 @@ func _resolve_expedition(e: Dictionary) -> void:
 			if recruit(who)["tier"] == "recruit":
 				recruits.erase(who)
 				Relationships.note_lost(who, j["name"])
-				lines.append("%s did not come back. The others waited a day at the edge. The white gave nothing back." % recruit(who)["name"])
+				lines.append(tr("%s did not come back. The others waited a day at the edge. The white gave nothing back.") % recruit(who)["name"])
 			else:
 				recruits[who]["injured"] = 8
 				Relationships.note_injury(who)
-				lines.append("%s was dragged back from the white, barely. Out of action for 8 days." % short_name(who))
+				lines.append(tr("%s was dragged back from the white, barely. Out of action for 8 days.") % short_name(who))
 	elif danger >= 2 and rng.randf() < 0.1 * (danger - 1):
 		hurt.append(squad[rng.randi_range(0, squad.size() - 1)])
 	for id in hurt:
 		var days := 1 + danger + rng.randi_range(0, 1)
 		recruits[id]["injured"] = maxi(int(recruits[id]["injured"]), days)
 		Relationships.note_injury(id)
-		lines.append("%s came back hurt: out of action for %d days." % [short_name(id), days])
-	var title := "%s: %s" % [j["name"], {"great": "great success", "success": "success", "fail": "failed"}[outcome]]
+		lines.append(tr("%s came back hurt: out of action for %d days.") % [short_name(id), days])
+	var title := "%s: %s" % [j["name"], {"great": tr("great success"), Loc.t("success"): "success", "fail": Loc.t("failed")}[outcome]]
 	reports.push_front({"day": day, "job": jid, "title": title, "outcome": outcome, "squad": squad,
 		"chance": int(odds["chance"]), "lines": lines, "read": false})
 	if reports.size() > REPORTS_KEPT:
 		reports.resize(REPORTS_KEPT)
 	Journal.record_expedition(reports[0])  # kept for good in the journal's History (issue #114)
-	notice.emit("Squad back from %s: %s. Report: E" % [territory().find(j["province"]).get("name", "?"), {"great": "great success", "success": "success", "fail": "it went badly"}[outcome]], outcome == "fail")
+	notice.emit(tr("Squad back from %s: %s. Report: E") % [territory().find(j["province"]).get("name", "?"), {"great": tr("great success"), "success": "success", "fail": tr("it went badly")}[outcome]], outcome == "fail")
 	expedition_returned.emit(reports[0])
 
 
@@ -1134,9 +1134,9 @@ func short_name(id: String) -> String:
 	# A nickname in quotes is what everyone calls them: Edwin "Quill" Pask -> Quill (docs/NAMING.md).
 	if n.count("\"") >= 2:
 		return n.get_slice("\"", 1)
-	for title in ["Old ", "Mother ", "Sister ", "Corporal ", "Mr. ", "The ", "Big "]:
+	for title in ["Old ", "Mother ", "Sister ", "Corporal ", "Mr. ", "The ", "Big "]:  # no-tr: name prefixes (names stay as written)
 		if n.begins_with(title):
-			return n.get_slice(" ", 1) if title in ["Corporal ", "Big "] else n
+			return n.get_slice(" ", 1) if title in ["Corporal ", "Big "] else n  # no-tr: name prefixes (names stay as written)
 	return n.get_slice(" ", 0)
 
 
@@ -1150,7 +1150,7 @@ func _load_research_data() -> void:
 	if not research_data.is_empty():
 		return
 	var f := FileAccess.open("res://data/research.json", FileAccess.READ)
-	var parsed = JSON.parse_string(f.get_as_text())
+	var parsed = Loc.data(JSON.parse_string(f.get_as_text()), f.get_path().get_file())
 	branch_data = parsed["branches"]
 	for n in parsed["nodes"]:
 		research_data[n["id"]] = n
@@ -1179,26 +1179,26 @@ func has_research(id: String) -> bool:
 func research_pace() -> Dictionary:
 	var lv := level_of("scriptorium")
 	if lv <= 0:
-		return {"pace": 0.0, "why": ["No Scriptorium yet: build it on the Buildings screen" + Prompts.tag("buildings")]}
+		return {"pace": 0.0, "why": [tr("No Scriptorium yet: build it on the Buildings screen") + Prompts.tag("buildings")]}
 	var staff := staff_of("scriptorium")
 	if _working(staff) == 0:
-		return {"pace": 0.0, "why": ["Nobody at the desks: give the Scriptorium a researcher (B or R)"]}
-	var why := ["Base pace 100%"]
+		return {"pace": 0.0, "why": [tr("Nobody at the desks: give the Scriptorium a researcher (B or R)")]}
+	var why := [tr("Base pace 100%")]
 	var pace := 1.0
 	for r in staff:
 		if int(recruits[r]["injured"]) > 0:
-			why.append("%s is injured and not reading" % short_name(r))
+			why.append(tr("%s is injured and not reading") % short_name(r))
 			continue
 		var lore := int(recruit(r)["stats"]["lore"])
 		var pts := lore * (2 if has_trait(r, "bookish") else 1)
 		pace += pts * RESEARCH_PER_LORE
-		why.append("%s, Lore %d%s: +%d%%" % [short_name(r), lore, " x2 (Bookish)" if has_trait(r, "bookish") else "", int(round(pts * RESEARCH_PER_LORE * 100))])
+		why.append(tr("%s, Lore %d%s: +%d%%") % [short_name(r), lore, tr(" x2 (Bookish)") if has_trait(r, "bookish") else "", int(round(pts * RESEARCH_PER_LORE * 100))])
 	if lv > 1:
 		pace += (lv - 1) * RESEARCH_PER_LEVEL
-		why.append("Scriptorium level %d: +%d%%" % [lv, int(round((lv - 1) * RESEARCH_PER_LEVEL * 100))])
+		why.append(tr("Scriptorium level %d: +%d%%") % [lv, int(round((lv - 1) * RESEARCH_PER_LEVEL * 100))])
 	for pk in bond_perks_with("research_pace"):
 		pace += float(pk["effect"]["research_pace"])
-		why.append("%s (%s's bond): +%d%%" % [pk["name"], short_name(pk["id"]), int(round(float(pk["effect"]["research_pace"]) * 100))])
+		why.append(tr("%s (%s's bond): +%d%%") % [pk["name"], short_name(pk["id"]), int(round(float(pk["effect"]["research_pace"]) * 100))])
 	return {"pace": pace, "why": why}
 
 
@@ -1235,24 +1235,24 @@ func _research_lock(id: String) -> String:
 	var n := research_node(id)
 	for need in n.get("needs", []):
 		if not has_research(need):
-			return "needs %s first" % research_node(need)["name"]
+			return tr("needs %s first") % research_node(need)["name"]
 	var lv := int(n.get("scriptorium", 1))
 	if level_of("scriptorium") < lv:
-		return "needs the Scriptorium" + (" at level %d" % lv if lv > 1 else "")
+		return tr("needs the Scriptorium") + (tr(" at level %d") % lv if lv > 1 else "")
 	return ""
 
 
 ## Why a node can't be started right now ("" = it can).
 func research_blocker(id: String) -> String:
 	if has_research(id):
-		return "already known"
+		return tr("already known")
 	if id == research_active:
-		return "already being studied"
+		return tr("already being studied")
 	var lock := _research_lock(id)
 	if lock != "":
 		return lock
 	if not id in research_paid and not can_afford(research_node(id)["cost"]):
-		return "not enough " + _missing(research_node(id)["cost"])
+		return tr("not enough ") + _missing(research_node(id)["cost"])
 	return ""
 
 
@@ -1261,7 +1261,7 @@ func cost_text(cost: Dictionary) -> String:
 	var parts := []
 	for k in ["insight", "ink", "gilt", "supplies"]:
 		if int(cost.get(k, 0)) > 0:
-			parts.append("%d %s" % [int(cost[k]), RES_NAMES[k]])
+			parts.append("%d %s" % [int(cost[k]), Loc.t(RES_NAMES[k])])
 	return ", ".join(parts) if not parts.is_empty() else "free"
 
 
@@ -1296,7 +1296,7 @@ func _advance_research(days: float) -> void:
 		research_paid.erase(id)
 		research_active = ""
 		var n := research_node(id)
-		notice.emit("Research done: %s. %s." % [n["name"], n["effect"]], false)
+		notice.emit(tr("Research done: %s. %s.") % [n["name"], n["effect"]], false)
 		research_finished.emit(id)
 
 
@@ -1310,35 +1310,35 @@ func mission_boosts() -> Dictionary:
 		b["damage"] += 3
 		b["power_rate"] = 1.2
 	if b["damage"] > 0:
-		b["lines"].append("+%d damage" % b["damage"])
+		b["lines"].append(tr("+%d damage") % b["damage"])
 	if has_research("arms_steel"):
-		b["lines"].append("faster gauge")
+		b["lines"].append(tr("faster gauge"))
 	if has_research("arms_leather"):
 		b["hp"] += 10
-		b["lines"].append("+10 max HP")
+		b["lines"].append(tr("+10 max HP"))
 	if has_research("ink_tap"):
 		b["ink_regen"] = 1.25
-		b["lines"].append("faster Ink")
+		b["lines"].append(tr("faster Ink"))
 	if has_research("ink_blot"):
 		b["revive"] = 1.4
-		b["lines"].append("faster revives")
+		b["lines"].append(tr("faster revives"))
 	if has_research("ink_skin"):
 		b["guard"] = 0.25
-		b["lines"].append("-25% damage taken")
+		b["lines"].append(tr("-25% damage taken"))
 	for pk in bond_perks_with("mission_hp"):
 		b["hp"] += int(pk["effect"]["mission_hp"])
-		b["lines"].append("+%d max HP (%s)" % [int(pk["effect"]["mission_hp"]), pk["name"]])
+		b["lines"].append(tr("+%d max HP (%s)") % [int(pk["effect"]["mission_hp"]), pk["name"]])
 	for pk in bond_perks_with("mission_damage"):
 		b["damage"] += int(pk["effect"]["mission_damage"])
-		b["lines"].append("+%d damage (%s)" % [int(pk["effect"]["mission_damage"]), pk["name"]])
+		b["lines"].append(tr("+%d damage (%s)") % [int(pk["effect"]["mission_damage"]), pk["name"]])
 	for pk in bond_perks_with("mission_revive"):
 		b["revive"] *= 1.0 + float(pk["effect"]["mission_revive"])
-		b["lines"].append("faster revives (%s)" % pk["name"])
+		b["lines"].append(tr("faster revives (%s)") % pk["name"])
 	for pk in bond_perks_with("mission_power_rate"):
 		b["power_rate"] *= 1.0 + float(pk["effect"]["mission_power_rate"])
-		b["lines"].append("faster gauge (%s)" % pk["name"])
+		b["lines"].append(tr("faster gauge (%s)") % pk["name"])
 	for pk in bond_perks_with("mission_guard"):
-		b["lines"].append("-%d%% damage taken (%s)" % [int(round(float(pk["effect"]["mission_guard"]) * 100)), pk["name"]])
+		b["lines"].append(tr("-%d%% damage taken (%s)") % [int(round(float(pk["effect"]["mission_guard"]) * 100)), pk["name"]])
 	var pe := Relationships.party_effects(PartyPicker.mission_party(active_mission))  # friends and rivals (issue #116)
 	b["damage"] += int(pe["damage"])
 	b["hp"] += int(pe["hp"])
@@ -1372,7 +1372,7 @@ func _load_faction_data() -> void:
 	if not faction_data.is_empty():
 		return
 	var f := FileAccess.open("res://data/factions.json", FileAccess.READ)
-	var parsed = JSON.parse_string(f.get_as_text())
+	var parsed = Loc.data(JSON.parse_string(f.get_as_text()), f.get_path().get_file())
 	tier_data = parsed["tiers"]
 	trade_breaks = int(parsed.get("trade_breaks", 0))
 	for fa in parsed["factions"]:
@@ -1455,29 +1455,29 @@ func envoy_effect(id: String, fid: String) -> Dictionary:
 	var charm := int(st["charm"])
 	var flirt := has_trait(id, "flirt")
 	var drift := 1 + (charm * (2 if flirt else 1)) / 3
-	why.append(["Charm %d%s: %+d a day" % [charm, " x2 (Flirt)" if flirt else "", drift], true])
+	why.append([tr("Charm %d%s: %+d a day") % [charm, tr(" x2 (Flirt)") if flirt else "", drift], true])
 	var stat: String = fa.get("respects", "charm")
 	var v := int(st.get(stat, 5))
 	if v >= FACTION_FIT_GOOD:
 		drift += 1
-		why.append(["%s %d: the %s respect that, +1" % [STAT_NAMES[stat], v, fa["short"]], true])
+		why.append([tr("%s %d: the %s respect that, +1") % [Loc.t(STAT_NAMES[stat]), v, fa["short"]], true])
 	elif v <= FACTION_FIT_POOR:
 		drift -= 1
-		why.append(["%s %d: the %s want %s, -1" % [STAT_NAMES[stat], v, fa["short"], STAT_NAMES[stat]], false])
+		why.append([tr("%s %d: the %s want %s, -1") % [Loc.t(STAT_NAMES[stat]), v, fa["short"], Loc.t(STAT_NAMES[stat])], false])
 	if has_trait(id, "greedy"):
 		drift -= 1
-		why.append(["Greedy: haggles over everything, -1", false])
+		why.append([tr("Greedy: haggles over everything, -1"), false])
 	if has_trait(id, "ex_concord") and fid == "concord":
 		drift -= 2
-		why.append(["Ex-Concord: the Concord hates them for it, -2", false])
+		why.append([tr("Ex-Concord: the Concord hates them for it, -2"), false])
 	if has_trait(id, "ink_sick") and fid == "coven":
 		drift += 1
-		why.append(["Ink-sick: the witches take pity, +1", true])
+		why.append([tr("Ink-sick: the witches take pity, +1"), true])
 	if has_trait(id, "contract") and fid == "guild":
 		drift += 1
-		why.append(["Contracted: speaks fluent Guild, +1", true])
+		why.append([tr("Contracted: speaks fluent Guild, +1"), true])
 	if int(recruits.get(id, {}).get("injured", 0)) > 0:
-		why.append(["Injured: not talking to anyone, no effect", false])
+		why.append([tr("Injured: not talking to anyone, no effect"), false])
 		drift = 0
 	return {"drift": drift, "why": why}
 
@@ -1490,10 +1490,10 @@ func standing_sources(fid: String, env := "-") -> Array:
 	if env == "-":
 		env = envoy_of(fid)
 	if env != "":
-		out.append(["Envoy %s" % short_name(env), int(envoy_effect(env, fid)["drift"])])
+		out.append([tr("Envoy %s") % short_name(env), int(envoy_effect(env, fid)["drift"])])
 	var base := int(fa.get("drift", 0))
 	if base != 0 and standing_of(fid) > int(fa.get("floor", -100)):
-		out.append([fa.get("drift_why", "Drifts"), base])
+		out.append([fa.get("drift_why", tr("Drifts")), base])
 	return out
 
 
@@ -1520,12 +1520,12 @@ func change_standing(fid: String, amount: int, why: String, quiet := false) -> v
 	var fa := faction(fid)
 	if before != after:
 		var up := tier_rank(after) > tier_rank(before)
-		notice.emit("%s: now %s with you.%s" % [fa["name"], tier_name(after), " " + fa["perk"]["text"] + "." if up and after == "friendly" else ""], not up)
+		notice.emit(tr("%s: now %s with you.%s") % [fa["name"], tier_name(after), " " + fa["perk"]["text"] + "." if up and after == "friendly" else ""], not up)
 	elif not quiet and why != "":
-		notice.emit("%s %+d standing: %s." % [fa["short"], amount, why], amount < 0)
+		notice.emit(tr("%s %+d standing: %s.") % [fa["short"], amount, why], amount < 0)
 	if fid in pacts and standing_of(fid) < trade_breaks:
 		pacts.erase(fid)
-		notice.emit("%s tore up your trade pact." % fa["name"], true)
+		notice.emit(tr("%s tore up your trade pact.") % fa["name"], true)
 
 
 func deal(fid: String, kind: String) -> Dictionary:
@@ -1545,30 +1545,30 @@ func deal_blocker(fid: String, kind: String) -> String:
 	var fa := faction(fid)
 	var d := deal(fid, kind)
 	if d.is_empty():
-		return "the %s don't do that" % fa.get("short", "?")
+		return tr("the %s don't do that") % fa.get("short", "?")
 	if kind == "trade" and fid in pacts:
-		return "already trading"
+		return tr("already trading")
 	if kind == "cede" and territory().find(fa["province"]).get("owner", "") != fid:
-		return "it isn't theirs to give any more"
+		return tr("it isn't theirs to give any more")
 	if envoy_of(fid) == "":
-		return "post an envoy first"
+		return tr("post an envoy first")
 	if int(recruits[envoy_of(fid)]["injured"]) > 0:
-		return "your envoy is injured"
+		return tr("your envoy is injured")
 	var need: String = DEAL_TIER[kind]
 	if not at_least(fid, need):
-		return "needs %s standing (%d+)" % [tier_name(need), tier_min(need)]
+		return tr("needs %s standing (%d+)") % [tier_name(need), tier_min(need)]
 	var cd := deal_cooldown_left(fid, kind)
 	if cd > 0:
-		return "ask again in %d day%s" % [cd, "" if cd == 1 else "s"]
+		return tr("ask again in %d day%s") % [cd, "" if cd == 1 else "s"]
 	if kind == "aid":
 		if surge.is_empty() or territory().find(surge["id"]).get("owner", "") != "you":
-			return "only while a surge gathers against your land"
+			return tr("only while a surge gathers against your land")
 		if surge.get("aid", "") != "":
-			return "%s already help with this surge" % faction(surge["aid"]).get("short", "?")
+			return tr("%s already help with this surge") % faction(surge["aid"]).get("short", "?")
 	if kind == "intel" and intel_until > day:
-		return "you still have fresh intel"
+		return tr("you still have fresh intel")
 	if not can_afford(d.get("cost", {})):
-		return "not enough " + _missing(d.get("cost", {}))
+		return tr("not enough ") + _missing(d.get("cost", {}))
 	return ""
 
 
@@ -1577,18 +1577,18 @@ func deal_summary(fid: String, kind: String) -> String:
 	var d := deal(fid, kind)
 	var parts := []
 	if not d.get("cost", {}).is_empty():
-		parts.append("costs " + cost_text(d["cost"]))
+		parts.append(tr("costs ") + cost_text(d["cost"]))
 	match kind:
 		"gift":
-			parts.append("%+d standing" % int(d["standing"]))
+			parts.append(tr("%+d standing") % int(d["standing"]))
 		"intel":
-			parts.append("+%d Insight, +1 surge warning for %d days" % [int(d.get("insight", 0)), int(d.get("warning_days", 5))])
+			parts.append(tr("+%d Insight, +1 surge warning for %d days") % [int(d.get("insight", 0)), int(d.get("warning_days", 5))])
 		"trade":
-			parts.append("then %s a day" % output_text(d["daily"]))
+			parts.append(tr("then %s a day") % output_text(d["daily"]))
 		"aid":
-			parts.append("surge lands at half, %d standing" % int(d["standing"]))
+			parts.append(tr("surge lands at half, %d standing") % int(d["standing"]))
 		"cede":
-			parts.append("%s becomes yours, %d standing" % [territory().find(faction(fid)["province"]).get("name", "?"), int(d["standing"])])
+			parts.append(tr("%s becomes yours, %d standing") % [territory().find(faction(fid)["province"]).get("name", "?"), int(d["standing"])])
 	return ", ".join(parts)
 
 
@@ -1607,10 +1607,10 @@ func make_deal(fid: String, kind: String) -> String:
 		"intel":
 			gain("insight", int(d.get("insight", 0)))
 			intel_until = day + int(d.get("warning_days", 5))
-			diplo_log.push_front({"day": day, "faction": fid, "text": d["name"] + ": +%d Insight" % int(d.get("insight", 0)), "change": 0})
+			diplo_log.push_front({"day": day, "faction": fid, "text": d["name"] + tr(": +%d Insight") % int(d.get("insight", 0)), "change": 0})
 		"trade":
 			pacts.append(fid)
-			diplo_log.push_front({"day": day, "faction": fid, "text": "Trade pact signed: " + d["name"], "change": 0})
+			diplo_log.push_front({"day": day, "faction": fid, "text": tr("Trade pact signed: ") + d["name"], "change": 0})
 		"aid":
 			surge["aid"] = fid
 			change_standing(fid, int(d["standing"]), d["name"], true)
@@ -1618,7 +1618,7 @@ func make_deal(fid: String, kind: String) -> String:
 			var p := territory().find(fa["province"])
 			p["owner"] = "you"
 			change_standing(fid, int(d["standing"]), d["name"], true)
-			notice.emit("%s is yours. Post a governor there%s before it frays." % [p["name"], Prompts.tag("govern")], false)
+			notice.emit(tr("%s is yours. Post a governor there%s before it frays.") % [p["name"], Prompts.tag("govern")], false)
 	if diplo_log.size() > DIPLO_LOG_KEPT:
 		diplo_log.resize(DIPLO_LOG_KEPT)
 	return d["text"]
@@ -1644,7 +1644,7 @@ func _react_near(pid: String, key: String) -> void:
 		if home.is_empty() or home["owner"] != fid or home["id"] == pid:
 			continue
 		if home["index"] in t.neighbors[p["index"]]:
-			change_standing(fid, amount, "%s (%s)" % [fa["react"].get("why_" + key.get_slice("_", 0), "Noticed"), p["name"]])
+			change_standing(fid, amount, "%s (%s)" % [fa["react"].get("why_" + key.get_slice("_", 0), tr("Noticed")), p["name"]])
 
 
 ## Trade pacts (and a Friendly Concord) pay at dawn like everything else: ledger lines.
@@ -1652,12 +1652,12 @@ func _diplomacy_ledger(lines: Array) -> void:
 	for fid in faction_ids():
 		if fid in pacts:
 			var d := deal(fid, "trade")
-			var line := {"label": "%s: %s" % [faction(fid)["short"], d["name"]], "note": "trade pact"}
+			var line := {"label": "%s: %s" % [faction(fid)["short"], d["name"]], "note": tr("trade pact")}
 			for k in RESOURCES:
 				line[k] = int(d["daily"].get(k, 0))
 			lines.append(line)
 	if has_perk("concord"):
-		lines.append({"label": "Concord: Tithe Road tolls go easy", "gilt": 2, "supplies": 0, "ink": 0, "note": "Friendly"})
+		lines.append({"label": tr("Concord: Tithe Road tolls go easy"), "gilt": 2, "supplies": 0, "ink": 0, "note": tr("Friendly")})
 
 
 ## Dawn: standing drifts, the Concord makes trouble.
@@ -1720,7 +1720,7 @@ func trouble_text() -> String:
 	if not tier_of("concord") in ["hostile", "wary"]:
 		return ""
 	var d := next_trouble_day - day
-	return "Expect Concord trouble %s." % ("at dawn" if d <= 1 else "in about %d days" % d)
+	return tr("Expect Concord trouble %s.") % (tr("at dawn") if d <= 1 else tr("in about %d days") % d)
 
 
 # ---------------------------------------------------------------- buildings and construction
@@ -1729,7 +1729,7 @@ func _load_building_data() -> void:
 	if not building_data.is_empty():
 		return
 	var f := FileAccess.open("res://data/buildings.json", FileAccess.READ)
-	var parsed = JSON.parse_string(f.get_as_text())
+	var parsed = Loc.data(JSON.parse_string(f.get_as_text()), f.get_path().get_file())
 	for b in parsed["buildings"]:
 		building_data[b["id"]] = b
 	lamp_data = parsed["wardlamp"]
@@ -1785,25 +1785,25 @@ func _working(staff: Array) -> int:
 ## text; previews (assigning someone, upgrading) call this with what-if arguments.
 func building_effect(id: String, level: int, staff: Array) -> Dictionary:
 	if level <= 0:
-		return {"text": "not built"}
+		return {"text": tr("not built")}
 	var working := _working(staff)
 	match id:
 		"command_table":
 			var cut := _stat_sum(staff, "craft", 3)
 			var warn := SURGE_WARNING_DAYS + level - 1
-			var t := "Surge warning %d days ahead" % warn
+			var t := tr("Surge warning %d days ahead") % warn
 			if cut > 0:
-				t += ", upkeep -%d Supplies a day" % cut
+				t += tr(", upkeep -%d Supplies a day") % cut
 			return {"warning": warn, "upkeep_cut": cut, "text": t}
 		"barracks":
 			var hp := 5 * level + _stat_sum(staff, "might", 2)
-			return {"hp": hp, "text": "Party leaves on missions with +%d max HP" % hp}
+			return {"hp": hp, "text": tr("Party leaves on missions with +%d max HP") % hp}
 		"infirmary":
 			var extra := (level + _stat_sum(staff, "lore", 3)) / 2
-			return {"extra_heal": extra, "text": "Injuries heal %d day%s per day (normally 1)" % [1 + extra, "" if extra == 0 else "s"]}
+			return {"extra_heal": extra, "text": tr("Injuries heal %d day%s per day (normally 1)") % [1 + extra, "" if extra == 0 else "s"]}
 		"inkworks":
 			if working == 0:
-				return {"ink": 0, "text": "Idle: needs a worker"}
+				return {"ink": 0, "text": tr("Idle: needs a worker")}
 			var held := 0
 			for p in territory().provinces:
 				if p["owner"] == "you" and int(p.get("output", {}).get("ink", 0)) > 0:
@@ -1812,20 +1812,20 @@ func building_effect(id: String, level: int, staff: Array) -> Dictionary:
 			var ink := level + _stat_sum(staff, "craft", 3) + held + tap
 			var extras := []
 			if held > 0:
-				extras.append("%d from Ink provinces" % held)
+				extras.append(tr("%d from Ink provinces") % held)
 			if tap > 0:
-				extras.append("1 from Spring Tapping")
-			return {"ink": ink, "text": "+%d Ink a day" % ink + (" (%s)" % ", ".join(extras) if not extras.is_empty() else "")}
+				extras.append(tr("1 from Spring Tapping"))
+			return {"ink": ink, "text": tr("+%d Ink a day") % ink + (" (%s)" % ", ".join(extras) if not extras.is_empty() else "")}
 		"scriptorium":
 			if working == 0:
-				return {"insight": 0, "text": "Idle: needs a researcher"}
+				return {"insight": 0, "text": tr("Idle: needs a researcher")}
 			var ins := level + _stat_sum(staff, "lore", 2, true)
-			return {"insight": ins, "text": "+%d Insight a day, banked for research" % ins}
+			return {"insight": ins, "text": tr("+%d Insight a day, banked for research") % ins}
 		"guildhall":
 			if working == 0:
-				return {"gilt": 0, "text": "Idle: needs a broker"}
+				return {"gilt": 0, "text": tr("Idle: needs a broker")}
 			var g := 2 * level + _stat_sum(staff, "charm", 2)
-			return {"gilt": g, "text": "+%d Gilt a day from contracts" % g}
+			return {"gilt": g, "text": tr("+%d Gilt a day from contracts") % g}
 		"forge", "market":  # issue #112: scripts/armory.gd
 			return Armory.building_effect(id, level, staff)
 	return {"text": ""}
@@ -1858,11 +1858,11 @@ func next_level(id: String) -> Dictionary:
 func build_blocker(id: String) -> String:
 	var nl := next_level(id)
 	if nl.is_empty():
-		return "fully upgraded"
+		return tr("fully upgraded")
 	if not construction.is_empty():
-		return "your builders are busy on the %s" % building(construction["id"])["name"]
+		return tr("your builders are busy on the %s") % building(construction["id"])["name"]
 	if not can_afford(nl["cost"]):
-		return "not enough " + _missing(nl["cost"])
+		return tr("not enough ") + _missing(nl["cost"])
 	return ""
 
 
@@ -1870,7 +1870,7 @@ func _missing(cost: Dictionary) -> String:
 	var out := []
 	for k in cost:
 		if int(res.get(k, 0)) < int(cost[k]):
-			out.append(RES_NAMES[k])
+			out.append(Loc.t(RES_NAMES[k]))
 	return ", ".join(out)
 
 
@@ -1901,9 +1901,9 @@ func days_left_text(days: float) -> String:
 	var d := hours / 24
 	var h := hours % 24
 	if d > 0 and h > 0:
-		return "%d day%s %d h" % [d, "" if d == 1 else "s", h]
+		return tr("%d day%s %d h") % [d, "" if d == 1 else "s", h]
 	if d > 0:
-		return "%d day%s" % [d, "" if d == 1 else "s"]
+		return tr("%d day%s") % [d, "" if d == 1 else "s"]
 	return "%d h" % maxi(h, 1)
 
 
@@ -1936,14 +1936,14 @@ func discounted(cost: Dictionary) -> Dictionary:
 func lamp_blocker(pid: String) -> String:
 	var p := territory().find(pid)
 	if p.get("owner", "") != "you":
-		return "you don't hold it"
+		return tr("you don't hold it")
 	var nl := lamp_next(pid)
 	if nl.is_empty():
-		return "fully upgraded"
+		return tr("fully upgraded")
 	if lamp_jobs.has(pid):
-		return "already being built"
+		return tr("already being built")
 	if not can_afford(nl["cost"]):
-		return "not enough " + _missing(nl["cost"])
+		return tr("not enough ") + _missing(nl["cost"])
 	return ""
 
 
@@ -1966,16 +1966,16 @@ func _advance_construction() -> void:
 		buildings[id] = level_of(id) + 1
 		var b := building(id)
 		if level_of(id) == 1:
-			notice.emit("The %s is finished. Give it staff on the Buildings screen%s." % [b["name"], Prompts.tag("buildings")], false)
+			notice.emit(tr("The %s is finished. Give it staff on the Buildings screen%s.") % [b["name"], Prompts.tag("buildings")], false)
 		else:
-			notice.emit("The %s is now level %d." % [b["name"], level_of(id)], false)
+			notice.emit(tr("The %s is now level %d.") % [b["name"], level_of(id)], false)
 		building_finished.emit(id)
 	for pid in lamp_jobs.keys():
 		if now >= float(lamp_jobs[pid]["finish"]):
 			lamp_jobs.erase(pid)
 			lamps[pid] = int(lamps.get(pid, 0)) + 1
 			var p := territory().find(pid)
-			notice.emit("The Wardlamp in %s is lit%s." % [p.get("name", "?"), "" if int(lamps[pid]) == 1 else " brighter (level %d)" % int(lamps[pid])], false)
+			notice.emit(tr("The Wardlamp in %s is lit%s.") % [p.get("name", "?"), "" if int(lamps[pid]) == 1 else tr(" brighter (level %d)") % int(lamps[pid])], false)
 			if int(lamps[pid]) == 1:
 				_react_near(pid, "lamp_near")
 
@@ -2200,7 +2200,7 @@ func open_region(rid: String, quiet := false) -> bool:
 		return false
 	regions_open.append(rid)
 	if not quiet:
-		notice.emit("The fog lifts over %s. New provinces on the map." % r["name"], false)
+		notice.emit(tr("The fog lifts over %s. New provinces on the map.") % r["name"], false)
 	region_opened.emit(rid)
 	return true
 
@@ -2221,7 +2221,7 @@ func newest_region() -> String:
 func region_lock_text(p: Dictionary) -> String:
 	var r := territory().region_of(p)
 	var ch := int(r.get("chapter", 0))
-	return "Beyond the fog. %s opens%s" % [r.get("name", "This region"), " in Chapter %d" % ch if ch > 0 else " later in the story"]
+	return tr("Beyond the fog. %s opens%s") % [r.get("name", tr("This region")), tr(" in Chapter %d") % ch if ch > 0 else tr(" later in the story")]
 
 
 func held_count() -> int:
@@ -2241,7 +2241,7 @@ func _load_bond_data() -> void:
 	if not bond_data.is_empty():
 		return
 	var f := FileAccess.open("res://data/bonds.json", FileAccess.READ)
-	bond_data = JSON.parse_string(f.get_as_text())
+	bond_data = Loc.data(JSON.parse_string(f.get_as_text()), f.get_path().get_file())
 
 
 func bond_cast() -> Dictionary:
@@ -2339,26 +2339,26 @@ func bond_ready_ids() -> Array:
 func bond_next_text(id: String) -> String:
 	var rank := bond_rank(id)
 	if rank >= BOND_MAX:
-		return "Bound. Nothing left to prove."
+		return tr("Bound. Nothing left to prove.")
 	if bond_next_scene(id) > 0:
-		return "Wants a word. Talk to them in Hollowmark (or %s here)." % ("tap them" if Prompts.touch() else "press " + Prompts.confirm())
+		return tr("Wants a word. Talk to them in Hollowmark (or %s here).") % (tr("tap them") if Prompts.touch() else tr("press ") + Prompts.confirm())
 	var need := bond_threshold(rank + 1) - bond_points(id)
 	if rank == BOND_MAX - 1 and not personal_done(id):
 		if personal_lost(id) != "":
-			return "Rank 5 is out of reach: their personal mission was in %s, and the Blank has erased it. Reclaim %s to finish their story." % [personal_lost(id), personal_lost(id)]
+			return tr("Rank 5 is out of reach: their personal mission was in %s, and the Blank has erased it. Reclaim %s to finish their story.") % [personal_lost(id), personal_lost(id)]
 		var pd := PersonalMissions.def_for(id)
 		var where: String = territory().find(pd.get("province", "")).get("name", "?")
-		var how := "they come along" if PersonalMissions.is_field(id) else "the party keeps them alive"
-		return "Rank 5 needs their personal mission: \"%s\" at %s on the Command Table (%s)." % [pd.get("name", "?"), where, how]
+		var how := tr("they come along") if PersonalMissions.is_field(id) else tr("the party keeps them alive")
+		return tr("Rank 5 needs their personal mission: \"%s\" at %s on the Command Table (%s).") % [pd.get("name", "?"), where, how]
 	if need > 0:
-		return "%d more bond point%s to rank %d." % [need, "" if need == 1 else "s", rank + 1]
+		return tr("%d more bond point%s to rank %d.") % [need, "" if need == 1 else "s", rank + 1]
 	return ""
 
 
 ## Can the scene be played right now (they are in Hollowmark)?
 func bond_scene_blocker(id: String) -> String:
 	if role_of(id) == "expedition":
-		return "%s is away on an expedition" % short_name(id)
+		return tr("%s is away on an expedition") % short_name(id)
 	return ""
 
 
@@ -2374,10 +2374,10 @@ func bond_gain(id: String, amount: int, why := "", quiet := false) -> int:
 	b["points"] = clampi(before + amount, bond_threshold(rank), maxi(cap, before))
 	var gained := int(b["points"]) - before
 	if not was_ready and bond_next_scene(id) > 0:
-		notice.emit("%s wants a word with Ash. Find them in Hollowmark (Bonds: H)." % short_name(id), false)
+		notice.emit(tr("%s wants a word with Ash. Find them in Hollowmark (Bonds: H).") % short_name(id), false)
 		bond_ready.emit(id)
 	elif gained != 0 and why != "" and not quiet:
-		notice.emit("%s: bond %+d (%s)." % [short_name(id), gained, why], false)
+		notice.emit(tr("%s: bond %+d (%s).") % [short_name(id), gained, why], false)
 	return gained
 
 
@@ -2475,7 +2475,7 @@ func finish_bond_scene(id: String, rank: int, choice := -1) -> Dictionary:
 		Relationships.note_choice(id, rank, choice)
 		var rp := Relationships.decide(id, pick)
 		bond_gain(id, int(pick.get("bond", 0)), "", true)
-		notice.emit("%s and Ash: %s" % [short_name(id), "a romance." if not rp.is_empty() else "friends."], false)
+		notice.emit(tr("%s and Ash: %s") % [short_name(id), tr("a romance.") if not rp.is_empty() else "friends."], false)
 		return rp
 	var b := _bond(id)
 	b["rank"] = rank
@@ -2483,11 +2483,11 @@ func finish_bond_scene(id: String, rank: int, choice := -1) -> Dictionary:
 	if choice >= 0 and choice < opts.size():
 		bond_gain(id, int(opts[choice].get("bond", 0)), "", true)
 	var perk: Dictionary = bond_info(id).get("perks", {}).get(str(rank), {})
-	var msg := "%s is now %s (bond rank %d)." % [short_name(id), bond_rank_name(rank), rank]
+	var msg := tr("%s is now %s (bond rank %d).") % [short_name(id), bond_rank_name(rank), rank]
 	if not perk.is_empty():
-		msg += " Perk: %s, %s" % [perk["name"], perk["desc"]]
+		msg += tr(" Perk: %s, %s") % [perk["name"], perk["desc"]]
 	if rank == 4 and personal_job(id) != "":
-		msg += " Their personal mission is waiting at %s on the Command Table." % territory().find(PersonalMissions.def_for(id).get("province", "")).get("name", "?")
+		msg += tr(" Their personal mission is waiting at %s on the Command Table.") % territory().find(PersonalMissions.def_for(id).get("province", "")).get("name", "?")
 	notice.emit(msg, false)
 	return perk
 
@@ -2527,14 +2527,14 @@ func bond_perk_lines() -> Array:
 		var e: Dictionary = pk["effect"]
 		if e.has("gilt_per_held"):
 			var held := territory().provinces.filter(func(p): return p["owner"] == "you").size()
-			out.append({"label": "%s (%s, %d held)" % [pk["name"], short_name(pk["id"]), held],
+			out.append({"label": tr("%s (%s, %d held)") % [pk["name"], short_name(pk["id"]), held],
 				"gilt": int(e["gilt_per_held"]) * held, "supplies": 0, "ink": 0, "note": "bond"})
 			continue
 		if not (e.has("gilt") or e.has("supplies") or e.has("ink") or e.has("insight")):
 			continue
 		out.append({"label": "%s (%s)" % [pk["name"], short_name(pk["id"])], "gilt": int(e.get("gilt", 0)),
 			"supplies": int(e.get("supplies", 0)), "ink": int(e.get("ink", 0)),
-			"note": ("+%d Insight" % int(e["insight"])) if e.has("insight") else "bond"})
+			"note": (tr("+%d Insight") % int(e["insight"])) if e.has("insight") else "bond"})
 	return out
 
 
@@ -2595,21 +2595,21 @@ func hook_text(id: String) -> String:
 	var h := join_hook(id)
 	match h.get("type", ""):
 		"claim":
-			return "Claim %s (G on the Command Table)." % territory().find(h.get("province", "")).get("name", "?")
+			return tr("Claim %s (G on the Command Table).") % territory().find(h.get("province", "")).get("name", "?")
 		"building":
 			var lv := int(h.get("level", 1))
 			var bn: String = building(h.get("building", "")).get("name", "?")
-			return ("Build the %s%s." % [bn, Prompts.tag("buildings")]) if lv <= 1 else ("Raise the %s to level %d%s." % [bn, lv, Prompts.tag("buildings")])
+			return (tr("Build the %s%s.") % [bn, Prompts.tag("buildings")]) if lv <= 1 else (tr("Raise the %s to level %d%s.") % [bn, lv, Prompts.tag("buildings")])
 		"standing":
-			return "Reach %s with the %s%s." % [tier_name(h.get("tier", "friendly")), faction(h.get("faction", "")).get("short", "?"), Prompts.tag("diplomacy")]
+			return tr("Reach %s with the %s%s.") % [tier_name(h.get("tier", "friendly")), faction(h.get("faction", "")).get("short", "?"), Prompts.tag("diplomacy")]
 		"research":
-			return "Finish %s at the Scriptorium%s." % [research_node(h.get("node", "")).get("name", "?"), Prompts.tag("research")]
+			return tr("Finish %s at the Scriptorium%s.") % [research_node(h.get("node", "")).get("name", "?"), Prompts.tag("research")]
 		"renown":
-			return "Reach %d Renown (expeditions, missions)." % int(h.get("amount", 1))
+			return tr("Reach %d Renown (expeditions, missions).") % int(h.get("amount", 1))
 		"bond":
-			return "Reach bond rank %d with %s%s." % [int(h.get("rank", 1)), short_name(h.get("who", "")), Prompts.tag("bonds")]
+			return tr("Reach bond rank %d with %s%s.") % [int(h.get("rank", 1)), short_name(h.get("who", "")), Prompts.tag("bonds")]
 		"rescue":
-			return "Send a squad on \"%s\" from the Guildhall%s." % [job(h.get("job", "")).get("name", "?"), Prompts.tag("expeditions")]
+			return tr("Send a squad on \"%s\" from the Guildhall%s.") % [job(h.get("job", "")).get("name", "?"), Prompts.tag("expeditions")]
 	return ""
 
 
@@ -2617,57 +2617,57 @@ func hook_text(id: String) -> String:
 func hook_progress(id: String) -> Array:
 	var h := join_hook(id)
 	if visitors.has(id):
-		return ["Waiting at the south gate since day %d." % int(visitors[id]), true]
+		return [tr("Waiting at the south gate since day %d.") % int(visitors[id]), true]
 	match h.get("type", ""):
 		"claim":
 			var p := territory().find(h.get("province", ""))
 			var owner: String = p.get("owner", "")
 			if owner == "erased":
-				return ["%s has been erased. Reclaim it first." % p.get("name", "?"), false]
+				return [tr("%s has been erased. Reclaim it first.") % p.get("name", "?"), false]
 			if owner == "free":
-				return ["%s is unclaimed%s." % [p.get("name", "?"), "" if borders_yours(p.get("id", "")) else ", and not next to your land yet"], false]
-			return ["%s is held by %s." % [p.get("name", "?"), faction(owner).get("short", owner)], false]
+				return [tr("%s is unclaimed%s.") % [p.get("name", "?"), "" if borders_yours(p.get("id", "")) else tr(", and not next to your land yet")], false]
+			return [tr("%s is held by %s.") % [p.get("name", "?"), faction(owner).get("short", owner)], false]
 		"building":
 			var bid: String = h.get("building", "")
 			var lv := level_of(bid)
-			var s := ("%s: level %d." % [building(bid).get("name", "?"), lv]) if lv > 0 else ("%s: not built yet." % building(bid).get("name", "?"))
+			var s := (tr("%s: level %d.") % [building(bid).get("name", "?"), lv]) if lv > 0 else (tr("%s: not built yet.") % building(bid).get("name", "?"))
 			if construction.get("id", "") == bid:
-				s += " Under construction."
+				s += tr(" Under construction.")
 			return [s, false]
 		"standing":
 			var fid: String = h.get("faction", "")
-			return ["%s standing %d (%s). %s at %d." % [faction(fid).get("short", fid), standing_of(fid), tier_name(tier_of(fid)),
+			return [tr("%s standing %d (%s). %s at %d.") % [faction(fid).get("short", fid), standing_of(fid), tier_name(tier_of(fid)),
 				tier_name(h.get("tier", "friendly")), tier_min(h.get("tier", "friendly"))], false]
 		"research":
 			var nid: String = h.get("node", "")
 			var st := research_state(nid)
 			if st == "active" or st == "shelved":
-				return ["%d%% studied%s." % [int(research_fraction(nid) * 100.0), "" if st == "active" else ", shelved"], false]
-			return ["Not started%s." % ("" if level_of("scriptorium") > 0 else "; needs a Scriptorium" + Prompts.tag("buildings")), false]
+				return [tr("%d%% studied%s.") % [int(research_fraction(nid) * 100.0), "" if st == "active" else tr(", shelved")], false]
+			return [tr("Not started%s.") % ("" if level_of("scriptorium") > 0 else tr("; needs a Scriptorium") + Prompts.tag("buildings")), false]
 		"renown":
-			return ["Renown %d of %d." % [int(res.get("renown", 0)), int(h.get("amount", 1))], false]
+			return [tr("Renown %d of %d.") % [int(res.get("renown", 0)), int(h.get("amount", 1))], false]
 		"bond":
 			var who: String = h.get("who", "")
 			if not recruits.has(who):
-				return ["%s hasn't joined yet." % recruit(who).get("name", "?"), false]
-			return ["%s: bond rank %d of %d." % [short_name(who), bond_rank(who), int(h.get("rank", 1))], false]
+				return [tr("%s hasn't joined yet.") % recruit(who).get("name", "?"), false]
+			return [tr("%s: bond rank %d of %d.") % [short_name(who), bond_rank(who), int(h.get("rank", 1))], false]
 		"rescue":
 			var jid: String = h.get("job", "")
 			if not expedition_running(jid).is_empty():
-				return ["A squad is on its way.", true]
+				return [tr("A squad is on its way."), true]
 			var why := job_blocker(jid)
-			return [("Can't send yet: %s." % why) if why != "" else "On the Guildhall board now.", why == ""]
+			return [(tr("Can't send yet: %s.") % why) if why != "" else tr("On the Guildhall board now."), why == ""]
 	return ["", false]
 
 
 ## Why a visitor can't be taken on right now ("" = they can).
 func hire_blocker(id: String) -> String:
 	if recruits.has(id):
-		return "already on the roster"
+		return tr("already on the roster")
 	if not visitors.has(id):
-		return "not here yet"
+		return tr("not here yet")
 	var short := _missing(hire_cost(id))
-	return ("not enough " + short) if short != "" else ""
+	return (tr("not enough ") + short) if short != "" else ""
 
 
 func hire(id: String) -> bool:
@@ -2675,7 +2675,7 @@ func hire(id: String) -> bool:
 		return false
 	visitors.erase(id)
 	recruits[id] = {"role": "idle", "target": "", "injured": 0}
-	notice.emit("%s joins your roster. Give them a job%s." % [recruit(id)["name"], Prompts.tag("roster")], false)
+	notice.emit(tr("%s joins your roster. Give them a job%s.") % [recruit(id)["name"], Prompts.tag("roster")], false)
 	return true
 
 
@@ -2686,7 +2686,7 @@ func _check_leads() -> void:
 			continue
 		visitors[id] = day
 		var r := recruit(id)
-		notice.emit("%s, %s, is waiting at Hollowmark's south gate. Talk to them in town, or open Newcomers%s." % [r["name"], r.get("title", ""), (" (" + Prompts.key("newcomers") + ")") if Prompts.key("newcomers") != "" else " from the menu"], false)
+		notice.emit(tr("%s, %s, is waiting at Hollowmark's south gate. Talk to them in town, or open Newcomers%s.") % [r["name"], r.get("title", ""), (" (" + Prompts.key("newcomers") + ")") if Prompts.key("newcomers") != "" else tr(" from the menu")], false)
 		lead_arrived.emit(id)
 
 

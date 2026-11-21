@@ -102,7 +102,7 @@ func update(delta: float) -> void:
 
 
 func _on_phase(_p: int) -> void:
-	main.hud.say("FINAL NOTICE. He is not holding back any more.", 3.0)
+	main.hud.say(tr("FINAL NOTICE. He is not holding back any more."), 3.0)
 	Audio.sfx("burst", 0.6)
 	adds_t = 1.2
 	if not Dialogue.is_seen("talk:" + _talk_id("phase2")):
@@ -136,10 +136,10 @@ func fail_text() -> String:
 func text() -> String:
 	match stage:
 		"approach":
-			return "Face the Auditor at the tollgate"
+			return tr("Face the Auditor at the tollgate")
 		"fight":
-			return str(obj.get("label", "Strike out the Auditor"))
-	return "The Auditor is struck out"
+			return str(obj.get("label", tr("Strike out the Auditor")))
+	return tr("The Auditor is struck out")
 
 
 func target_pos():
@@ -192,7 +192,7 @@ class BossBar extends Control:
 		draw_rect(Rect2(x, y + 1, w * r, 5), Color("d2463c" if phase == 1 else "8a1f2a", a))
 		var px := x + w * Auditor.PHASE2_AT  # where Final Notice starts
 		draw_line(Vector2(px, y - 1), Vector2(px, y + 8), Color(0.96, 0.92, 0.82, 0.8 * a), 1.0)
-		var sub: String = fight.info["title"] if phase == 1 else "Final Notice"
+		var sub: String = fight.info["title"] if phase == 1 else tr("Final Notice")
 		var sw := f.get_string_size(sub, HORIZONTAL_ALIGNMENT_LEFT, -1, 7).x
 		draw_string_outline(f, Vector2(x + w - sw, y - 4), sub, HORIZONTAL_ALIGNMENT_LEFT, -1, 7, 2, Color(0, 0, 0, 0.8 * a))
 		draw_string(f, Vector2(x + w - sw, y - 4), sub, HORIZONTAL_ALIGNMENT_LEFT, -1, 7, Color(0.8, 0.76, 0.68, a) if phase == 1 else Color("ff8a7a", a))

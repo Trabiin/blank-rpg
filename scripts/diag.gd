@@ -104,7 +104,7 @@ func start_session() -> void:
 	previous = read_previous(crashed)
 	_write_file(dir.path_join("session.lock"), Time.get_datetime_string_from_system(true) + "Z\n")
 	_full = false
-	_append(["Last Ink session log", ""] + header_lines() + [""])
+	_append(["Last Ink session log", ""] + header_lines() + [""])  # no-tr: developer log
 	_print("session " + game_version() + " " + OS.get_name())
 
 
@@ -209,7 +209,7 @@ func mute() -> void:
 func system_info() -> Dictionary:
 	var info := {
 		"game_version": game_version(),
-		"build": ("debug" if OS.is_debug_build() else "release") + (" +test_shortcuts" if OS.has_feature("test_shortcuts") else ""),
+		"build": ("debug" if OS.is_debug_build() else "release") + (" +test_shortcuts" if OS.has_feature("test_shortcuts") else ""),  # no-tr: build tag
 		"godot": Engine.get_version_info().get("string", ""),
 		"os": OS.get_name(),
 		"os_version": OS.get_version(),
@@ -249,7 +249,7 @@ func header_lines() -> Array:
 	var info := system_info()
 	for k in info:
 		lines.append("%s: %s" % [k, info[k]])
-	lines.append("started: %sZ" % Time.get_datetime_string_from_unix_time(int(started), true))
+	lines.append("started: %sZ" % Time.get_datetime_string_from_unix_time(int(started), true))  # no-tr: developer log
 	return lines
 
 
@@ -287,7 +287,7 @@ func _check_context() -> void:
 func breadcrumb(what: String) -> void:
 	var t := Time.get_time_string_from_system()
 	var empire := get_node_or_null("/root/Empire")
-	var line := "[%s +%ds day %d] %s" % [t, int(Time.get_unix_time_from_system() - started), empire.day if empire else 0, what]
+	var line := "[%s +%ds day %d] %s" % [t, int(Time.get_unix_time_from_system() - started), empire.day if empire else 0, what]  # no-tr: developer log
 	_append([line])
 	_print(what)
 
@@ -313,7 +313,7 @@ func _drain_web_console() -> void:
 			errors += 1
 		else:
 			warnings += 1
-		lines.append(text if tagged else ("ERROR: " if is_err else "WARNING: ") + text)
+		lines.append(text if tagged else ("ERROR: " if is_err else "WARNING: ") + text)  # no-tr: developer log
 	_append(lines)
 
 
@@ -328,7 +328,7 @@ func _append(lines: Array) -> void:
 		return
 	f.seek_end()
 	if f.get_length() > MAX_LOG:
-		f.store_line("(log full: nothing more is written this session)")
+		f.store_line("(log full: nothing more is written this session)")  # no-tr: developer log
 		_full = true
 	else:
 		for l in lines:
@@ -394,20 +394,20 @@ func take_screenshot() -> String:
 	await RenderingServer.frame_post_draw
 	var img := get_viewport().get_texture().get_image()
 	if img == null or img.is_empty():  # no screen to grab (headless)
-		toast("Could not take a screenshot.")
+		toast(tr("Could not take a screenshot."))
 		return ""
 	var name := "last-ink_%s.png" % Time.get_datetime_string_from_system().replace(":", "-").replace("T", "_")
 	if OS.has_feature("web"):
 		JavaScriptBridge.download_buffer(img.save_png_to_buffer(), name, "image/png")
-		toast("Screenshot downloaded: " + name)
+		toast(tr("Screenshot downloaded: ") + name)
 		return name
 	DirAccess.make_dir_recursive_absolute(SHOT_DIR)
 	var path := SHOT_DIR.path_join(name)
 	if img.save_png(path) != OK:
-		toast("Could not save the screenshot.")
+		toast(tr("Could not save the screenshot."))
 		return ""
 	breadcrumb("screenshot " + name)
-	toast("Screenshot saved: " + ProjectSettings.globalize_path(path))
+	toast(tr("Screenshot saved: ") + ProjectSettings.globalize_path(path))
 	return path
 
 

@@ -93,7 +93,7 @@ static func strike(h: Hero, enemy: Enemy, dmg: int, from: Vector2, knock: float,
 		return false
 	var dealt := before - enemy.hp
 	if crit and dealt > 0:
-		Fx.damage_number(h.get_parent(), enemy.global_position + Vector2(0, -30), "Sharp!", Color("ffe08a"))
+		Fx.damage_number(h.get_parent(), enemy.global_position + Vector2(0, -30), Loc.t("Sharp!"), Color("ffe08a"))
 	var leech := p(h, "leech") + float(a.get("leech", 0.0))
 	if leech > 0.0 and dealt > 0 and not h.dead:
 		_heal_self(h, int(round(dealt * leech)))
@@ -149,7 +149,7 @@ static func killed(h: Hero, enemy: Node) -> void:
 	if p(h, "kill_ink_party") > 0.0:
 		for o in _allies(h, 90.0):
 			o.ink = minf(o.ink + p(h, "kill_ink_party"), o.max_ink)
-			Fx.damage_number(parent, o.global_position + Vector2(0, -24), "+%d Ink" % int(p(h, "kill_ink_party")), Color("6aa8ff"))
+			Fx.damage_number(parent, o.global_position + Vector2(0, -24), Loc.t("+%d Ink") % int(p(h, "kill_ink_party")), Color("6aa8ff"))
 	if p(h, "kill_heal") > 0.0:
 		_heal_self(h, int(p(h, "kill_heal")))
 	if p(h, "kill_gauge") > 0.0:
@@ -164,7 +164,7 @@ static func killed(h: Hero, enemy: Node) -> void:
 		for i in h.abilities.size():
 			if str(h.abilities[i].get("id", "")) == reset and h.cooldowns[i] > 0.0:
 				h.cooldowns[i] = 0.0
-				Fx.damage_number(parent, h.global_position + Vector2(0, -30), "Again!", Color("ffd166"))
+				Fx.damage_number(parent, h.global_position + Vector2(0, -30), Loc.t("Again!"), Color("ffd166"))
 
 
 ## An enemy fell (main.gd): kills that no strike credited (poison, burn) go to whoever put the status on
@@ -183,7 +183,7 @@ static func pay(h: Hero, gilt: int, at: Vector2) -> void:
 		return
 	var found: Dictionary = h.party.found
 	found["gilt"] = int(found.get("gilt", 0)) + gilt
-	Fx.damage_number(h.get_parent(), at + Vector2(0, -22), "+%d Gilt" % gilt, Color("ffd166"))
+	Fx.damage_number(h.get_parent(), at + Vector2(0, -22), Loc.t("+%d Gilt") % gilt, Color("ffd166"))
 
 
 static func _heal_self(h: Hero, amount: int) -> void:
@@ -200,7 +200,7 @@ static func _heal_self(h: Hero, amount: int) -> void:
 ## bodyguard nearby takes part of it. -1 means the hit was dodged outright.
 static func incoming(h: Hero, amount: int, from: Vector2) -> int:
 	if p(h, "evade") > 0.0 and randf() < p(h, "evade"):
-		Fx.damage_number(h.get_parent(), h.global_position + Vector2(0, -18), "missed", Color(0.8, 0.8, 0.85))
+		Fx.damage_number(h.get_parent(), h.global_position + Vector2(0, -18), Loc.t("missed"), Color(0.8, 0.8, 0.85))
 		h.invuln_t = maxf(h.invuln_t, 0.25)
 		return -1
 	if _redirecting:
@@ -235,7 +235,7 @@ static func adjust(h: Hero, amount: int) -> int:
 		h.last_stand_spent = true
 		amount = maxi(h.hp - 1, 0)
 		h.invuln_t = maxf(h.invuln_t, 1.5)
-		Fx.damage_number(h.get_parent(), h.global_position + Vector2(0, -30), "Not today!", Color("ffd166"))
+		Fx.damage_number(h.get_parent(), h.global_position + Vector2(0, -30), Loc.t("Not today!"), Color("ffd166"))
 		Fx.burst(h.get_parent(), h.global_position + Vector2(0, -10), [Color("ffd166"), Color.WHITE], 16, 60.0)
 	return amount
 

@@ -56,10 +56,10 @@ static func apply(save: Dictionary) -> Dictionary:
 			continue
 		var step: Script = load(DIR + id + ".gd")
 		if step == null:
-			return {"ok": false, "error": "upgrade step %s is missing" % id}
+			return {"ok": false, "error": Loc.t("upgrade step %s is missing") % id}
 		var out = step.call("migrate", d)
 		if typeof(out) != TYPE_DICTIONARY or (out as Dictionary).is_empty():
-			return {"ok": false, "error": "upgrade step %s could not convert it" % id}
+			return {"ok": false, "error": Loc.t("upgrade step %s could not convert it") % id}
 		d = out
 		done.append(id)
 		applied.append(id)
