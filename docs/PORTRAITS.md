@@ -70,3 +70,10 @@ portrait costs about $0.054; every call is logged in `tools/art_spend.jsonl` wit
 are in project files `last-ink/portraits/` next to the raw images.
 
 Corporal Daro is non-binary (they/them).
+
+## Style trial (2026-11-21)
+
+`tools/portrait_style.py OUT_DIR quill velvette bran` makes code-only treatments of existing portraits
+(grade, ink, pix336, pix168), and `tools/shot.gd ... scene=town talk=quill_first portraits=OUT_DIR/pix336`
+shows one in the real dialogue box without touching `assets/portraits/` (`skip=N` starts N lines in).
+Comparison images: project files `last-ink/art-pass/portrait-style/`.
