@@ -31,6 +31,7 @@ const OUTCOME_WORDS := {"done": "done", "failed": "failed", "refused": "refused"
 
 static var _asks := {}  # ask id -> ask Dictionary (with "faction" added)
 static var _rules := {}
+static var _help = null  # the onboarding Help class script, false when this build has none
 
 
 # ---------------------------------------------------------------- data
@@ -322,7 +323,18 @@ static func _schedule(fid: String, gap: Array) -> void:
 
 ## True when the factions can ask anything: the map is yours, and the faction is known.
 static func can_ask(fid: String) -> bool:
-	return Story.command_on() and Journal.faction_known(fid) and not Empire.faction(fid).is_empty()
+	return Story.command_on() and _diplomacy_open() and Journal.faction_known(fid) and not Empire.faction(fid).is_empty()
+
+
+## In a story campaign Diplomacy stays shut until the story opens it (onboarding, issue #115:
+## Help.is_open). Looked up by name so this works with or without that class in the build.
+static func _diplomacy_open() -> bool:
+	if _help == null:
+		_help = false
+		for c in ProjectSettings.get_global_class_list():
+			if str(c.get("class", "")) == "Help":
+				_help = load(str(c["path"]))
+	return true if not _help is Script else bool(_help.call("is_open", "diplomacy"))
 
 
 # ---------------------------------------------------------------- answering
