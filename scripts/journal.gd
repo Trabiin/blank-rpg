@@ -351,7 +351,8 @@ static func _offered(pid: String, mid: String) -> Dictionary:
 	return {}
 
 
-## What each faction you know of wants next: the next standing tier and what it opens.
+## What each faction you know of wants next: the next standing tier and what it opens, then the
+## request they have made of you, if any (scripts/faction_asks.gd).
 static func faction_quests() -> Array:
 	var out := []
 	for fid in Empire.faction_ids():
@@ -391,6 +392,7 @@ static func faction_quests() -> Array:
 			row["state"] = "blocked"
 		row["next"] = " ".join(steps)
 		out.append(row)
+		out.append_array(FactionAsks.rows(fid))  # what they asked of you (issue #131)
 	return out
 
 

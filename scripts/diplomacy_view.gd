@@ -1,10 +1,12 @@
 extends Control
 ## Diplomacy screen. Opened with F, from the menus, or the Diplomacy button on the Command Table.
 ##
-## One list (Up/Down, Enter, Esc; mouse and touch tap): for each faction, its envoy and the deals
-## you can make. Enter on the envoy row opens a picker (who to send, with the standing they would
-## win per day); Enter on a deal makes it. The right panel explains the selected row: standing,
-## why it moves, what the faction's tiers do, and what happened lately.
+## One list (Up/Down, Enter, Esc; mouse and touch tap): for each faction, its envoy, the favour it
+## asks of you (issue #131, scripts/faction_asks.gd) and the deals you can make. Enter on the envoy
+## row opens a picker (who to send, with the standing they would win per day); Enter on a request
+## accepts it (the row under it refuses), or hands over what an accepted one wants; Enter on a deal
+## makes it. The right panel explains the selected row: standing, why it moves, what the faction's
+## tiers do, and what happened lately. The list scrolls when it is taller than the screen.
 
 signal closed
 
@@ -13,6 +15,7 @@ const GOOD := Color("9fd18b")
 const BAD := Color("ff9b8a")
 const TEXT := Color("ece6da")
 const DIM := Color(0.42, 0.41, 0.44)
+const ASK := Color("e8c06a")  # requests a faction makes of you
 const SOFT := Color(0.62, 0.6, 0.62)
 const ROW_H := 13.0
 const HEAD_H := 25.0
@@ -28,9 +31,12 @@ var closed_frame := -1
 var opened_frame := -1
 var flash := ""
 var flash_t := 0.0
-var _rows: Array = []  # {"kind": envoy|deal|person|recall, "faction", "id"}
+var _rows: Array = []  # {"kind": envoy|offer|refuse|ask|deal|person|recall, "faction", "id"}
 var _row_rects: Array = []
 var _list_sel := 0  # where to come back to from the picker
+var _scroll := 0.0  # how far the list is scrolled down, in px
+var _confirm := ""  # "faction:deal" pressed once that would break a promise: press again to go ahead
+var _asks_sig := ""  # what the factions are asking, to rebuild the list when it changes under us
 var font: Font
 
 
@@ -47,7 +53,14 @@ func open() -> void:
 	opened_frame = Engine.get_process_frames()
 	_go("list")
 	sel = 0
-	# Start on the first thing you can do (a deal you can make, else an empty envoy post).
+	_scroll = 0.0
+	_confirm = ""
+	# Start on the first thing you can do: a request waiting for an answer, a deal you can make,
+	# else an empty envoy post.
+	for i in _rows.size():
+		if _rows[i]["kind"] == "offer":
+			sel = i
+			return
 	for i in _rows.size():
 		var r: Dictionary = _rows[i]
 		if r["kind"] == "deal" and Empire.deal_blocker(r["faction"], r["id"]) == "":
@@ -69,8 +82,14 @@ func _go(p: String) -> void:
 	page = p
 	_rows.clear()
 	if page == "list":
+		_asks_sig = _sig()
 		for fid in Empire.faction_ids():
 			_rows.append({"kind": "envoy", "faction": fid, "id": ""})
+			if not FactionAsks.offer_of(fid).is_empty():
+				_rows.append({"kind": "offer", "faction": fid, "id": ""})
+				_rows.append({"kind": "refuse", "faction": fid, "id": ""})
+			if not FactionAsks.active_of(fid).is_empty():
+				_rows.append({"kind": "ask", "faction": fid, "id": ""})
 			for k in Empire.deal_ids(fid):
 				_rows.append({"kind": "deal", "faction": fid, "id": k})
 		sel = clampi(_list_sel, 0, _rows.size() - 1)
@@ -92,6 +111,17 @@ func _go(p: String) -> void:
 				sel = i
 
 
+## Rebuilds the list after a request changed, keeping the cursor near where it was.
+func _refresh(i: int) -> void:
+	_list_sel = i
+	_go("list")
+
+
+func _sig() -> String:
+	var st := FactionAsks.state()
+	return str(st["offers"].keys()) + str(st["active"].keys())
+
+
 func _person_blocker(id: String) -> String:
 	for o in Empire.role_options(id):
 		if o["role"] == "envoy" and o["target"] == pick_faction:
@@ -103,13 +133,17 @@ func _process(delta: float) -> void:
 	if not visible:
 		return
 	flash_t = maxf(flash_t - delta, 0.0)
+	if page == "list" and _sig() != _asks_sig:
+		_refresh(sel)  # a request arrived, lapsed or ended while the screen was open
 	queue_redraw()
 	if Engine.get_process_frames() == opened_frame or _rows.is_empty():
 		return
 	if Input.is_action_just_pressed("move_up") or Input.is_action_just_pressed("ui_up"):
 		sel = posmod(sel - 1, _rows.size())
+		_confirm = ""
 	elif Input.is_action_just_pressed("move_down") or Input.is_action_just_pressed("ui_down"):
 		sel = posmod(sel + 1, _rows.size())
+		_confirm = ""
 	if Input.is_action_just_pressed("ui_accept"):
 		_pick(sel)
 	elif Input.is_action_just_pressed("diplomacy"):
@@ -134,6 +168,9 @@ func _pick(i: int) -> void:
 	var r: Dictionary = _rows[i]
 	var fid: String = r["faction"]
 	var fa := Empire.faction(fid)
+	if page == "list" and _sig() != _asks_sig:
+		_refresh(i)  # the list was out of date: show the new one before acting on it
+		return
 	match r["kind"]:
 		"envoy":
 			_list_sel = i
@@ -144,9 +181,40 @@ func _pick(i: int) -> void:
 			if why != "":
 				_say("Can't: %s." % why)
 				return
+			var promise := FactionAsks.pact_breaks(fid) if r["id"] == "trade" else {}
+			if not promise.is_empty() and _confirm != fid + ":trade":
+				_confirm = fid + ":trade"
+				_say("That breaks your promise to the %s. Press again to sign anyway." % Empire.faction(promise["faction"]).get("short", "?"))
+				return
+			_confirm = ""
 			var said := Empire.make_deal(fid, r["id"])
 			if said != "":
 				_say(said)
+			FactionAsks.check()  # a broken promise fails at once
+			_refresh(i)
+		"offer":
+			var why2 := FactionAsks.accept_blocker(fid)
+			if why2 != "":
+				_say("Can't: %s." % why2)
+				return
+			_say(FactionAsks.accept(fid))
+			_refresh(i)
+		"refuse":
+			var said2 := FactionAsks.refuse(fid)
+			if said2 != "":
+				_say(said2)
+			_refresh(i)
+		"ask":
+			var a := FactionAsks.active_of(fid)
+			if a.get("kind", "") == "deliver":
+				var why3 := FactionAsks.deliver_blocker(fid)
+				if why3 != "":
+					_say("Can't: %s." % why3)
+					return
+				_say(FactionAsks.deliver(fid))
+				_refresh(i)
+			else:
+				_say(FactionAsks.progress_text(fid))
 		"recall":
 			var cur := Empire.envoy_of(fid)
 			if cur != "":
@@ -169,8 +237,12 @@ func _pick(i: int) -> void:
 func _gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:
 		for i in _row_rects.size():
-			if (_row_rects[i] as Rect2).has_point(event.position):
+			if (_row_rects[i] as Rect2).has_point(event.position) and sel != i:
 				sel = i
+				_confirm = ""
+	elif event is InputEventMouseButton and event.pressed and page == "list" and event.button_index in [MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN]:
+		sel = posmod(sel + (1 if event.button_index == MOUSE_BUTTON_WHEEL_DOWN else -1), _rows.size())
+		_confirm = ""
 	elif Prompts.tapped(event):
 		for i in _row_rects.size():
 			if (_row_rects[i] as Rect2).has_point(event.position):
@@ -227,7 +299,7 @@ func _draw() -> void:
 		_draw_picker(vs)
 	else:
 		_draw_list(vs)
-	var help := Prompts.help([["updown", "choose"], ["ui_accept", "send"], ["ui_cancel", "back"]], "Tap an envoy, tap again to send   Close: back") if page == "envoy" else Prompts.help([["updown", "choose"], ["ui_accept", "pick envoy / make deal"], [["ui_cancel", "diplomacy"], "close"]], "Tap a row, tap again to act")
+	var help := Prompts.help([["updown", "choose"], ["ui_accept", "send"], ["ui_cancel", "back"]], "Tap an envoy, tap again to send   Close: back") if page == "envoy" else Prompts.help([["updown", "choose"], ["ui_accept", "act"], [["ui_cancel", "diplomacy"], "close"]], "Tap a row, tap again to act")
 	_text(Vector2(8, vs.y - 8), help, 7, Color(0.5, 0.48, 0.52))
 	if flash_t > 0.0:
 		var a := clampf(flash_t / 0.4, 0.0, 1.0)
@@ -245,72 +317,131 @@ func _draw_list(vs: Vector2) -> void:
 	_text(Vector2(90, 20), sub, 8, GOLD)
 	if trouble != "":
 		_text(Vector2(8, 34), trouble + " Get them to Neutral (-9) to stop it.", 8, BAD)
-	var y := 38.0
+	# Lay the list out first, then scroll so the selected row is on screen.
+	var top := 38.0
+	var bottom := vs.y - 22.0
+	var ys := []
+	var heads := {}  # row index -> y of the faction header drawn above it
+	var y := top
 	var last := ""
+	for i in _rows.size():
+		var fid: String = _rows[i]["faction"]
+		if fid != last:
+			last = fid
+			y += 4
+			heads[i] = y
+			y += HEAD_H
+		ys.append(y)
+		y += ROW_H
+	if not ys.is_empty():
+		var want_top: float = heads.get(sel, ys[sel]) - 4.0
+		if want_top - _scroll < top:
+			_scroll = maxf(want_top - top, 0.0)
+		elif ys[sel] + ROW_H - _scroll > bottom:
+			_scroll = ys[sel] + ROW_H - bottom
+		_scroll = clampf(_scroll, 0.0, maxf(y - bottom, 0.0))
+	if _scroll > 0.5:
+		_text(Vector2(8 + LIST_W - 8, top - 2), "^", 8, SOFT)
+	if y - _scroll > bottom + 0.5:
+		_text(Vector2(8 + LIST_W - 8, bottom + 8), "v", 8, SOFT)
 	for i in _rows.size():
 		var r: Dictionary = _rows[i]
 		var fid: String = r["faction"]
 		var fa := Empire.faction(fid)
-		if fid != last:
-			last = fid
-			y += 4
-			var v := Empire.standing_of(fid)
-			var tier := Empire.tier_of(fid)
-			draw_rect(Rect2(8, y, 3, HEAD_H - 6), FACTION_COLORS.get(fid, TEXT))
-			var fx := 15.0
-			if UiSkin.draw_icon(self, fid, Rect2(14, y - 1, 12, 12)):
-				fx = 29.0
-			_text(Vector2(fx, y + 9), fa["name"], 10, FACTION_COLORS.get(fid, TEXT))
-			_text_r(Vector2(8 + LIST_W, y + 9), "%s %+d" % [Empire.tier_name(tier), v], 9, TIER_COLORS[tier])
-			var rate := Empire.standing_rate(fid)
-			_standing_bar(Rect2(15, y + 13, LIST_W - 70, 4), v)
-			_text_r(Vector2(8 + LIST_W, y + 18), "%+d/day" % rate, 8, GOOD if rate > 0 else (BAD if rate < 0 else SOFT))
-			y += HEAD_H
-		var rr := Rect2(14, y, LIST_W - 6, ROW_H - 1)
+		if heads.has(i):
+			var hy: float = heads[i] - _scroll
+			if hy >= top - 6 and hy + HEAD_H <= bottom + 4:
+				_draw_head(fid, fa, hy)
+		var ry: float = ys[i] - _scroll
+		if ry < top - 1 or ry + ROW_H > bottom + 1:
+			_row_rects.append(Rect2())  # scrolled out of sight
+			continue
+		var rr := Rect2(14, ry, LIST_W - 6, ROW_H - 1)
 		_row_rects.append(rr)
 		var on := i == sel
 		draw_rect(rr, Color(0.16, 0.13, 0.09) if on else Color(0.09, 0.08, 0.11))
 		if on:
 			draw_rect(rr, GOLD, false, 1.0)
 		var base := rr.position + Vector2(6, 9)
-		if r["kind"] == "envoy":
-			var env := Empire.envoy_of(fid)
-			_text(base, "Envoy", 8, SOFT)
-			if env == "":
-				_text(base + Vector2(44, 0), "nobody posted", 9, GOLD if on else Color("e8a86a"))
-			else:
-				_text(base + Vector2(44, 0), Empire.recruit(env)["name"], 9, GOLD if on else TEXT, 150)
-				var hurt := int(Empire.recruits[env]["injured"]) > 0
-				_text_r(base + Vector2(LIST_W - 18, 0), "injured" if hurt else "%+d/day" % int(Empire.envoy_effect(env, fid)["drift"]), 8, BAD if hurt else GOOD)
-		else:
-			var k: String = r["id"]
-			var d := Empire.deal(fid, k)
-			var why := Empire.deal_blocker(fid, k)
-			var active: bool = k == "trade" and fid in Empire.pacts
-			var col := TEXT if why == "" else DIM
-			if active:
-				col = GOOD
-			_text(base, d["name"], 9, GOLD if on and why == "" else col, 160)
-			var right := ""
-			var rc := SOFT
-			if active:
-				right = "active: %s/day" % Empire.output_text(d["daily"])
-				rc = GOOD
-			elif why == "":
-				right = Empire.cost_text(d["cost"]) if d.has("cost") else "%d standing" % int(d.get("standing", 0))
-				rc = GOLD
-			elif not Empire.at_least(fid, Empire.DEAL_TIER[k]):
-				right = Empire.tier_name(Empire.DEAL_TIER[k])
-				rc = DIM
-			elif why == "post an envoy first":
-				right = "needs envoy"
-				rc = Color("e8a86a")
-			else:
-				right = "not now"
-				rc = DIM
-			_text_r(base + Vector2(LIST_W - 18, 0), right, 8, rc)
-		y += ROW_H
+		if (r["kind"] in ["offer", "refuse"] and FactionAsks.offer_of(fid).is_empty()) or (r["kind"] == "ask" and FactionAsks.active_of(fid).is_empty()):
+			continue  # ended this frame: the list rebuilds next frame
+		match r["kind"]:
+			"envoy":
+				var env := Empire.envoy_of(fid)
+				_text(base, "Envoy", 8, SOFT)
+				if env == "":
+					_text(base + Vector2(44, 0), "nobody posted", 9, GOLD if on else Color("e8a86a"))
+				else:
+					_text(base + Vector2(44, 0), Empire.recruit(env)["name"], 9, GOLD if on else TEXT, 150)
+					var hurt := int(Empire.recruits[env]["injured"]) > 0
+					_text_r(base + Vector2(LIST_W - 18, 0), "injured" if hurt else "%+d/day" % int(Empire.envoy_effect(env, fid)["drift"]), 8, BAD if hurt else GOOD)
+			"offer":
+				var o := FactionAsks.offer_of(fid)
+				_text(base, "Asks", 8, ASK)
+				_text(base + Vector2(44, 0), o["name"], 9, GOLD if on else TEXT, LIST_W - 120)
+				_text_r(base + Vector2(LIST_W - 18, 0), "accept, %s" % _left(int(o["until"])), 8, ASK)
+			"refuse":
+				var o2 := FactionAsks.offer_of(fid)
+				_text(base + Vector2(44, 0), "Refuse", 9, GOLD if on else SOFT)
+				_text_r(base + Vector2(LIST_W - 18, 0), "%+d standing" % int(o2.get("refuse", -2)), 8, BAD if int(o2.get("refuse", -2)) < 0 else SOFT)
+			"ask":
+				var a := FactionAsks.active_of(fid)
+				var can_hand: bool = a.get("kind", "") == "deliver" and FactionAsks.deliver_blocker(fid) == ""
+				_text(base, "Owed", 8, ASK)
+				_text(base + Vector2(44, 0), a["name"], 9, GOLD if on else TEXT, LIST_W - 120)
+				var left := int(a["until"]) - Empire.day
+				_text_r(base + Vector2(LIST_W - 18, 0), "hand over" if can_hand else _left(int(a["until"])), 8, GOOD if can_hand else (BAD if left <= 1 else ASK))
+			_:
+				var k: String = r["id"]
+				var d := Empire.deal(fid, k)
+				var why := Empire.deal_blocker(fid, k)
+				var active: bool = k == "trade" and fid in Empire.pacts
+				var col := TEXT if why == "" else DIM
+				if active:
+					col = GOOD
+				_text(base, d["name"], 9, GOLD if on and why == "" else col, 160)
+				var right := ""
+				var rc := SOFT
+				if active:
+					right = "active: %s/day" % Empire.output_text(d["daily"])
+					rc = GOOD
+				elif why == "" and k == "trade" and not FactionAsks.pact_breaks(fid).is_empty():
+					right = "breaks a promise"
+					rc = BAD
+				elif why == "":
+					right = Empire.cost_text(d["cost"]) if d.has("cost") else "%d standing" % int(d.get("standing", 0))
+					rc = GOLD
+				elif not Empire.at_least(fid, Empire.DEAL_TIER[k]):
+					right = Empire.tier_name(Empire.DEAL_TIER[k])
+					rc = DIM
+				elif why == "post an envoy first":
+					right = "needs envoy"
+					rc = Color("e8a86a")
+				else:
+					right = "not now"
+					rc = DIM
+				_text_r(base + Vector2(LIST_W - 18, 0), right, 8, rc)
 	_draw_details(vs)
+
+
+func _draw_head(fid: String, fa: Dictionary, y: float) -> void:
+	var v := Empire.standing_of(fid)
+	var tier := Empire.tier_of(fid)
+	draw_rect(Rect2(8, y, 3, HEAD_H - 6), FACTION_COLORS.get(fid, TEXT))
+	var fx := 15.0
+	if UiSkin.draw_icon(self, fid, Rect2(14, y - 1, 12, 12)):
+		fx = 29.0
+	_text(Vector2(fx, y + 9), fa["name"], 10, FACTION_COLORS.get(fid, TEXT))
+	_text_r(Vector2(8 + LIST_W, y + 9), "%s %+d" % [Empire.tier_name(tier), v], 9, TIER_COLORS[tier])
+	var rate := Empire.standing_rate(fid)
+	_standing_bar(Rect2(15, y + 13, LIST_W - 70, 4), v)
+	_text_r(Vector2(8 + LIST_W, y + 18), "%+d/day" % rate, 8, GOOD if rate > 0 else (BAD if rate < 0 else SOFT))
+
+
+## "2 days left" / "last day" to a deadline day.
+func _left(until: int) -> String:
+	var d := until - Empire.day
+	return "last day" if d <= 1 else "%d days left" % d
 
 
 func _draw_details(vs: Vector2) -> void:
@@ -347,6 +478,8 @@ func _draw_details(vs: Vector2) -> void:
 		else:
 			_text(Vector2(x, y + 9), "Ready. %s to send." % Prompts.confirm(), 8, GOOD, w)
 		y += 22
+	elif r["kind"] in ["offer", "refuse", "ask"]:
+		y = _draw_ask(r, fid, x, y, w)
 	else:
 		_text(Vector2(x, y), fa["name"], 12, Color("f3efe4"), w)
 		y += 4
@@ -386,6 +519,40 @@ func _draw_details(vs: Vector2) -> void:
 			var change := int(e.get("change", 0))
 			var line := "Day %d: %s%s" % [int(e["day"]), e["text"], "" if change == 0 else " (%+d)" % change]
 			y += _wrap(Vector2(x, y + 9), line, w, 7, BAD if change < 0 or e.get("trouble", false) else SOFT) + 1
+
+
+## The right panel for a request: what they ask, what it pays, what missing it costs. Returns the new y.
+func _draw_ask(r: Dictionary, fid: String, x: float, y: float, w: float) -> float:
+	var offered: bool = r["kind"] != "ask"
+	var a := FactionAsks.offer_of(fid) if offered else FactionAsks.active_of(fid)
+	if a.is_empty():
+		return y
+	var short: String = Empire.faction(fid).get("short", fid)
+	_text(Vector2(x, y), a["name"], 12, Color("f3efe4"), w)
+	y += 4
+	_text(Vector2(x, y + 9), "%s request  ·  %s" % [short, FactionAsks.KIND_WORDS.get(a.get("kind", ""), "")], 8, ASK, w)
+	y += 12
+	y += _wrap(Vector2(x, y + 9), "\"%s\"" % a.get("text", ""), w, 8, Color(0.82, 0.8, 0.76)) + 4
+	y += _wrap(Vector2(x, y + 9), FactionAsks.task_text(a), w, 8, TEXT) + 2
+	y += _wrap(Vector2(x, y + 9), "Pays: %s." % FactionAsks.reward_text(a), w, 8, GOOD) + 1
+	y += _wrap(Vector2(x, y + 9), "Missing the deadline: %s." % FactionAsks.fail_text(a), w, 8, BAD) + 2
+	if offered:
+		y += _wrap(Vector2(x, y + 9), "You get %s to do it once accepted. Answer within %s; refusing, or not answering, costs %d standing." % [FactionAsks._days(int(a.get("days", 5))), FactionAsks._days(int(a["until"]) - Empire.day), absi(int(a.get("refuse", -2)))], w, 8, SOFT) + 2
+		var why := FactionAsks.accept_blocker(fid)
+		if r["kind"] == "refuse":
+			_text(Vector2(x, y + 9), "%s to refuse." % Prompts.confirm(), 8, BAD, w)
+		elif why != "":
+			y += _wrap(Vector2(x, y + 9), "Can't accept: %s." % why, w, 8, BAD)
+		else:
+			if a.get("kind", "") == "shun" and str(a.get("rival", "")) in Empire.pacts:
+				y += _wrap(Vector2(x, y + 9), "Accepting tears up your trade pact with the %s." % Empire.faction(str(a["rival"])).get("short", "?"), w, 8, BAD) + 1
+			_text(Vector2(x, y + 9), "%s to accept." % Prompts.confirm(), 8, GOOD, w)
+	else:
+		var left := int(a["until"]) - Empire.day
+		_text(Vector2(x, y + 9), "Accepted on day %d, %s left (the deadline is dawn of day %d)." % [int(a["day"]), FactionAsks._days(left), int(a["until"])], 8, BAD if left <= 1 else SOFT, w)
+		y += 12
+		y += _wrap(Vector2(x, y + 9), FactionAsks.progress_text(fid), w, 8, GOLD)
+	return y + 18
 
 
 func _draw_picker(vs: Vector2) -> void:

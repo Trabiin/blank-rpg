@@ -86,6 +86,48 @@
 				"success": ["{a} skimmed Ink off the white while {b} kept talking, loudly, so the Blank would know they were still there. It works. Nobody knows why.", "{lead} came back with jars of Ink and an extra shadow. The shadow left after a bath."],
 				"fail": ["The white got hungry. {a} dropped the jars and pulled {b} back by the collar. {b} has a pale stripe in their hair now and will not discuss it.", "{lead} stared too long. Came back fine, apart from forgetting the word for 'spoon'. Nobody has had the heart to tell them."]
 			}
+		},
+		{
+			"id": "ask_guild_cut", "name": "Run a Guild barge through the Saltreed cut", "kind": "Escort", "province": "saltreed", "ask": "guild_cut",
+			"blurb": "A Guild request (Diplomacy). The river is silting up, the only way round is the Saltreed cut, and something in the reeds has been eating barges. Two of yours on deck, all the way through.",
+			"days": 2, "rations": 2, "stats": {"might": 1.0, "grit": 1.0}, "target": 24, "danger": 2, "cooldown": 1,
+			"reward": {"gilt": [10, 16]},
+			"text": {
+				"success": ["Something long and pale came up out of the reeds on the second night. {a} hit it with an oar. {b} hit it with the other oar. The barge came through and the bargemen have started calling them 'the oars'.", "{lead} sat on the cargo with a lantern and a very large stick for two days. Whatever lives in the cut decided the barge was not worth it."],
+				"fail": ["The reeds closed over the channel and {a} spent a night poling in circles while {b} shouted directions at the wrong stars. The barge turned back. It can try again.", "{lead} saw the thing in the reeds and the thing saw {lead}. Everyone agreed to go back the way they came. The Guild still wants it done."]
+			}
+		},
+		{
+			"id": "ask_guild_blades", "name": "Lend blades for a Guild contract", "kind": "Escort", "province": "gallows", "ask": "guild_blades",
+			"blurb": "A Guild request (Diplomacy). A contract has gone sideways at the toll-forts and the Guild is short of swords. Lend two for three days. Mercenaries respect people who show up.",
+			"days": 3, "rations": 2, "stats": {"might": 1.0, "charm": 0.5, "grit": 0.5}, "target": 27, "danger": 2, "cooldown": 1,
+			"reward": {"gilt": [12, 20], "renown": 1},
+			"text": {
+				"success": ["{a} held the fort's gate while {b} explained to the other side, in some detail, why they should go home. They went home. The Guild captain bought the drinks.", "{lead} did the work of three sellswords and charged for one. The Guild has noticed. The Guild notices everything that is cheap."],
+				"fail": ["The contract fell apart before {a} got there. {b} spent the three days guarding an empty fort for a captain who had already left. They can go back if the Guild still asks.", "{lead} picked a fight with the wrong sellsword. It was the Guild's sellsword. Everyone was sent home to cool off."]
+			}
+		},
+		{
+			"id": "ask_coven_letters", "name": "Gather fallen letters at the Saltreed edge", "kind": "Scouting", "province": "saltreed", "ask": "coven_letters",
+			"blurb": "A Coven request (Diplomacy). Where the Blank eats a place, its words fall out first. Walk the marsh's white edge and bring back every letter that has fallen, before it rots to blank paper.",
+			"days": 2, "rations": 1, "stats": {"lore": 1.0, "craft": 0.5, "grit": 0.5}, "target": 22, "danger": 2, "cooldown": 1,
+			"reward": {"insight": [1, 3]},
+			"needs": {"blank": true},
+			"text": {
+				"success": ["{a} picked letters out of the mud with tongs while {b} read the legible ones aloud to keep them from fading. One was a love letter. Nobody will say who cried.", "{lead} came back with a sack of fallen words and ink to the elbows. Some of the words have been trying to spell {lead}'s name since."],
+				"fail": ["The white moved in overnight and took the letter-field with it. {a} saved a handful. {b} saved a grocery list. The Coven wants more than that.", "{lead} got turned around in a fog full of whispering. Came back with nothing but a word stuck in their head that they refuse to say."]
+			}
+		},
+		{
+			"id": "ask_concord_census", "name": "Sit for the Concord census", "kind": "Survey", "province": "tithe", "ask": "concord_census",
+			"blurb": "A Concord request (Diplomacy). Two responsible persons are to present themselves at the Tithe Road customs house to be counted. Bring your own ink. Charm helps. Knowing the forms helps more.",
+			"days": 2, "rations": 1, "stats": {"charm": 1.0, "lore": 1.0}, "target": 24, "danger": 1, "cooldown": 1,
+			"reward": {"insight": [1, 2]},
+			"needs": {"concord": true},
+			"text": {
+				"success": ["{a} filled in forty-one forms without a single blot. {b} smiled at the clerk until the clerk smiled back, which the clerk then had to report. Hollowmark is now officially counted.", "{lead} answered every question, including 'state your reason for existing', with enough confidence that the census-taker wrote it down verbatim."],
+				"fail": ["{a} filled in Form 9 before Form 7, which voided both. {b} argued. The customs house closed for lunch. For two days. They can go back and try again.", "{lead} was counted, then recounted, then found to be 'statistically improbable' and sent home pending review."]
+			}
 		}
 	]
 }

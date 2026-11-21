@@ -130,6 +130,8 @@ var ai_presets := {}
 var ai_techs := {}
 ## The journal's own state (scripts/journal.gd, issue #114): enemies met, history log, codex read markers.
 var journal := {}
+## Faction asks: favours the factions ask of you (scripts/faction_asks.gd, issue #131).
+var asks := {}
 
 
 func territory() -> Territory:
@@ -199,6 +201,7 @@ func reset() -> void:
 	progress["armory"] = Armory.fresh()  # materials, stores, satchel pack, Forge, Market (issue #112)
 	visitors = {}
 	journal = Journal.fresh()
+	asks = FactionAsks.fresh()
 	rng.seed = 1234
 	if _territory != null:
 		_territory.reload_data()
@@ -207,6 +210,7 @@ func reset() -> void:
 
 func tick(delta: float) -> void:
 	_check_leads()
+	FactionAsks.check()
 	if SPEEDS[speed] == 0:
 		return
 	var days: float = delta * SPEEDS[speed] / DAY_SECONDS
@@ -350,6 +354,7 @@ func fray_sources(p: Dictionary, gov := "-") -> Array:
 				out.append(["Coven hedge-wards (Friendly)", -1])
 	elif owner == "free":
 		out.append(["Nobody holds it", FRAY_UNHELD])
+	out.append_array(FactionAsks.fray_sources(p))
 	out.append_array(BlankPlans.sources(p, gov if owner == "you" else "-"))
 	return out
 
@@ -808,7 +813,7 @@ func job(id: String) -> Dictionary:
 ## Jobs worth listing: rescues vanish once the person has joined.
 func job_ids() -> Array:
 	_load_expedition_data()
-	return job_data.keys().filter(func(j): return not recruits.has(job_data[j].get("recruit", "")) and personal_open(j))
+	return job_data.keys().filter(func(j): return not recruits.has(job_data[j].get("recruit", "")) and personal_open(j) and FactionAsks.job_listed(job_data[j]))
 
 
 ## How many squads the Guildhall can have out at once (one per level).
@@ -1071,6 +1076,7 @@ func _resolve_expedition(e: Dictionary) -> void:
 		if rid != "" and not recruits.has(rid) and recruit_data.has(rid):
 			recruits[rid] = {"role": "idle", "target": "", "injured": 0}
 			lines.append("%s joins your roster. Find them in Hollowmark or give them a job%s." % [recruit(rid)["name"], Prompts.tag("roster")])
+	lines.append_array(FactionAsks.on_expedition(jid, outcome != "fail"))  # a faction's request (issue #131)
 	var road := Relationships.banter_quote(squad)  # friends and rivals on the road (issue #116)
 	if road != "":
 		lines.append(road)
@@ -1663,6 +1669,7 @@ func _advance_diplomacy() -> void:
 			target = maxi(target, mini(standing_of(fid), int(fa.get("floor", -100))))
 		change_standing(fid, target - standing_of(fid), "", true)
 	_concord_trouble()
+	FactionAsks.dawn()
 
 
 func _concord_trouble() -> void:
@@ -2020,6 +2027,7 @@ func to_dict() -> Dictionary:
 		"relations": relations,
 		"visitors": visitors,
 		"journal": journal,
+		"asks": asks,
 		"missions_cleared": missions_cleared,
 		"progress": progress,
 		"dialogue": Dialogue.seen,
@@ -2140,6 +2148,7 @@ func from_dict(d: Dictionary) -> void:
 	relations = Relationships.from_save(d.get("relations", {}))
 	_load_visitors(d)
 	journal = Journal.from_save(d.get("journal", null))
+	asks = FactionAsks.from_save(d.get("asks", null))
 	progress = Progress.from_save(d.get("progress", {}))
 	if d.has("rng_state"):
 		rng.state = int(d["rng_state"])
