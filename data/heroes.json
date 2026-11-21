@@ -50,7 +50,7 @@
 			"special": "Biggest Ink pool. Audit makes enemies take +50% from everyone; Levy drains them to heal the party."
 		},
 		"velvette": {
-			"short": "Velvette", "weapon": "Rapier", "hp": 40, "speed": 74, "damage": 13, "power_rate": 1.1, "reach": 26, "arc": 35,
+			"short": "Fauvette", "weapon": "Rapier", "hp": 40, "speed": 74, "damage": 13, "power_rate": 1.1, "reach": 26, "arc": 35,
 			"ai": "balanced", "ink": 12, "abilities": ["riposte", "fleche"],
 			"trail": {"color": "e0405a", "style": "thrust"},
 			"special": "Narrow, quick thrusts. Time Riposte just before a blow lands to turn it back. Her tech finishes off the wounded."

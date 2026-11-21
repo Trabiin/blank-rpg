@@ -272,11 +272,11 @@ func test_command_table_explains_itself_and_its_screens_once() -> void:
 	await frames(5)
 	check(not Help.busy(), "no explainer the second time")
 	cmd.roster_view.close()
-	# The voice fits who is there: research falls to Quill until Abeyance joins.
+	# The voice fits who is there: research falls to Quill until Hild joins.
 	var res := Help.topic("research")
-	check_eq(Help.voice(res), "quill", "Quill reads the files before Abeyance joins")
+	check_eq(Help.voice(res), "quill", "Quill reads the files before Hild joins")
 	Empire.recruits["abeyance"] = {"role": "idle", "target": "", "injured": 0}
-	check_eq(Help.voice(res), "abeyance", "Abeyance once she has")
+	check_eq(Help.voice(res), "abeyance", "Hild once she has")
 	# Pause menu: locked screens are greyed with their day, and Help is there.
 	cmd._open_menu()
 	await frames(2)

@@ -144,7 +144,7 @@ func test_pre_region_save_keeps_act1_and_fogs_the_rest() -> void:
 	if not check_eq(r["status"], Saves.GOOD, "pre-region save reads"):
 		return
 	var d: Dictionary = r["data"]
-	check_eq(d["empire"].get("regions", []), ["marches"], "only the Hollow Marches are open")
+	check_eq(d["empire"].get("regions", []), ["marches"], "only the Brack Marches are open")
 	Empire.from_dict(d["empire"])
 	var t: Territory = Empire.territory()
 	check_eq(t.provinces.size(), 24, "the whole map")
@@ -301,3 +301,17 @@ func test_mid_mission_satchel_is_left_alone() -> void:
 		return
 	var e: Dictionary = r["data"]["empire"]
 	check(e["progress"]["armory"]["stores"].is_empty(), "nothing moved to the stores mid-mission")
+
+
+## Issue #158: the naming pass rewrites old display names in a save's history; ids stay as they were.
+func test_old_names_in_history_are_renamed() -> void:
+	var r: Dictionary = Saves.parse(_fixture_text("20261124_names__table_day42_old_names.json"))
+	if not check_eq(r["status"], Saves.GOOD, "save written before the naming pass reads"):
+		return
+	var text := JSON.stringify(r["data"])
+	check(not text.contains("Hesper Quoin"), "old name gone from the history")
+	check(text.contains("Hetty Coyne did not come back"), "new name in the same line")
+	check(text.contains("\"hesper\""), "the recruit id is untouched")
+	Empire.from_dict(r["data"]["empire"])
+	check_eq(Empire.short_name("hesper"), "Hetty", "the recruit shows the new name")
+	check_eq(Empire.short_name("quill"), "Quill", "Edwin \"Quill\" Pask goes by Quill")

@@ -113,12 +113,12 @@ Phase 3 batch (map objects, mixed views, palette only cleaned) did not fit toget
   One of the three meadow sets came back broken (dirt in the wrong corners): check every set on a sheet.
 - **Characters:** `create-character-v3` with Ash's settings, then `snap()` on every frame.
 - **Map-object inpainting** into a crop of the target was tried for cheap props: unreliable, not used.
-- Hub people: Quill, Tobble, Abeyance idle only; townsfolk (`folk_man`, `folk_woman`, `folk_elder`, `folk_child`)
+- Hub people: Quill, Tobble, Hild idle only; townsfolk (`folk_man`, `folk_woman`, `folk_elder`, `folk_child`)
   idle + walk, wandering the plaza (`scripts/townsfolk.gd`).
 
 ## Phase 8 remakes (one body plan)
 
-Odile, Verity, Abeyance, Dunmore, Ottoline, the folk man and woman and the Merrow Three were remade to the
+Odile, Verity, Hild, Dunmore, Ottoline, the folk man and woman and the Merrow Three were remade to the
 heroes' body plan (docs/ART_STYLE.md "Proportions"). What worked:
 - **No reference image.** create-character-v3 with Ash as `reference_image` just redraws Ash.
 - End the description with `sturdy build with a large head like the other heroes` (for an ordinary build:
@@ -129,10 +129,10 @@ heroes' body plan (docs/ART_STYLE.md "Proportions"). What worked:
   `tools/compose_group.py`, which also stands a group (the Merrow Three) side by side in one sprite.
 - Cost: a base about $0.027, idle in 5 directions about $0.045, walk in 5 directions about $0.05.
 
-## Field heroes batch (2026-11-20: Ottoline, Jessamy, Odile, Velvette)
+## Field heroes batch (2026-11-20: Ottoline, Jessamy, Odile, Fauvette)
 
 Combat sets for the four new field heroes, on the PixelLab characters their town sprites already came from
-(Ottoline `ottoline p8` on a 36 px canvas, Jessamy `jessamy base`, Odile `odile p8 pilot 2`) plus a new Velvette
+(Ottoline `ottoline p8` on a 36 px canvas, Jessamy `jessamy base`, Odile `odile p8 pilot 2`) plus a new Fauvette
 (`velvette field 2`). Same action list and frame counts as Phase 1; weapon wording per hero:
 
 | Id | Attack | Tech (second half = release) | Victory |
@@ -142,7 +142,7 @@ Combat sets for the four new field heroes, on the PixelLab characters their town
 | odile | `swinging a heavy iron-bound ledger book in a short smacking strike` | `... slamming a large brass stamp seal down in a mighty strike` | `snapping her ledger book shut and adjusting her glasses triumphantly` |
 | velvette | `thrusting a thin rapier forward in a quick fencing lunge` | `crouching low into a fencing stance ... mighty rapier thrust` | `saluting with her rapier and taking an elegant bow` |
 
-Velvette's base: `elegant duelist woman around 30 with a big head and a short wine-red bob haircut, black high-collared
+Fauvette's base: `elegant duelist woman around 30 with a big head and a short wine-red bob haircut, black high-collared
 coat with gold buttons and crimson lining, long black gloves, thin silver rapier in one hand, sturdy build with a large
 head like the other heroes`. The first try with "average build" came out slim with a small head (rejected, $0.027).
 

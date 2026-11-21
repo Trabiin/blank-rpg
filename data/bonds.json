@@ -136,7 +136,7 @@
 					["ninefingers", "You're staring at my hand. Everybody stares at the hand."],
 					["ninefingers", "Fine. I lost it to a paper cut. Form C-114, Requisition of Requisition Forms. It went septic."],
 					["", "Bran, passing: \"Last week it was a bear.\""],
-					["ninefingers", "Last week I liked you more, Coil."]
+					["ninefingers", "Last week I liked you more, Tolley."]
 				], "choice": [
 					{"label": "[Hold up nine fingers]", "bond": 3, "reply": [["ninefingers", "Oh, that's funny. Silent and a comedian. We're going to get along horribly."]]},
 					{"label": "[Look concerned]", "bond": 1, "reply": [["ninefingers", "Don't. Pity's a form too. I don't sign those."]]}
@@ -327,13 +327,13 @@
 					{"label": "[Hand her a fresh quill]", "bond": 2, "reply": [["abeyance", "Oh, a good one. I'll use it for the margins. That's where I keep the true things now."]]}
 				], "end": [["abeyance", "I'll work the margins at the Scriptorium. Things go faster when you know what to look for."]]},
 				{"rank": 4, "title": "A Map", "lines": [
-					["abeyance", "The page drew a map last night. Not words. Lines. The Lampwick Hills, and a chapel I've never seen."],
+					["abeyance", "The page drew a map last night. Not words. Lines. The Wickham Hills, and a chapel I've never seen."],
 					["abeyance", "There's an X. The page has never been that direct. It's usually so polite."],
 					["abeyance", "I think it wants to go home. Or it wants me to see something. I have to take it. Will you send people with me?"]
 				], "choice": [
-					{"label": "[Nod]", "bond": 3, "reply": [["abeyance", "Thank you. The Lampwick Hills. I'll pack the notebook. And the page. Obviously the page. You'll have to do the fighting."]]},
+					{"label": "[Nod]", "bond": 3, "reply": [["abeyance", "Thank you. The Wickham Hills. I'll pack the notebook. And the page. Obviously the page. You'll have to do the fighting."]]},
 					{"label": "[Mime: careful]", "bond": 2, "reply": [["abeyance", "I'm always careful. It's the page that isn't."]]}
-				], "end": [["", "A personal mission is on the Command Table: \"Follow the Page\", in the Lampwick Hills. Sister Abeyance can't fight: the party goes along to keep her alive."]]},
+				], "end": [["", "A personal mission is on the Command Table: \"Follow the Page\", in the Wickham Hills. Sister Hild can't fight: the party goes along to keep her alive."]]},
 				{"rank": 5, "title": "Not Yet", "lines": [
 					["abeyance", "The chapel was empty. Just a lectern, and on it, a book with every page torn out but one."],
 					["abeyance", "My page fit the gap exactly. It went in, and the book wrote one line, and then it was still."],
@@ -368,7 +368,7 @@
 				]},
 				{"rank": 2, "title": "Six Hundred Sequins", "lines": [
 					["", "Ottoline is sewing. Her hands are the size of shovels and the needle is the size of an eyelash. She does not miss a stitch."],
-					["ottoline", "Sequins. Velvette's old costume needed six hundred. Every one came off at least once a week, usually in a fight."],
+					["ottoline", "Sequins. Fauvette's old costume needed six hundred. Every one came off at least once a week, usually in a fight."],
 					["ottoline", "Rule of the Crimson Encore: if the audience can see you, you're part of the show. So the bouncers wore sequins too."],
 					["ottoline", "I was the biggest sparkle in the room. Glittering at drunks. Throwing them out in time with the band."],
 					["ottoline", "Don't laugh. I had a waltz for it. Three steps, a turn, out the door.", "happy"]
@@ -377,7 +377,7 @@
 					{"label": "[Hold the thread for her]", "bond": 2, "reply": [["ottoline", "Steady hands. Good. Most people shake around me. I'm told it's the height."]]}
 				]},
 				{"rank": 3, "title": "Six Tickets", "lines": [
-					["ottoline", "Velvette will tell you about the night the Blank came down Lantern Row one day, if she hasn't. Her version's got a lot of swooning in it."],
+					["ottoline", "Fauvette will tell you about the night the Blank came down Lantern Row one day, if she hasn't. Her version's got a lot of swooning in it."],
 					["ottoline", "Here's mine. The white came up the street like milk boiling over. Everyone ran for the door. My door."],
 					["ottoline", "I got them out. Two at a time, three. I threw people. And I counted. A hundred and twelve in. A hundred and six out."],
 					["ottoline", "Then it was on the step, and I could hear the last six coming down from the balcony, laughing, they didn't know yet. And I shut the door.", "sad"],
@@ -454,10 +454,10 @@
 					{"label": "[Shrug: you don't know]", "bond": 1, "reply": [["jessamy", "No. Course you don't. Neither of us read the instructions."]]}
 				], "end": [["jessamy", "I know every back road and every bent quartermaster between here and the sea. You'll have more Supplies than you know what to do with. Don't ask where from.", "smug"]]},
 				{"rank": 4, "title": "The Notary", "lines": [
-					["jessamy", "The scribe who struck me out. Notary Fennick Marrow. Still working a toll post on the Tithe Road, scratching people off for coin."],
+					["jessamy", "The scribe who struck me out. Notary Fennick. Still working a toll post on the Tithe Road, scratching people off for coin."],
 					["jessamy", "A pen that can take you out can put you back in. If he's paid enough. Or frightened enough."],
 					["jessamy", "I've never wanted to be on anybody's books in my life. But I'd like to see noon again. Just once. I've forgotten what colour things are.", "sad"],
-					["jessamy", "Lend me a squad. A big one. Marrow scares easy, but he has friends with crossbows."]
+					["jessamy", "Lend me a squad. A big one. Fennick scares easy, but he has friends with crossbows."]
 				], "choice": [
 					{"label": "[Nod]", "bond": 3, "reply": [["jessamy", "Lovely. Tithe Road. We'll go by night, obviously, and knock at his window. He'll adore that.", "smug"]]},
 					{"label": "[Mime: frightened, not paid]", "bond": 2, "reply": [["jessamy", "Oh, I like you. Frightened it is. He took my money, after all. Only fair to take his sleep.", "happy"]]}
@@ -465,8 +465,8 @@
 				{"rank": 5, "title": "Noon", "lines": [
 					["", "It is noon. The plaza is full of honest people doing honest things. In the middle of it, Jessamy lies flat on her back on the cobbles, eyes shut, perfectly solid."],
 					["jessamy", "Don't block it. Shift. You're in my sun."],
-					["jessamy", "Marrow wrote me back in. Took him an hour, his hand was shaking so badly. I stood over him and read every word."],
-					["jessamy", "When he asked for my occupation, I told him to put \"yes\". So that's me, officially. Jessamy Nightjar, occupation: yes.", "smug"],
+					["jessamy", "Fennick wrote me back in. Took him an hour, his hand was shaking so badly. I stood over him and read every word."],
+					["jessamy", "When he asked for my occupation, I told him to put \"yes\". So that's me, officially. Jessamy Leake, occupation: yes.", "smug"],
 					["jessamy", "I'm sunburnt. It's horrible. I love it. Everything is so loud and yellow.", "happy"],
 					["jessamy", "I'll still work nights, mind. Habit. But now it's because I choose to."]
 				], "choice": [
@@ -589,7 +589,7 @@
 				], "choice": [
 					{"label": "[Nod]", "bond": 3, "reply": [["velvette", "Lovely. Saltreed Marsh. I'll need you, a costume and a very quiet boat.", "smug"]]},
 					{"label": "[Mime: don't kill him]", "bond": 2, "reply": [["velvette", "...You ask a lot. Fine. I'll leave him breathing. I'll leave him a great many other things too, mostly bruises."]]}
-				], "end": [["", "A personal mission is on the Command Table: \"The Last Performance\", in Saltreed Marsh. Velvette is going, and Ash goes with her."]]},
+				], "end": [["", "A personal mission is on the Command Table: \"The Last Performance\", in Saltreed Marsh. Fauvette is going, and Ash goes with her."]]},
 				{"rank": 5, "title": "Curtain Call", "lines": [
 					["velvette", "The Gilded Heron had a full house. I came on during the closing act. In costume, naturally. One has standards."],
 					["velvette", "I challenged Augustin with the whole Marsh watching. He'd never held a sword in his life. I let him keep his. Then I read the commissions aloud. Every name. Every price."],

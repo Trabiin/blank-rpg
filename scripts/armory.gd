@@ -159,7 +159,7 @@ static func mats_text(need: Dictionary) -> String:
 
 
 ## What one kill drops: the kind's own table, plus the region's when the mission is outside the
-## Hollow Marches or the kind has none (so a chapter's new enemies drop its materials). {id: n}
+## Brack Marches or the kind has none (so a chapter's new enemies drop its materials). {id: n}
 static func roll_mats(kind: String, mission: Dictionary) -> Dictionary:
 	var out := {}
 	var own: Dictionary = mats_data().get("enemies", {}).get(kind, {})

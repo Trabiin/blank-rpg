@@ -12,7 +12,7 @@
 		"tithe_wax": {"name": "Tithe Wax", "region": "marches", "tier": 3, "value": 5,
 			"blurb": "Red sealing wax scraped off Concord strongboxes. It still smells of somebody else's money."},
 		"lamp_brass": {"name": "Lamp Brass", "region": "marches", "tier": 3, "value": 5,
-			"blurb": "Fittings off Lampwick's lamps: hinges, chimneys, little brass flames. Lampwick would like them back."},
+			"blurb": "Fittings off Wickham's lamps: hinges, chimneys, little brass flames. Wickham would like them back."},
 		"relic_silver": {"name": "Reliquary Silver", "region": "abbey", "tier": 4, "value": 9,
 			"blurb": "Prised off saints' boxes in the Abbey. The saints were not using it, and the Blank hates the shine."},
 		"bell_bronze": {"name": "Bell Bronze", "region": "abbey", "tier": 4, "value": 8,

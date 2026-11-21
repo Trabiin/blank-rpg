@@ -130,13 +130,39 @@ official name shows up in Concord dialogue and paperwork, which is funnier than 
 2. Add it to the glossary used by localisation (#143) with pronunciation if not obvious.
 3. Renames change **display text only**; internal ids (`"id": "quill"`) stay so saves keep working. If an id
    must change, add a save migration step and fixture (#110, `docs/SAVES.md`).
-4. A test in `tests/test_data.gd` will fail on banned names and stems in player-facing text. It lands with the
-   renames, once the current names that break the rules are gone.
+4. `tests/test_data.gd` `test_no_banned_names` fails on any name from 1.1 or any retired name (6.0) in data values
+   or script strings. Add a name to `BANNED_NAMES` there when it's retired.
 5. LLM *prose* tells in dialogue (as opposed to names) are covered by the script voice pass, #167.
 
 ---
 
 ## 6. Review of current names
+
+### 6.0 Applied (Ojon approved 2026-11-21, PR #170)
+Ojon accepted the recommendations below, "your call" rows included. These renames are in the game; ids are
+unchanged (save step `20261124_names` rewrites old names in saved history).
+
+| Was | Now |
+|---|---|
+| Brannoc "Bran" Coil | Brannoc "Bran" Tolley |
+| Quill Marrow | Edwin "Quill" Pask (goes by Quill) |
+| Notary Fennick Marrow | Notary Fennick |
+| Sister Abeyance | Sister Hild |
+| Jessamy Nightjar (and her skill branch "Nightjar") | Jessamy Leake (branch "After Dark") |
+| Velvette | Fauvette, stage name of Colombe Brissot |
+| Lysandre, the Velvet Marquise (Chapter 3, not built yet) | Hortense, the Velvet Marquise |
+| Saffron Kiss | stays, stage name of Maud Pickering |
+| Hex & Tally / Vane & Vesper (not built yet) | Nan Cripps & Tally / Cass & Kit Pruett |
+| Pell Undermoss · Hesper Quoin · Dunmore Vell | Pell Mossop · Hetty Coyne · Dunmore Vellacott |
+| The Tide That Forgot (Chapter 4 boss) | Low Water |
+| The Hollow Marches | The Brack Marches |
+| Lampwick Hills · Candlemere · Inkmere Shallows · Quillpine Pass | Wickham Hills · Candleford · Pendower Shallows · Scarth Pass |
+| Ledgerside · Saltgrave Harbour · Rosewine Terraces · The Drowned Light | Ledsham · Trevail Harbour · Vauclair Terraces · Polgarrow Light |
+| Raven's Quill (gear) | Crow Quill |
+
+Kept after review: Verity Hale, Ilse of the Mirror, the Merrow Three, the Gilded Concord (say "the Concord" in
+dialogue), the Mercenary Guild (plain, not an AI tell, and the Guildhall is built on it), Mothsilk Shawl,
+Saltglass Mantle, Inkpearl Quill, Thornwire Bracelet. The tables below are the review as it was made.
 
 Verdicts: **keep**, **rename** (breaks a hard rule), **your call** (borderline; recommendation given).
 Alternatives are suggestions, chosen to pass section 1 and fit section 2. Ojon picks.

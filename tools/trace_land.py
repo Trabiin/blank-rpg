@@ -21,7 +21,7 @@ GRID = (450, 300)  # Empire.MAP_CELLS
 # Hand fixes, in painting pixels (1536x1024): water that belongs to provinces.
 LAKES = [
     (255, 575, 815, 800),  # the ink lake round the Velvet Causeway
-    (760, 90, 990, 300),  # Candlemere's lake
+    (760, 90, 990, 300),  # Candleford's lake
 ]
 
 

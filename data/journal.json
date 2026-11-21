@@ -8,7 +8,7 @@
 			"done": {"cleared": ["meadow_prologue"]},
 			"recap": [
 				{"when": {}, "text": "The Blank eats everything it touches: grass, roads, names, the paperwork that says a thing exists. It does not give things back. It gave you back. You came to in the Frayed Meadow with no name, no voice and no entry in the Great Ledger, and the Nibblers wanted you returned like a library book."},
-				{"when": {"cleared": ["meadow_prologue"]}, "text": "You drove them off. A sellsword called Brannoc Coil, Bran to anyone he has not yet invoiced, watched you do it, decided you were either a miracle or a business opportunity, and walked you to the nearest town to find out which."}
+				{"when": {"cleared": ["meadow_prologue"]}, "text": "You drove them off. A sellsword called Brannoc Tolley, Bran to anyone he has not yet invoiced, watched you do it, decided you were either a miracle or a business opportunity, and walked you to the nearest town to find out which."}
 			]
 		},
 		{
@@ -39,7 +39,7 @@
 		}
 	],
 	"codex": [
-		{"id": "region_marches", "cat": "places", "region": "marches", "title": "The Hollow Marches",
+		{"id": "region_marches", "cat": "places", "region": "marches", "title": "The Brack Marches",
 			"text": "Farmland, marsh and wood around Hollowmark, on the eastern edge of everything. Pastoral from a distance. Up close the grass grows in half-sentences, the fences end in mid-air, and the horizon is a little closer every week. The Concord never cared much for the Marches. It taxed them, which it considers caring."},
 		{"id": "region_abbey", "cat": "places", "region": "abbey", "title": "Saint Ledger's Abbey",
 			"text": "The north, across the Candle Sound. Bells that ring the hours of a liturgy older than the Concord, and monks who copy the Great Ledger by hand, forever, in their own blood, so that if the capital's copy burns the world can be written back. Lately the pages come out blank, and the monks are running out of blood."},
@@ -119,7 +119,7 @@
 			"text": "Lamps lit with Ink on posts at a province's edge. The Blank dislikes being looked at, and a lit Wardlamp lowers the daily Fray of the province it stands in. Build and raise them from the Buildings screen in any province you hold; every level costs more and burns brighter."},
 
 		{"id": "ink_stuff", "cat": "inks", "title": "Ink", "unlock": {},
-			"text": "Ink is what the world is written in, and the only thing the Blank cannot simply eat: it has to unwrite it first. It wells up from the ground at the Lampwick spring, comes back from expeditions, and pays for the things that push the white away: Wardlamps, Reclaims, the rarest research. In a hero's hands it becomes magic, in five colours that people can hold and one that only the Blank uses."},
+			"text": "Ink is what the world is written in, and the only thing the Blank cannot simply eat: it has to unwrite it first. It wells up from the ground at the Wickham spring, comes back from expeditions, and pays for the things that push the white away: Wardlamps, Reclaims, the rarest research. In a hero's hands it becomes magic, in five colours that people can hold and one that only the Blank uses."},
 		{"id": "ink_red", "cat": "inks", "ink": "red", "title": "Red Ink",
 			"text": "Force. Blows, lunges and blasts that hurt. Red is the colour of every underlined threat and every final demand, and it hits like one."},
 		{"id": "ink_blue", "cat": "inks", "ink": "blue", "title": "Blue Ink",

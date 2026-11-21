@@ -38,7 +38,7 @@ func test_map_has_about_24_provinces_in_five_regions() -> void:
 		check(int(p["cells"]) > 300, "%s has room on the map (%d cells)" % [p["id"], int(p["cells"])])
 		var c: Vector2 = p["center"] * Vector2(Empire.MAP_CELLS)
 		check_eq(t.cell(int(c.x), int(c.y)), p["index"], "%s's label sits inside it" % p["id"])
-	check_eq(Empire.regions_open, ["marches"], "a new campaign opens the Hollow Marches only")
+	check_eq(Empire.regions_open, ["marches"], "a new campaign opens the Brack Marches only")
 
 
 func test_act1_borders_are_unchanged() -> void:
@@ -83,7 +83,7 @@ func test_opening_a_region() -> void:
 	check(not Empire.open_region("abbey"), "only once")
 	check(not Empire.open_region("nowhere"), "unknown regions are ignored")
 	check_eq(opened, ["abbey"], "region_opened fired once")
-	check(Empire.province_open(_p("candlemere")), "Candlemere is on the map")
+	check(Empire.province_open(_p("candlemere")), "Candleford is on the map")
 	check_eq(Empire.claim_blocker("candlemere"), "Too far. Claim the land in between first", "claims need a border")
 	_p("oldmill")["owner"] = "you"
 	Empire.res["gilt"] = 500

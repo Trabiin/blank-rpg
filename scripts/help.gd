@@ -3,7 +3,7 @@ extends RefCounted
 ## Onboarding and in-game help (issue #115). The words live in data/help.json (see its _comment);
 ## this file decides what plays when. Everything is static, like Dialogue and Story.
 ##
-##   Explainers  a short talk, voiced by whoever fits (Quill for the table, Abeyance for research,
+##   Explainers  a short talk, voiced by whoever fits (Quill for the table, Hild for research,
 ##               Tobble for bonds...), the first time each Command screen opens. Skippable, and
 ##               replayable from the Help screen (scripts/help_view.gd) and the codex.
 ##   Unlocks     in a story campaign the empire switches on a piece at a time over the first Act 1

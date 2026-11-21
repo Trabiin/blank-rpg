@@ -2,7 +2,7 @@
 	"_comment": "The Inklands: regions, biomes and provinces (issue #53). Coordinates: pos and label are 0-1 on the world map (x east, y south); the Blank's wall runs down the east edge. regions: open (open at the start), chapter (the story chapter that opens it; locked regions show under fog with their hint), opens_when (optional Story conditions, see Story.meets; story beats can also open one with then: open_region:<id>), pressure (optional extra Fray a day on every open province in the region, listed in its panel), label (where the region name sits). biomes: maps = the mission map pool (maps/<id>.txt, three layouts per biome made by tools/make_biomes.py; each map lists its objective spots in @spot lines and MissionTypes.vary picks among them, issue #113); an empty pool falls back to frayed_meadow and each chapter adds its region's maps. provinces: region, biome, weight > 1 grows a province. owner: you, free, erased or a faction id from data/factions.json. Output is per day. favors: the stat a governor here needs (7+ = good fit, 3 or less = poor fit); favors_why says why. claim: cost to plant your flag on an unclaimed province next to your land (it needs a governor to go with it).",
 	"regions": [
 		{
-			"id": "marches", "name": "The Hollow Marches", "chapter": 1, "open": true, "label": [0.56, 0.625],
+			"id": "marches", "name": "The Brack Marches", "chapter": 1, "open": true, "label": [0.56, 0.625],
 			"mood": "Pastoral, wrong at the edges",
 			"hint": "Hollowmark and the land around it. Grass grows in half-sentences."
 		},
@@ -70,7 +70,7 @@
 			"blurb": "The mill still turns. Nobody has seen the miller since the Blank came."
 		},
 		{
-			"id": "lampwick", "name": "Lampwick Hills", "region": "marches", "biome": "hills", "pos": [0.811, 0.278], "weight": 0.95,
+			"id": "lampwick", "name": "Wickham Hills", "region": "marches", "biome": "hills", "pos": [0.811, 0.278], "weight": 0.95,
 			"owner": "free", "fray": 24, "output": {"ink": 1, "gilt": 2}, "sites": ["Ink spring"],
 			"favors": "lore", "favors_why": "Only a scholar can coax the ink spring.", "claim": {"gilt": 60, "supplies": 12},
 			"blurb": "The only place for miles where ink still wells up from the ground."
@@ -100,7 +100,7 @@
 			"blurb": "There was a village here. The Blank kept the outline and ate the rest."
 		},
 		{
-			"id": "candlemere", "name": "Candlemere", "region": "abbey", "biome": "lakeshore", "pos": [0.55, 0.21], "weight": 1.0,
+			"id": "candlemere", "name": "Candleford", "region": "abbey", "biome": "lakeshore", "pos": [0.55, 0.21], "weight": 1.0,
 			"owner": "free", "fray": 10, "output": {"supplies": 5, "gilt": 4}, "sites": ["Chandlery", "Wax barges"],
 			"favors": "craft", "favors_why": "The chandlers keep a hundred wicks burning. Someone has to keep the wax coming.", "claim": {"gilt": 90, "supplies": 18},
 			"blurb": "A lake town that makes the Abbey's candles. Every window burns all night, just in case."
@@ -118,7 +118,7 @@
 			"blurb": "An outlying cloister on ground the Ledger says was always empty. The ground disagrees."
 		},
 		{
-			"id": "quillpine", "name": "Quillpine Pass", "region": "abbey", "biome": "mountain", "pos": [0.853, 0.225], "weight": 1.05,
+			"id": "quillpine", "name": "Scarth Pass", "region": "abbey", "biome": "mountain", "pos": [0.853, 0.225], "weight": 1.05,
 			"owner": "free", "fray": 26, "output": {"gilt": 5, "supplies": 3}, "sites": ["Pilgrims' hostel"],
 			"favors": "might", "favors_why": "Bandits, pilgrims and worse use the pass. Someone has to hold it.", "claim": {"gilt": 85, "supplies": 16},
 			"blurb": "A mountain pass of pines with feather-shaped needles. The road east ends in white."
@@ -130,7 +130,7 @@
 			"blurb": "The walled march at the end of the Tithe Road. Everyone pays to pass, including the wind."
 		},
 		{
-			"id": "ledgerside", "name": "Ledgerside", "region": "spire", "biome": "capital", "pos": [0.254, 0.107], "weight": 1.0,
+			"id": "ledgerside", "name": "Ledsham", "region": "spire", "biome": "capital", "pos": [0.254, 0.107], "weight": 1.0,
 			"owner": "concord", "fray": 2, "output": {"gilt": 8, "ink": 1}, "sites": ["Correction offices"],
 			"favors": "lore", "favors_why": "Clerks respect whoever spots the error first.",
 			"blurb": "The clerks' quarter, where history is edited weekly, by committee, with biscuits."
@@ -160,22 +160,22 @@
 			"blurb": "A bridge-city on a lake of ink. The elite dance at the masquerade while the water rises."
 		},
 		{
-			"id": "inkmere", "name": "Inkmere Shallows", "region": "causeway", "biome": "lakeshore", "pos": [0.111, 0.684], "weight": 1.0,
+			"id": "inkmere", "name": "Pendower Shallows", "region": "causeway", "biome": "lakeshore", "pos": [0.111, 0.684], "weight": 1.0,
 			"owner": "free", "fray": 24, "output": {"ink": 2, "supplies": 2}, "sites": ["Word-nets"],
 			"favors": "lore", "favors_why": "Only a scholar can tell a good catch of words from a cursed one.", "claim": {"gilt": 100, "supplies": 18},
 			"blurb": "The ink lake runs shallow here. Fishermen net words out of it and sell them by the pound."
 		},
 		{
-			"id": "terraces", "name": "Rosewine Terraces", "region": "causeway", "biome": "farmland", "pos": [0.352, 0.84], "weight": 1.0,
+			"id": "terraces", "name": "Vauclair Terraces", "region": "causeway", "biome": "farmland", "pos": [0.352, 0.84], "weight": 1.0,
 			"owner": "free", "fray": 12, "output": {"supplies": 5, "gilt": 4}, "sites": ["Wine presses"],
 			"favors": "craft", "favors_why": "The presses are old and the vines are fussy. Someone has to mend both.", "claim": {"gilt": 95, "supplies": 18},
 			"blurb": "Terraced vineyards that supply the masquerades. The grapes have started to taste of paper."
 		},
 		{
-			"id": "saltgrave", "name": "Saltgrave Harbour", "region": "coast", "biome": "coast", "pos": [0.56, 0.811], "weight": 1.0,
+			"id": "saltgrave", "name": "Trevail Harbour", "region": "coast", "biome": "coast", "pos": [0.56, 0.811], "weight": 1.0,
 			"owner": "free", "fray": 28, "output": {"gilt": 6, "supplies": 3}, "sites": ["Shipyard"],
 			"favors": "craft", "favors_why": "Half the fleet needs patching before it can sail anywhere.", "claim": {"gilt": 80, "supplies": 16},
-			"blurb": "Ships still leave Saltgrave. They sail east into the white, and nobody writes back."
+			"blurb": "Ships still leave Trevail. They sail east into the white, and nobody writes back."
 		},
 		{
 			"id": "halfwave", "name": "Halfwave Bay", "region": "coast", "biome": "coast", "pos": [0.775, 0.781], "weight": 1.0,
@@ -184,7 +184,7 @@
 			"blurb": "The sea stops mid-wave here. Children dare each other to touch the edge."
 		},
 		{
-			"id": "lighthouse", "name": "The Drowned Light", "region": "coast", "biome": "coast", "pos": [0.693, 0.928], "weight": 0.95,
+			"id": "lighthouse", "name": "Polgarrow Light", "region": "coast", "biome": "coast", "pos": [0.693, 0.928], "weight": 0.95,
 			"owner": "free", "fray": 52, "output": {"ink": 2, "supplies": 1}, "sites": ["Lighthouse"],
 			"favors": "lore", "favors_why": "The keeper speaks in riddles. Only a scholar keeps up.", "claim": {"gilt": 65, "supplies": 12},
 			"blurb": "A keeper still tends a light that shines out over nothing. Sometimes the nothing answers."

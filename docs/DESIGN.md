@@ -85,17 +85,17 @@ never required.
 ### 5.2 The territory map
 
 The Inklands are split into **provinces**, connected by roads: **24 provinces in five regions** (issue #53). The
-Hollow Marches (Act 1, nine provinces round Hollowmark) are open from the start; the other four regions lie under
+Brack Marches (Act 1, nine provinces round Hollowmark) are open from the start; the other four regions lie under
 fog, each showing its name, the chapter that opens it and a rumour of what is there, until its story chapter lifts
 the fog (`Empire.open_region()`, or a story beat with `then: open_region:<id>`):
 
 | Region | Chapter | Provinces | Notes |
 |---|---|---|---|
-| The Hollow Marches | 1 (open) | Hollowmark, Frayed Meadow, Gutterwoods, Old Mill Crossing, Lampwick Hills, Saltreed Marsh, Gallows Ferry, Tithe Road, Whitewater | Act 1, unchanged |
-| Saint Ledger's Abbey | 2 | Saint Ledger's Abbey, Candlemere, Bonefield Cloister, Quillpine Pass | North, across the Candle Sound from the capital |
-| The Velvet Causeway | 3 | The Velvet Causeway, Lantern Quay, Inkmere Shallows, Rosewine Terraces | South-west, round the ink lake |
-| The Unfinished Coast | 4 | Saltgrave Harbour, Halfwave Bay, The Drowned Light | South-east, next to the Blank; region pressure +1 Fray a day ("the sea forgets itself") |
-| The Gilded Spire | 5 | The Gilded Spire, Ledgerside, Tollmarch, Goldwash Fields | West, the capital at the end of the Tithe Road |
+| The Brack Marches | 1 (open) | Hollowmark, Frayed Meadow, Gutterwoods, Old Mill Crossing, Wickham Hills, Saltreed Marsh, Gallows Ferry, Tithe Road, Whitewater | Act 1, unchanged |
+| Saint Ledger's Abbey | 2 | Saint Ledger's Abbey, Candleford, Bonefield Cloister, Scarth Pass | North, across the Candle Sound from the capital |
+| The Velvet Causeway | 3 | The Velvet Causeway, Lantern Quay, Pendower Shallows, Vauclair Terraces | South-west, round the ink lake |
+| The Unfinished Coast | 4 | Trevail Harbour, Halfwave Bay, Polgarrow Light | South-east, next to the Blank; region pressure +1 Fray a day ("the sea forgets itself") |
+| The Gilded Spire | 5 | The Gilded Spire, Ledsham, Tollmarch, Goldwash Fields | West, the capital at the end of the Tithe Road |
 
 The Margin (Chapter 6) is the Blank itself: the white wall down the map's east edge, not a set of provinces.
 
@@ -175,7 +175,7 @@ Recruits come from story missions, rescue missions, reclaimed provinces, the Gui
 buildings that attract certain people (open a cabaret and singers come), and faction deals.
 
 **Governors in the MVP** (numbers in `scripts/empire.gd` and `data/provinces.json`): each province **wants** one
-stat (Hollowmark Charm, Old Mill Craft, Lampwick Lore, the Meadow and Saltreed Grit, and so on). A governor with 7+
+stat (Hollowmark Charm, Old Mill Craft, Wickham Lore, the Meadow and Saltreed Grit, and so on). A governor with 7+
 in it is a **good fit** (+50% of the province's output, Fray 1 slower); 3 or less is a **poor fit** (-25%, Fray 1
 faster). On top of that Grit slows Fray, Charm adds Gilt, Craft adds Supplies, and traits chip in (Stubborn,
 Coward, Greedy, Ink-sick, Ex-Concord). A province you hold with **no governor** frays +3 a day and delivers 25%
@@ -219,7 +219,7 @@ mission by hand.
 
 **Expeditions in the MVP** (jobs in `data/expeditions.json`, rules in `scripts/empire.gd`, screen E): the Guildhall
 offers about 8 jobs tied to provinces (forage, salvage, escort, scouting, three rescues that bring in Mother
-Gristle, Sister Abeyance and Corporal Daro, and a deadly Ink run at the erased edge). Each job wants one or two
+Gristle, Sister Hild and Corporal Daro, and a deadly Ink run at the erased edge). Each job wants one or two
 stats; squad strength is the sum of those stats over the two strongest members plus half for each extra member, and every point above or below the job's target
 moves the chance 4% from 50% (5% to 95%). Traits and pairings add or subtract (Coward on dangerous jobs, Night Owl
 on scouting and rescues, Ink-sick near the Blank, Ex-Concord on Tithe Road, Bran and Daro together, Quill and
@@ -302,7 +302,7 @@ About **20 core characters** (all the combat heroes plus the most important staf
 - Every core character gets an epilogue line that depends on their bond and fate.
 
 **Built (`data/bonds.json`, Bonds screen on H):** ten bonds: Bran, Mother Gristle, Daro, Big Ottoline, Jessamy,
-Odile and Velvette (field) plus Quill, Tobble and Sister Abeyance (core staff). Ranks need 6/16/30/46/64 points. Points: +2 for the first chat of
+Odile and Fauvette (field) plus Quill, Tobble and Sister Hild (core staff). Ranks need 6/16/30/46/64 points. Points: +2 for the first chat of
 the day in Hollowmark, +2 a day in a liked role, -1 a day in a disliked one, +2 for a successful expedition, +1 per
 8 kills fighting beside Ash (max 4 per mission), and +0 to +3 from the one choice in each rank scene (Ash never
 speaks; choices are gestures). Points never drop below the current rank and stop at the next rank until its scene
@@ -320,12 +320,12 @@ The four 2026-11-20 heroes' arcs: **Ottoline** shut the Crimson Encore's door on
 a hundred and six (personal mission: answer the knocking at that door, on Gallows Ferry). **Jessamy** paid a notary to strike
 her out of the Ledger and has faded in daylight ever since (mission: make him write her back in, Tithe Road).
 **Odile** found her own mother's countersignature on the order to collect Lowmere (mission: settle the account at Old
-Mill). **Velvette** killed eleven Concord-chosen "volunteers" on stage (mission: a last performance on her old
+Mill). **Fauvette** killed eleven Concord-chosen "volunteers" on stage (mission: a last performance on her old
 impresario's showboat in the Saltreed).
 
 **Romance, rivalries and epilogues (#116, `data/relationships.json`, `data/epilogues.json`, `scripts/relationships.gd`,
 `scripts/epilogues.gd`, `scripts/epilogue_view.gd`):**
-- **Romance.** Velvette, Jessamy, Odile, Daro and Big Ottoline can fall for Ash. After their rank 3 scene, once the bond
+- **Romance.** Fauvette, Jessamy, Odile, Daro and Big Ottoline can fall for Ash. After their rank 3 scene, once the bond
   reaches 38 points, they want one more word: an evening scene (listed as "3+" on the Bonds screen) where Ash either
   says yes (a romance) or stays a friend for good. Rank 4 waits for it. One romance at a time: saying yes to someone
   else is labelled "(ends it with X)" first, costs the ex 6 bond points (never below their rank), they say their
@@ -371,7 +371,7 @@ the Command Table, each briefing showing type, threat (1 to 5 with a name), rewa
   over them (faster at higher Fray). Piles near the edge are worth more.
 - **Personal** (`scripts/personal_missions.gd`, `data/personal.json`): one hand-built mission per bonded character,
   offered at rank 4 in their home province, on a set-piece map from `tools/make_personal.py`. Field heroes are forced
-  into the party (it is their fight); core staff (Quill, Tobble, Abeyance) come as an escort who can't fight and has
+  into the party (it is their fight); core staff (Quill, Tobble, Hild) come as an escort who can't fight and has
   to be kept alive (20 seconds to revive them if they drop). Each plays a script of steps (`scripts/mission_script.gd`:
   talk, go to, clear with an optional named elite, hold a spot or protect something, have someone work a spot,
   exit) with its own speakers, talks and portraits. Success opens the rank-5 scene and moves faction standing;
@@ -421,8 +421,8 @@ Party progression (per fighter), on top of the empire's own progression (buildin
    Branches reflect personality (e.g. Bran: *Bodyguard* vs *Turncoat*).
    **As built (issue #25, `data/skill_trees.json`, `scripts/skill_tree.gd`, passives in `scripts/tree_perks.gd`):**
    every field hero has a root and two branches of five (11 nodes): Ash Author / Editor, Bran Bodyguard / Turncoat,
-   Gristle Matron / Poisoner, Daro Corporal / Deserter, Ottoline Doorkeeper / Brawler, Jessamy Nightjar / Smuggler,
-   Odile Assessor / Collector, Velvette Duelist / Star. One Skill Point per level past 1 (19 at level 20); nodes cost
+   Gristle Matron / Poisoner, Daro Corporal / Deserter, Ottoline Doorkeeper / Brawler, Jessamy Leake / Smuggler,
+   Odile Assessor / Collector, Fauvette Duelist / Star. One Skill Point per level past 1 (19 at level 20); nodes cost
    1-3 and are bought in order; the last node of each branch is a capstone and a hero holds only one, so a
    max-level hero finishes one branch and most of the other. Step 4 needs bond rank Familiar, the capstone Trusted
    (Ash, who has no bond: 2 bonds at Familiar, then 3 at Trusted). Nodes add stats, change abilities (riders such as
@@ -538,7 +538,7 @@ entry ends up in charge, which the Concord considers a clerical nightmare and Br
 ### Outline (about 15 to 20 hours with the empire layer; the MVP covers the Prologue and Act 1)
 
 **Prologue: Spat Out** (Frayed Meadow, ~10 min)
-Ash crawls out of the Blank's edge. Nibblers (small hungry blank-creatures) attack. Brannoc Coil, a mercenary
+Ash crawls out of the Blank's edge. Nibblers (small hungry blank-creatures) attack. Brannoc Tolley, a mercenary
 paid to "check out the static," finds Ash and decides an unregistered person is either worthless or priceless.
 Tutorial: movement, attack, power gauge, swapping heroes. *(This is the current prototype.)*
 
@@ -563,17 +563,17 @@ for the first time and *does not fight*. She shows them an unedited page: the Ab
 Concord wrote out. Boss: **The Abbot Who Copied Himself** (many copies, one real).
 
 **Chapter 3: Masquerade** (Velvet Causeway, ~40 min)
-The Concord's elite throw a masquerade while the city drowns in ink. Recruit **Lysandre, the Velvet Marquise**
-(duelist, flirt, obvious liar) and **Saffron Kiss** (cabaret singer whose voice makes things briefly real).
-Optional recruit: **Hex & Tally**. Twist: Lysandre is a Concord spy assigned to bring Ash in, because the Concord
+The Concord's elite throw a masquerade while the city drowns in ink. Recruit **Hortense, the Velvet Marquise**
+(duelist, flirt, obvious liar) and **Saffron Kiss** (stage name of Maud Pickering; cabaret singer whose voice makes things briefly real).
+Optional recruit: **Nan Cripps & Tally**. Twist: Hortense is a Concord spy assigned to bring Ash in, because the Concord
 wants to dissect the one person the Blank spat out. Player chooses dialogue tone, but the story stays linear;
-Lysandre stays (she has fallen for the party, or at least for their odds). Boss: **The Host**, a party guest who is
+Hortense stays (she has fallen for the party, or at least for their odds). Boss: **The Host**, a party guest who is
 mostly mouth.
 
 **Chapter 4: The Sea Stops** (Unfinished Coast, ~30 min)
 The Vacancy speaks for the first time, through a drowned lighthouse keeper, in redacted text. Recruit **Ilse of the
 Mirror**, a knight who is actually a reflection that walked out of her mirror when the original was erased. Verity
-realizes the Blank is eating places she did not aim it at. She does not tell anyone. Boss: **The Tide That Forgot**.
+realizes the Blank is eating places she did not aim it at. She does not tell anyone. Boss: **Low Water**.
 
 **Chapter 5: The Gilded Spire** (~35 min)
 The party storms the capital, alongside or against Verity depending on the scene (still linear). The Concord's
@@ -608,12 +608,12 @@ The roster has three tiers:
 | Hero | Flavor | Weapon / Ink | Role | Where recruited | Hook |
 |---|---|---|---|---|---|
 | **Ash, the Unwritten** | Silent protagonist | Inkblade (sword), any Ink | All-rounder | Prologue | Spat out by the Blank; can briefly walk inside it |
-| **Brannoc "Bran" Coil** | Mercenary | Axe, Red Ink | Tank / bruiser | Prologue (Frayed Meadow) | His contract is tattooed on his arm and tightens if he breaks it. Will absolutely sell you out if outbid, and tells you so |
+| **Brannoc "Bran" Tolley** | Mercenary | Axe, Red Ink | Tank / bruiser | Prologue (Frayed Meadow) | His contract is tattooed on his arm and tightens if he breaks it. Will absolutely sell you out if outbid, and tells you so |
 | **Mother Gristle** | Mercenary | Staff, Green + Gold Ink | Healer / poisoner | Gutterwoods | Charges per heal (gold counter in the UI as a joke). Her poisons and her medicines are the same bottles |
 | **Corporal "Ninefingers" Daro** | Mercenary (deserter) | Crossbow, Black Ink | Ranged DPS | Act 1 (rescue mission) | Deserted the Concord army after being ordered to strike out a village. Sharpest tongue in the party |
-| **Lysandre, the Velvet Marquise** | Glamorous / flirty, spy | Rapier, Blue Ink | Fast duelist | Velvet Causeway | Flirts with everyone, including enemies, mid-fight. Secretly sent to capture Ash |
+| **Hortense, the Velvet Marquise** | Glamorous / flirty, spy | Rapier, Blue Ink | Fast duelist | Velvet Causeway | Flirts with everyone, including enemies, mid-fight. Secretly sent to capture Ash |
 | **Saffron Kiss** | Glamorous / flirty | Whip, Gold Ink | Support / buffer | Velvet Causeway | Cabaret singer whose voice makes things exist for a few seconds. Buffs are literally songs |
-| **Hex & Tally** | Mercenary con artists | Knuckles, Black Ink | Trickster / debuffer | Velvet Causeway (optional) | A grifter and her talking shadow, who signs the contracts she does not want to honor |
+| **Nan Cripps & Tally** | Mercenary con artists | Knuckles, Black Ink | Trickster / debuffer | Velvet Causeway (optional) | A grifter and her talking shadow, who signs the contracts she does not want to honor |
 | **Ilse of the Mirror** | Glamorous, unsettling | Spear, Blue + White Ink | Lancer / counter | Unfinished Coast | A reflection whose original was erased. Vain, gorgeous, and the only hero besides Ash who can touch White Ink |
 
 **Added 2026-11-20 (Ojon: more women in the playable party).** Four Hollowmark field heroes fill the four open slots,
@@ -622,21 +622,21 @@ so the 12 are complete. They join through the empire layer rather than the story
 | Hero | Flavor | Weapon | Role | How they join | Kit (data/heroes.json, abilities.json, techs.json) |
 |---|---|---|---|---|---|
 | **Big Ottoline** | Cabaret bouncer, Tobble's niece | Brass knuckles | Bruiser / crowd control | Tobble bond rank 2 | Most HP, takes 35% knockback. Chucking Out (charge that hurls and stuns), Last Orders (slam: stun all around 2 s). Tech: Through the Door |
-| **Jessamy Nightjar** | Smuggler, flirt | Hook-knives | Skirmisher / ranged | Guild standing Friendly | Fastest, quickest gauge, fragile. Knife Fan (3 thrown knives), Lamps Out (vanish 3 s, next hit x2). Tech: Cut and Run |
+| **Jessamy Leake** | Smuggler, flirt | Hook-knives | Skirmisher / ranged | Guild standing Friendly | Fastest, quickest gauge, fragile. Knife Fan (3 thrown knives), Lamps Out (vanish 3 s, next hit x2). Tech: Cut and Run |
 | **Odile Penhallow** | Ex-Concord tax collector | Iron-bound ledger | Controller / sustain | 3 Renown | Biggest Ink pool. Levy (drain around her, heals the party), Audit (+50% damage taken, 6 s). Tech: Final Demand (lands at range, Audits survivors) |
-| **Velvette** | Cabaret duelist, secret-broker (separate from Lysandre) | Rapier | Precision duelist / counter | 5 Renown | Riposte (parry window: cancel the next hit and counter with a stun), Fleche (long lunge). Tech: Coup de Grace (double damage below 35% HP) |
+| **Fauvette** | Cabaret duelist, secret-broker (separate from Hortense) | Rapier | Precision duelist / counter | 5 Renown | Riposte (parry window: cancel the next hit and counter with a stun), Fleche (long lunge). Tech: Coup de Grace (double damage below 35% HP) |
 
-Field roster after this: Gristle, Ottoline, Jessamy, Odile, Velvette (women), Ash, Bran (men), Daro (non-binary).
+Field roster after this: Gristle, Ottoline, Jessamy, Odile, Fauvette (women), Ash, Bran (men), Daro (non-binary).
 Still to come: the core staff and the recruit pool. Prototype implements **Ash** (player) and **Bran** (AI ally).
 
 ### Core staff (first ideas, MVP picks marked)
 
 | Character | Post | Hook |
 |---|---|---|
-| **Quill Marrow** (MVP) | Quartermaster at the Command Table | A former Concord clerk who kept Hollowmark's books and now cooks them for you. Knows where every coin is buried |
-| **Sister Abeyance** (MVP) | Head of the Scriptorium | Ran away from the Abbey with one stolen page that rewrites itself every night |
+| **Edwin "Quill" Pask** (MVP) | Quartermaster at the Command Table | A former Concord clerk who kept Hollowmark's books and now cooks them for you. Knows where every coin is buried |
+| **Sister Hild** (MVP) | Head of the Scriptorium | Ran away from the Abbey with one stolen page that rewrites itself every night |
 | **Old Tobble** (MVP) | Tavern keeper | Has been "about to retire" for thirty years. Hears everything; sells most of it |
-| **Vane & Vesper** | Inkworks | Twin chemists who disagree about everything except that the ink is alive |
+| **Cass & Kit Pruett** | Inkworks | Twin chemists who disagree about everything except that the ink is alive |
 
 ### Recruit pool (examples of the light tier)
 

@@ -189,7 +189,7 @@ func _on_choice(id: String) -> void:
 			slots.setup("Test shortcuts", [
 				{"id": "command", "label": "Hollowmark", "detail": "a fresh town and the Command Table"},
 				{"id": "boss_test", "label": "Boss: The Auditor", "detail": "fresh level 6 party, straight into the fight"},
-				{"id": "heroes_test", "label": "New heroes", "detail": "fresh town with Ottoline, Jessamy, Odile and Velvette already hired"},
+				{"id": "heroes_test", "label": "New heroes", "detail": "fresh town with Ottoline, Jessamy, Odile and Fauvette already hired"},
 				{"id": "map_test", "label": "Whole map", "detail": "Command Table with every region open, and coin to claim land"},
 				{"id": "error_test", "label": "Log a test error", "detail": "the next launch offers to send a report"},
 				{"id": "back", "label": "Back"}])
