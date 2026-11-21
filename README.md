@@ -5,6 +5,10 @@ Reality is being eaten by a hungry Blank, and you are the one person it spat bac
 
 **Play in your browser:** https://trabiin.github.io/last-ink/ (rebuilt automatically on every push to `main`)
 
+**Desktop (Windows, macOS, Linux):** every push to `main` builds all three; download them from the latest
+[Desktop builds](https://github.com/Trabiin/last-ink/actions/workflows/desktop.yml) run (Artifacts, at the bottom),
+or from [Releases](https://github.com/Trabiin/last-ink/releases) once a version is tagged. See [docs/DESKTOP.md](docs/DESKTOP.md).
+
 - Design document: [docs/DESIGN.md](docs/DESIGN.md)
 - Asset credits: [CREDITS.md](CREDITS.md)
 
@@ -17,10 +21,11 @@ Reality is being eaten by a hungry Blank, and you are the one person it spat bac
 | Swap hero | Tab / Q | Y | SWAP button |
 | Pause menu | Esc / P | Start | Pause button (top right) |
 | Journal (quests, people, codex, history) | I | Pause menu > Journal; LB / RB switch tabs | Journal button on the Command Table, or the menu |
+| Fullscreen (desktop) | Alt+Enter / F11 | Options > Display | - |
 
 Attacks use a power gauge: swinging before it refills still hits, but for less damage.
 
-Saving: pick Save game in the pause menu (three slots). The game also autosaves every minute when no enemy is close and nobody is down, and when you quit to the title or switch away from the tab. Saves live in your browser's storage, so they stay on that browser and device. Saves from older versions of the game load and are upgraded automatically; a save that cannot be read is set aside (never deleted) and the title screen says so.
+Saving: pick Save game in the pause menu (three slots). The game also autosaves every minute when no enemy is close and nobody is down, and when you quit to the title or switch away from the tab. In the browser, saves live in the browser's storage, so they stay on that browser and device; the desktop builds keep them in a Last Ink folder (Options > Save folder opens it). Saves from older versions of the game load and are upgraded automatically; a save that cannot be read is set aside (never deleted) and the title screen says so.
 
 ## Development
 
@@ -28,6 +33,7 @@ Saving: pick Save game in the pause menu (three slots). The game also autosaves 
 - Art: CC0 packs in `assets/source/` (see [CREDITS.md](CREDITS.md)). After changing them, run
   `python3 tools/import_art.py` to rebuild the paper-doll layers in `assets/characters/`.
 - Web export: `godot --headless --export-release "Web" build/web/index.html` (needs the 4.3 web export templates).
+- Desktop exports (Windows, macOS, Linux), releases and their smoke tests: [docs/DESKTOP.md](docs/DESKTOP.md).
 - Maps: each area is a plain text file in `maps/` (legend at the top of the file). Edit the
   characters to move paths, bushes, rocks, signs, spawns and the party start; paths get smooth
   edges automatically from `shaders/terrain_blend.gdshader`.
@@ -49,6 +55,6 @@ Saving: pick Save game in the pause menu (three slots). The game also autosaves 
   missions). Province shapes and borders are generated from the seed points by `scripts/territory.gd`,
   so moving a seed or changing its weight reshapes the map and its adjacency together.
 - CI: `.github/workflows/deploy-web.yml` tests and builds every push and PR, and deploys `main` to GitHub Pages
-  only when the tests pass.
+  only when the tests pass. `.github/workflows/desktop.yml` builds and smoke-tests the desktop versions.
 - Tests: `tools/run_tests.sh` (data checks, save migrations, scene smoke tests). See [docs/TESTING.md](docs/TESTING.md).
 - Saves: old saves must keep loading. Any change to saved state follows [docs/SAVES.md](docs/SAVES.md).

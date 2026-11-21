@@ -20,7 +20,7 @@ const W := 440.0
 const ROW_H := 22.0
 const ROW_H_CONTROLS := 17.0  # the Controls page has more rows
 
-var page := "main"  # "main", "controls" or "fx"
+var page := "main"  # "main", "controls", "fx" or "display"
 var sel := 0
 var listening := ""  # action id waiting for a new key/button
 var note := ""
@@ -94,7 +94,15 @@ func _rebuild() -> void:
 			"detail": ""})
 		_rows.append({"id": "fx_page", "kind": "open", "label": "Visual effects", "value": "shadows, clouds, mist, lamps",
 			"detail": ""})
+		_rows.append({"id": "display_page", "kind": "open", "label": "Display",
+			"value": "window, size, vsync, frame cap" if DisplaySettings.is_desktop() else "fullscreen, scaling",
+			"detail": ""})
+		if DisplaySettings.is_desktop():  # issue #145
+			_rows.append({"id": "save_folder", "kind": "open", "label": "Save folder", "value": "open",
+				"detail": "Saves and settings live in %s" % _short_path(ProjectSettings.globalize_path("user://"))})
 		_rows.append({"id": "back", "kind": "button", "label": "Back", "value": "", "detail": ""})
+	elif page == "display":
+		_display_rows()
 	elif page == "fx":
 		for f in Settings.FX:
 			var v := Settings.fx_value(f[0])
@@ -113,11 +121,44 @@ func _rebuild() -> void:
 	sel = clampi(sel, 0, _rows.size() - 1)
 
 
+## The Display page (issue #145). Only what this platform can change.
+func _display_rows() -> void:
+	var D := DisplaySettings
+	D.load_settings()
+	var desk := D.is_desktop()
+	_rows.append({"id": "d:mode", "kind": "cycle", "label": "Window mode" if desk else "Fullscreen", "value": D.mode_name(),
+		"detail": D.mode_info()})
+	if desk:
+		_rows.append({"id": "d:size", "kind": "cycle", "label": "Window size", "value": D.size_name(),
+			"detail": "Size of the window in windowed mode." if D.mode == 0 else "Fullscreen uses the whole screen. Switch to Windowed to pick a size."})
+	_rows.append({"id": "d:scaling", "kind": "cycle", "label": "Scaling", "value": D.SCALINGS[D.scaling], "detail": D.SCALING_INFO[D.scaling]})
+	if desk:
+		_rows.append({"id": "d:vsync", "kind": "cycle", "label": "VSync", "value": "On" if D.vsync else "Off",
+			"detail": "Matches the screen's refresh rate so the picture never tears. Off can feel snappier but may tear."})
+		_rows.append({"id": "d:fps", "kind": "cycle", "label": "Frame cap", "value": D.fps_name(),
+			"detail": "Limits frames per second to keep laptops cool and quiet. Off = as fast as the machine goes."})
+	_rows.append({"id": "d:background", "kind": "cycle", "label": "In the background", "value": D.BACKGROUNDS[D.background],
+		"detail": D.BACKGROUND_INFO[D.background]})
+	_rows.append({"id": "display_back", "kind": "button", "label": "Back", "value": "", "detail": ""})
+
+
+## A long folder path shortened for the footer (the home folder becomes ~).
+func _short_path(p: String) -> String:
+	var home := OS.get_environment("USERPROFILE" if OS.get_name() == "Windows" else "HOME")
+	if home != "" and p.begins_with(home):
+		p = "~" + p.substr(home.length())
+	return p.trim_suffix("/")
+
+
 ## Left/right (step -1/+1) on a value row.
 func _step(i: int, step: int) -> void:
 	if i < 0 or i >= _rows.size():
 		return
 	var id: String = _rows[i]["id"]
+	if id.begins_with("d:"):
+		DisplaySettings.step(id.substr(2), step)
+		_rebuild()
+		return
 	match id:
 		"battle_speed":
 			Settings.battle_speed_i = clampi(Settings.battle_speed_i + step, 0, Settings.BATTLE_SPEEDS.size() - 1)
@@ -171,7 +212,10 @@ func _activate(i: int) -> void:
 			if int(_rows[i].get("level", 0)) == int(r.get("level", 0)):
 				_step(i, -10)
 		"open":
-			page = "fx" if r["id"] == "fx_page" else "controls"
+			if r["id"] == "save_folder":
+				_open_save_folder()
+				return
+			page = {"fx_page": "fx", "display_page": "display"}.get(r["id"], "controls")
 			sel = 0
 			_rebuild()
 		"bind":
@@ -181,7 +225,7 @@ func _activate(i: int) -> void:
 			match r["id"]:
 				"back":
 					close()
-				"controls_back", "fx_back":
+				"controls_back", "fx_back", "display_back":
 					_back()
 				"fx_reset":
 					for f in Settings.FX:
@@ -196,7 +240,14 @@ func _activate(i: int) -> void:
 
 
 func _value_index(id: String) -> int:
+	var D := DisplaySettings
 	match id:
+		"d:mode": return D.mode
+		"d:size": return D.size_i
+		"d:scaling": return D.scaling
+		"d:vsync": return 1 if D.vsync else 0
+		"d:fps": return D.fps_i
+		"d:background": return D.background
 		"battle_speed": return Settings.battle_speed_i
 		"difficulty": return Settings.difficulty
 		"text_speed": return Dialogue.speed_index()
@@ -208,12 +259,22 @@ func _value_index(id: String) -> int:
 func _back() -> void:
 	if listening != "":
 		listening = ""
-	elif page == "controls" or page == "fx":
-		sel = 8 if page == "controls" else 9
+	elif page != "main":
+		var from: String = {"controls": "controls", "fx": "fx_page", "display": "display_page"}[page]
 		page = "main"
 		_rebuild()
+		sel = maxi(0, _rows.map(func(r): return r["id"]).find(from))
 	else:
 		close()
+
+
+## Opens the folder with the saves and settings in the system's file manager (issue #145).
+func _open_save_folder() -> void:
+	var path := ProjectSettings.globalize_path("user://")
+	if OS.shell_show_in_file_manager(path) != OK and OS.shell_open(path) != OK:
+		_say("Could not open it. The saves are in " + _short_path(path))
+		return
+	_say("Opened " + _short_path(path))
 
 
 func _say(s: String) -> void:
@@ -343,13 +404,14 @@ func _draw() -> void:
 	draw_rect(Rect2(Vector2.ZERO, vs), Color(0.04, 0.03, 0.07, 0.75))
 	var w := minf(W, vs.x - 16.0)
 	var row_h := ROW_H_CONTROLS if page == "controls" else ROW_H
+	row_h = maxf(ROW_H_CONTROLS, minf(row_h, floorf((vs.y - 92.0) / maxf(_rows.size(), 1))))  # long pages squeeze to fit
 	var h := 40.0 + _rows.size() * row_h + 40.0
 	_panel = Rect2((vs.x - w) / 2.0, maxf(6.0, (vs.y - h) / 2.0), w, minf(h, vs.y - 12.0))
 	draw_rect(_panel, PANEL)
 	draw_rect(_panel, Color(1, 1, 1, 0.18), false, 1.0)
 	var x0 := _panel.position.x + 24.0
 	var x1 := _panel.end.x - 14.0
-	_str(font, Vector2(x0 - 8, _panel.position.y + 22), {"main": "Options", "controls": "Controls", "fx": "Visual effects"}[page], 16, Color("f3f1ea"))
+	_str(font, Vector2(x0 - 8, _panel.position.y + 22), {"main": "Options", "controls": "Controls", "fx": "Visual effects", "display": "Display"}[page], 16, Color("f3f1ea"))
 	if page == "controls":
 		_str(font, Vector2(x1 - 168, _panel.position.y + 22), "Keyboard", 9, SOFT)
 		_str(font, Vector2(x1 - 70, _panel.position.y + 22), "Gamepad", 9, SOFT)

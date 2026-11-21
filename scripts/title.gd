@@ -1,6 +1,6 @@
 extends Control
 ## Title screen: the Blank slowly eating a black page, the Last Ink logo bleeding ink,
-## and a plain list menu (Continue, New Game, Load Game, Options, Credits).
+## and a plain list menu (Continue, New Game, Load Game, Options, Credits, and Quit on desktop).
 
 const GAME_SCENE := "res://scenes/main.tscn"
 const KEY_ART: Texture2D = preload("res://assets/ui/title_keyart.jpg")
@@ -35,6 +35,8 @@ func _ready() -> void:
 	items.append({"id": "options", "label": "Options", "detail": "speed, difficulty, sound, controls"})
 	items.append({"id": "report", "label": "Report a bug", "detail": "or send feedback"})
 	items.append({"id": "credits", "label": "Credits"})
+	if DisplaySettings.is_desktop():  # a browser tab is closed by the browser (issue #145)
+		items.append({"id": "quit", "label": "Quit"})
 	# Testing shortcuts live one level down, and only in builds that ask for them (test_shortcuts_on).
 	if test_shortcuts_on():
 		items.append({"id": "tests", "label": "Test shortcuts", "detail": "jump straight to the town or the Auditor"})
@@ -185,6 +187,8 @@ func _on_choice(id: String) -> void:
 		"credits":
 			menu.visible = false
 			credits.visible = true
+		"quit":
+			get_tree().quit()
 		"tests":
 			slots.setup("Test shortcuts", [
 				{"id": "command", "label": "Hollowmark", "detail": "a fresh town and the Command Table"},

@@ -45,6 +45,7 @@ func _run() -> void:
 	saves.notices = []
 	var files := []
 	for f in DirAccess.get_files_at(DIR):
+		f = f.trim_suffix(".remap")  # an exported build lists scripts as test_x.gd.remap (desktop smoke test, #145)
 		if f.begins_with("test_") and f.ends_with(".gd") and f != "test_case.gd" and (_filter == "" or _filter in f):
 			files.append(f)
 	files.sort()

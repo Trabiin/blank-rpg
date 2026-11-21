@@ -1,0 +1,273 @@
+name: Desktop builds
+
+# Windows, macOS and Linux builds (issue #145, docs/DESKTOP.md).
+# - Every push to main and every pull request: export all three, smoke-test each on its own OS
+#   (headless boot + a subset of the automated tests run by the exported binary), and upload them
+#   as workflow artifacts.
+# - A tag v<version> (matching application/config/version in project.godot) also publishes a
+#   GitHub release with the three downloads and a changelog of the merged pull requests.
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: desktop-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  GODOT_VERSION: "4.3"
+  RCEDIT_VERSION: "v2.0.0"
+
+jobs:
+  # Linux and macOS export from Linux. macOS is a universal (Intel + Apple Silicon) app, ad-hoc
+  # signed, not notarised (see docs/DESKTOP.md "Signing").
+  linux-macos:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.ver.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: ver
+        name: Read the game version
+        run: echo "version=$(sed -n 's/^config\/version="\(.*\)"/\1/p' project.godot)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Godot and export templates
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/godot
+            ~/.local/share/godot/export_templates
+          key: godot-${{ env.GODOT_VERSION }}-desktop-linux
+
+      - name: Download Godot and export templates
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          set -e
+          base="https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable"
+          mkdir -p ~/godot
+          curl -sSL -o /tmp/godot.zip "$base/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
+          unzip -q /tmp/godot.zip -d ~/godot
+          mv ~/godot/Godot_v${GODOT_VERSION}-stable_linux.x86_64 ~/godot/godot
+          curl -sSL -o /tmp/templates.tpz "$base/Godot_v${GODOT_VERSION}-stable_export_templates.tpz"
+          dest=~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
+          mkdir -p "$dest"
+          unzip -q -j /tmp/templates.tpz templates/linux_release.x86_64 templates/macos.zip templates/version.txt -d "$dest"
+          rm /tmp/templates.tpz
+
+      - name: Import project
+        run: timeout 600 ~/godot/godot --headless --import || true
+
+      - name: Export Linux and macOS
+        run: |
+          set -e
+          mkdir -p build/linux build/macos
+          ~/godot/godot --headless --export-release "Linux" build/linux/LastInk.x86_64
+          ~/godot/godot --headless --export-release "macOS" build/macos/LastInk.zip
+          test -x build/linux/LastInk.x86_64
+          test -s build/macos/LastInk.zip
+
+      - name: Export test packs for the smoke tests
+        run: |
+          set -e
+          cp export_presets.cfg /tmp/presets.bak
+          python3 tools/smoke_pack.py
+          mkdir -p build/smoke
+          ~/godot/godot --headless --export-pack "Linux" build/smoke/linux.pck
+          ~/godot/godot --headless --export-pack "macOS" build/smoke/macos.pck
+          cp /tmp/presets.bak export_presets.cfg
+
+      - name: Smoke test the Linux build
+        run: tools/smoke_build.sh build/linux/LastInk.x86_64 build/smoke/linux.pck
+
+      - name: Package
+        run: |
+          set -e
+          v="${{ steps.ver.outputs.version }}"
+          mkdir -p dist "pkg/Last Ink"
+          cp build/linux/LastInk.x86_64 "pkg/Last Ink/"
+          cp assets/icon/icon.png "pkg/Last Ink/last-ink.png"
+          cp tools/desktop/install-desktop-entry.sh tools/desktop/README.txt "pkg/Last Ink/"
+          chmod +x "pkg/Last Ink/LastInk.x86_64" "pkg/Last Ink/install-desktop-entry.sh"
+          tar -C pkg -czf "dist/LastInk-$v-linux-x86_64.tar.gz" "Last Ink"
+          cp build/macos/LastInk.zip "dist/LastInk-$v-macos.zip"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: LastInk-${{ steps.ver.outputs.version }}-linux
+          path: dist/*linux*
+          retention-days: ${{ github.event_name == 'pull_request' && 14 || 90 }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: LastInk-${{ steps.ver.outputs.version }}-macos
+          path: dist/*macos*
+          retention-days: ${{ github.event_name == 'pull_request' && 14 || 90 }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: smoke-pack-macos
+          path: build/smoke/macos.pck
+          retention-days: 1
+
+  # Windows exports on Windows: rcedit (icon and version info in the .exe) needs it.
+  windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Keep line endings as committed (the shell scripts break with CRLF)
+        run: git config --global core.autocrlf false
+
+      - uses: actions/checkout@v4
+
+      - id: ver
+        name: Read the game version
+        run: echo "version=$(sed -n 's/^config\/version="\(.*\)"/\1/p' project.godot)" >> "$GITHUB_OUTPUT"
+
+      # Self-contained Godot (the ._sc_ file): editor settings and templates live next to it.
+      - name: Cache Godot, export templates and rcedit
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: godot-sc
+          key: godot-${{ env.GODOT_VERSION }}-desktop-windows-rcedit-${{ env.RCEDIT_VERSION }}
+
+      - name: Download Godot, export templates and rcedit
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          set -e
+          base="https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable"
+          mkdir -p godot-sc
+          curl -sSL -o godot.zip "$base/Godot_v${GODOT_VERSION}-stable_win64.exe.zip"
+          7z e -y godot.zip -ogodot-sc > /dev/null
+          mv godot-sc/Godot_v${GODOT_VERSION}-stable_win64_console.exe godot-sc/godot_console.exe
+          mv godot-sc/Godot_v${GODOT_VERSION}-stable_win64.exe godot-sc/godot.exe
+          touch godot-sc/._sc_
+          curl -sSL -o templates.tpz "$base/Godot_v${GODOT_VERSION}-stable_export_templates.tpz"
+          dest="godot-sc/editor_data/export_templates/${GODOT_VERSION}.stable"
+          mkdir -p "$dest"
+          7z e -y templates.tpz templates/windows_release_x86_64.exe templates/windows_release_x86_64_console.exe templates/version.txt "-o$dest" > /dev/null
+          rm templates.tpz godot.zip
+          curl -sSL -o godot-sc/rcedit-x64.exe "https://github.com/electron/rcedit/releases/download/${RCEDIT_VERSION}/rcedit-x64.exe"
+
+      - name: Point Godot at rcedit
+        run: |
+          printf '[gd_resource type="EditorSettings" format=3]\n\n[resource]\nexport/windows/rcedit = "%s"\n' \
+            "$(cygpath -m "$PWD/godot-sc/rcedit-x64.exe")" > godot-sc/editor_data/editor_settings-${GODOT_VERSION}.tres
+
+      - name: Import project
+        run: timeout 600 godot-sc/godot_console.exe --headless --import || true
+
+      - name: Export Windows
+        run: |
+          set -e
+          mkdir -p build/windows
+          godot-sc/godot_console.exe --headless --export-release "Windows" build/windows/LastInk.exe 2>&1 | tee export.log
+          test -s build/windows/LastInk.exe
+          if grep -q "Resources Modification" export.log; then echo "rcedit did not run"; exit 1; fi
+
+      - name: Check the .exe icon and version info
+        run: |
+          set -e
+          python -m pip install --quiet pefile
+          python tools/desktop/check_exe.py build/windows/LastInk.exe "${{ steps.ver.outputs.version }}"
+
+      - name: Export the test pack for the smoke test
+        run: |
+          set -e
+          cp export_presets.cfg presets.bak
+          python tools/smoke_pack.py
+          mkdir -p build/smoke
+          godot-sc/godot_console.exe --headless --export-pack "Windows" build/smoke/windows.pck
+          cp presets.bak export_presets.cfg
+
+      - name: Smoke test the Windows build
+        run: tools/smoke_build.sh build/windows/LastInk.exe build/smoke/windows.pck
+
+      - name: Package
+        run: |
+          set -e
+          mkdir -p "pkg/Last Ink" dist
+          cp build/windows/LastInk.exe "pkg/Last Ink/"
+          cp tools/desktop/README.txt "pkg/Last Ink/"
+          (cd pkg && 7z a -tzip "../dist/LastInk-${{ steps.ver.outputs.version }}-windows-x86_64.zip" "Last Ink" > /dev/null)
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: LastInk-${{ steps.ver.outputs.version }}-windows
+          path: dist/*windows*
+          retention-days: ${{ github.event_name == 'pull_request' && 14 || 90 }}
+
+  # The macOS build runs on a real Mac (Apple Silicon), straight from the downloaded zip.
+  macos-smoke:
+    needs: linux-macos
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: LastInk-${{ needs.linux-macos.outputs.version }}-macos
+          path: dist
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: smoke-pack-macos
+          path: smoke
+
+      - name: Unpack
+        run: |
+          set -e
+          mkdir app
+          ditto -x -k dist/*.zip app
+          ls app
+          codesign --verify --verbose "app/Last Ink.app"
+
+      - name: Smoke test the macOS build
+        run: tools/smoke_build.sh "app/Last Ink.app/Contents/MacOS/Last Ink" smoke/macos.pck
+
+  # Tag v<version>: a GitHub release with all three downloads and the changelog.
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [linux-macos, windows, macos-smoke]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Tag must match the game version
+        run: |
+          want="v${{ needs.linux-macos.outputs.version }}"
+          if [ "$GITHUB_REF_NAME" != "$want" ]; then
+            echo "Tag $GITHUB_REF_NAME does not match project.godot version ($want). Bump application/config/version first."
+            exit 1
+          fi
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: LastInk-*
+          path: dist
+          merge-multiple: true
+
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -e
+          v="${{ needs.linux-macos.outputs.version }}"
+          pre=""
+          case "$v" in 0.*) pre="--prerelease" ;; esac
+          ls -la dist
+          gh release create "$GITHUB_REF_NAME" dist/* --title "Last Ink $v" --generate-notes $pre \
+            --notes-file tools/desktop/release_notes_header.md

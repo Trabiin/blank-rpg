@@ -601,6 +601,13 @@ func autosave() -> void:
 		Saves.save("auto", snapshot())
 
 
+## The window lost focus and the player wants the game paused then (DisplaySettings, issue #145):
+## open the pause menu like the pause key does, so coming back lands on Resume, not mid-swing.
+func pause_for_focus_loss() -> void:
+	if not game_over and not ending and not get_tree().paused:
+		set_paused(true)
+
+
 func _notification(what: int) -> void:
 	# Switching away from the tab (or closing it) usually blurs the page first.
 	if what == NOTIFICATION_APPLICATION_FOCUS_OUT or what == NOTIFICATION_WM_CLOSE_REQUEST:

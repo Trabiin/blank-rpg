@@ -133,6 +133,7 @@ static func apply_all() -> void:
 	load_settings()
 	apply_audio()
 	apply_bindings()
+	DisplaySettings.apply()  # window mode, size, vsync, frame cap, focus handling (issue #145)
 
 
 # ---------------------------------------------------------------- battle speed and difficulty
