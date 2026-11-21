@@ -1,7 +1,8 @@
 class_name QuickMenu
 extends Control
 ## The quick menu (issue #6): one button opens it mid-fight and time slows to 10% instead of pausing.
-## Tabs: Items, Abilities, Techs (which charged tech, orders to allies), Party (take control, AI behaviour), Equip.
+## Tabs: Items, Abilities, Techs (which charged tech, orders to allies), Tree (skill trees, issue #25),
+## Party (take control, AI behaviour), Equip.
 ## A plain list, never a ring.
 ## Every action is two presses: pick a row, then pick from its short list (or it acts at once).
 ##
@@ -12,7 +13,7 @@ extends Control
 
 signal closed
 
-const TABS := ["Items", "Abilities", "Techs", "Party", "Equip", "Options"]
+const TABS := ["Items", "Abilities", "Techs", "Tree", "Party", "Equip", "Options"]
 const SLOW := 0.1
 const W := 420.0
 const ROW_H := 30.0
@@ -166,6 +167,40 @@ func _open_gear() -> bool:
 	return true
 
 
+## The Tree tab's right-hand note: points to spend, or how much is learned.
+func _tree_right(id: String) -> String:
+	var free := SkillTree.points_free(id)
+	if SkillTree.can_spend(id):
+		return "%d Skill Point%s to spend" % [free, "" if free == 1 else "s"]
+	return "%d/%d nodes" % [SkillTree.learned(id).size(), SkillTree.all_nodes(id).size()]
+
+
+## The Tree tab's second line: how far along each branch the hero is.
+func _tree_line(id: String) -> String:
+	var parts := []
+	for b in SkillTree.branches(id):
+		var done := (b["nodes"] as Array).filter(func(n): return SkillTree.knows(id, str(n["id"]))).size()
+		parts.append("%s %d/%d" % [b.get("name", "?"), done, (b["nodes"] as Array).size()])
+	return "  ·  ".join(parts) + "  (pick to open the tree)"
+
+
+## The skill tree screen (issue #25) over the fight, paused underneath until it closes.
+func _open_tree(hero_id: String) -> void:
+	if party == null:
+		return
+	var tv := SkillTreeView.new()
+	get_parent().add_child(tv)
+	tv.party = party
+	close()
+	get_tree().paused = true
+	party.touch.release_all()
+	tv.open("mission", hero_id)
+	tv.closed.connect(func():
+		if is_inside_tree():
+			get_tree().paused = false
+		tv.queue_free())
+
+
 ## The options screen (issue #14) over the fight, which stays paused underneath until it closes.
 func _open_options() -> void:
 	close()
@@ -208,6 +243,11 @@ func _rebuild() -> void:
 					"right": "%s Lv %d  %d/%d techs" % [Skills.weapon_name(hero.hero_id), Skills.weapon_level(hero.hero_id),
 						Skills.known_techs(hero.hero_id).size(), Skills.all_techs(hero.hero_id).size()],
 					"detail": _tech_line(hero), "enabled": true, "hero": hero})
+		"Tree":  # issue #25: Skill Points to spend; picking a hero opens their tree (the fight pauses)
+			for h in _heroes():
+				var hero: Hero = h
+				rows.append({"id": hero.hero_id, "label": hero.hero_name + ("  (down)" if hero.dead else ""),
+					"right": _tree_right(hero.hero_id), "detail": _tree_line(hero.hero_id), "enabled": true, "hero": hero})
 		"Party":
 			for h in _heroes():
 				var hero: Hero = h
@@ -266,6 +306,9 @@ func _pick_row(i: int) -> void:
 	if not r.get("enabled", true):
 		return
 	if TABS[tab] == "Equip" and _open_gear():
+		return
+	if TABS[tab] == "Tree":
+		_open_tree(str(r["id"]))
 		return
 	if TABS[tab] == "Options":
 		_open_options()

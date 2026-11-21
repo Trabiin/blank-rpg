@@ -20,6 +20,7 @@ const LEGACY := {"steady": "balanced", "reckless": "aggressive", "guard": "suppo
 const KITE_FAR := 92.0  # Keep Distance closes in again past this
 const KITE_LEASH := 150.0  # ... and never kites further than this from the leader
 const SUPPORT_HEAL_SPEEDUP := 0.5  # a Support hero's passive poultice runs 1.5x as often
+const FOCUS_LOOK := 0.6  # seconds between a focused ally's second looks at who to go for
 
 
 static func preset_id(style: String) -> String:
@@ -51,12 +52,21 @@ static func steer(h: Hero, leader: Hero, delta: float) -> Vector2:
 		h.heal_t -= delta * SUPPORT_HEAL_SPEEDUP
 
 	var t: Enemy = h.ai_target
+	# Keep Distance picks from where it stands; everyone else guards the leader's surroundings.
+	var from := h.global_position if id == "distance" else leader.global_position
 	if t == null or not is_instance_valid(t) or t.dead \
 			or t.global_position.distance_to(leader.global_position) > float(p["leash"]):
-		# Keep Distance picks from where it stands; everyone else guards the leader's surroundings.
-		var from := h.global_position if id == "distance" else leader.global_position
-		h.ai_target = h._nearest_enemy(from, float(p["seek"]))
+		h.ai_target = focus_target(h, from, float(p["seek"]), leader)
 		t = h.ai_target
+	elif h.ai_focus != "":
+		# A skill tree focus (issue #25) looks again every so often: a newly wounded or marked enemy wins.
+		h.ai_focus_t -= delta
+		if h.ai_focus_t <= 0.0:
+			h.ai_focus_t = FOCUS_LOOK
+			var better := focus_target(h, from, float(p["seek"]), leader)
+			if better != null:
+				h.ai_target = better
+				t = better
 	if t == null:
 		return _follow(h, leader, float(p["follow"]))
 
@@ -121,6 +131,42 @@ static func steer(h: Hero, leader: Hero, delta: float) -> Vector2:
 	if d < float(p["back_off"]):
 		return -to_t.normalized() * 0.8
 	return Vector2.ZERO
+
+
+## Who the ally goes for within r of from: the nearest enemy, unless a skill tree node gave it a focus
+## (SkillTree.focus, TreePerks.FOCUS): the most hurt, marked ones first, whatever is on the leader, or the
+## toughest. Falls back to the nearest when nothing fits the focus.
+static func focus_target(h: Hero, from: Vector2, r: float, leader: Hero) -> Enemy:
+	var nearest: Enemy = h._nearest_enemy(from, r)
+	if h.ai_focus == "" or nearest == null:
+		return nearest
+	var best: Enemy = null
+	var best_score := -INF
+	for e in h.get_tree().get_nodes_in_group("enemies"):
+		var enemy := e as Enemy
+		if enemy == null or enemy.dead:
+			continue
+		var d := enemy.global_position.distance_to(from)
+		if d > r:
+			continue
+		var score := -INF
+		match h.ai_focus:
+			"wounded":
+				var ratio := float(enemy.hp) / float(maxi(enemy.max_hp, 1))
+				if ratio < 0.95:
+					score = (1.0 - ratio) * 200.0 - d * 0.3
+			"marked":
+				if enemy.marked():
+					score = -d
+			"leader_threat":
+				if leader and (enemy.target == leader or enemy.global_position.distance_to(leader.global_position) < 50.0):
+					score = -enemy.global_position.distance_to(leader.global_position)
+			"elite":
+				score = float(enemy.max_hp) - d * 0.2
+		if score > best_score:
+			best_score = score
+			best = enemy
+	return best if best != null else nearest
 
 
 ## An ordinary swing, unless the gauge is being saved for a charged tech (AllyTechs.saving).

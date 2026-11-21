@@ -89,6 +89,14 @@ var poise := 1.0
 ## Riposte (Velvette): while parry_t > 0 the next hit is turned aside and answered (abilities.gd kind "parry").
 var parry_t := 0.0
 var parry_ability := {}
+## Skill tree (issue #25, scripts/skill_tree.gd): passives the hero's learned nodes give (summed values,
+## handled in scripts/tree_perks.gd), who the ally AI goes for, and the once-a-mission last stand.
+var perks := {}
+var ai_focus := ""
+var ai_focus_t := 0.0
+var last_stand_left := 0
+var last_stand_set := false
+var last_stand_spent := false
 
 # Charged tech (issue #8; rules, blast and glow live in scripts/techs.gd).
 var charging := false
@@ -211,7 +219,7 @@ func _apply_hit() -> void:
 			continue
 		var to := enemy.global_position - global_position
 		if to.length() <= reach + enemy.radius and absf(facing.angle_to(to)) <= arc:
-			if enemy.take_hit(dmg, global_position, 120.0 + 160.0 * swing_power):
+			if TreePerks.strike(self, enemy, dmg, global_position, 120.0 + 160.0 * swing_power, {}, "swing"):
 				hit_any = true
 				Status.swing_landed(self, enemy, dmg)  # trinket perks: first strike, lifesteal, stun (issue #112)
 	if hit_any and crit_next > 1.0:
@@ -241,10 +249,16 @@ func _adjust_damage(amount: int) -> int:
 		amount = maxi(1, roundi(amount * (1.0 - guard_cut)))
 	if guard > 0.0:  # armor (issue #15)
 		amount = maxi(1, roundi(amount * (1.0 - guard)))
+	if party != null:
+		amount = TreePerks.adjust(self, amount)  # allies' guard auras and the last stand (issue #25)
 	return amount
 
 
 func take_hit(amount: int, from: Vector2, force := 160.0) -> bool:
+	if not dead and invuln_t <= 0.0 and parry_t <= 0.0 and amount > 0 and party != null:
+		amount = TreePerks.incoming(self, amount, from)  # skill tree: evading, a bodyguard nearby (issue #25)
+		if amount < 0:
+			return true
 	if parry_t > 0.0 and not dead and amount > 0:
 		Abilities.riposte(self, from)
 		return true
@@ -252,6 +266,7 @@ func take_hit(amount: int, from: Vector2, force := 160.0) -> bool:
 		Status.thorns(self, from)  # Thornwire Bracelet bites back (issue #112)
 	var before := hp
 	var landed := super.take_hit(amount, from, force * poise)
+	TreePerks.hit_back(self, before - hp, from)  # skill tree thorns (issue #25)
 	if hp < before:
 		AllyTechs.interrupted(self, before - hp)  # a heavy blow breaks an ally's charge
 	return landed
@@ -372,7 +387,7 @@ func _update_heal(delta: float) -> void:
 	if best == null:
 		heal_t = 0.5  # nobody needs it: look again soon
 		return
-	var amount := mini(heal_amount, best.max_hp - best.hp)
+	var amount := mini(TreePerks.heal_amount(self, heal_amount), best.max_hp - best.hp)
 	best.hp += amount
 	Fx.damage_number(get_parent(), best.global_position + Vector2(0, -18), "+%d" % amount, Color("9fe07a"))
 	Fx.burst(get_parent(), best.global_position + Vector2(0, -10), [Color("9fbf6a"), Color("dff5b0")], 10, 40.0)

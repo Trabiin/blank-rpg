@@ -1,0 +1,1569 @@
+{
+	"_comment": "Per-hero skill trees (issue #25, scripts/skill_tree.gd, screen scripts/skill_tree_view.gd). Each field hero has a root node and two branches of five nodes, bought in order with Skill Points (points: per_level for every level past 1). A branch's first node needs the root; every other node needs the one before it. The last node of each branch is its capstone: a hero can hold only one capstone. bond: the hero's bond rank with Ash (data/bonds.json) the node needs. bonds: [rank, count] for heroes without a bond (Ash): that many bonds at that rank or higher. effects: stats (added like gear, keys as in Progress.STAT_ORDER), abilities ({ability id: {add, mult, set, set_missing}} applied after the Ink tier, see SkillTree.mod_ability), perks (passives, every key is handled in scripts/tree_perks.gd, see PERKS there), ai ({focus: wounded | marked | leader_threat | elite}: who the hero goes for when the ally AI drives it). respec: unlearning a whole tree costs base + per_point Gilt for every point spent, in Hollowmark or at the Command Table (not on a mission).",
+	"points": {
+		"per_level": 1
+	},
+	"respec": {
+		"base": 30,
+		"per_point": 10
+	},
+	"trees": {
+		"ash": {
+			"root": {
+				"id": "ash_first_draft",
+				"name": "First Draft",
+				"cost": 1,
+				"desc": "+6 Max HP and +2 Ink.",
+				"flavor": "Spat out of the Blank with nothing. Something to start from.",
+				"effects": {
+					"stats": {
+						"hp": 6,
+						"ink": 2
+					}
+				}
+			},
+			"branches": [
+				{
+					"id": "author",
+					"name": "Author",
+					"color": "8fd06a",
+					"blurb": "Write the party back into the world: bigger mends, more Ink, nobody stays down.",
+					"nodes": [
+						{
+							"id": "ash_generous_hand",
+							"name": "Generous Hand",
+							"cost": 1,
+							"desc": "Rewrite heals 4 more and reaches 12 px further.",
+							"flavor": "Ash writes in a wider hand than they need to.",
+							"effects": {
+								"abilities": {
+									"rewrite": {
+										"add": {
+											"heal": 4,
+											"radius": 12
+										}
+									}
+								}
+							}
+						},
+						{
+							"id": "ash_footnotes",
+							"name": "Footnotes",
+							"cost": 1,
+							"desc": "Ink refills 0.15 a second faster (about a third quicker).",
+							"flavor": "Small print, endlessly.",
+							"effects": {
+								"perks": {
+									"ink_regen": 0.15
+								}
+							}
+						},
+						{
+							"id": "ash_second_draft",
+							"name": "Second Draft",
+							"cost": 2,
+							"desc": "Rewrite also gives every ally it touches 3 Ink.",
+							"flavor": "The second draft is always kinder.",
+							"effects": {
+								"abilities": {
+									"rewrite": {
+										"set": {
+											"ink_gift": 3
+										}
+									}
+								}
+							}
+						},
+						{
+							"id": "ash_marginalia",
+							"name": "Marginalia",
+							"cost": 3,
+							"desc": "Allies within 70 px of Ash take 10% less damage.",
+							"flavor": "People stand closer to Ash than they mean to. The Blank notices.",
+							"bonds": [
+								2,
+								2
+							],
+							"effects": {
+								"perks": {
+									"aura_guard": 0.1
+								}
+							}
+						},
+						{
+							"id": "ash_authors_hand",
+							"name": "Author's Hand",
+							"cost": 3,
+							"desc": "Rewrite is 2 s quicker to come back and its shield is half again as strong. Fallen allies near Ash get up twice as fast.",
+							"flavor": "Nobody dies in Ash's chapters. Not on purpose, anyway.",
+							"bonds": [
+								3,
+								3
+							],
+							"effects": {
+								"abilities": {
+									"rewrite": {
+										"add": {
+											"cooldown": -2
+										},
+										"mult": {
+											"shield": 1.5
+										}
+									}
+								},
+								"perks": {
+									"revive_speed": 1.0
+								}
+							},
+							"capstone": true
+						}
+					]
+				},
+				{
+					"id": "editor",
+					"name": "Editor",
+					"color": "8a7fb0",
+					"blurb": "Cut what should not be there: marks, sharper edges, techs that end things.",
+					"nodes": [
+						{
+							"id": "ash_sharp_nib",
+							"name": "Sharp Nib",
+							"cost": 1,
+							"desc": "+2 Damage.",
+							"flavor": "A quill-knife is mostly knife.",
+							"effects": {
+								"stats": {
+									"damage": 2
+								}
+							}
+						},
+						{
+							"id": "ash_red_pen",
+							"name": "Red Pen",
+							"cost": 1,
+							"desc": "Strikethrough marks everything it cuts: they take 25% more damage from everyone for 4 s.",
+							"flavor": "Circled, underlined, queried.",
+							"effects": {
+								"abilities": {
+									"strikethrough": {
+										"set": {
+											"mark": 4,
+											"mark_mult": 1.25
+										}
+									}
+								}
+							}
+						},
+						{
+							"id": "ash_cut_copy",
+							"name": "Cut Copy",
+							"cost": 2,
+							"desc": "Strikethrough comes back 1.5 s sooner, and every kill Ash lands gives back 2 Ink.",
+							"flavor": "Every line removed is a line you don't have to read.",
+							"effects": {
+								"abilities": {
+									"strikethrough": {
+										"add": {
+											"cooldown": -1.5
+										}
+									}
+								},
+								"perks": {
+									"kill_ink": 2
+								}
+							}
+						},
+						{
+							"id": "ash_kill_your_darlings",
+							"name": "Kill Your Darlings",
+							"cost": 3,
+							"desc": "Ash deals 30% more damage to enemies under 35% HP.",
+							"flavor": "Finish it. Do not admire it.",
+							"bonds": [
+								2,
+								2
+							],
+							"effects": {
+								"perks": {
+									"dmg_wounded": 0.3
+								},
+								"ai": {
+									"focus": "wounded"
+								}
+							}
+						},
+						{
+							"id": "ash_final_cut",
+							"name": "Final Cut",
+							"cost": 3,
+							"desc": "Charged techs hit 20% harder, and Strikethrough stuns what it cuts for 0.5 s more.",
+							"flavor": "The End, in a clean hand.",
+							"bonds": [
+								3,
+								3
+							],
+							"effects": {
+								"abilities": {
+									"strikethrough": {
+										"add": {
+											"stun": 0.5
+										}
+									}
+								},
+								"perks": {
+									"tech_mult": 0.2
+								}
+							},
+							"capstone": true
+						}
+					]
+				}
+			]
+		},
+		"bran": {
+			"root": {
+				"id": "bran_clause_one",
+				"name": "Clause One: Payment",
+				"cost": 1,
+				"desc": "+10 Max HP.",
+				"flavor": "Payment first. Everything else is negotiable.",
+				"effects": {
+					"stats": {
+						"hp": 10
+					}
+				}
+			},
+			"branches": [
+				{
+					"id": "bodyguard",
+					"name": "Bodyguard",
+					"color": "6a9ae8",
+					"blurb": "Clause four, taken seriously: Bran stands in front of the client and takes the hits meant for them.",
+					"nodes": [
+						{
+							"id": "bran_client_protection",
+							"name": "Client Protection",
+							"cost": 1,
+							"desc": "Hold the Line reaches 20 px further, and as an ally Bran uses it as soon as one enemy closes on the leader.",
+							"flavor": "The rider nobody reads until they need it.",
+							"effects": {
+								"abilities": {
+									"hold_the_line": {
+										"add": {
+											"radius": 20
+										},
+										"set": {
+											"ai": {
+												"when": "threat",
+												"count": 1,
+												"range": 70
+											}
+										}
+									}
+								}
+							}
+						},
+						{
+							"id": "bran_thick_hide",
+							"name": "Thick Hide",
+							"cost": 1,
+							"desc": "Armor blocks 8% more of every hit, and knockback moves him half as far.",
+							"flavor": "Bran is not pushed. Bran is occasionally relocated.",
+							"effects": {
+								"stats": {
+									"guard": 0.08
+								},
+								"perks": {
+									"poise_cut": 0.5
+								}
+							}
+						},
+						{
+							"id": "bran_clause_four",
+							"name": "Clause Four",
+							"cost": 2,
+							"desc": "30% of the damage aimed at allies within 56 px lands on Bran instead. As an ally he goes for whatever is attacking the leader.",
+							"flavor": "Guard the client. It's tattooed. It tightens if he doesn't.",
+							"effects": {
+								"perks": {
+									"bodyguard": 0.3
+								},
+								"ai": {
+									"focus": "leader_threat"
+								}
+							}
+						},
+						{
+							"id": "bran_hold_the_bill",
+							"name": "Hold the Bill",
+							"cost": 3,
+							"desc": "Hold the Line lasts 2 s longer and gives Bran a 15-point shield.",
+							"flavor": "The bill comes later. He makes sure there is a later.",
+							"bond": 2,
+							"effects": {
+								"abilities": {
+									"hold_the_line": {
+										"add": {
+											"time": 2
+										},
+										"set": {
+											"self_shield": 15
+										}
+									}
+								}
+							}
+						},
+						{
+							"id": "bran_paid_in_blood",
+							"name": "Paid in Blood",
+							"cost": 3,
+							"desc": "Once a mission, a blow that would drop Bran leaves him on 1 HP instead. Enemies that hit him take 20% of it back.",
+							"flavor": "Breach of contract is not an option. It is in the contract.",
+							"bond": 3,
+							"effects": {
+								"perks": {
+									"last_stand": 1,
+									"thorns": 0.2
+								}
+							},
+							"capstone": true
+						}
+					]
+				},
+				{
+					"id": "turncoat",
+					"name": "Turncoat",
+					"color": "e0504a",
+					"blurb": "Bran works for whoever pays best, and he tells you so: harder hits, bounties and looking after number one.",
+					"nodes": [
+						{
+							"id": "bran_hazard_pay",
+							"name": "Hazard Pay",
+							"cost": 1,
+							"desc": "+2 Damage.",
+							"flavor": "Danger money, paid in advance, spent in advance.",
+							"effects": {
+								"stats": {
+									"damage": 2
+								}
+							}
+						},
+						{
+							"id": "bran_itemised_violence",
+							"name": "Itemised Violence",
+							"cost": 1,
+							"desc": "Every kill Bran lands is worth 2 Gilt, brought home with the rest of the loot.",
+							"flavor": "One Nibbler, removed. Two Gilt. Receipt on request.",
+							"effects": {
+								"perks": {
+									"kill_gilt": 2
+								}
+							}
+						},
+						{
+							"id": "bran_cleave_clause",
+							"name": "Cleave Clause",
+							"cost": 2,
+							"desc": "Cleave swings 20 degrees wider and heals Bran for 30% of the damage it deals.",
+							"flavor": "Self-preservation is a clause too. Clause one, technically.",
+							"effects": {
+								"abilities": {
+									"cleave": {
+										"add": {
+											"arc": 20
+										},
+										"set": {
+											"leech": 0.3
+										}
+									}
+								}
+							}
+						},
+						{
+							"id": "bran_renegotiation",
+							"name": "Renegotiation",
+							"cost": 3,
+							"desc": "Below 40% HP Bran hits 30% harder.",
+							"flavor": "Terms change when the client is bleeding. So does the price.",
+							"bond": 2,
+							"effects": {
+								"perks": {
+									"dmg_low_hp": 0.3
+								}
+							}
+						},
+						{
+							"id": "bran_highest_bidder",
+							"name": "Highest Bidder",
+							"cost": 3,
+							"desc": "Kills refill Bran's gauge at once, and 15% of his hits land half again as hard. As an ally he picks off the wounded first.",
+							"flavor": "He told you he would sell you out if outbid. Nobody has outbid you. Yet.",
+							"bond": 3,
+							"effects": {
+								"perks": {
+									"kill_gauge": 1,
+									"crit": 0.15
+								},
+								"ai": {
+									"focus": "wounded"
+								}
+							},
+							"capstone": true
+						}
+					]
+				}
+			]
+		},
+		"gristle": {
+			"root": {
+				"id": "gristle_bedside_manner",
+				"name": "Bedside Manner",
+				"cost": 1,
+				"desc": "Her passive poultice heals 2 more.",
+				"flavor": "Brusque, yes. Effective, invoiced.",
+				"effects": {
+					"stats": {
+						"heal": 2
+					}
+				}
+			},
+			"branches": [
+				{
+					"id": "matron",
+					"name": "Matron",
+					"color": "8fd06a",
+					"blurb": "Her medicines: bigger heals, sooner, shields on top, and everybody back on their feet. Billed, naturally.",
+					"nodes": [
+						{
+							"id": "gristle_warm_hands",
+							"name": "Warm Hands",
+							"cost": 1,
+							"desc": "Every heal she gives (Poultice Toss and her passive poultice) is 15% bigger.",
+							"flavor": "Warmed on the cauldron. Don't ask what else is in the cauldron.",
+							"effects": {
+								"perks": {
+									"heal_power": 0.15
+								}
+							}
+						},
+						{
+							"id": "gristle_house_call",
+							"name": "House Call",
+							"cost": 1,
+							"desc": "Poultice Toss reaches 16 px further, and as an ally she throws it as soon as anyone nearby drops under 70% HP.",
+							"flavor": "She doesn't wait to be asked. She waits to be paid.",
+							"effects": {
+								"abilities": {
+									"poultice_toss": {
+										"add": {
+											"radius": 16
+										},
+										"set": {
+											"ai": {
+												"when": "hurt",
+												"below": 0.7
+											}
+										}
+									}
+								}
+							}
+						},
+						{
+							"id": "gristle_thick_broth",
+							"name": "Thick Broth",
+							"cost": 2,
+							"desc": "Poultice Toss adds an 8-point shield for 5 s to everyone it heals.",
+							"flavor": "It sets like glue. That is the point.",
+							"effects": {
+								"abilities": {
+									"poultice_toss": {
+										"add": {
+											"shield": 8
+										},
+										"set_missing": {
+											"shield_time": 5
+										}
+									}
+								}
+							}
+						},
+						{
+							"id": "gristle_smelling_salts",
+							"name": "Smelling Salts",
+							"cost": 3,
+							"desc": "Fallen allies near her get up twice as fast.",
+							"flavor": "One sniff and the dead sit up and complain about the smell.",
+							"bond": 2,
+							"effects": {
+								"perks": {
+									"revive_speed": 1.0
+								}
+							}
+						},
+						{
+							"id": "gristle_account_settled",
+							"name": "Account Settled",
+							"cost": 3,
+							"desc": "Her passive poultice comes 30% more often, and every Poultice Toss bills 3 Gilt, brought home with the loot.",
+							"flavor": "Mother Gristle has never lost a patient. She has lost several debtors.",
+							"bond": 3,
+							"effects": {
+								"perks": {
+									"heal_rate": 0.3,
+									"heal_bill": 3
+								}
+							},
+							"capstone": true
+						}
+					]
+				},
+				{
+					"id": "poisoner",
+					"name": "Poisoner",
+					"color": "9a6ad0",
+					"blurb": "Her poisons are the same bottles: venom on the ladle, scalds that linger, and things that stop getting up.",
+					"nodes": [
+						{
+							"id": "gristle_same_bottle",
+							"name": "Same Bottle",
+							"cost": 1,
+							"desc": "Her swings poison: 2 damage a second for 4 s.",
+							"flavor": "Medicine is a matter of dose. So is the other thing.",
+							"effects": {
+								"perks": {
+									"poison": 2
+								}
+							}
+						},
+						{
+							"id": "gristle_scalding",
+							"name": "Scalding",
+							"cost": 1,
+							"desc": "Scald deals 4 more and poisons for 3 a second.",
+							"flavor": "Broth, with notes of nightshade.",
+							"effects": {
+								"abilities": {
+									"scald": {
+										"add": {
+											"damage": 4
+										},
+										"set": {
+											"poison": 3
+										}
+									}
+								}
+							}
+						},
+						{
+							"id": "gristle_bitter_draught",
+							"name": "Bitter Draught",
+							"cost": 2,
+							"desc": "She deals 25% more damage to poisoned enemies.",
+							"flavor": "It works better if they're already feeling poorly.",
+							"effects": {
+								"perks": {
+									"dmg_poisoned": 0.25
+								}
+							}
+						},
+						{
+							"id": "gristle_black_label",
+							"name": "Black Label",
+							"cost": 3,
+							"desc": "Her poison bites 2 a second harder, and every kill she lands gives her 3 Ink.",
+							"flavor": "The bottle with the skull on it. She drew the skull herself.",
+							"bond": 2,
+							"effects": {
+								"perks": {
+									"poison": 2,
+									"kill_ink": 3
+								}
+							}
+						},
+						{
+							"id": "gristle_last_rites",
+							"name": "Last Rites",
+							"cost": 3,
+							"desc": "Poultice Toss also poisons every enemy in its radius for 4 a second.",
+							"flavor": "One fistful, two prescriptions.",
+							"bond": 3,
+							"effects": {
+								"abilities": {
+									"poultice_toss": {
+										"set": {
+											"poison_area": 4
+										}
+									}
+								}
+							},
+							"capstone": true
+						}
+					]
+				}
+			]
+		},
+		"ninefingers": {
+			"root": {
+				"id": "daro_ten_opinions",
+				"name": "Nine Fingers, Ten Opinions",
+				"cost": 1,
+				"desc": "+4 Reach.",
+				"flavor": "Daro has a point. Daro always has a point. It's on a pole.",
+				"effects": {
+					"stats": {
+						"reach": 4
+					}
+				}
+			},
+			"branches": [
+				{
+					"id": "corporal",
+					"name": "Corporal",
+					"color": "6a9ae8",
+					"blurb": "Still a soldier under the scowl: sweeping the line clear, calling targets and making the squad hit harder.",
+					"nodes": [
+						{
+							"id": "daro_form_up",
+							"name": "Form Up",
+							"cost": 1,
+							"desc": "Pike Sweep swings 30 degrees wider and reaches 6 px further.",
+							"flavor": "Shaft level, feet set, mouth running.",
+							"effects": {
+								"abilities": {
+									"pike_sweep": {
+										"add": {
+											"arc": 30,
+											"reach": 6
+										}
+									}
+								}
+							}
+						},
+						{
+							"id": "daro_call_the_target",
+							"name": "Call the Target",
+							"cost": 1,
+							"desc": "Pike Sweep marks what it hits: 25% more damage from everyone for 4 s.",
+							"flavor": "\"That one. No, the ugly one. The uglier one.\"",
+							"effects": {
+								"abilities": {
+									"pike_sweep": {
+										"set": {
+											"mark": 4,
+											"mark_mult": 1.25
+										}
+									}
+								}
+							}
+						},
+						{
+							"id": "daro_hold_the_ford",
+							"name": "Hold the Ford",
+							"cost": 2,
+							"desc": "Allies within 70 px of Daro deal 10% more damage.",
+							"flavor": "Nobody wants to look slow in front of Daro. Daro will mention it.",
+							"effects": {
+								"perks": {
+									"aura_damage": 0.1
+								}
+							}
+						},
+						{
+							"id": "daro_drill_voice",
+							"name": "Drill Voice",
+							"cost": 3,
+							"desc": "Pike Sweep stuns for 0.8 s more and comes back 1.5 s sooner.",
+							"flavor": "Learned on the parade ground. Unlearned nothing.",
+							"bond": 2,
+							"effects": {
+								"abilities": {
+									"pike_sweep": {
+										"add": {
+											"stun": 0.8,
+											"cooldown": -1.5
+										}
+									}
+								}
+							}
+						},
+						{
+							"id": "daro_orders_reversed",
+							"name": "Orders Reversed",
+							"cost": 3,
+							"desc": "Daro deals 30% more damage to marked enemies, and as an ally goes for marked enemies first.",
+							"flavor": "They taught Daro to strike out villages. Daro strikes out Concord sergeants instead.",
+							"bond": 3,
+							"effects": {
+								"perks": {
+									"dmg_marked": 0.3
+								},
+								"ai": {
+									"focus": "marked"
+								}
+							},
+							"capstone": true
+						}
+					]
+				},
+				{
+					"id": "deserter",
+					"name": "Deserter",
+					"color": "e0504a",
+					"blurb": "Walked off the line and never looked back: light on their feet, never where you aimed, first blood every time.",
+					"nodes": [
+						{
+							"id": "daro_light_kit",
+							"name": "Light Kit",
+							"cost": 1,
+							"desc": "+6 Speed.",
+							"flavor": "Left the regulation kit in a ditch near Tithe Road.",
+							"effects": {
+								"stats": {
+									"speed": 6
+								}
+							}
+						},
+						{
+							"id": "daro_not_here",
+							"name": "Not Here",
+							"cost": 1,
+							"desc": "12% of hits miss Daro completely.",
+							"flavor": "Officially, Corporal Daro is not here. Officially, Corporal Daro is a pile of ash.",
+							"effects": {
+								"perks": {
+									"evade": 0.12
+								}
+							}
+						},
+						{
+							"id": "daro_run_through",
+							"name": "Run Them Through",
+							"cost": 2,
+							"desc": "Long Thrust goes 20 px further, deals 6 more and comes back 1 s sooner.",
+							"flavor": "The point goes in. The rest of Daro follows.",
+							"effects": {
+								"abilities": {
+									"long_thrust": {
+										"add": {
+											"distance": 20,
+											"damage": 6,
+											"cooldown": -1
+										}
+									}
+								}
+							}
+						},
+						{
+							"id": "daro_no_orders",
+							"name": "No Orders",
+							"cost": 3,
+							"desc": "Daro deals 35% more damage to enemies that are still unhurt.",
+							"flavor": "No orders means nobody says wait.",
+							"bond": 2,
+							"effects": {
+								"perks": {
+									"dmg_fresh": 0.35
+								}
+							}
+						},
+						{
+							"id": "daro_awol",
+							"name": "AWOL",
+							"cost": 3,
+							"desc": "A kill by Daro resets Long Thrust at once, and 10% of their hits land half again as hard.",
+							"flavor": "Gone before the paperwork. Gone before the body hits the ground.",
+							"bond": 3,
+							"effects": {
+								"perks": {
+									"kill_reset": "long_thrust",
+									"crit": 0.1
+								}
+							},
+							"capstone": true
+						}
+					]
+				}
+			]
+		},
+		"ottoline": {
+			"root": {
+				"id": "ottoline_built_like_a_door",
+				"name": "Built Like a Door",
+				"cost": 1,
+				"desc": "+12 Max HP.",
+				"flavor": "Tobble says she was a big baby. Tobble says it quietly.",
+				"effects": {
+					"stats": {
+						"hp": 12
+					}
+				}
+			},
+			"branches": [
+				{
+					"id": "doorkeeper",
+					"name": "Doorkeeper",
+					"color": "6a9ae8",
+					"blurb": "Nobody gets past the door: she pulls the room onto herself and keeps everyone behind her standing.",
+					"nodes": [
+						{
+							"id": "ottoline_coat_check",
+							"name": "Coat Check",
+							"cost": 1,
+							"desc": "Armor blocks 6% more of every hit.",
+							"flavor": "Six tickets in her coat pocket. She never hands them in.",
+							"effects": {
+								"stats": {
+									"guard": 0.06
+								}
+							}
+						},
+						{
+							"id": "ottoline_nobody_gets_past",
+							"name": "Nobody Gets Past",
+							"cost": 1,
+							"desc": "Everything Last Orders hits goes for Ottoline for 3 s.",
+							"flavor": "Every eye in the room on the bouncer. As it should be.",
+							"effects": {
+								"abilities": {
+									"last_orders": {
+										"set": {
+											"taunt": 3
+										}
+									}
+								}
+							}
+						},
+						{
+							"id": "ottoline_door_policy",
+							"name": "Door Policy",
+							"cost": 2,
+							"desc": "Allies within 70 px of her take 10% less damage. As an ally she goes for whatever is attacking the leader.",
+							"flavor": "Inside the door, you're hers. Outside, you're on your own.",
+							"effects": {
+								"perks": {
+									"aura_guard": 0.1
+								},
+								"ai": {
+									"focus": "leader_threat"
+								}
+							}
+						},
+						{
+							"id": "ottoline_six_tickets",
+							"name": "Six Tickets",
+							"cost": 3,
+							"desc": "Enemies that hit her take 25% of it back.",
+							"flavor": "Hitting Ottoline is a mistake you make once, painfully.",
+							"bond": 2,
+							"effects": {
+								"perks": {
+									"thorns": 0.25
+								}
+							}
+						},
+						{
+							"id": "ottoline_closing_the_door",
+							"name": "Closing the Door",
+							"cost": 3,
+							"desc": "Once a mission, a blow that would drop her leaves her on 1 HP instead. Last Orders comes back 3 s sooner.",
+							"flavor": "She shut it once on six people. She will not be the one left outside.",
+							"bond": 3,
+							"effects": {
+								"abilities": {
+									"last_orders": {
+										"add": {
+											"cooldown": -3
+										}
+									}
+								},
+								"perks": {
+									"last_stand": 1
+								}
+							},
+							"capstone": true
+						}
+					]
+				},
+				{
+					"id": "brawler",
+					"name": "Brawler",
+					"color": "e0504a",
+					"blurb": "A bar fight with extra steps: stun them, then make them regret standing up.",
+					"nodes": [
+						{
+							"id": "ottoline_knuckle_duster",
+							"name": "Knuckle Duster",
+							"cost": 1,
+							"desc": "+2 Damage.",
+							"flavor": "Brass, polished nightly. Dented nightly.",
+							"effects": {
+								"stats": {
+									"damage": 2
+								}
+							}
+						},
+						{
+							"id": "ottoline_one_more_round",
+							"name": "One More Round",
+							"cost": 1,
+							"desc": "Chucking Out goes 16 px further and comes back 1.5 s sooner.",
+							"flavor": "Last orders were an hour ago. She's not counting.",
+							"effects": {
+								"abilities": {
+									"chucking_out": {
+										"add": {
+											"distance": 16,
+											"cooldown": -1.5
+										}
+									}
+								}
+							}
+						},
+						{
+							"id": "ottoline_ringing_ears",
+							"name": "Ringing Ears",
+							"cost": 2,
+							"desc": "She deals 30% more damage to stunned enemies.",
+							"flavor": "Hit them while the bells are still going.",
+							"effects": {
+								"perks": {
+									"dmg_stunned": 0.3
+								}
+							}
+						},
+						{
+							"id": "ottoline_last_call",
+							"name": "Last Call",
+							"cost": 3,
+							"desc": "Kills refill her gauge at once and heal her 3.",
+							"flavor": "Next!",
+							"bond": 2,
+							"effects": {
+								"perks": {
+									"kill_gauge": 1,
+									"kill_heal": 3
+								}
+							}
+						},
+						{
+							"id": "ottoline_lights_up",
+							"name": "Lights Up",
+							"cost": 3,
+							"desc": "Her full-power swings stun for 0.4 s, and Chucking Out stuns 0.6 s longer.",
+							"flavor": "Lights up, music off, everybody out.",
+							"bond": 3,
+							"effects": {
+								"abilities": {
+									"chucking_out": {
+										"add": {
+											"stun": 0.6
+										}
+									}
+								},
+								"perks": {
+									"swing_stun": 0.4
+								}
+							},
+							"capstone": true
+						}
+					]
+				}
+			]
+		},
+		"jessamy": {
+			"root": {
+				"id": "jessamy_light_fingers",
+				"name": "Light Fingers",
+				"cost": 1,
+				"desc": "Her gauge fills 5% faster.",
+				"flavor": "Your purse was never safe. It was merely unvisited.",
+				"effects": {
+					"stats": {
+						"power_rate": 0.05
+					}
+				}
+			},
+			"branches": [
+				{
+					"id": "nightjar",
+					"name": "Nightjar",
+					"color": "8a7fb0",
+					"blurb": "Struck from the Ledger and better for it: longer in the dark, the first cut from nowhere, gone again.",
+					"nodes": [
+						{
+							"id": "jessamy_soft_soles",
+							"name": "Soft Soles",
+							"cost": 1,
+							"desc": "Lamps Out lasts 1 s longer and loses enemies 30 px further away.",
+							"flavor": "Never the creaky board. Never.",
+							"effects": {
+								"abilities": {
+									"lamps_out": {
+										"add": {
+											"time": 1,
+											"radius": 30
+										}
+									}
+								}
+							}
+						},
+						{
+							"id": "jessamy_back_alley",
+							"name": "Back Alley",
+							"cost": 1,
+							"desc": "She deals 30% more damage to enemies that are still unhurt.",
+							"flavor": "The first cut is the one they never see.",
+							"effects": {
+								"perks": {
+									"dmg_fresh": 0.3
+								}
+							}
+						},
+						{
+							"id": "jessamy_off_the_books",
+							"name": "Off the Books",
+							"cost": 2,
+							"desc": "Lamps Out heals her 10 and comes back 3 s sooner.",
+							"flavor": "A bandage in the dark, a wink in the light.",
+							"effects": {
+								"abilities": {
+									"lamps_out": {
+										"add": {
+											"cooldown": -3
+										},
+										"set": {
+											"heal": 10
+										}
+									}
+								}
+							}
+						},
+						{
+							"id": "jessamy_struck_out",
+							"name": "Struck from the Ledger",
+							"cost": 3,
+							"desc": "15% of hits miss her completely.",
+							"flavor": "Hard to hit someone the world has stopped writing down.",
+							"bond": 2,
+							"effects": {
+								"perks": {
+									"evade": 0.15
+								}
+							}
+						},
+						{
+							"id": "jessamy_nobodys_name",
+							"name": "Nobody's Name",
+							"cost": 3,
+							"desc": "Every kill she lands puts her out of sight for 1.5 s, and Lamps Out's ambush hits half again as hard.",
+							"flavor": "Occupation: yes. Whereabouts: no.",
+							"bond": 3,
+							"effects": {
+								"abilities": {
+									"lamps_out": {
+										"add": {
+											"crit": 0.5
+										}
+									}
+								},
+								"perks": {
+									"kill_vanish": 1.5
+								}
+							},
+							"capstone": true
+						}
+					]
+				},
+				{
+					"id": "smuggler",
+					"name": "Smuggler",
+					"color": "e8c45a",
+					"blurb": "Contraband by the crate: more knives, nastier knives, and a cut of everything that falls.",
+					"nodes": [
+						{
+							"id": "jessamy_extra_blade",
+							"name": "Extra Blade",
+							"cost": 1,
+							"desc": "Knife Fan throws one more knife.",
+							"flavor": "There's always one more. Check her boots.",
+							"effects": {
+								"abilities": {
+									"knife_fan": {
+										"add": {
+											"count": 1
+										}
+									}
+								}
+							}
+						},
+						{
+							"id": "jessamy_weighted_hilts",
+							"name": "Weighted Hilts",
+							"cost": 1,
+							"desc": "Knife Fan's knives deal 3 more and fly 30 px further.",
+							"flavor": "Balanced in Saltreed, sold in Hollowmark, thrown everywhere.",
+							"effects": {
+								"abilities": {
+									"knife_fan": {
+										"add": {
+											"damage": 3,
+											"range": 30
+										}
+									}
+								}
+							}
+						},
+						{
+							"id": "jessamy_contraband",
+							"name": "Contraband",
+							"cost": 2,
+							"desc": "Knife Fan's knives go through every enemy on their line and poison for 2 a second.",
+							"flavor": "Imported. Undeclared. Lethal.",
+							"effects": {
+								"abilities": {
+									"knife_fan": {
+										"set": {
+											"pierce": true,
+											"poison": 2
+										}
+									}
+								}
+							}
+						},
+						{
+							"id": "jessamy_hot_goods",
+							"name": "Hot Goods",
+							"cost": 3,
+							"desc": "Every kill she lands is worth 2 Gilt (brought home with the loot) and 1 Ink.",
+							"flavor": "Finders keepers, killers more so.",
+							"bond": 2,
+							"effects": {
+								"perks": {
+									"kill_gilt": 2,
+									"kill_ink": 1
+								}
+							}
+						},
+						{
+							"id": "jessamy_knife_rain",
+							"name": "Knife Rain",
+							"cost": 3,
+							"desc": "Knife Fan throws two more knives, costs 1 less Ink and comes back 1 s sooner. As an ally she picks off the wounded first.",
+							"flavor": "It's not raining. Don't look up.",
+							"bond": 3,
+							"effects": {
+								"abilities": {
+									"knife_fan": {
+										"add": {
+											"count": 2,
+											"cost": -1,
+											"cooldown": -1
+										}
+									}
+								},
+								"ai": {
+									"focus": "wounded"
+								}
+							},
+							"capstone": true
+						}
+					]
+				}
+			]
+		},
+		"odile": {
+			"root": {
+				"id": "odile_double_entry",
+				"name": "Double Entry",
+				"cost": 1,
+				"desc": "+4 Ink.",
+				"flavor": "Every debit has a credit. Every Nibbler has a column.",
+				"effects": {
+					"stats": {
+						"ink": 4
+					}
+				}
+			},
+			"branches": [
+				{
+					"id": "assessor",
+					"name": "Assessor",
+					"color": "8fd06a",
+					"blurb": "The fair assessor her mother never was: Levy pays the party back with interest.",
+					"nodes": [
+						{
+							"id": "odile_fair_share",
+							"name": "Fair Share",
+							"cost": 1,
+							"desc": "Levy can heal each ally 6 more and reaches allies 20 px further away.",
+							"flavor": "Assessed fairly. Distributed fairly. Novel concept.",
+							"effects": {
+								"abilities": {
+									"levy": {
+										"add": {
+											"heal_cap": 6,
+											"heal_radius": 20
+										}
+									}
+								}
+							}
+						},
+						{
+							"id": "odile_rebate",
+							"name": "Rebate",
+							"cost": 1,
+							"desc": "Levy also gives allies nearby a quarter of what it takes as Ink.",
+							"flavor": "A rebate, for once, in the right direction.",
+							"effects": {
+								"abilities": {
+									"levy": {
+										"set": {
+											"ink_ratio": 0.25
+										}
+									}
+								}
+							}
+						},
+						{
+							"id": "odile_tax_relief",
+							"name": "Tax Relief",
+							"cost": 2,
+							"desc": "Every heal she gives is 20% bigger, and Levy comes back 2 s sooner.",
+							"flavor": "Relief is cheaper than funerals. She ran the numbers.",
+							"effects": {
+								"abilities": {
+									"levy": {
+										"add": {
+											"cooldown": -2
+										}
+									}
+								},
+								"perks": {
+									"heal_power": 0.2
+								}
+							}
+						},
+						{
+							"id": "odile_sign_here",
+							"name": "Sign Here",
+							"cost": 3,
+							"desc": "Fallen allies near her get up 75% faster.",
+							"flavor": "\"You are not dead until I've stamped it.\"",
+							"bond": 2,
+							"effects": {
+								"perks": {
+									"revive_speed": 0.75
+								}
+							}
+						},
+						{
+							"id": "odile_restitution",
+							"name": "Restitution",
+							"cost": 3,
+							"desc": "Levy deals 6 more and reaches 20 px further, and every hit she lands heals her for 15% of it.",
+							"flavor": "Penhallow Mere was saved with 90 stolen Gilt. She is paying it back in blood.",
+							"bond": 3,
+							"effects": {
+								"abilities": {
+									"levy": {
+										"add": {
+											"damage": 6,
+											"radius": 20
+										}
+									}
+								},
+								"perks": {
+									"leech": 0.15
+								}
+							},
+							"capstone": true
+						}
+					]
+				},
+				{
+					"id": "collector",
+					"name": "Collector",
+					"color": "e8c45a",
+					"blurb": "The Concord trained her to collect, and she was very good at it: audits that hurt and debts that come due.",
+					"nodes": [
+						{
+							"id": "odile_penalty_clause",
+							"name": "Penalty Clause",
+							"cost": 1,
+							"desc": "+2 Damage.",
+							"flavor": "The ledger is iron-bound for a reason.",
+							"effects": {
+								"stats": {
+									"damage": 2
+								}
+							}
+						},
+						{
+							"id": "odile_itemised",
+							"name": "Itemised",
+							"cost": 1,
+							"desc": "Audit reaches 20 px further and lasts 2 s longer.",
+							"flavor": "Every line. Every column. Every Nibbler.",
+							"effects": {
+								"abilities": {
+									"audit": {
+										"add": {
+											"radius": 20,
+											"time": 2
+										}
+									}
+								}
+							}
+						},
+						{
+							"id": "odile_late_fees",
+							"name": "Late Fees",
+							"cost": 2,
+							"desc": "She deals 25% more damage to marked enemies, and as an ally goes for marked enemies first.",
+							"flavor": "Payment is overdue. Payment is always overdue.",
+							"effects": {
+								"perks": {
+									"dmg_marked": 0.25
+								},
+								"ai": {
+									"focus": "marked"
+								}
+							}
+						},
+						{
+							"id": "odile_distraint",
+							"name": "Distraint",
+							"cost": 3,
+							"desc": "Audit also deals 8 damage and stuns for 0.8 s.",
+							"flavor": "Seizure of goods, and of the goods' owner.",
+							"bond": 2,
+							"effects": {
+								"abilities": {
+									"audit": {
+										"set": {
+											"damage": 8,
+											"stun": 0.8
+										}
+									}
+								}
+							}
+						},
+						{
+							"id": "odile_writ_of_seizure",
+							"name": "Writ of Seizure",
+							"cost": 3,
+							"desc": "Audited enemies take 15% more again, and every kill she lands pays 2 Gilt (brought home with the loot) and 3 Ink.",
+							"flavor": "Countersigned. Not by her mother.",
+							"bond": 3,
+							"effects": {
+								"abilities": {
+									"audit": {
+										"add": {
+											"mult": 0.15
+										}
+									}
+								},
+								"perks": {
+									"kill_gilt": 2,
+									"kill_ink": 3
+								}
+							},
+							"capstone": true
+						}
+					]
+				}
+			]
+		},
+		"velvette": {
+			"root": {
+				"id": "velvette_en_garde",
+				"name": "En Garde",
+				"cost": 1,
+				"desc": "+3 Reach.",
+				"flavor": "The rapier is a long sentence with a full stop at the end.",
+				"effects": {
+					"stats": {
+						"reach": 3
+					}
+				}
+			},
+			"branches": [
+				{
+					"id": "duelist",
+					"name": "Duelist",
+					"color": "6a9ae8",
+					"blurb": "Precision, nothing wasted: wider parries, cleaner answers, and the killing thrust on anything that bleeds.",
+					"nodes": [
+						{
+							"id": "velvette_tight_guard",
+							"name": "Tight Guard",
+							"cost": 1,
+							"desc": "Riposte's guard holds 0.3 s longer.",
+							"flavor": "She can wait. She has waited eleven bodies' worth.",
+							"effects": {
+								"abilities": {
+									"riposte": {
+										"add": {
+											"time": 0.3
+										}
+									}
+								}
+							}
+						},
+						{
+							"id": "velvette_second_intention",
+							"name": "Second Intention",
+							"cost": 1,
+							"desc": "Riposte's answer deals 8 more and refunds 1 more Ink.",
+							"flavor": "The first move is a lie. The second is the point.",
+							"effects": {
+								"abilities": {
+									"riposte": {
+										"add": {
+											"damage": 8,
+											"refund": 1
+										}
+									}
+								}
+							}
+						},
+						{
+							"id": "velvette_prise_de_fer",
+							"name": "Prise de Fer",
+							"cost": 2,
+							"desc": "15% of her hits land half again as hard.",
+							"flavor": "Take the blade, take the opening, take the bow.",
+							"effects": {
+								"perks": {
+									"crit": 0.15
+								}
+							}
+						},
+						{
+							"id": "velvette_killing_blow",
+							"name": "Killing Blow",
+							"cost": 3,
+							"desc": "She deals 35% more damage to enemies under 35% HP, and as an ally picks off the wounded first.",
+							"flavor": "The audience always knows when it is the last act.",
+							"bond": 2,
+							"effects": {
+								"perks": {
+									"dmg_wounded": 0.35
+								},
+								"ai": {
+									"focus": "wounded"
+								}
+							}
+						},
+						{
+							"id": "velvette_bind_and_answer",
+							"name": "Bind and Answer",
+							"cost": 3,
+							"desc": "Riposte answers every enemy within its reach, not just the one that swung, and stuns 0.4 s longer.",
+							"flavor": "One parry, every throat.",
+							"bond": 3,
+							"effects": {
+								"abilities": {
+									"riposte": {
+										"set": {
+											"aoe": true
+										},
+										"add": {
+											"stun": 0.4
+										}
+									}
+								}
+							},
+							"capstone": true
+						}
+					]
+				},
+				{
+					"id": "star",
+					"name": "Star",
+					"color": "e0405a",
+					"blurb": "She was the show before she was the weapon: lunges for the gallery and a stage presence that lifts everyone on it.",
+					"nodes": [
+						{
+							"id": "velvette_stage_presence",
+							"name": "Stage Presence",
+							"cost": 1,
+							"desc": "Fleche deals 5 more and lunges 16 px further.",
+							"flavor": "Enter, stage left, at speed.",
+							"effects": {
+								"abilities": {
+									"fleche": {
+										"add": {
+											"damage": 5,
+											"distance": 16
+										}
+									}
+								}
+							}
+						},
+						{
+							"id": "velvette_applause",
+							"name": "Applause",
+							"cost": 1,
+							"desc": "Kills refill her gauge at once.",
+							"flavor": "She bows. Briefly. There's another one.",
+							"effects": {
+								"perks": {
+									"kill_gauge": 1
+								}
+							}
+						},
+						{
+							"id": "velvette_spotlight",
+							"name": "Spotlight",
+							"cost": 2,
+							"desc": "Allies within 70 px of her deal 10% more damage.",
+							"flavor": "Everyone performs better with a star in the room. Everyone performs worse beside one.",
+							"effects": {
+								"perks": {
+									"aura_damage": 0.1
+								}
+							}
+						},
+						{
+							"id": "velvette_showstopper",
+							"name": "Showstopper",
+							"cost": 3,
+							"desc": "Fleche stuns for 0.6 s more and marks what it hits: 25% more damage from everyone for 4 s.",
+							"flavor": "Hold the pose. Let them look.",
+							"bond": 2,
+							"effects": {
+								"abilities": {
+									"fleche": {
+										"add": {
+											"stun": 0.6
+										},
+										"set": {
+											"mark": 4,
+											"mark_mult": 1.25
+										}
+									}
+								}
+							}
+						},
+						{
+							"id": "velvette_standing_ovation",
+							"name": "Standing Ovation",
+							"cost": 3,
+							"desc": "Every kill she lands gives 2 Ink to each ally within 90 px, and her charged techs hit 20% harder.",
+							"flavor": "The Gilded Heron never had a house like this one.",
+							"bond": 3,
+							"effects": {
+								"perks": {
+									"kill_ink_party": 2,
+									"tech_mult": 0.2
+								}
+							},
+							"capstone": true
+						}
+					]
+				}
+			]
+		}
+	}
+}

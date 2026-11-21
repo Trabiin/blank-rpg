@@ -10,6 +10,10 @@ var knock := 120.0
 var range_left := 150.0
 var pierce := false
 var color := Color("d8d2c4")
+## Who threw it and with what (skill tree perks and riders, issue #25). source: "ability" or "tech".
+var hero: Hero = null
+var ability := {}
+var source := "ability"
 var hit: Array = []
 var t := 0.0
 
@@ -29,7 +33,10 @@ func _physics_process(delta: float) -> void:
 			continue
 		if enemy.global_position.distance_to(global_position + Vector2(0, 6)) < enemy.radius + 4.0:
 			hit.append(enemy)
-			enemy.take_hit(damage, global_position - dir * 8.0, knock)
+			if hero != null and is_instance_valid(hero):
+				TreePerks.strike(hero, enemy, damage, global_position - dir * 8.0, knock, ability, source)
+			else:
+				enemy.take_hit(damage, global_position - dir * 8.0, knock)
 			Fx.burst(get_parent(), global_position, [color, Color.WHITE], 5, 40.0)
 			if not pierce:
 				queue_free()

@@ -74,6 +74,7 @@ static func from_save(d) -> Dictionary:
 				gear[s] = iid
 		out["heroes"][id] = {"xp": maxi(int(h.get("xp", 0)), 0), "level": clampi(int(h.get("level", 1)), 1, max_level()), "gear": gear}
 		Skills.clean_into(h, out["heroes"][id])  # weapon and Ink skill levels (issue #24)
+		SkillTree.clean_into(str(id), h, out["heroes"][id])  # skill tree (issue #25)
 	return out
 
 
@@ -236,7 +237,7 @@ static func gear_stats(id: String, override := {}) -> Dictionary:
 	return out
 
 
-## Everything levels and gear add for this hero: {stat: amount}. override: {slot: item id or ""}
+## Everything levels, gear and the skill tree add for this hero: {stat: amount}. override: {slot: item id or ""}
 ## shows what the hero would have with different gear (the Gear screen's preview).
 static func bonus(id: String, override := {}) -> Dictionary:
 	var out := {}
@@ -246,6 +247,9 @@ static func bonus(id: String, override := {}) -> Dictionary:
 	var gs := gear_stats(id, override)
 	for k in gs:
 		out[k] = float(out.get(k, 0.0)) + float(gs[k])
+	var ts := SkillTree.stats(id)  # skill tree nodes (issue #25)
+	for k in ts:
+		out[k] = float(out.get(k, 0.0)) + float(ts[k])
 	return out
 
 
@@ -281,6 +285,7 @@ static func apply_to(h: Hero) -> void:
 		h.heal_amount += int(b.get("heal", 0))
 	h.max_ink += float(b.get("ink", 0))
 	h.ink = h.max_ink
+	SkillTree.apply_perks(h)  # skill tree passives (issue #25)
 
 
 ## Moves a hero in the field from one set of stats to another (a level-up or a gear change
