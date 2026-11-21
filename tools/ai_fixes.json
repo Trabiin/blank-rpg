@@ -1,0 +1,138 @@
+{
+ "_comment": "Free frame repairs from the Act 1 AI artefact audit (issue #166), applied by tools/fix_frames.py. op breathe = rebuild the idle strip from rot_<dir> with a one-pixel breath; op lock = keep the motion but paste the rotation frame's top band over each frame. Each entry was judged by eye on a contact sheet; see docs/AI_AUDIT.md.",
+ "fixes": [
+  {
+   "op": "breathe",
+   "sprite": "velvette",
+   "strip": "idle_north",
+   "why": "face appears on the back of her head and the sword swaps hands"
+  },
+  {
+   "op": "breathe",
+   "sprite": "dunmore",
+   "strip": "idle_north",
+   "why": "turns round to face the camera"
+  },
+  {
+   "op": "breathe",
+   "sprite": "tobble",
+   "strip": "idle_north",
+   "why": "turns round to face the camera"
+  },
+  {
+   "op": "breathe",
+   "sprite": "odile",
+   "strip": "idle_north",
+   "why": "a briefcase pops into her hand"
+  },
+  {
+   "op": "breathe",
+   "sprite": "hesper",
+   "strip": "idle_north",
+   "why": "the held tool changes into a different object"
+  },
+  {
+   "op": "breathe",
+   "sprite": "folk_elder",
+   "strip": "idle_north",
+   "why": "the walking cane vanishes"
+  },
+  {
+   "op": "breathe",
+   "sprite": "folk_man",
+   "strip": "idle_north",
+   "why": "eyes appear in the back of his hair"
+  },
+  {
+   "op": "breathe",
+   "sprite": "nibbler",
+   "strip": "idle_north",
+   "why": "a mouth opens on the back of its body"
+  },
+  {
+   "op": "breathe",
+   "sprite": "nibbler",
+   "strip": "idle_south",
+   "why": "a different face every frame"
+  },
+  {
+   "op": "breathe",
+   "sprite": "nibbler",
+   "strip": "idle_south-east",
+   "why": "a different face every frame"
+  },
+  {
+   "op": "breathe",
+   "sprite": "nibbler",
+   "strip": "idle_east",
+   "why": "the grey glyph-like scribble on its side (painted out of rot_east by hand)"
+  },
+  {
+   "op": "breathe",
+   "sprite": "gristle",
+   "strip": "idle_east",
+   "why": "turns her face to the camera on frames 3-4"
+  },
+  {
+   "op": "breathe",
+   "sprite": "ottoline",
+   "strip": "idle_north-east",
+   "why": "turns to face east on frames 3-4"
+  },
+  {
+   "op": "breathe",
+   "sprite": "tobble",
+   "strip": "idle_south-east",
+   "why": "swells and changes pose on frames 3-4"
+  },
+  {
+   "op": "lock",
+   "sprite": "nibbler",
+   "strip": "walk_south",
+   "band": 0.72,
+   "why": "eyes and teeth change every frame"
+  },
+  {
+   "op": "lock",
+   "sprite": "nibbler",
+   "strip": "walk_south-east",
+   "band": 0.72,
+   "why": "eyes and teeth change every frame"
+  },
+  {
+   "op": "lock",
+   "sprite": "nibbler",
+   "strip": "walk_east",
+   "band": 0.72,
+   "why": "the face melts into a smear on frames 3-5"
+  }
+ ],
+ "recolors": [
+  {
+   "sprite": "velvette",
+   "material": "hair",
+   "tool": "tools/recolor_sprite.py velvette hair",
+   "why": "sprite hair was magenta-maroon, portrait is a crimson red bob"
+  },
+  {
+   "sprite": "abeyance",
+   "material": "hood",
+   "tool": "tools/recolor_sprite.py abeyance hood",
+   "why": "sprite hood and back were slate grey, portrait wears a bone-white hood and robe"
+  }
+ ],
+ "hand_edits": [
+  {
+   "file": "assets/sprites/nibbler/rot_east.png",
+   "why": "grey glyph-like scribble on its side painted out (11 pixels to body white)"
+  },
+  {
+   "file": "assets/portraits/merrow.png",
+   "why": "dark shadow blob and music-note smear over the middle girl's chin and cheek; repainted as skin with a clean jaw line, the smear as hair"
+  },
+  {
+   "file": "assets/portraits/warden.png",
+   "why": "the ledger page pinned to his tabard pixelated into scribbles that read as fake writing; redrawn as a clean ruled page with the Concord seal, keeping the paper texture"
+  }
+ ]
+}

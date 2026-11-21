@@ -64,6 +64,29 @@ Keep the background plain light grey: the cut-out tool depends on it.
 - **Mother Gristle:** a hunched, sturdy old woman around 70, a swamp herbalist who heals for money. Wild grey hair tied back with twine, sharp hooked nose, deep wrinkles, gold-capped front tooth, shrewd narrow eyes. Patched brown shawl over a dark apron hung with rows of small glass bottles, the liquid inside a glowing poison green as her accent. Gnarled wooden staff wrapped in dried herbs, a coin purse on her belt. Grandmotherly grin that doesn't reach her eyes, like she's already adding up your bill.
 - **Ilse:** an ageless knight who is a living reflection that stepped out of a mirror after her original was erased. Strikingly beautiful, long straight pale hair, porcelain skin with thin hairline cracks like broken glass along her cheek and collarbone, her side part and beauty mark on the "wrong" side. Silvered mirror-plate armour over a dark gown, with icy cyan light glinting in the cracks and on her spear tip as her accent. Holds a slender spear upright. Faint mirrored double outline around her silhouette. Cool, vain, faintly amused expression, admiring herself more than the viewer.
 
+### Canon looks (issue #166)
+
+The portrait is the canon reference for each character. Every expression, CG and field sprite must keep the
+items below. `python3 tools/character_sheet.py out_dir` puts portrait, expressions, CGs and the five sprite
+rotations side by side for checking; see docs/AI_AUDIT.md for the audit.
+
+| Character | Must match everywhere | Known gaps (audit 2026-11-21) |
+|---|---|---|
+| Ash | messy black hair, pale skin, charcoal cloak with ink-blue lining, one sword | field sprite always has the hood up, portrait and key art have it down |
+| Bran | shaved head, grey stubble (not a full beard), rust-orange sash, grey pauldron, heavy axe | sprite has a full grey beard and red marks on the face |
+| Mother Gristle | wild grey hair tied up, hooked nose, rust shawl, poison-green vials, gnarled staff | none |
+| Ninefingers | short dark hair, mustard scarf, worn grey-brown coat, spear; one finger missing | the only hand in the portrait has all five fingers (show the missing one in expressions) |
+| Jessamy | dark hood up, long dark hair, violet scarf, lantern in her right hand | none |
+| Odile | black hair in a bun, round spectacles, navy uniform with gold trim, satchel and book | none |
+| Ottoline | long black hair, magenta waistcoat over black shirt, rolled sleeves, arms crossed | none |
+| Velvette | crimson-red bob, black high-collared coat with crimson lining, gold buttons, rapier | none since the sprite hair recolour |
+| Abeyance | bone-white hood and robe, brown hair, glowing writ held to her chest, satchel of quills | none since the sprite hood recolour |
+| Quill | grey hair, quill behind the ear, green coat, book | none |
+| Tobble | bald with a white beard, cream shirt, brown apron, copper mug | none |
+| Verity | silver-streaked dark hair pinned up, bone robe with violet stole, ledger | none |
+| The Auditor | top hat, white mask with a red mark, black coat with red lining, quill-blade spear | sprite mask is grey with no red mark |
+| Clerk Pettigrew / Ozias Crane | both balding, spectacles and a quill behind the ear | the two old clerks read as the same face; Crane should get his own look |
+
 ### Expressions
 
 In the same chat as the locked neutral image, paste the same full prompt, replace only the last sentence with one of these, and add "Same character, same outfit, same framing, change only the facial expression."
