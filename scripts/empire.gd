@@ -85,7 +85,6 @@ var reports := []
 var job_ready := {}  # job id -> first day it can be taken again
 var mission_ready := {}  # "raid:<province>" / "salvage:<province>" -> first day it is offered again (issue #113)
 var job_data := {}  # id -> Dictionary from data/expeditions.json
-var pair_data := []
 ## Research: finished node ids, days of study done per node, the node being studied now ("" = none),
 ## and nodes whose cost has been paid (shelving a node keeps both its progress and its payment).
 var research_done := []
@@ -108,6 +107,8 @@ var tier_data := []
 var trade_breaks := 0
 # Bonds (data/bonds.json): id -> {"points", "rank", "talk_day", "personal_done"} for the core cast who have joined.
 var bonds := {}
+## Romance, friends and rivals, fates (scripts/relationships.gd, issue #116).
+var relations := {}
 var bond_data := {}
 var mission_kills_bonded := 0  # how many kill steps this mission already paid out (not saved)
 # Missions (scripts/missions.gd): the one being played (saved with the mission, not here),
@@ -189,6 +190,7 @@ func reset() -> void:
 	diplo_log = []
 	_load_bond_data()
 	bonds = {}
+	relations = Relationships.fresh()
 	mission_kills_bonded = 0
 	active_mission = {}
 	missions_cleared = []
@@ -667,8 +669,10 @@ func role_options(id: String) -> Array:
 		party_note = "party is full (%d/%d)" % [in_party, PARTY_SIZE]
 	elif hurt:
 		party_note = "injured"
+	var with_party := party_ids().filter(func(p): return p != id) + [id]
+	var party_pairs := Relationships.notes_text(with_party, "party")  # friends and rivals (issue #116)
 	out.append({"role": "party", "target": "", "label": "Party (%d/%d)" % [in_party, PARTY_SIZE],
-		"enabled": party_note == "" and not locked, "note": party_note, "preview": "Goes on missions with Ash."})
+		"enabled": party_note == "" and not locked, "note": party_note, "preview": "Goes on missions with Ash." + ("\n" + party_pairs if party_pairs != "" else "")})
 	for p in territory().provinces:
 		if p["owner"] != "you":
 			continue
@@ -701,6 +705,9 @@ func role_options(id: String) -> Array:
 		if not here:
 			with_me.append(id)
 		var preview := "%s: %s  (now: %s)" % [b["name"], building_effect(bid, lv, with_me)["text"], building_effect(bid, lv, staff)["text"]]
+		var staff_pairs := Relationships.notes_text(with_me, "building")  # friends and rivals (issue #116)
+		if staff_pairs != "":
+			preview += "\n" + staff_pairs
 		out.append({"role": "staff", "target": bid, "label": "Work the %s (%d/%d)" % [b["name"], staff.size(), slots_of(bid)],
 			"enabled": note == "", "note": note, "preview": preview})
 	var expedition_note := ("send squads from the Expeditions screen" + Prompts.tag("expeditions")) if level_of("guildhall") > 0 else "needs a Guildhall"
@@ -791,7 +798,6 @@ func _load_expedition_data() -> void:
 	var parsed = JSON.parse_string(f.get_as_text())
 	for j in parsed["jobs"]:
 		job_data[j["id"]] = j
-	pair_data = parsed.get("pairs", [])
 
 
 func job(id: String) -> Dictionary:
@@ -948,10 +954,9 @@ func expedition_odds(jid: String, squad: Array) -> Dictionary:
 	for pk in bond_perks_with("all_odds"):
 		chance += int(pk["effect"]["all_odds"])
 		why.append(["%s (%s's bond), +%d%%" % [pk["name"], short_name(pk["id"]), int(pk["effect"]["all_odds"])], true])
-	for pair in pair_data:
-		if pair["ids"][0] in squad and pair["ids"][1] in squad:
-			chance += int(pair["mod"])
-			why.append(["%s, %+d%%" % [pair["text"], int(pair["mod"])], int(pair["mod"]) > 0])
+	for pm in Relationships.expedition_mods(squad):  # friends and rivals on the same squad (issue #116)
+		chance += int(pm[1])
+		why.append(["%s, %+d%%" % [pm[0], int(pm[1])], int(pm[1]) > 0])
 	var c := clampi(int(round(chance)), CHANCE_MIN, CHANCE_MAX)
 	return {"chance": c, "strength": strength, "why": why}
 
@@ -1066,6 +1071,9 @@ func _resolve_expedition(e: Dictionary) -> void:
 		if rid != "" and not recruits.has(rid) and recruit_data.has(rid):
 			recruits[rid] = {"role": "idle", "target": "", "injured": 0}
 			lines.append("%s joins your roster. Find them in Hollowmark or give them a job%s." % [recruit(rid)["name"], Prompts.tag("roster")])
+	var road := Relationships.banter_quote(squad)  # friends and rivals on the road (issue #116)
+	if road != "":
+		lines.append(road)
 	# A quip from someone on the squad
 	var quippers := squad.filter(func(id): return not recruit(id).get("quips", []).is_empty())
 	if not quippers.is_empty():
@@ -1083,15 +1091,18 @@ func _resolve_expedition(e: Dictionary) -> void:
 			hurt.erase(who)
 			if recruit(who)["tier"] == "recruit":
 				recruits.erase(who)
+				Relationships.note_lost(who, j["name"])
 				lines.append("%s did not come back. The others waited a day at the edge. The white gave nothing back." % recruit(who)["name"])
 			else:
 				recruits[who]["injured"] = 8
+				Relationships.note_injury(who)
 				lines.append("%s was dragged back from the white, barely. Out of action for 8 days." % short_name(who))
 	elif danger >= 2 and rng.randf() < 0.1 * (danger - 1):
 		hurt.append(squad[rng.randi_range(0, squad.size() - 1)])
 	for id in hurt:
 		var days := 1 + danger + rng.randi_range(0, 1)
 		recruits[id]["injured"] = maxi(int(recruits[id]["injured"]), days)
+		Relationships.note_injury(id)
 		lines.append("%s came back hurt: out of action for %d days." % [short_name(id), days])
 	var title := "%s: %s" % [j["name"], {"great": "great success", "success": "success", "fail": "failed"}[outcome]]
 	reports.push_front({"day": day, "job": jid, "title": title, "outcome": outcome, "squad": squad,
@@ -1319,6 +1330,12 @@ func mission_boosts() -> Dictionary:
 		b["lines"].append("faster gauge (%s)" % pk["name"])
 	for pk in bond_perks_with("mission_guard"):
 		b["lines"].append("-%d%% damage taken (%s)" % [int(round(float(pk["effect"]["mission_guard"]) * 100)), pk["name"]])
+	var pe := Relationships.party_effects(PartyPicker.mission_party(active_mission))  # friends and rivals (issue #116)
+	b["damage"] += int(pe["damage"])
+	b["hp"] += int(pe["hp"])
+	b["power_rate"] *= maxf(0.1, 1.0 + float(pe["power_rate"]))
+	b["revive"] *= maxf(0.1, 1.0 + float(pe["revive"]))
+	b["lines"].append_array(pe["lines"])
 	return b
 
 
@@ -1327,7 +1344,8 @@ func damage_to_party(amount: int) -> int:
 	var mult := 0.75 if has_research("ink_skin") else 1.0
 	for pk in bond_perks_with("mission_guard"):  # House Rules (Ottoline's bond)
 		mult *= 1.0 - float(pk["effect"]["mission_guard"])
-	if mult >= 1.0:
+	mult *= 1.0 - float(Relationships.party_effects(PartyPicker.mission_party(active_mission))["guard"])  # rivals take risks
+	if is_equal_approx(mult, 1.0):
 		return amount
 	return maxi(1, int(round(amount * mult)))
 
@@ -1744,6 +1762,8 @@ func _stat_sum(staff: Array, stat: String, div: int, bookish_double := false) ->
 		if bookish_double and has_trait(r, "bookish"):
 			v *= 2
 		total += v
+	if total > 0:  # friends working together pull harder, rivals get in each other's way (issue #116)
+		total = maxi(total + Relationships.building_mod(staff), 0)
 	return total
 
 
@@ -1997,6 +2017,7 @@ func to_dict() -> Dictionary:
 		"standing": standing, "pacts": pacts, "deal_ready": deal_ready, "intel_until": intel_until,
 		"next_trouble_day": next_trouble_day, "diplo_log": diplo_log,
 		"bonds": bonds,
+		"relations": relations,
 		"visitors": visitors,
 		"journal": journal,
 		"missions_cleared": missions_cleared,
@@ -2116,6 +2137,7 @@ func from_dict(d: Dictionary) -> void:
 			var b: Dictionary = saved_bonds[id]
 			bonds[id] = {"points": maxi(int(b.get("points", 0)), 0), "rank": clampi(int(b.get("rank", 0)), 0, 5),
 				"talk_day": int(b.get("talk_day", 0)), "personal_done": bool(b.get("personal_done", false))}
+	relations = Relationships.from_save(d.get("relations", {}))
 	_load_visitors(d)
 	journal = Journal.from_save(d.get("journal", null))
 	progress = Progress.from_save(d.get("progress", {}))
@@ -2278,11 +2300,16 @@ func personal_open(_jid: String) -> bool:
 	return true
 
 
-## The rank scene waiting to be seen (1-5), or 0.
+## The scene waiting to be seen: a rank (1-5), Relationships.MOMENT (the romance question, which comes
+## before rank 4), or 0.
 func bond_next_scene(id: String) -> int:
 	if not has_bond(id):
 		return 0
+	if Relationships.moment_ready(id):
+		return Relationships.MOMENT
 	var rank := bond_rank(id)
+	if rank == 3 and Relationships.can_romance(id) and Relationships.romance_of(id) == "":
+		return 0  # the moment comes first (Relationships.moment_ready)
 	if rank >= BOND_MAX:
 		return 0
 	if bond_points(id) < bond_threshold(rank + 1):
@@ -2387,6 +2414,7 @@ func _advance_bonds() -> void:
 				bond_gain(id, int(bond_data["points"]["liked_role"]), "", true)
 			"dislikes":
 				bond_gain(id, int(bond_data["points"]["disliked_role"]), "", true)
+	Relationships.daily()  # friends and rivals posted together (issue #116)
 
 
 ## Called by the mission scene on every kill: party members with bonds earn a little per few kills.
@@ -2402,15 +2430,25 @@ func bond_fought(kills: int, ids: Array) -> void:
 
 
 func bond_scene(id: String, rank: int) -> Dictionary:
+	if rank == Relationships.MOMENT:
+		return Relationships.moment_scene(id)
+	if rank == 5 and not Relationships.rank5_scene(id).is_empty():
+		return Relationships.rank5_scene(id)  # the romantic version (issue #116)
 	for sc in bond_info(id).get("scenes", []):
 		if int(sc["rank"]) == rank:
 			return sc
 	return {}
 
 
-## Seen scenes can be replayed from the Bonds screen.
+## Seen scenes can be replayed from the Bonds screen (the romance moment, once decided, sits after rank 3).
 func bond_seen_scenes(id: String) -> Array:
-	return bond_info(id).get("scenes", []).filter(func(sc): return int(sc["rank"]) <= bond_rank(id))
+	var out := []
+	for sc in bond_info(id).get("scenes", []):
+		if int(sc["rank"]) <= bond_rank(id):
+			out.append(bond_scene(id, int(sc["rank"])))
+		if int(sc["rank"]) == 3 and Relationships.romance_of(id) != "":
+			out.append(bond_scene(id, Relationships.MOMENT))
+	return out
 
 
 ## The scene for the next rank was watched: rank up, then add what the choice was worth.
@@ -2418,10 +2456,18 @@ func bond_seen_scenes(id: String) -> Array:
 func finish_bond_scene(id: String, rank: int, choice := -1) -> Dictionary:
 	if bond_next_scene(id) != rank:
 		return {}
-	var b := _bond(id)
-	b["rank"] = rank
 	var sc := bond_scene(id, rank)
 	var opts: Array = sc.get("choice", [])
+	if rank == Relationships.MOMENT:  # the romance question: no rank change, the choice decides it
+		var pick: Dictionary = opts[choice] if choice >= 0 and choice < opts.size() else {}
+		Relationships.note_choice(id, rank, choice)
+		var rp := Relationships.decide(id, pick)
+		bond_gain(id, int(pick.get("bond", 0)), "", true)
+		notice.emit("%s and Ash: %s" % [short_name(id), "a romance." if not rp.is_empty() else "friends."], false)
+		return rp
+	var b := _bond(id)
+	b["rank"] = rank
+	Relationships.note_choice(id, rank, choice, "romance" if rank == 5 and not Relationships.rank5_scene(id).is_empty() else "")
 	if choice >= 0 and choice < opts.size():
 		bond_gain(id, int(opts[choice].get("bond", 0)), "", true)
 	var perk: Dictionary = bond_info(id).get("perks", {}).get(str(rank), {})
@@ -2445,6 +2491,9 @@ func bond_perks() -> Array:
 				pk["id"] = id
 				pk["rank"] = int(r)
 				out.append(pk)
+	var rp := Relationships.partner_perk()  # a romance counts like a perk while it lasts (issue #116)
+	if not rp.is_empty():
+		out.append(rp)
 	return out
 
 

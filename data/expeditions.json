@@ -87,15 +87,5 @@
 				"fail": ["The white got hungry. {a} dropped the jars and pulled {b} back by the collar. {b} has a pale stripe in their hair now and will not discuss it.", "{lead} stared too long. Came back fine, apart from forgetting the word for 'spoon'. Nobody has had the heart to tell them."]
 			}
 		}
-	],
-	"pairs": [
-		{"ids": ["ottoline", "velvette"], "mod": 5, "text": "Old Encore hands: Ottoline keeps the door, Velvette works the room"},
-		{"ids": ["jessamy", "velvette"], "mod": 5, "text": "Night owls: Jessamy and Velvette know every back door that's open after dark"},
-		{"ids": ["odile", "quill"], "mod": 5, "text": "Two sets of books: Odile and Quill argue about rounding, and miss nothing"},
-		{"ids": ["bran", "ninefingers"], "mod": 5, "text": "Old soldiers: Bran and Daro cover each other's blind side"},
-		{"ids": ["quill", "ninefingers"], "mod": 5, "text": "Two ex-Concord: they know where the forms are weakest"},
-		{"ids": ["pell", "abeyance"], "mod": 5, "text": "Pell and Abeyance both talk to the dead; the dead give directions"},
-		{"ids": ["quill", "tobble"], "mod": -5, "text": "Quill and Tobble argue about Tobble's bar tab the whole way"},
-		{"ids": ["gristle", "bran"], "mod": -5, "text": "Gristle bills Bran for every bandage; Bran refuses on principle"}
 	]
 }

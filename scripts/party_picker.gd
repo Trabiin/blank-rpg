@@ -285,13 +285,22 @@ func _draw() -> void:
 		var kit_line := "Abilities: " + ", ".join(kit)
 		if not known.is_empty():  # weapon skill (issue #24): the techs learned so far
 			kit_line += "   Techs (%s Lv %d): %s" % [Skills.weapon_name(id), Skills.weapon_level(id), ", ".join(known.map(func(t): return str(t.get("name", ""))))]
-		_wrap(Vector2(x, y + 9), kit_line, w, 8, Color(0.78, 0.74, 0.86))
+		y += _wrap(Vector2(x, y + 9), kit_line, w, 8, Color(0.78, 0.74, 0.86)) + 4
+		# Friends and rivals among the party (issue #116), as it would be with this hero in it.
+		var with_me := party.filter(func(p): return p != id) + [id]
+		for n in Relationships.notes(with_me, "party"):
+			if Empire.short_name(id) in str(n[0]):
+				y += _wrap(Vector2(x, y + 9), ("" if id in party else "If picked: ") + str(n[0]), w, 8, Color("9fe07a") if n[1] else Color("ff9b8a")) + 1
 	else:
 		_text(Vector2(x, 46), "Ready?", 13, PAPER)
 		_wrap(Vector2(x, 62), "The clock stops while you are out. Whoever stays home keeps working their post.", w, 8, Color(0.68, 0.66, 0.68))
 
 	# The party, standing in a row
 	var py := vs.y - 76
+	var pn := Relationships.pairs_among(party)  # friends and rivals in this party (issue #116)
+	if not pn.is_empty():
+		var tip := "   ".join(pn.map(func(p): return Relationships.pair_title(p)))
+		_text(Vector2(x, vs.y - 13), tip, 7, Color("9fe07a") if pn.all(func(p): return p["kind"] != "rivals") else Color("ffc48a"))
 	draw_rect(Rect2(x, py - 10, w, 64), Color(0.08, 0.07, 0.1))
 	draw_rect(Rect2(x, py - 10, w, 64), Color(0.25, 0.22, 0.28), false, 1.0)
 	for i in Empire.PARTY_SIZE:

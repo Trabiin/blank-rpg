@@ -119,6 +119,12 @@ func _finish() -> void:
 		_outro = "Memory: %s" % _scene().get("title", "")
 		return
 	var perk := Empire.finish_bond_scene(id, rank, _picked)
+	if rank == Relationships.MOMENT:  # the romance question (issue #116)
+		if Relationships.romance_of(id) == "partner":
+			_outro = "%s and Ash: a romance.\nWhile it lasts: %s. %s" % [Empire.short_name(id), perk.get("name", ""), perk.get("desc", "")]
+		else:
+			_outro = "%s and Ash: friends, and that's settled." % Empire.short_name(id)
+		return
 	_outro = "%s is now %s.  Bond rank %d." % [Empire.short_name(id), Empire.bond_rank_name(Empire.bond_rank(id)), Empire.bond_rank(id)]
 	if not perk.is_empty():
 		_outro += "\nPerk unlocked: %s. %s" % [perk["name"], perk["desc"]]
@@ -243,7 +249,8 @@ func _draw() -> void:
 	else:  # safety net only: tests/test_data.gd requires a portrait for everyone with a bond
 		Dialogue.draw_portrait(self, Rect2(24, 30, 150, vs.y - 30 - 102), id, "", 0.0 if them_lit else 0.55, true)
 	# Header: whose scene, which rank
-	var head := "%s  ·  Bond rank %d: %s%s" % [Empire.short_name(id), rank, sc.get("title", ""), "   (memory)" if replay else ""]
+	var head := "%s  ·  %s: %s%s" % [Empire.short_name(id), "Between ranks 3 and 4" if rank == Relationships.MOMENT else "Bond rank %d" % rank,
+		sc.get("title", ""), "   (memory)" if replay else ""]
 	var hw := font.get_string_size(head, HORIZONTAL_ALIGNMENT_LEFT, -1, 10).x
 	draw_rect(Rect2(vs.x - hw - 18, 5, hw + 12, 18), Color(0, 0, 0, 0.6))
 	draw_string(font, Vector2(vs.x - hw - 12, 18), head, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, accent.lightened(0.2))

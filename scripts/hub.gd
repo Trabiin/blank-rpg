@@ -483,6 +483,13 @@ func _use(t: Dictionary) -> void:
 		scene_view.play(id, ready_rank)
 		touch.release_all()
 		return
+	var ended := Relationships.take_ended_lines(id)  # an ex says their piece, once (issue #116)
+	if not ended.is_empty():
+		(npcs[id] as Hero).facing = (leader.global_position - (npcs[id] as Node2D).global_position).normalized()
+		Empire.bond_talk(id)
+		touch.release_all()
+		dialogue_box.play_lines(ended)
+		return
 	var r := Empire.recruit(id)
 	var lines: Array = r.get("lines", [])
 	var npc: Hero = npcs[id]
@@ -499,6 +506,8 @@ func _use(t: Dictionary) -> void:
 	elif not lines.is_empty():
 		var i: int = talk_index.get(id, 0)
 		line = lines[i % lines.size()]
+		if Relationships.talk_line(id, i) != "":  # sweet nothings (issue #116)
+			line = Relationships.talk_line(id, i)
 		talk_index[id] = i + 1
 	var gained := Empire.bond_talk(id)
 	var bond_note := "   (bond +%d)" % gained if gained > 0 else ""

@@ -286,9 +286,6 @@ func test_expeditions() -> void:
 			check(recruits.has(j["recruit"]), "%s: recruit %s missing" % [w, j["recruit"]])
 		if j.has("who"):
 			check(recruits.has(j["who"]), "%s: recruit %s missing" % [w, j["who"]])
-	for p in e["pairs"]:
-		for id in p["ids"]:
-			check(recruits.has(id), "expeditions.json pair: %s missing" % id)
 
 
 func test_missions_and_enemies() -> void:
