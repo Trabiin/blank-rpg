@@ -195,7 +195,7 @@ func _status(id: String) -> Array:
 		var how: Dictionary = Empire.recruit(id).get("join", {})
 		var where := ""
 		if how.get("type", "") == "rescue":
-			where = "Rescue job on the Expeditions board (E): " + str(Empire.job(how.get("job", "")).get("name", "?"))
+			where = "Rescue job on the Expeditions board%s: " % Prompts.tag("expeditions") + str(Empire.job(how.get("job", "")).get("name", "?"))
 		return ["Not found yet. " + where, Color(0.45, 0.44, 0.47)]
 	if Empire.recruit(id).get("locked_party", false):
 		return ["Leads the party", GOLD]

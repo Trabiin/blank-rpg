@@ -11,6 +11,7 @@ config/features=PackedStringArray("4.3", "GL Compatibility")
 
 [autoload]
 
+Diag="*res://scripts/diag.gd"
 Audio="*res://scripts/audio.gd"
 Controls="*res://scripts/controls.gd"
 Saves="*res://scripts/save.gd"

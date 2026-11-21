@@ -404,6 +404,7 @@ static func apply(m: Dictionary, outcome: String, dry := false) -> Array:
 				Empire.mission_ready["salvage:" + p["id"]] = Empire.day + _cooldown()
 		"personal":
 			lines.append_array(PersonalMissions.apply(m, outcome, dry))
+	lines.append_array(FactionAsks.on_mission(m, outcome, dry))  # a faction's request (issue #131)
 	return lines
 
 

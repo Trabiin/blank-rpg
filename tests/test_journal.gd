@@ -37,6 +37,8 @@ func _act1() -> void:
 	for id in ["gristle", "ninefingers", "quill", "tobble"]:
 		Empire.recruits[id] = {"role": "idle", "target": "", "injured": 0}
 	Empire.day = 12
+	for t in Help.topics():  # a day-12 player has heard the explainers and tips (issue #115)
+		Help.mark(t["id"])
 
 
 # ------------------------------------------------------------------ data

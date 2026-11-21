@@ -547,7 +547,7 @@ func _draw_detail(vs: Vector2) -> void:
 			y += 4
 			if why == "":
 				var d := Armory.days_for(r)
-				_text(Vector2(x, y + 8), "Enter: forge it. Ready %s." % ("at dawn" if d <= 1 else "in %d days" % d), 8, GOOD, w)
+				_text(Vector2(x, y + 8), "%s: forge it. Ready %s." % [_ok_word(), "at dawn" if d <= 1 else "in %d days" % d], 8, GOOD, w)
 			else:
 				_wrap(Vector2(x, y + 8), "Can't yet: %s." % why, w, 8, BAD)
 		"job":
@@ -568,11 +568,11 @@ func _draw_detail(vs: Vector2) -> void:
 					y = _item_head(st["id"], x, y, w)
 					y += _wrap(Vector2(x, y + 2), Armory.result_blurb(st["id"]), w, 8, Color(0.78, 0.76, 0.74)) + 4
 			var why2 := Armory.buy_blocker(int(row["i"]), st)
-			_text(Vector2(x, box.end.y - 10), ("Enter: buy one for %d Gilt." % Armory.price(st["kind"], st["id"])) if why2 == "" else "Can't: %s." % why2, 8, GOOD if why2 == "" else BAD, w)
+			_text(Vector2(x, box.end.y - 10), ("%s: buy one for %d Gilt." % [_ok_word(), Armory.price(st["kind"], st["id"])]) if why2 == "" else "Can't: %s." % why2, 8, GOOD if why2 == "" else BAD, w)
 		"sell", "mat":
 			_mat_head(row["id"], x, y, w)
 			if row["kind"] == "sell":
-				_text(Vector2(x, box.end.y - 10), "Enter: sell one for %d Gilt." % Armory.sell_price_mat(row["id"]), 8, GOOD, w)
+				_text(Vector2(x, box.end.y - 10), "%s: sell one for %d Gilt." % [_ok_word(), Armory.sell_price_mat(row["id"])], 8, GOOD, w)
 		"pack":
 			var id: String = row["id"]
 			y = _item_head(id, x, y, w)
@@ -582,7 +582,7 @@ func _draw_detail(vs: Vector2) -> void:
 			if int(it.get("start", 0)) > 0:
 				lines.append("Free rations: up to %d after every mission." % int(it["start"]))
 			if it.get("stall", false):
-				lines.append("Tobble sells them: %d Gilt (Enter)." % int(it.get("price", 0)))
+				lines.append("Tobble sells them: %d Gilt (%s)." % [int(it.get("price", 0)), _ok_word()])
 			if Armory.forge_data().get("recipes", {}).has(id):
 				lines.append("The Forge makes them: %s." % Armory.mats_text(Armory.recipe(id)["mats"]))
 			for l in lines:
@@ -649,3 +649,8 @@ func _mat_head(k: String, x: float, y: float, w: float) -> float:
 		uses = uses.slice(0, 8) + ["and %d more" % (Armory.uses(k).size() - 8)]
 	y += _wrap(Vector2(x, y + 8), "Makes: " + ", ".join(uses), w, 8, SOFT)
 	return y
+
+
+## What to press to act on this device: "Enter", "A", "Tap twice" (issue #115).
+func _ok_word() -> String:
+	return "Tap twice" if Prompts.touch() else Prompts.confirm()

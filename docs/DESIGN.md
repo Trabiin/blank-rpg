@@ -274,6 +274,21 @@ erased (Coven -10), a Wardlamp lit next to the woods (Coven +4), and expeditions
 on failure), finding the hedge-witch before the Coven does (-8), springing Daro from the Concord (-8). Story
 missions will call the same hook (Empire.faction_react) once they exist.
 
+**Faction asks (#131):** each faction you know of asks one favour at a time (data/factions.json `asks`,
+scripts/faction_asks.gd). The first comes 2-4 days after the Command Table opens, then 3-5 days after each one
+ends. It arrives as a notice that goes to Diplomacy (F), where it waits 3 days for an answer: accept, or refuse
+(-2 to -4 standing; leaving it unanswered counts as refusing). Accepted, it has a deadline (5-10 days) and a
+reward (standing plus resources, Forge materials, a boon or a recruit at the gate early); missing it costs more
+standing and sometimes more (a Guild fine, Concord trouble at dawn, a Coven hex of +2 Fray a day that a Wardlamp
+burns off). Asks depend on standing tier (some only while things are bad, like the Concord's back-tithe) and come
+in seven kinds: request-only **expeditions** that appear on the Guildhall board while accepted, **raids** on a rival's
+land, **salvage** runs, **holding Fray** under a line on your land by their home, **lighting a Wardlamp** there,
+**handing over** resources from Diplomacy, and **promises** not to trade with a rival. MVP: Guild 4 (Saltreed barge,
+raid the Concord, ferry dues, lend blades: brings Jessamy), Coven 5 (treeline Fray, lamp by the woods: brings Mr.
+Biscuits, fallen letters, no Guild pact, salvage the hedge-books), Concord 5 (back-tithe, census, no Guild pact, audit a Guild cargo, keep the
+road towns standing). The journal's Factions section lists the offer and the accepted ask with a countdown and
+show-on-map; History keeps how each ended. New factions from #54 add their own asks in the same file.
+
 ### 5.10 Relationships
 
 About **20 core characters** (all the combat heroes plus the most important staff) have relationships:

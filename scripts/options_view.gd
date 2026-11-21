@@ -81,9 +81,11 @@ func _rebuild() -> void:
 		_rows.append({"id": "difficulty", "kind": "cycle", "label": "Difficulty", "value": Settings.DIFFICULTIES[Settings.difficulty],
 			"detail": Settings.DIFFICULTY_INFO[Settings.difficulty] + "  Change it any time."})
 		_rows.append({"id": "text_speed", "kind": "cycle", "label": "Text speed", "value": Dialogue.speed_name(),
-			"detail": "Typewriter speed in conversations (Tab also changes it there)."})
+			"detail": "Typewriter speed in conversations%s." % ((" (%s changes it there too)" % Prompts.key("swap")) if Prompts.key("swap") != "" else "")})
 		_rows.append({"id": "shake", "kind": "cycle", "label": "Screen shake", "value": Settings.SHAKES[Settings.shake_i],
 			"detail": "Camera shake on heavy hits and techs."})
+		_rows.append({"id": "tips", "kind": "cycle", "label": "Tips", "value": "On" if Settings.tips_enabled() else "Off",
+			"detail": "The cast explains each screen the first time it opens and speaks up when something new happens. Everything is also under Help in the menu."})
 		for bus in Settings.BUSES:
 			var label: String = {"Master": "Master volume", "Music": "Music volume", "SFX": "Sound effects volume"}[bus]
 			_rows.append({"id": "vol:" + bus, "kind": "slider", "label": label, "value": "%d%%" % Settings.volumes[bus],
@@ -126,6 +128,8 @@ func _step(i: int, step: int) -> void:
 			_set_text_speed(clampi(Dialogue.speed_index() + step, 0, Dialogue.SPEEDS.size() - 1))
 		"shake":
 			Settings.shake_i = clampi(Settings.shake_i + step, 0, Settings.SHAKES.size() - 1)
+		"tips":  # issue #115
+			Settings.tips = step > 0
 		_:
 			if id.begins_with("vol:"):
 				var bus := id.substr(4)
@@ -197,6 +201,7 @@ func _value_index(id: String) -> int:
 		"difficulty": return Settings.difficulty
 		"text_speed": return Dialogue.speed_index()
 		"shake": return Settings.shake_i
+		"tips": return 1 if Settings.tips_enabled() else 0
 	return -1
 
 
@@ -204,7 +209,7 @@ func _back() -> void:
 	if listening != "":
 		listening = ""
 	elif page == "controls" or page == "fx":
-		sel = 7 if page == "controls" else 8
+		sel = 8 if page == "controls" else 9
 		page = "main"
 		_rebuild()
 	else:

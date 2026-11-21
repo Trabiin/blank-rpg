@@ -90,6 +90,22 @@ func _process(_delta: float) -> bool:
 		_spread()
 	if frame == total - int(args.get("lead", "30")) and args.has("act"):
 		_act(str(args["act"]))
+	if frame == total - 25 and args.has("talk") and current_scene != null and "dialogue_box" in current_scene:
+		# talk=quill_first opens that conversation in town; portraits=DIR swaps in <id>.png from DIR (a
+		# style trial from tools/portrait_style.py) without touching assets/portraits.
+		var dlg = load("res://scripts/dialogue.gd")
+		dlg._speed = 3  # instant text
+		if args.has("portraits"):
+			var dir := DirAccess.open(str(args["portraits"]))
+			for f in dir.get_files():
+				if f.ends_with(".png"):
+					var tex := ImageTexture.create_from_image(Image.load_from_file(str(args["portraits"]).path_join(f)))
+					for ex in ["", "happy", "angry", "sad", "surprised", "smug"]:  # stands in for every expression
+						dlg._portraits["%s|%s" % [f.get_basename(), ex]] = tex
+		current_scene.dialogue_box.play(str(args["talk"]))
+		for i in int(args.get("skip", "0")):  # skip=1: start on the next line
+			current_scene.dialogue_box._shown = 99999.0
+			current_scene.dialogue_box._advance()
 	if frame == total - 1 and args.has("nohud") and current_scene != null:  # clean ground for UI mockups
 		for c in current_scene.find_children("*", "CanvasLayer", true, false):
 			c.visible = false

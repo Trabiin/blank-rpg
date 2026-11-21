@@ -185,7 +185,7 @@ func _draw() -> void:
 			"Attack: %s, hold when full: tech" % Prompts.key("attack"),
 			"Swap hero: " + Prompts.key("swap"),
 			"Pause: " + Prompts.key("pause"),
-			"Abilities: " + (abil if pad else "1-4"),
+			"Abilities: " + abil,
 			"Quick menu: " + Prompts.key("quick_menu"),
 			"" if pad else "F1: show or hide this",
 		]

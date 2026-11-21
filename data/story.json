@@ -103,12 +103,12 @@
 	"goals": [
 		{"text": "Escape the tax office", "chapter": "ch1", "hint": "Get past the wardens and out through the front door", "done": {"cleared": ["ch1_breakout"]}, "show": {"active": true}},
 		{"text": "Take charge of Hollowmark", "chapter": "ch1", "hint": "Walk back into the square at dawn", "done": {"seen": ["ch1_takeover"]}, "show": {"active": true}},
-		{"text": "Find the hedge-witch in the Gutterwoods", "chapter": "act1", "hint": "Rescue job (E) or Rescue mission on the map", "done": {"joined": ["gristle"]}, "show": {"seen": ["act1_rumours"]}},
-		{"text": "Free the deserter on Tithe Road", "chapter": "act1", "hint": "Rescue job (E) or Rescue mission on the map", "done": {"joined": ["ninefingers"]}, "show": {"seen": ["act1_rumours"]}},
+		{"text": "Find the hedge-witch in the Gutterwoods", "chapter": "act1", "hint": "Rescue job on the Expeditions board{tag:expeditions}, or a Rescue mission on the map", "done": {"joined": ["gristle"]}, "show": {"seen": ["act1_rumours"]}},
+		{"text": "Free the deserter on Tithe Road", "chapter": "act1", "hint": "Rescue job on the Expeditions board{tag:expeditions}, or a Rescue mission on the map", "done": {"joined": ["ninefingers"]}, "show": {"seen": ["act1_rumours"]}},
 		{"text": "The Concord Answers: break the tithe column", "chapter": "act1", "hint": "story mission at Old Mill Crossing", "done": {"cleared": ["act1_concord"]}, "show": {"seen": ["act1_writ"]}},
 		{"text": "The Auditor: stop him on the Tithe Road", "chapter": "act1", "hint": "story mission at Tithe Road", "done": {"cleared": ["auditor_duel"]}, "show": {"seen": ["act1_concord_after"]}},
 		{"text": "Take Whitewater back from the Blank", "chapter": "act1", "hint": "Reclaim mission on the territory map, then claim it with a governor", "done": {"owns": ["whitewater"]}, "show": {"seen": ["act1_end"]}},
 		{"text": "Hold six provinces", "chapter": "act1", "hint": "claim free neighbours from the Command Table", "done": {"held": 6}, "show": {"seen": ["act1_end"]}},
-		{"text": "Win a seventh province by treaty", "chapter": "act1", "hint": "a faction that likes you enough will cede land (Diplomacy, F)", "done": {"held": 7}, "show": {"seen": ["act1_end"]}}
+		{"text": "Win a seventh province by treaty", "chapter": "act1", "hint": "a faction that likes you enough will cede land (Diplomacy{tag:diplomacy})", "done": {"held": 7}, "show": {"seen": ["act1_end"]}}
 	]
 }

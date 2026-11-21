@@ -239,7 +239,7 @@ func _start_pick() -> void:
 	pick_i = 1 if ch.size() > 1 else 0
 	if ch.size() <= 1 and cur == "":
 		picking = false
-		_say("No spare %s for %s. The shop (Tab) or missions have more." % [Progress.SLOT_NAMES[_slot()].to_lower(), PartyPicker.short_of(_hero_id())])
+		_say("No spare %s for %s. The shop%s or missions have more." % [Progress.SLOT_NAMES[_slot()].to_lower(), PartyPicker.short_of(_hero_id()), Prompts.tag("swap")])
 
 
 func _equip(i: int) -> void:

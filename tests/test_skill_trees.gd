@@ -414,6 +414,86 @@ func test_perks_in_a_real_fight() -> void:
 	bran.dead = false
 
 
+## Issue #136: tree poison is the shared poison status (scripts/status.gd), not a ticker of its own.
+func test_tree_poison_is_the_shared_status() -> void:
+	var main := await _mission(["gristle"])
+	if not check(main != null and main.leader != null, "mission running"):
+		return
+	await _clear(main)
+	main.mission["loot"] = {}  # only the tree's Gilt lands in the loot
+	var ash: Hero = main.leader
+	var gristle := _hero(main, "gristle")
+	if not check(gristle != null, "Gristle in the field"):
+		return
+	ash.invuln_t = 999.0
+	gristle.invuln_t = 999.0
+	var e := await _enemy(main, ash.global_position + Vector2(330, 0), 200)  # out of everyone's reach
+	if not check(e != null, "an enemy"):
+		return
+	e.stun_until = 0  # free to act, so a stagger would show
+	e._set_state(Enemy.State.WANDER, 1.0)
+	TreePerks.poison(e, 4.0, 3.0, gristle)
+	check(Status.has(e, "poison"), "the poison is the shared status")
+	check(TreePerks.poisoned(e), "and TreePerks reads it back")
+	check(e.get_node_or_null("TreePoison") == null, "no ticker of the tree's own on the enemy")
+	check(TreePerks.damage_bonus(gristle, e) == 0.0, "no bonus without the perk")
+	gristle.perks = {"dmg_poisoned": 0.5}
+	check_eq(TreePerks.damage_bonus(gristle, e), 0.5, "dmg_poisoned sees the shared poison")
+	gristle.perks = {}
+	# Ticks hurt but never stagger, flash or knock it back.
+	var hp0 := e.hp
+	var staggered := false
+	var flashed := false
+	var t0 := Time.get_ticks_msec()
+	while Time.get_ticks_msec() - t0 < 1600 and is_instance_valid(e) and not e.dead:
+		staggered = staggered or e.state == Enemy.State.STAGGER
+		flashed = flashed or e.flash_t > 0.0
+		await tree.process_frame
+	if check(is_instance_valid(e) and not e.dead, "still standing"):
+		check(e.hp <= hp0 - 4, "the poison ticked (%d -> %d)" % [hp0, e.hp])
+		check(not staggered, "no stagger from a poison tick")
+		check(not flashed, "no hit flash from a poison tick")
+		check_eq(e.get_meta("status_source", null), gristle, "the ticks are credited to Gristle")
+		# Re-applying keeps the stronger dose and refreshes the time; a cure clears it like any poison.
+		TreePerks.poison(e, 1.0, 5.0, gristle)
+		check_eq(float(Status._all(e)["poison"]["dps"]), 4.0, "the stronger dose stays")
+		check(Status.left(e, "poison") > 4.5, "the time is refreshed")
+		check_eq(Status.cure(e, ["poison"]), 1, "a cure removes it")
+		check(not TreePerks.poisoned(e), "and it is gone")
+	# A dead or missing enemy is ignored.
+	TreePerks.poison(null, 4.0, 3.0, gristle)
+	await _clear(main)
+	# A poison kill pays the poisoner's kill rewards.
+	e = await _enemy(main, ash.global_position + Vector2(330, 0), 2)
+	if check(e != null, "a second enemy"):
+		gristle.perks = {"kill_gilt": 4}
+		var g0 := int(main.found.get("gilt", 0))
+		TreePerks.poison(e, 4.0, 3.0, gristle)
+		var t1 := Time.get_ticks_msec()
+		while Time.get_ticks_msec() - t1 < 1500 and is_instance_valid(e) and not e.dead:
+			await tree.process_frame
+		check(not is_instance_valid(e) or e.dead, "the poison finished it")
+		await frames(2)
+		check_eq(int(main.found.get("gilt", 0)) - g0, 4, "the kill paid Gristle's kill_gilt")
+	gristle.perks = {}
+	await _clear(main)
+	# Bosses keep their own rules: the Auditor is untouchable while dormant, poison or not.
+	var aud: Enemy = load("res://scripts/auditor.gd").new()
+	aud.position = ash.global_position + Vector2(330, 0)
+	main.entities.add_child(aud)
+	aud.floor_node = main.area
+	aud.arena = Rect2(Vector2(24, 24), main.world - Vector2(48, 40))
+	await frames(2)
+	var a0 := aud.hp
+	TreePerks.poison(aud, 6.0, 2.0, gristle)
+	var t2 := Time.get_ticks_msec()
+	while Time.get_ticks_msec() - t2 < 1200:
+		await tree.process_frame
+	check_eq(aud.hp, a0, "a dormant Auditor shrugs off poison")
+	aud.queue_free()
+	await frames(1)
+
+
 func test_learning_mid_mission_takes_effect_at_once() -> void:
 	var main := await _mission(["bran", "gristle"])
 	if not check(main != null, "mission running"):

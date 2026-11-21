@@ -208,6 +208,7 @@ func _ready() -> void:
 	Empire.day_passed.connect(_on_day_passed)
 	Empire.notice.connect(_on_notice)
 	Empire.hollowmark_lost.connect(_on_hollowmark_lost)
+	HelpWatch.attach(self)  # explainers, the story's paced unlocks and first-time tips (issue #115)
 
 	if not Saves.pending.is_empty():
 		var d: Dictionary = Saves.pending
@@ -505,7 +506,7 @@ func _use(t: Dictionary) -> void:
 		line = "%s Right now: %s." % [STAFF_LINES.get(bid, "Working."), Empire.current_effect(bid)["text"].to_lower()]
 	elif not lines.is_empty():
 		var i: int = talk_index.get(id, 0)
-		line = lines[i % lines.size()]
+		line = Prompts.fill(str(lines[i % lines.size()]))
 		if Relationships.talk_line(id, i) != "":  # sweet nothings (issue #116)
 			line = Relationships.talk_line(id, i)
 		talk_index[id] = i + 1
@@ -556,7 +557,7 @@ func _open_table() -> void:
 
 ## Plays the next story beat in town if one is due and nothing else is on screen.
 func _story_check() -> void:
-	if leaving or not is_inside_tree() or menu.visible or dialogue_box.visible or chapter_card.visible:
+	if leaving or not is_inside_tree() or menu.visible or dialogue_box.visible or chapter_card.visible or Help.busy():
 		return
 	if roster_view.visible or buildings_view.visible or expedition_view.visible or research_view.visible \
 			or diplomacy_view.visible or bonds_view.visible or scene_view.visible or newcomers_view.visible or gear_view.visible:
@@ -690,13 +691,15 @@ func open_menu(note := "") -> void:
 		{"id": "journal", "label": "Journal", "detail": "quests, people, codex, history" + Prompts.tag("journal")},
 		{"id": "roster", "label": "Roster", "detail": Prompts.key("roster")},
 		{"id": "buildings", "label": "Buildings", "detail": Prompts.key("buildings")},
-		{"id": "expeditions", "label": "Expeditions", "detail": Prompts.key("expeditions")},
-		{"id": "research", "label": "Research", "detail": Prompts.key("research")},
-		{"id": "diplomacy", "label": "Diplomacy", "detail": Prompts.key("diplomacy")},
-		{"id": "bonds", "label": "Bonds", "detail": Prompts.key("bonds")},
+		{"id": "expeditions", "label": "Expeditions", "detail": Prompts.key("expeditions"), "enabled": Help.is_open("expeditions"), "note": "(%s)" % Help.locked_note("expeditions")},
+		{"id": "research", "label": "Research", "detail": Prompts.key("research"), "enabled": Help.is_open("research"), "note": "(%s)" % Help.locked_note("research")},
+		{"id": "diplomacy", "label": "Diplomacy", "detail": Prompts.key("diplomacy"), "enabled": Help.is_open("diplomacy"), "note": "(%s)" % Help.locked_note("diplomacy")},
+		{"id": "bonds", "label": "Bonds", "detail": Prompts.key("bonds"), "enabled": Help.is_open("bonds"), "note": "(%s)" % Help.locked_note("bonds")},
 		{"id": "newcomers", "label": "Newcomers", "detail": Prompts.key("newcomers")},
 		{"id": "gear", "label": "Party gear & shop", "detail": Prompts.key("gear")},
 		{"id": "armory", "label": "Forge & Market", "detail": Prompts.key("armory")},
+		{"id": "help", "label": "Help", "detail": "explainers, tips and controls"},
+		{"id": "report", "label": "Report a bug", "detail": "or send feedback"},
 		{"id": "save", "label": "Save game"},
 		{"id": "load", "label": "Load game", "enabled": Saves.latest_slot() != "", "note": "(no saves yet)"},
 		{"id": "options", "label": "Options"},
@@ -754,6 +757,12 @@ func _on_menu(id: String) -> void:
 		"armory":
 			_close_menu()
 			armory_view.open()
+		"help":  # issue #115
+			menu.visible = false
+			HelpView.popup(self).closed.connect(func(): menu.visible = true)
+		"report":  # issue #146
+			menu.visible = false
+			FeedbackView.popup(self).closed.connect(func(): menu.visible = true)
 		"options":
 			menu.visible = false
 			OptionsView.popup(self).closed.connect(func(): menu.visible = true)

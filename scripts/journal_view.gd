@@ -30,8 +30,8 @@ const LINE := 13.0  # page text line height: matches the page's ruling
 const BODY := 10
 const SECTION_NAMES := {"story": "Main story", "personal": "Personal", "factions": "Factions", "open": "Open missions and threats"}
 const GROUP_NAMES := {"roster": "On the roster", "gate": "Waiting at the south gate", "lead": "Rumours", "figure": "Others met"}
-const HISTORY_FILTERS := ["", "mission", "expedition", "bond"]
-const FILTER_NAMES := {"": "everything", "mission": "missions only", "expedition": "expeditions only", "bond": "people only"}
+const HISTORY_FILTERS := ["", "mission", "expedition", "bond", "faction"]
+const FILTER_NAMES := {"": "everything", "mission": "missions only", "expedition": "expeditions only", "bond": "people only", "faction": "faction requests only"}
 
 var tab := 0
 var sel := {}  # tab -> selected row index (rows that are headers are never selected)
@@ -563,7 +563,7 @@ func _blocks() -> Array:
 		"log":
 			b.append(["title", row["title"]])
 			var where: String = Empire.territory().find(str(row.get("province", ""))).get("name", "")
-			b.append(["sub", "%s%s  ·  %s" % [("Day %d" % int(row["day"])) if int(row["day"]) > 0 else "Before the journal",  ("  ·  " + where) if where != "" else "", {"expedition": "Expedition report", "bond": "Between people"}.get(row.get("entry_kind", ""), "Mission")], INK_SOFT])
+			b.append(["sub", "%s%s  ·  %s" % [("Day %d" % int(row["day"])) if int(row["day"]) > 0 else "Before the journal",  ("  ·  " + where) if where != "" else "", {"expedition": "Expedition report", "bond": "Between people", "faction": "Faction request"}.get(row.get("entry_kind", ""), "Mission")], INK_SOFT])
 			b.append(["gap"])
 			for l in row.get("lines", []):
 				b.append(["para", str(l), INK])
@@ -666,7 +666,7 @@ func _draw_page() -> void:
 		var ph := pw * float(tex.get_height()) / float(maxi(tex.get_width(), 1))
 		var prect := Rect2(pr.end.x - pw - 26.0, top - page_scroll, pw, ph)
 		if prect.end.y > top and prect.position.y < bottom:
-			_clip_tex(tex, prect, top, bottom, Color(0.16, 0.12, 0.1, 0.8) if shade else Color(1, 1, 1, 0.95))
+			_clip_tex(Dialogue.fitted(tex, ph), prect, top, bottom, Color(0.16, 0.12, 0.1, 0.8) if shade else Color(1, 1, 1, 0.95))
 	var title_w := w - (pw + 6.0 if tex else 0.0)
 	for blk in _blocks():
 		var kind: String = blk[0]

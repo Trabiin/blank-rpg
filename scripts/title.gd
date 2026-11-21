@@ -33,6 +33,7 @@ func _ready() -> void:
 	items.append({"id": "new", "label": "New Game"})
 	items.append({"id": "load", "label": "Load Game", "enabled": latest != "", "note": "(no saves yet)"})
 	items.append({"id": "options", "label": "Options", "detail": "speed, difficulty, sound, controls"})
+	items.append({"id": "report", "label": "Report a bug", "detail": "or send feedback"})
 	items.append({"id": "credits", "label": "Credits"})
 	# Testing shortcuts live one level down, and only in builds that ask for them (test_shortcuts_on).
 	if test_shortcuts_on():
@@ -58,10 +59,12 @@ func _ready() -> void:
 	_show_save_notices()
 
 
-## Saves that could not be read were set aside at start-up (scripts/save.gd): say so once.
+## Saves that could not be read were set aside at start-up (scripts/save.gd): say so once. Then the
+## offer to report the last session's crash or errors, if there was one.
 func _show_save_notices() -> void:
 	var notes := Saves.take_notices()
 	if notes.is_empty():
+		_offer_report()
 		return
 	var notice := InkMenu.new()
 	notice.dim = 0.85
@@ -71,11 +74,54 @@ func _show_save_notices() -> void:
 	menu.visible = false
 	notice.chosen.connect(func(_id):
 		notice.queue_free()
-		menu.visible = true)
+		menu.visible = true
+		_offer_report())
+
+
+## The last session crashed or hit errors (Diag, issue #146): offer once to send a report about it.
+## Nothing is sent unless the player goes on to press Send in the form.
+func _offer_report() -> void:
+	if not Diag.should_offer_report():
+		return
+	var prev: Dictionary = Diag.previous
+	var n := int(prev.get("errors", 0))
+	var what := "Last Ink closed unexpectedly last time." if prev.get("crashed", false) \
+		else "Last Ink ran into %d error%s last time." % [n, "" if n == 1 else "s"]
+	var offer := InkMenu.new()
+	offer.dim = 0.85
+	offer.top = 0.28
+	add_child(offer)
+	offer.setup("Sorry about that", [
+		{"id": "send", "label": "Send report", "detail": "you see everything before it goes"},
+		{"id": "logs", "label": "Download the logs" if OS.has_feature("web") else "Open log folder"},
+		{"id": "later", "label": "Not now"},
+		{"id": "mute", "label": "Don't ask again", "detail": "until the next update"},
+	], what + " A report with the log from then helps fix it.")
+	menu.visible = false
+	Diag.previous = {}  # asked once per launch
+	offer.chosen.connect(_on_offer.bind(offer, prev))
+
+
+func _on_offer(id: String, offer: InkMenu, prev: Dictionary) -> void:
+	match id:
+		"send":
+			offer.visible = false
+			FeedbackView.popup(self, {"screenshot": false, "previous": prev}).closed.connect(func():
+				offer.queue_free()
+				menu.visible = true)
+		"logs":
+			Diag.open_log_folder()
+		"mute":
+			Diag.mute()
+			offer.queue_free()
+			menu.visible = true
+		_:
+			offer.queue_free()
+			menu.visible = true
 
 
 func _on_slot(id: String) -> void:
-	if id in ["command", "boss_test", "heroes_test", "map_test"]:
+	if id in ["command", "boss_test", "heroes_test", "map_test", "error_test"]:
 		_on_choice(id)
 	elif id == "back" or id == "cancel":
 		slots.visible = false
@@ -130,6 +176,12 @@ func _on_choice(id: String) -> void:
 		"options":
 			menu.visible = false
 			OptionsView.popup(self).closed.connect(func(): menu.visible = true)
+		"report":  # issue #146
+			menu.visible = false
+			FeedbackView.popup(self, {"screenshot": false}).closed.connect(func(): menu.visible = true)
+		"error_test":  # issue #146: something for the next launch's report offer to find
+			push_error("Test error from the title screen's test shortcuts (issue #146).")
+			Diag.toast("Logged a test error. Restart the game to see the report offer.")
 		"credits":
 			menu.visible = false
 			credits.visible = true
@@ -139,6 +191,7 @@ func _on_choice(id: String) -> void:
 				{"id": "boss_test", "label": "Boss: The Auditor", "detail": "fresh level 6 party, straight into the fight"},
 				{"id": "heroes_test", "label": "New heroes", "detail": "fresh town with Ottoline, Jessamy, Odile and Velvette already hired"},
 				{"id": "map_test", "label": "Whole map", "detail": "Command Table with every region open, and coin to claim land"},
+				{"id": "error_test", "label": "Log a test error", "detail": "the next launch offers to send a report"},
 				{"id": "back", "label": "Back"}])
 			menu.visible = false
 			slots.visible = true
