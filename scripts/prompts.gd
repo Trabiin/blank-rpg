@@ -30,7 +30,7 @@ const TRIGGERS := {
 }
 const DPAD := {JOY_BUTTON_DPAD_UP: "Up", JOY_BUTTON_DPAD_DOWN: "Down",
 	JOY_BUTTON_DPAD_LEFT: "Left", JOY_BUTTON_DPAD_RIGHT: "Right"}
-const KEY_SHORT := {"Escape": "Esc", "Kp Enter": "Enter", "BackSpace": "Backspace"}
+const KEY_SHORT := {"Escape": "Esc", "Kp Enter": "Enter", "BackSpace": "Backspace", "Equal": "=", "Minus": "-"}
 
 
 ## Called by Controls for every input event: remembers what the player last touched.
@@ -161,3 +161,76 @@ static func tapped(event: InputEvent) -> bool:
 static func tag(action: String) -> String:
 	var k := key(action)
 	return "" if k == "" else " (%s)" % k
+
+
+## Fills button tokens in text written in data files, for the device in use (issue #115):
+##   {tag:action}   " (T)" after a name; on a pad with nothing bound " (via Menu)"; nothing on touch
+##   {key:action}   "T" / "Y"; on a pad with nothing bound "the Menu button"; on touch "a tap"
+##   {confirm}      "Enter" / "A" / "Tap"
+##   {back}         "Esc" / "B" / "the back button"
+##   {dev:keyboard text|pad text|touch text}   whichever matches the device (touch may be left out)
+## Keys are read from the InputMap, so remapped controls show up. Text with no "{" is returned as is.
+static func fill(text: String) -> String:
+	if not "{" in text:
+		return text
+	var out := ""
+	var i := 0
+	while i < text.length():
+		var open := text.find("{", i)
+		if open < 0:
+			out += text.substr(i)
+			break
+		var close := _closing(text, open)
+		if close < 0:
+			out += text.substr(i)
+			break
+		out += text.substr(i, open - i)
+		out += _token(text.substr(open + 1, close - open - 1))
+		i = close + 1
+	return out
+
+
+static func _token(tok: String) -> String:
+	var colon := tok.find(":")
+	var kind := tok if colon < 0 else tok.substr(0, colon)
+	var arg := "" if colon < 0 else tok.substr(colon + 1)
+	match kind:
+		"tag":
+			if device == TOUCH:
+				return ""
+			var k := key(arg)
+			if k == "" and device == PAD:
+				return " (via %s)" % key("pause")
+			return "" if k == "" else " (%s)" % k
+		"key":
+			if device == TOUCH:
+				return "a tap"
+			var k := key(arg)
+			if k == "" and device == PAD:
+				return "the %s button" % key("pause")
+			return k
+		"confirm":
+			return confirm()
+		"back":
+			return "the back button" if device == TOUCH else key("ui_cancel")
+		"dev":
+			var parts := arg.split("|")
+			var at := 1 if device == PAD else (2 if device == TOUCH else 0)
+			if at >= parts.size():
+				at = 0
+			return fill(parts[at])  # the chosen part may hold tokens of its own
+	return "{" + tok + "}"  # not a token: leave it alone
+
+
+## The "}" that closes the "{" at `open`, counting nested pairs; -1 if it never closes.
+static func _closing(text: String, open: int) -> int:
+	var depth := 0
+	for i in range(open, text.length()):
+		var c := text[i]
+		if c == "{":
+			depth += 1
+		elif c == "}":
+			depth -= 1
+			if depth == 0:
+				return i
+	return -1

@@ -127,7 +127,7 @@ func _draw() -> void:
 		_draw_markers(store)
 	var x := origin.x
 	var pend: Array = store.pending()
-	var tab_hint := "Tab"
+	var tab_hint := "tap" if Prompts.touch() else Prompts.key("alert_go")  # follows the device and remaps (issue #115)
 	var g := Alerts.goal()
 	var y := origin.y
 	if grow_up:
@@ -139,7 +139,7 @@ func _draw() -> void:
 	if not g.is_empty():
 		goal_target = g.get("target", {})
 		var gs := "Story: " + str(g["text"])
-		var hint := str(g.get("hint", ""))
+		var hint := Prompts.fill(str(g.get("hint", "")))
 		var gw := font.get_string_size(gs, HORIZONTAL_ALIGNMENT_LEFT, -1, 8).x
 		var key := ""
 		if not goal_target.is_empty():

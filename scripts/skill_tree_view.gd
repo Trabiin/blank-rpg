@@ -488,9 +488,9 @@ func _draw_details(area: Rect2) -> void:
 		_text(Vector2(x, y + 8), ("Needs " if not met else "Unlocked by ") + gate, 8, GOOD if met else BAD, w)
 		y += 12
 		if not met and id != "ash":
-			y += _wrap(Vector2(x, y + 7), "Bonds grow by fighting beside %s, talking in Hollowmark and giving them work they like (H)." % PartyPicker.short_of(id), w, 7, DIM) + 4
+			y += _wrap(Vector2(x, y + 7), "Bonds grow by fighting beside %s, talking in Hollowmark and giving them work they like%s." % [PartyPicker.short_of(id), Prompts.tag("bonds")], w, 7, DIM) + 4
 		elif not met:
-			y += _wrap(Vector2(x, y + 7), "Ash is written by the people around them: grow your bonds with the others (H).", w, 7, DIM) + 4
+			y += _wrap(Vector2(x, y + 7), "Ash is written by the people around them: grow your bonds with the others%s." % Prompts.tag("bonds"), w, 7, DIM) + 4
 	# Learn button.
 	var why := SkillTree.blocker(id, sel)
 	_learn_rect = Rect2(x, minf(y + 6, _reset_rect.position.y - 22), w, 16)

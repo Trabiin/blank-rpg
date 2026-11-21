@@ -406,7 +406,7 @@ func _draw() -> void:
 		var lvl_s := "Not built" if lv == 0 else "Level %d of %d" % [lv, Empire.max_level(id)]
 		_text(Vector2(DETAIL_X + font.get_string_size(b["name"], HORIZONTAL_ALIGNMENT_LEFT, -1, 15).x + 10, dy), lvl_s, 9, Color(0.75, 0.72, 0.7))
 		dy += 8
-		dy += _wrap(Vector2(DETAIL_X, dy + 9), b["blurb"], w, 8, Color(0.62, 0.6, 0.62)) + 6
+		dy += _wrap(Vector2(DETAIL_X, dy + 9), Prompts.fill(str(b["blurb"])), w, 8, Color(0.62, 0.6, 0.62)) + 6
 		if lv > 0:
 			_text(Vector2(DETAIL_X, dy + 9), "Now: " + Empire.current_effect(id)["text"], 9, Color("cfe0b0"))
 			dy += 16

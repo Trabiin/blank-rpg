@@ -445,6 +445,7 @@ func _pause_items() -> Array:
 		{"id": "resume", "label": "Resume"},
 		{"id": "gear", "label": "Party gear", "detail": "levels and equipment"},
 		{"id": "journal", "label": "Journal", "detail": "quests, people, codex, history"},
+		{"id": "help", "label": "Help", "detail": "explainers, field notes and controls"},
 		{"id": "save", "label": "Save game"},
 		{"id": "load", "label": "Load game", "enabled": Saves.latest_slot() != "", "note": "(no saves yet)"},
 		{"id": "retreat", "label": "Retreat to Hollowmark", "detail": "end the mission, keep what you found"},
@@ -466,6 +467,9 @@ func _on_pause_choice(id: String) -> void:
 		"journal":
 			pause_menu.visible = false
 			_journal().open()
+		"help":  # issue #115
+			pause_menu.visible = false
+			HelpView.popup(self).closed.connect(_on_gear_closed)
 		"retreat":
 			pause_menu.visible = false
 			_end_mission("retreat")

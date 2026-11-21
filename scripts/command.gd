@@ -218,6 +218,7 @@ func _ready() -> void:
 	brief_menu.title_size = 18
 	layer.add_child(brief_menu)
 	brief_menu.chosen.connect(_on_brief)
+	HelpWatch.attach(self)  # explainers, the story's paced unlocks and first-time tips (issue #115)
 	if Empire.territory().find("hollowmark").get("owner", "") == "erased":
 		call_deferred("_show_lost")  # lost while walking around town
 
@@ -325,14 +326,15 @@ func _menu_items(note := "") -> void:
 		{"id": "town", "label": "Back to Hollowmark", "detail": "walk around town"},
 		{"id": "roster", "label": "Roster", "detail": Prompts.key("roster")},
 		{"id": "buildings", "label": "Buildings", "detail": Prompts.key("buildings")},
-		{"id": "expeditions", "label": "Expeditions", "detail": Prompts.key("expeditions")},
-		{"id": "research", "label": "Research", "detail": Prompts.key("research")},
-		{"id": "diplomacy", "label": "Diplomacy", "detail": Prompts.key("diplomacy")},
-		{"id": "bonds", "label": "Bonds", "detail": Prompts.key("bonds")},
+		{"id": "expeditions", "label": "Expeditions", "detail": Prompts.key("expeditions"), "enabled": Help.is_open("expeditions"), "note": "(%s)" % Help.locked_note("expeditions")},
+		{"id": "research", "label": "Research", "detail": Prompts.key("research"), "enabled": Help.is_open("research"), "note": "(%s)" % Help.locked_note("research")},
+		{"id": "diplomacy", "label": "Diplomacy", "detail": Prompts.key("diplomacy"), "enabled": Help.is_open("diplomacy"), "note": "(%s)" % Help.locked_note("diplomacy")},
+		{"id": "bonds", "label": "Bonds", "detail": Prompts.key("bonds"), "enabled": Help.is_open("bonds"), "note": "(%s)" % Help.locked_note("bonds")},
 		{"id": "newcomers", "label": "Newcomers", "detail": Prompts.key("newcomers")},
 		{"id": "gear", "label": "Party gear & shop", "detail": Prompts.key("gear")},
 		{"id": "armory", "label": "Forge & Market", "detail": Prompts.key("armory")},
 		{"id": "journal", "label": "Journal", "detail": Prompts.key("journal")},
+		{"id": "help", "label": "Help", "detail": "explainers, tips and controls"},
 		{"id": "save", "label": "Save game"},
 		{"id": "load", "label": "Load game", "enabled": Saves.latest_slot() != "", "note": "(no saves yet)"},
 		{"id": "options", "label": "Options"},
@@ -357,6 +359,9 @@ func _on_menu(id: String) -> void:
 	match id:
 		"resume", "cancel":
 			_close_menu()
+		"help":  # issue #115
+			menu.visible = false
+			HelpView.popup(self).closed.connect(func(): menu.visible = true)
 		"options":
 			menu.visible = false
 			OptionsView.popup(self).closed.connect(func(): menu.visible = true)
@@ -1251,33 +1256,36 @@ func _draw_overlay(c: CanvasItem) -> void:
 	UiSkin.panel(_cv, tb, "button")
 	_text_c(Vector2(tb.get_center().x, tb.position.y + 12), "To town", 9, Color(0.85, 0.82, 0.76))
 	var eb := _expeditions_button_rect()
-	UiSkin.panel(_cv, eb, "button")
-	var unread := Empire.unread_reports()
-	var out := Empire.expeditions.size()
-	var etext := "Expeditions"
-	if unread > 0:
-		etext = "Reports (%d)" % unread
-	elif out > 0:
-		etext = "Squads out: %d" % out
-	_text_c(Vector2(eb.get_center().x, eb.position.y + 12), etext + _k("expeditions"), 9, GOLD if unread > 0 else Color(0.85, 0.82, 0.76))
+	if not _draw_locked_button(eb, "Expeditions", "expeditions"):
+		UiSkin.panel(_cv, eb, "button")
+		var unread := Empire.unread_reports()
+		var out := Empire.expeditions.size()
+		var etext := "Expeditions"
+		if unread > 0:
+			etext = "Reports (%d)" % unread
+		elif out > 0:
+			etext = "Squads out: %d" % out
+		_text_c(Vector2(eb.get_center().x, eb.position.y + 12), etext + _k("expeditions"), 9, GOLD if unread > 0 else Color(0.85, 0.82, 0.76))
 	var rsb := _research_button_rect()
-	UiSkin.panel(_cv, rsb, "button")
-	var rtext := "Research"
-	var rcol := Color(0.85, 0.82, 0.76)
-	if Empire.research_active != "":
-		var stalled := float(Empire.research_pace()["pace"]) <= 0.0
-		rtext = "Research %d%%%s" % [int(Empire.research_fraction(Empire.research_active) * 100), " (stalled)" if stalled else ""]
-		rcol = Color(1, 0.55, 0.5) if stalled else Color("d7b8f0")
-	_text_c(Vector2(rsb.get_center().x, rsb.position.y + 12), rtext + _k("research"), 9, rcol)
+	if not _draw_locked_button(rsb, "Research", "research"):
+		UiSkin.panel(_cv, rsb, "button")
+		var rtext := "Research"
+		var rcol := Color(0.85, 0.82, 0.76)
+		if Empire.research_active != "":
+			var stalled := float(Empire.research_pace()["pace"]) <= 0.0
+			rtext = "Research %d%%%s" % [int(Empire.research_fraction(Empire.research_active) * 100), " (stalled)" if stalled else ""]
+			rcol = Color(1, 0.55, 0.5) if stalled else Color("d7b8f0")
+		_text_c(Vector2(rsb.get_center().x, rsb.position.y + 12), rtext + _k("research"), 9, rcol)
 	var db := _diplomacy_button_rect()
-	UiSkin.panel(_cv, db, "button")
-	var dtext := "Diplomacy"
-	var dcol := Color(0.85, 0.82, 0.76)
-	if Empire.surge.get("id", "") != "" and Empire.surge.get("aid", "") == "" and Empire.territory().find(Empire.surge["id"]).get("owner", "") == "you" \
-			and Empire.faction_ids().any(func(f): return Empire.deal_blocker(f, "aid") == ""):
-		dtext = "Ask for aid!"
-		dcol = GOLD
-	_text_c(Vector2(db.get_center().x, db.position.y + 12), dtext + _k("diplomacy"), 9, dcol)
+	if not _draw_locked_button(db, "Diplomacy", "diplomacy"):
+		UiSkin.panel(_cv, db, "button")
+		var dtext := "Diplomacy"
+		var dcol := Color(0.85, 0.82, 0.76)
+		if Empire.surge.get("id", "") != "" and Empire.surge.get("aid", "") == "" and Empire.territory().find(Empire.surge["id"]).get("owner", "") == "you" \
+				and Empire.faction_ids().any(func(f): return Empire.deal_blocker(f, "aid") == ""):
+			dtext = "Ask for aid!"
+			dcol = GOLD
+		_text_c(Vector2(db.get_center().x, db.position.y + 12), dtext + _k("diplomacy"), 9, dcol)
 	var jb := _journal_button_rect()
 	UiSkin.panel(_cv, jb, "button")
 	var jnew := Journal.unread_count() > 0
@@ -1294,6 +1302,23 @@ func _draw_overlay(c: CanvasItem) -> void:
 	if Empire.SPEEDS[Empire.speed] == 0:
 		_text_c(Vector2(_map_rect().get_center().x, MAP_ORIGIN.y + MAP_VIEW.y - 24), "TIME PAUSED", 11, Color(1, 1, 1, 0.55 + 0.25 * sin(t * 3.0)), 4)
 	_cv = self
+
+
+## A screen the story has not opened yet (issue #115): a dimmed button with a padlock and the day it
+## opens. Returns false (and draws nothing) when the screen is open.
+func _draw_locked_button(r: Rect2, label: String, screen: String) -> bool:
+	if Help.is_open(screen):
+		return false
+	UiSkin.panel(_cv, r, "button", Color(0.55, 0.52, 0.5))
+	var note := Help.locked_note(screen)
+	var s := "%s: %s" % [label, note]
+	var w := font.get_string_size(s, HORIZONTAL_ALIGNMENT_LEFT, -1, 8).x
+	var x := r.get_center().x - (w + 9.0) / 2.0
+	var lk := Vector2(x + 3, r.position.y + 9)  # padlock: shackle over a body
+	_cv.draw_arc(lk + Vector2(0, -2), 2.0, PI, TAU, 6, Color(0.6, 0.57, 0.53), 1.0)
+	_cv.draw_rect(Rect2(lk + Vector2(-3, -1), Vector2(6, 5)), Color(0.6, 0.57, 0.53))
+	_text(Vector2(x + 9, r.position.y + 11), s, 8, Color(0.6, 0.57, 0.53))
+	return true
 
 
 func _draw_zoom_buttons() -> void:

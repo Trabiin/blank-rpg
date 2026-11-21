@@ -43,7 +43,7 @@
 		},
 		{
 			"id": "scriptorium", "name": "Scriptorium", "start_level": 0, "stat": "lore", "site": "site_scriptorium", "look": "scriptorium",
-			"blurb": "Quiet desks for people who read the margins. Researchers gather Insight to spend on research (T), and their Lore speeds up study.",
+			"blurb": "Quiet desks for people who read the margins. Researchers gather Insight to spend on research{tag:research}, and their Lore speeds up study.",
 			"staff_title": "Researcher",
 			"levels": [
 				{"cost": {"gilt": 60, "supplies": 5, "ink": 2}, "days": 2, "slots": 1},
@@ -53,7 +53,7 @@
 		},
 		{
 			"id": "guildhall", "name": "Guildhall", "start_level": 0, "stat": "charm", "site": "site_guildhall", "look": "guildhall",
-			"blurb": "Where jobs get posted and coin changes hands. A charming broker brings in contract Gilt. Squads go out on expeditions from here (E): one at a time per level.",
+			"blurb": "Where jobs get posted and coin changes hands. A charming broker brings in contract Gilt. Squads go out on expeditions from here{tag:expeditions}: one at a time per level.",
 			"staff_title": "Broker",
 			"levels": [
 				{"cost": {"gilt": 80, "supplies": 10}, "days": 2, "slots": 1},

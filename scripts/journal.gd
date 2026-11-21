@@ -21,8 +21,8 @@ extends RefCounted
 const PATH := "res://data/journal.json"
 const LOG_KEPT := 400  # history entries kept; a long campaign writes a few a day at most
 const LOG_LINES := 6  # lines kept per history entry
-const CATS := ["places", "factions", "enemies", "blank", "inks"]
-const CAT_NAMES := {"places": "Places", "factions": "Factions", "enemies": "Enemies", "blank": "The Blank", "inks": "Ink"}
+const CATS := ["places", "factions", "enemies", "blank", "inks", "help"]
+const CAT_NAMES := {"places": "Places", "factions": "Factions", "enemies": "Enemies", "blank": "The Blank", "inks": "Ink", "help": "Help & tips"}
 ## Condition keys the journal adds to Story.meets (see data/journal.json _comment).
 const DEAL_WORDS := {"gift": "a gift", "intel": "intel", "trade": "a trade pact", "aid": "aid against surges", "cede": "they cede land"}
 const OWN_KEYS := ["command", "region", "enemy_seen", "defeated", "erased_any", "plans", "ink"]
@@ -263,7 +263,7 @@ static func story_quests() -> Array:
 		var target := {} if done else Alerts.goal_target(g.get("done", {}))
 		var next := ""
 		if not done:
-			next = str(g.get("hint", ""))
+			next = Prompts.fill(str(g.get("hint", "")))
 			var why := _story_blocker(g.get("done", {}))
 			if why != "" and next != "":
 				next += ". For now: " + why + "."
@@ -505,6 +505,7 @@ static func codex() -> Array:
 			for p in Empire.territory().provinces:
 				if p.get("region", "") == c["region"]:
 					out.append(_province_entry(p))
+	out.append_array(Help.codex_entries())  # every explainer and tip, from data/help.json (issue #115)
 	return out
 
 
