@@ -2,7 +2,8 @@ extends "res://tests/test_case.gd"
 ## Allies firing charged techs (issue #108, scripts/ally_techs.gd; this file is issue #124). For every
 ## field hero, in a real mission against a stunned crowd: the ally charges and fires its tech under each
 ## AI preset, "On my call" never fires on its own, "Unleash" fires within a few seconds, and taking
-## control mid-charge never lets the tech go. Also: the tech mode survives a save, and the scoring that
+## control mid-charge never lets the tech go, and a stunned crowd just out of reach never gets a wasted
+## charge (#161). Also: the tech mode survives a save, and the scoring that
 ## picks among several techs (#24) works for every hero. tools/ai_tech_sim.gd stays as the long soak.
 
 const MAIN := "res://scenes/main.tscn"
@@ -166,6 +167,7 @@ func test_every_field_hero_as_an_ally() -> void:
 		await _call_holds_and_unleash_fires(main, ally)
 		await _hand_over_never_fires(main, ally)
 		await _scoring_covers_every_tech(main, ally)
+		await _stunned_out_of_reach(main, ally)
 
 
 ## Under each AI preset the ally charges and fires at a crowd in reach.
@@ -235,6 +237,61 @@ func _scoring_covers_every_tech(main: Node, ally: Hero) -> void:
 			(es[i] as Enemy).global_position = ally.global_position + Vector2(maxf(stand, 22.0) + (i % 2) * 5.0 - 2.5, floorf(i / 2.0) * 5.0 - 2.5)
 		var aim := AllyTechs.best_aim(ally, t, "balanced", main.leader, 0.0, false)
 		check(aim["score"] > 0.0, "%s/%s: scores against a crowd at its standoff" % [id, t.get("id")])
+
+
+## Issue #161: a stunned crowd just past the tech's reach (inside the 14 px "they keep coming" slack,
+## but stunned, so they never come). Under every preset the ally either leaves it alone or walks in
+## and fires; it must never plant its feet, charge, hold and give up (about 3 s wasted, again and again).
+func _stunned_out_of_reach(main: Node, ally: Hero) -> void:
+	var id := ally.hero_id
+	for preset in PRESETS:
+		_reset(main, ally, preset)
+		var es := await _crowd(main, ally)
+		var t: Dictionary = AllyTechs.techs_of(ally)[0]
+		var gap := AllyTechs._span(t) + 5.0 + 8.0  # enemy radius 5: 8 px out of reach
+		for i in es.size():
+			var e: Enemy = es[i]
+			e.global_position = ally.global_position + Vector2(gap + (i % 2) * 3.0, floorf(i / 2.0) * 6.0 - 3.0)
+			e.remove_meta("offset")  # stunned: they stay where they are
+		if preset == "balanced":  # the scoring itself: slack counts for enemies that can come, not stunned ones
+			var here := ally.global_position
+			var lead: Hero = main.leader
+			var stunned: float = AllyTechs.score(ally, t, here, Vector2.RIGHT, preset, lead, es, 14.0)["score"]
+			check(stunned <= 0.0, "%s: a stunned crowd 8 px out of reach scores nothing (%.2f)" % [id, stunned])
+			for e in es:
+				(e as Enemy).stun_until = 0
+			var free: float = AllyTechs.score(ally, t, here, Vector2.RIGHT, preset, lead, es, 14.0)["score"]
+			check(free > 0.0, "%s: the same crowd on its feet counts (it keeps coming)" % id)
+			for e in es:
+				(e as Enemy).stun(30.0)
+		var w := await _watch(ally, 4500)
+		check(w["abandoned"] == 0, "%s/%s: no charge wasted on a stunned crowd out of reach (started %d, fired %d, gave up %d)" \
+			% [id, preset, w["started"], w["fired"], w["abandoned"]])
+
+
+## Watches the ally for ms of game time: charges it starts, techs it fires, charges it drops unfired.
+func _watch(ally: Hero, ms: int) -> Dictionary:
+	var out := {"started": 0, "fired": 0, "abandoned": 0}
+	var t0 := Time.get_ticks_msec()
+	var was := false
+	var prev := ally.tech_flash_t
+	while (Time.get_ticks_msec() - t0) * Engine.time_scale < ms:
+		await tree.process_frame
+		if not is_instance_valid(ally):
+			break
+		for e in tree.get_nodes_in_group("enemies"):
+			if not e.dead:
+				e.hp = maxi(e.hp, 500)
+		var fired := ally.tech_flash_t > prev + 0.1
+		prev = ally.tech_flash_t
+		if fired:
+			out["fired"] += 1
+		if ally.ai_charging and not was:
+			out["started"] += 1
+		elif was and not ally.ai_charging and not fired:
+			out["abandoned"] += 1
+		was = ally.ai_charging
+	return out
 
 
 # ------------------------------------------------------------------ saves and scoring
