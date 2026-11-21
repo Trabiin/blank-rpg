@@ -276,8 +276,40 @@ func _credit_lines() -> String:
 				var asset := cols[0].strip_edges().get_slice(" (", 0)
 				lines.append("%s  -  %s  (%s)" % [asset, cols[1].strip_edges(), cols[3].strip_edges()])
 	lines.append("")
+	lines.append_array(ai_use_lines())
 	lines.append("Made with Godot Engine")
 	return "\n".join(lines)
+
+
+## The short AI statement (docs/AI_USE.md, issue #164) from data/ai_use.json, then a blank line.
+static func ai_use_lines() -> Array:
+	var f := FileAccess.open("res://data/ai_use.json", FileAccess.READ)
+	if f == null:
+		return []
+	var d = JSON.parse_string(f.get_as_text())
+	if not d is Dictionary:
+		return []
+	var out := []
+	for key in ["heading", "short", "more"]:
+		if d.has(key):
+			out.append_array(_wrap(TranslationServer.translate(str(d[key])), 96))
+	out.append("")
+	return out
+
+
+## Breaks text into lines of at most `width` characters at spaces (the credits box doesn't wrap).
+static func _wrap(text: String, width: int) -> Array:
+	var out := []
+	var line := ""
+	for word in text.split(" ", false):
+		if line != "" and line.length() + 1 + word.length() > width:
+			out.append(line)
+			line = word
+		else:
+			line = word if line == "" else line + " " + word
+	if line != "":
+		out.append(line)
+	return out
 
 
 func _process(delta: float) -> void:
