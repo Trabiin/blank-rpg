@@ -87,7 +87,7 @@ func _draw_ability_bar(hero: Hero, vs: Vector2) -> void:
 		var cost_col := INK_COL if why != "ink" else Color("ff6b6b")
 		_text(Vector2(x + 4 + ox, y + 22), tr("%d Ink") % int(a.get("cost", 0)), 8, cost_col, false)
 		if cd > 0.0:
-			_text(Vector2(x + 44 + ox, y + 22), "%.1fs" % cd, 8, Color(0.8, 0.8, 0.85), false)
+			_text(Vector2(x + 44 + ox, y + 22), Loc.dec(cd) + "s", 8, Color(0.8, 0.8, 0.85), false)
 		x += w + 4.0
 
 

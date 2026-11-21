@@ -46,6 +46,16 @@ jobs:
       - name: Run tests
         run: GODOT=~/godot/godot tools/run_tests.sh
 
+      # Every player-facing string, for translators (issue #143, docs/LOCALIZATION.md).
+      - name: Extract strings
+        run: GODOT=~/godot/godot tools/extract_strings.sh
+
+      - name: Keep messages.pot
+        uses: actions/upload-artifact@v4
+        with:
+          name: messages-pot
+          path: locale/messages.pot
+
   build:
     runs-on: ubuntu-latest
     steps:

@@ -875,7 +875,7 @@ func job_days(jid: String) -> float:
 ## "2 days", "1.5 days", "1 day".
 func job_days_text(jid: String) -> String:
 	var d := job_days(jid)
-	var s := str(int(d)) if is_equal_approx(d, roundf(d)) else ("%.2f" % d).rstrip("0")
+	var s := str(int(d)) if is_equal_approx(d, roundf(d)) else Loc.dec(d, 2).rstrip("0")
 	return tr("%s day%s") % [s, "" if is_equal_approx(d, 1.0) else "s"]
 
 

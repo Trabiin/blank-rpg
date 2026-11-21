@@ -709,7 +709,7 @@ func _draw_skills(vs: Vector2) -> void:
 		var col := Color(str(t.get("color", "ffffff")))
 		draw_rect(Rect2(r.position, Vector2(3, r.size.y)), col if known else DIM)
 		_text(r.position + Vector2(8, 9), str(t.get("name", "?")), 9, (GOLD if i == tech_i else TEXT) if known else DIM, 150)
-		_text(r.position + Vector2(8, 19), (tr("Ready after %.1f s") % Techs.charge_time(t)) if known else tr("Learned at level %d") % lvl, 7, SOFT if known else DIM)
+		_text(r.position + Vector2(8, 19), (tr("Ready after %s s") % Loc.dec(Techs.charge_time(t))) if known else tr("Learned at level %d") % lvl, 7, SOFT if known else DIM)
 		var tag := tr("ALWAYS") if picked == t["id"] else (tr("LV %d") % lvl)
 		_text_r(r.position + Vector2(r.size.x - 6, 9), tag, 7, GOOD if picked == t["id"] else (col.lightened(0.2) if known else DIM))
 		y += 25

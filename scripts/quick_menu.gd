@@ -378,7 +378,7 @@ func _tech_sub(hero: Hero) -> void:
 		var lvl := int(t.get("level", 1))
 		var ok := lvl <= known
 		sub.append({"id": "pick:" + str(t["id"]), "label": str(t.get("name", "?")),
-			"right": (tr("current") if picked == t["id"] else "%.1f s" % Techs.charge_time(t)) if ok else tr("Lv %d") % lvl, "enabled": ok,
+			"right": (tr("current") if picked == t["id"] else tr("%s s") % Loc.dec(Techs.charge_time(t))) if ok else tr("Lv %d") % lvl, "enabled": ok,
 			"desc": str(t.get("desc", ""))})
 	sub_sel = 0
 	for i in sub.size():
@@ -420,7 +420,7 @@ func _pick_sub(i: int) -> void:
 		if hero.charging and not hero.ai_charging:
 			Techs.cancel(hero)
 		var t := Techs.find(tid)
-		_say((tr("%s will charge %s every time (%.1f s).") % [hero.hero_name, t.get("name", "?"), Techs.charge_time(t)]) if tid != ""
+		_say((tr("%s will charge %s every time (%s s).") % [hero.hero_name, t.get("name", "?"), Loc.dec(Techs.charge_time(t))]) if tid != ""
 			else tr("%s: hold Attack longer to reach stronger techs.") % hero.hero_name)
 	elif id == "tech_now":
 		var hero: Hero = r["hero"]
@@ -634,7 +634,7 @@ func _draw() -> void:
 		elif sub_sel >= 0 and sub_sel < sub.size() and str(sub[sub_sel]["id"]) == "pick:":
 			hint = tr("Hold Attack on a full gauge: each tech it knows is ready a little later than the last.")
 		elif sub_sel >= 0 and sub_sel < sub.size() and str(sub[sub_sel]["id"]).begins_with("pick:"):
-			hint = tr("Charges only this tech, ready after %.1f s of holding.") % Techs.charge_time(Techs.find(str(sub[sub_sel]["id"]).substr(5)))
+			hint = tr("Charges only this tech, ready after %s s of holding.") % Loc.dec(Techs.charge_time(Techs.find(str(sub[sub_sel]["id"]).substr(5))))
 		_str(font, Vector2(x0, fy), hint, 8, DIM)
 	_str_right(font, x1, fy, tr("time slowed"), 8, Color(0.7, 0.8, 1.0, 0.6 + 0.3 * sin(_t * 3.0)))
 
