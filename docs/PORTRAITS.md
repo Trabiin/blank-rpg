@@ -53,13 +53,13 @@ Visual novel character portrait for a dark surreal fantasy game. Half-body, neut
 
 Keep the background plain light grey: the cut-out tool depends on it.
 
-**Accent colours** (one per character): Ash ink-blue, Bran rust-orange, Velvette crimson, Verity violet, Mother Gristle poison green, Ilse icy cyan. Pick a new, distinct one for each new character.
+**Accent colours** (one per character): Ash ink-blue, Bran rust-orange, Fauvette crimson, Verity violet, Mother Gristle poison green, Ilse icy cyan. Pick a new, distinct one for each new character.
 
 ### Character paragraphs used so far
 
 - **Ash:** a quiet young swordsman around 20. Messy black hair, pale skin, faint black ink stains creeping up his hands and neck. Tattered charcoal cloak whose frayed edges fade to blank white, with a deep ink-blue lining as his accent. Dark leather vest, steel shortsword at his hip. Calm, unreadable, determined expression.
 - **Bran:** a broad-shouldered mercenary in his 40s. Shaved head, scarred jaw, grey stubble, one clouded eye. Dented grey plate pauldron over a stained brown gambeson, with a rust-orange sash as his accent. A contract written in tiny black script is tattooed down his bare forearm. Heavy axe on his back. Wry, tired half-smirk, a man who'd sell you out for the right price but apologise first.
-- **Velvette:** an elegant woman around 30, a duelist and courtesan-spy. Sleek wine-red bob, sharp eyeliner, beauty mark. Fitted black high-collared coat with gold buttons and a deep crimson inner lining as her accent, long gloves, thin rapier. Playful, knowing smile with one raised eyebrow.
+- **Fauvette:** an elegant woman around 30, a duelist and courtesan-spy. Sleek wine-red bob, sharp eyeliner, beauty mark. Fitted black high-collared coat with gold buttons and a deep crimson inner lining as her accent, long gloves, thin rapier. Playful, knowing smile with one raised eyebrow.
 - **Verity Hale:** a former chief archivist in her early 50s, now a quiet villain. Tall and thin, silver-streaked dark hair pinned up neatly, a few loose strands, faint lines around tired grey eyes, small round reading spectacles. Long bone-white archivist's robe with a high collar, ink-stained cuffs, and a deep violet stole as her accent. Her right hand and the hem of her robe are fading into blank white paper, as if erased. Holds a closed ledger against her chest. Polite, weary, gently sad smile, someone who believes she is doing the merciful thing.
 - **Mother Gristle:** a hunched, sturdy old woman around 70, a swamp herbalist who heals for money. Wild grey hair tied back with twine, sharp hooked nose, deep wrinkles, gold-capped front tooth, shrewd narrow eyes. Patched brown shawl over a dark apron hung with rows of small glass bottles, the liquid inside a glowing poison green as her accent. Gnarled wooden staff wrapped in dried herbs, a coin purse on her belt. Grandmotherly grin that doesn't reach her eyes, like she's already adding up your bill.
 - **Ilse:** an ageless knight who is a living reflection that stepped out of a mirror after her original was erased. Strikingly beautiful, long straight pale hair, porcelain skin with thin hairline cracks like broken glass along her cheek and collarbone, her side part and beauty mark on the "wrong" side. Silvered mirror-plate armour over a dark gown, with icy cyan light glinting in the cracks and on her spear tip as her accent. Holds a slender spear upright. Faint mirrored double outline around her silhouette. Cool, vain, faintly amused expression, admiring herself more than the viewer.
@@ -76,7 +76,7 @@ In the same chat as the locked neutral image, paste the same full prompt, replac
 
 ### Status
 
-Every recruit and story speaker has a neutral portrait (Phase 8, plus Clerk Pettigrew, Governor Thale, the Concord Warden and Tithe-Captain Morrow for issue #111, and Ozias Crane, Hester Vane, Notary Marrow, Marguerite Penhallow and Augustin Sallow for the personal missions of issue #113). Expressions (`<id>_<expr>.png`) are issue #107.
+Every recruit and story speaker has a neutral portrait (Phase 8, plus Clerk Pettigrew, Governor Thale, the Concord Warden and Tithe-Captain Morrow for issue #111, and Ozias Crane, Hester Vane, Notary Fennick, Marguerite Penhallow and Augustin Sallow for the personal missions of issue #113). Expressions (`<id>_<expr>.png`) are issue #107.
 
 ## API pipeline (Phase 8)
 

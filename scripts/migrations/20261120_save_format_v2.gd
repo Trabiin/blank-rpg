@@ -44,7 +44,7 @@ static func migrate(save: Dictionary) -> Dictionary:
 	return save
 
 
-## Lower-case id, full name or short name ("Bran" for Brannoc Coil) -> recruit id.
+## Lower-case id, full name or short name ("Bran" for Brannoc Tolley) -> recruit id.
 static func _ids_by_name() -> Dictionary:
 	var out := {}
 	if Empire.recruit_data.is_empty():  # Saves checks the slots at start-up, before Empire is ready
@@ -53,4 +53,12 @@ static func _ids_by_name() -> Dictionary:
 		out[str(id).to_lower()] = id
 		out[str(Empire.recruit_data[id].get("name", id)).to_lower()] = id
 		out[Empire.short_name(id).to_lower()] = id
+	# Names from before the naming pass (#158, 20261124_names), as early saves wrote them.
+	for old in LEGACY_NAMES:
+		out[old] = LEGACY_NAMES[old]
 	return out
+
+
+const LEGACY_NAMES := {"quill marrow": "quill", "brannoc coil": "bran", "sister abeyance": "abeyance",
+	"abeyance": "abeyance", "hesper quoin": "hesper", "hesper": "hesper", "pell undermoss": "pell",
+	"dunmore vell": "dunmore", "jessamy nightjar": "jessamy", "velvette": "velvette"}

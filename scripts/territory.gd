@@ -108,7 +108,7 @@ func map_pool(pid: String) -> Array:
 
 ## Is map point uv (0-1 on both axes) land? The traced mask when there is one; otherwise a wide continent with a ragged, noisy coast, cut by
 ## three long bays that set the regions apart: the Candle Sound in the north (between the capital and
-## the Abbey), the Gulf of Quills in the west (between the capital and the Causeway) and the Saltgrave
+## the Abbey), the Mornay Gulf in the west (between the capital and the Causeway) and the Trevail
 ## Reach in the south (between the Causeway and the Unfinished Coast).
 const BAYS := [
 	[Vector2(0.47, -0.02), Vector2(0.475, 0.16), 0.055],

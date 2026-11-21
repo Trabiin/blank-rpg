@@ -525,7 +525,7 @@ func test_ally_focus_picks_targets() -> void:
 	var vel := _hero(main, "velvette")
 	var near := await _enemy(main, main.leader.global_position + Vector2(30, 0), 100)
 	var hurt := await _enemy(main, main.leader.global_position + Vector2(80, 0), 100)
-	if not check(near != null and hurt != null and vel != null, "two enemies and Velvette"):
+	if not check(near != null and hurt != null and vel != null, "two enemies and Fauvette"):
 		return
 	hurt.hp = 20
 	vel.global_position = main.leader.global_position

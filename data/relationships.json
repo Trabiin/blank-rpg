@@ -7,7 +7,7 @@
 			"velvette": {
 				"perk": {"name": "Leading Lady", "desc": "Fallen party members get back up 25% faster on missions.", "effect": {"mission_revive": 0.25}},
 				"moment": {"title": "Second Billing", "lines": [
-					["", "Late. The Encore's old dressing-room trunk stands open in the barracks loft. Velvette has hung a sheet for a curtain and lit exactly one candle."],
+					["", "Late. The Encore's old dressing-room trunk stands open in the barracks loft. Fauvette has hung a sheet for a curtain and lit exactly one candle."],
 					["velvette", "Sit. No, there. That's the good side of the candle. I gave you the good side. Notice it."],
 					["velvette", "I've been thinking about what you did. Not looking away. Do you know how rare that is? Everyone looks away from me eventually. It's practically my exit cue."],
 					["velvette", "So here is my problem, darling. I don't do sincere. Sincere has no second act. And yet."],
@@ -31,7 +31,7 @@
 					["velvette", "And through all of it I kept finding you in the wings. Do you know how distracting that is? I nearly missed a cue. I have never missed a cue."],
 					["velvette", "House rules: a secret for a secret. I've owed you one since the first night."],
 					["", "She leans in and says it in Ash's ear: her real name. It is a very ordinary name. Nobody else will ever hear it."],
-					["velvette", "That's what you call me when it's just us. In public I'm still Velvette, and you're still my extremely lucky stagehand."],
+					["velvette", "That's what you call me when it's just us. In public I'm still Fauvette, and you're still my extremely lucky stagehand."],
 					["velvette", "I've played a hundred lovers, darling. Every one of them died in the third act. I'd like to try one where nobody does."]
 				], "choice": [
 					{"label": "[Say nothing, and kiss her]", "bond": 3, "reply": [
@@ -76,7 +76,7 @@
 				"rank5": {"rank": 5, "title": "Noon", "lines": [
 					["", "It is noon. The plaza is full of honest people doing honest things. In the middle of it, Jessamy lies flat on her back on the cobbles, eyes shut, perfectly solid."],
 					["jessamy", "Don't block it. Shift. You're in my sun."],
-					["jessamy", "Marrow wrote me back in. Took him an hour, his hand was shaking so badly. When he asked for my occupation, I told him to put \"yes\"."],
+					["jessamy", "Fennick wrote me back in. Took him an hour, his hand was shaking so badly. When he asked for my occupation, I told him to put \"yes\"."],
 					["jessamy", "Then he asked for next of kin. I gave him your name. He said you haven't got one. I said write \"Ash\" and stop being difficult."],
 					["jessamy", "So you're on my line now. Officially. Sorry. Should've asked. Wasn't going to."],
 					["jessamy", "Lie down. Properly. Next to me. I want to know what it's like to hold someone's hand in daylight and actually feel it."],
@@ -244,13 +244,13 @@
 		}
 	},
 	"pairs": [
-		{"ids": ["ottoline", "velvette"], "kind": "friends", "name": "Old Encore hands", "text": "Ottoline keeps the door, Velvette works the room. Fifteen years of closing nights between them.",
+		{"ids": ["ottoline", "velvette"], "kind": "friends", "name": "Old Encore hands", "text": "Ottoline keeps the door, Fauvette works the room. Fifteen years of closing nights between them.",
 			"effects": {"expedition": 5, "building": 1, "party": {"guard": 0.05}, "bond": 1},
 			"banter": [
 				[["velvette", "Ottoline, darling, if this goes badly, carry me out dramatically."], ["ottoline", "I carry you out every time. You always want it dramatic."]],
 				[["ottoline", "Same as the Encore. I hit them, you charm the ones I miss."], ["velvette", "You never miss. It's very bad for my part."]]
 			]},
-		{"ids": ["jessamy", "velvette"], "kind": "friends", "name": "Night owls", "text": "Jessamy and Velvette know every back door that's open after dark, and who left it open.",
+		{"ids": ["jessamy", "velvette"], "kind": "friends", "name": "Night owls", "text": "Jessamy and Fauvette know every back door that's open after dark, and who left it open.",
 			"effects": {"expedition": 5, "party": {"power_rate": 0.1}, "bond": 1},
 			"banter": [
 				[["jessamy", "Bet you a crate of Coven gin I get more of them."], ["velvette", "Darling, I'd never bet against you. I'd only cheat."]],
@@ -273,7 +273,7 @@
 			"banter": [
 				[["quill", "Form Nine-B. Requisition of a deserter's remains."], ["ninefingers", "Fill it in. Tell them they can collect when I'm done with them."]]
 			]},
-		{"ids": ["pell", "abeyance"], "kind": "friends", "name": "On speaking terms with the dead", "text": "Pell and Abeyance both talk to the dead. The dead give them directions.",
+		{"ids": ["pell", "abeyance"], "kind": "friends", "name": "On speaking terms with the dead", "text": "Pell and Hild both talk to the dead. The dead give them directions.",
 			"effects": {"expedition": 5, "building": 1, "bond": 1},
 			"banter": [
 				[["pell", "They say left at the old well, Sister."], ["abeyance", "Mine say right. Mine are more polite about it, though."]]
@@ -283,7 +283,7 @@
 			"banter": [
 				[["tobble", "Mind your back, girl. You're not getting any younger."], ["ottoline", "Neither are you, and you've been retiring since before I was born."]]
 			]},
-		{"ids": ["hesper", "jessamy"], "kind": "friends", "name": "Maps and back roads", "text": "Hesper draws the roads a week before they exist. Jessamy has already used them.",
+		{"ids": ["hesper", "jessamy"], "kind": "friends", "name": "Maps and back roads", "text": "Hetty draws the roads a week before they exist. Jessamy has already used them.",
 			"effects": {"expedition": 5, "building": 1, "bond": 1},
 			"banter": [
 				[["hesper", "There's a road here on Thursday."], ["jessamy", "Lovely. I'll be on it Wednesday night."]]
@@ -342,12 +342,12 @@
 				"banter": [
 					[["dunmore", "Paid off another elbow this week, miss."], ["odile", "Good. Ahead of schedule. I'm very proud. Professionally."]]
 				]}},
-		{"ids": ["merrow", "velvette"], "kind": "rivals", "name": "One spotlight", "text": "Velvette and the Merrow Three both expect the last word. There are four of them and only one last word.",
+		{"ids": ["merrow", "velvette"], "kind": "rivals", "name": "One spotlight", "text": "Fauvette and the Merrow Three both expect the last word. There are four of them and only one last word.",
 			"effects": {"expedition": -5, "building": -1, "party": {"power_rate": 0.1, "guard": -0.05}, "bond": -1},
 			"banter": [
 				[["velvette", "Darlings, a little harmony goes a long way. Ideally away."], ["merrow", "WE WERE SINGING IN THE MARGINS BEFORE YOU HAD TEETH."]]
 			],
-			"truce": {"days": 10, "name": "A duet, for once", "text": "Velvette and the Merrow Three found a song they all know: the Encore's old closing number. Now they do it together, in four parts. Pim gets the high bit.",
+			"truce": {"days": 10, "name": "A duet, for once", "text": "Fauvette and the Merrow Three found a song they all know: the Encore's old closing number. Now they do it together, in four parts. Pim gets the high bit.",
 				"effects": {"expedition": 5, "party": {"power_rate": 0.1}},
 				"banter": [
 					[["merrow", "FROM THE TOP, VELVETTE?"], ["velvette", "From the top, darlings. Pim, the high bit's yours."]]
@@ -365,7 +365,7 @@
 		{"ids": ["bran", "ottoline"], "kind": "rivals", "name": "The good chair", "text": "Bran's contract says he gets the good chair. Ottoline throws people out of chairs for a living. Furniture is suffering.",
 			"effects": {"expedition": -5, "building": -1, "party": {"damage": 2, "guard": -0.05}, "bond": -1},
 			"banter": [
-				[["ottoline", "That's my chair, Coil."], ["bran", "Clause twelve says otherwise."], ["ottoline", "Clause twelve's about to go through a window."]],
+				[["ottoline", "That's my chair, Tolley."], ["bran", "Clause twelve says otherwise."], ["ottoline", "Clause twelve's about to go through a window."]],
 				[["bran", "Bet I drop more of them than you."], ["ottoline", "Bet you need carrying home after."]]
 			],
 			"truce": {"days": 10, "name": "Two chairs", "text": "Ottoline built a second good chair out of a wardrobe and a Concord desk. It is enormous. Bran pretends to hate it and sits in it every night.",

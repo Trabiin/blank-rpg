@@ -98,5 +98,16 @@ static func _names() -> Dictionary:
 			if n.begins_with(title):
 				short = n.get_slice(" ", 1) if title in ["Corporal ", "Big "] else n
 				break
+		if n.count("\"") >= 2:  # Edwin "Quill" Pask goes by Quill
+			short = n.get_slice("\"", 1)
 		out[str(r["id"])] = [n] if short == n else [n, short]
+	# Saves from before the naming pass (#158) still say the old names until 20261124_names runs.
+	for id in OLD_NAMES:
+		if out.has(id):
+			out[id] = out[id] + OLD_NAMES[id]
 	return out
+
+
+const OLD_NAMES := {"hesper": ["Hesper Quoin", "Hesper"], "quill": ["Quill Marrow"], "bran": ["Brannoc Coil"],
+	"abeyance": ["Sister Abeyance", "Abeyance"], "pell": ["Pell Undermoss"], "dunmore": ["Dunmore Vell"],
+	"jessamy": ["Jessamy Nightjar"], "velvette": ["Velvette"]}

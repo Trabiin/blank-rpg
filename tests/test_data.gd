@@ -501,18 +501,41 @@ func test_every_building_level_has_art() -> void:
 const UNFINISHED := "(?i)\\bMVP\\b|placeholder|later update|coming soon|not implemented|lorem ipsum|\\bTODO\\b|\\bTBD\\b"
 
 
-func _scan_text(where: String, v, re: RegEx) -> void:
+func _scan_text(where: String, v, re: RegEx, what := "unfinished text") -> void:
 	match typeof(v):
 		TYPE_STRING:
 			var m := re.search(v)
-			check(m == null, "%s: unfinished text '%s' in \"%s\"" % [where, m.get_string() if m else "", v.left(80)])
+			check(m == null, "%s: %s '%s' in \"%s\"" % [where, what, m.get_string() if m else "", v.left(80)])
 		TYPE_ARRAY:
 			for i in v.size():
-				_scan_text(where, v[i], re)
+				_scan_text(where, v[i], re, what)
 		TYPE_DICTIONARY:
 			for k in v:
 				if not str(k).begins_with("_"):  # _comment keys are notes for us, not for players
-					_scan_text("%s.%s" % [where, k], v[k], re)
+					_scan_text("%s.%s" % [where, k], v[k], re, what)
+
+
+## Names AI models overuse, and names retired by the naming pass (#158). docs/NAMING.md section 1.1.
+const BANNED_NAMES := "\\b(Elara|Elora|Seraphina|Seraphine|Lyra|Lysandra|Lysandre|Kael|Kaelen|Thorne|Vex|Vesper|Nyx|Aria|Aurora|Aurore|Elowen|Isolde|Rowan|Wren|Sable|Raven|Silas|Corvin|Corvus|Caelum|Orion|Zephyr|Nova|Ember|Sylas|Aldric|Eldric|Cedric|Alaric|Theron|Lucian|Damien|Valerius|Mira|Mirabel|Liora|Celeste|Selene|Astra|Calla|Ophelia|Vivienne|Evander|Thalia|Briar|Oriel|Kestrel|Morrigan|Velvette|Abeyance|Nightjar|Undermoss|Quoin|Hesper|Inkmere|Quillpine|Ledgerside|Saltgrave|Rosewine|Candlemere|Lampwick)\\b"
+
+
+## No player-facing text uses a banned or retired name (docs/NAMING.md): data/ values and script strings.
+func test_no_banned_names() -> void:
+	var re := RegEx.create_from_string(BANNED_NAMES)
+	for f in D:
+		_scan_text(f, D[f], re, "banned name (docs/NAMING.md)")
+	var lit := RegEx.create_from_string("\"(?:[^\"\\\\]|\\\\.)*\"")
+	for f in DirAccess.get_files_at("res://scripts/"):
+		if not f.ends_with(".gd"):
+			continue
+		var n := 0
+		for line in FileAccess.get_file_as_string("res://scripts/" + f).split("\n"):
+			n += 1
+			if line.strip_edges().begins_with("#"):
+				continue
+			for m in lit.search_all(line):
+				var bad := re.search(m.get_string())
+				check(bad == null, "scripts/%s:%d: banned name '%s' (docs/NAMING.md)" % [f, n, bad.get_string() if bad else ""])
 
 
 ## No player-facing text says placeholder, MVP, "later update" and the like: in data/ (all values but

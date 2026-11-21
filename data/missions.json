@@ -69,7 +69,7 @@
 			"loot": {"gilt": [0.3, 1, 2], "supplies": [0.15, 1, 2], "ink": [0.04, 1, 1]}
 		},
 		{
-			"id": "lampwick_patrol", "name": "Patrol: Lampwick Hills", "province": "lampwick", "after": "meadow_prologue",
+			"id": "lampwick_patrol", "name": "Patrol: Wickham Hills", "province": "lampwick", "after": "meadow_prologue",
 			"map": "res://maps/lampwick.txt",
 			"brief": "The ink spring draws things out of the hills. Walk the lamp road and see what comes.",
 			"objective": {"kind": "kills", "count": 12, "label": "Clear the area"},

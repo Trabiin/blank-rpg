@@ -3,7 +3,7 @@
 
 Each one is a biome map from tools/make_biomes.py (same ground, props and generator) with the character's
 own places put down by hand: Bran's broker's counting-house on the ferry landing, the Coven tree, Hob's Wick,
-Quill's strongbox, the ruin of the Last Drop, Abeyance's chapel, the door on Lantern Row, Marrow's toll house,
+Quill's strongbox, the ruin of the Last Drop, Hild's chapel, the door on Lantern Row, Fennick's toll house,
 Odile's inn, the Gilded Heron. Their @spot lines are what the mission's steps point at.
 
 Run through make_biomes.py (it calls build_all), or on its own:
@@ -51,7 +51,7 @@ MAPS = {
         "setpiece": [("v", (55, 34)), ("b", (53, 39)), ("b", (61, 38))],
     },
     "personal_abeyance": {
-        "biome": "lampwick", "layout": "c", "name": "Lampwick Hills: the Chapel Nobody Remembers",
+        "biome": "lampwick", "layout": "c", "name": "Wickham Hills: the Chapel Nobody Remembers",
         "sign": "LAMPWICK HILLS|There is no chapel here.|Please stop asking.",
         "marks": [("mark1", (30, 15), 2), ("mark2", (50, 30), 2), ("mark3", (58, 16), 2), ("chapel", (62, 10), 2)],
         "setpiece": [("z", (63, 7)), ("g", (59, 7)), ("g", (66, 7))],

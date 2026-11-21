@@ -13,7 +13,7 @@ const DIR := "res://assets/portraits/"
 const SIZE := Vector2i(224, 336)
 const RING := 3
 const PALE_MAX := 10  # per mille of the ring
-## Reviewed 2026-11-21: Abeyance's white hood, the Auditor's quill-feather blade, Ilse's silver hair and
+## Reviewed 2026-11-21: Hild's white hood, the Auditor's quill-feather blade, Ilse's silver hair and
 ## armour, the Merrow kids' pale hair and collars, Verity's bone robe and erased sleeve.
 const PALE_OK := {"abeyance": 160, "auditor": 35, "ilse": 200, "merrow": 50, "verity": 70}
 const SPECK := 20  # opaque islands (8-connected) smaller than this float free of the figure

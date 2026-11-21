@@ -86,7 +86,7 @@ var vanish_speed := 1.0
 var crit_next := 1.0
 ## Big Ottoline: this fraction of knockback still moves her (1 = normal, data/heroes.json "poise").
 var poise := 1.0
-## Riposte (Velvette): while parry_t > 0 the next hit is turned aside and answered (abilities.gd kind "parry").
+## Riposte (Fauvette): while parry_t > 0 the next hit is turned aside and answered (abilities.gd kind "parry").
 var parry_t := 0.0
 var parry_ability := {}
 ## Skill tree (issue #25, scripts/skill_tree.gd): passives the hero's learned nodes give (summed values,

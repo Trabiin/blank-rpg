@@ -1131,6 +1131,9 @@ func _advance_expeditions() -> void:
 ## "Brannoc", "Old Tobble", "Mother Gristle": how people are named in reports.
 func short_name(id: String) -> String:
 	var n: String = recruit(id).get("name", "?")
+	# A nickname in quotes is what everyone calls them: Edwin "Quill" Pask -> Quill (docs/NAMING.md).
+	if n.count("\"") >= 2:
+		return n.get_slice("\"", 1)
 	for title in ["Old ", "Mother ", "Sister ", "Corporal ", "Mr. ", "The ", "Big "]:
 		if n.begins_with(title):
 			return n.get_slice(" ", 1) if title in ["Corporal ", "Big "] else n
@@ -1506,7 +1509,7 @@ func change_standing(fid: String, amount: int, why: String, quiet := false) -> v
 	if amount == 0 or not faction_data.has(fid):
 		return
 	if amount > 0:
-		amount += bond_perk_total("standing_bonus")  # Pillow Talk (Velvette's bond)
+		amount += bond_perk_total("standing_bonus")  # Pillow Talk (Fauvette's bond)
 	var before := tier_of(fid)
 	standing[fid] = clampi(standing_of(fid) + amount, -100, 100)
 	var after := tier_of(fid)

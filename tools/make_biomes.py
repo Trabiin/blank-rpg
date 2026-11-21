@@ -124,7 +124,7 @@ BIOMES = {
         "groves": [("D", 4, 5, 8), ("F", 2, 6, 6), ("Z", 3, 4, 6)],
     },
     "lampwick": {
-        "name": "Lampwick Hills", "mood": "grade=1.04,0.98,0.86 mist=0.5 motes=1.0,0.9,0.55", "ground": "hills", "seed": 41,
+        "name": "Wickham Hills", "mood": "grade=1.04,0.98,0.86 mist=0.5 motes=1.0,0.9,0.55", "ground": "hills", "seed": 41,
         "sign": "LAMPWICK HILLS|Ink spring ahead.|Do not drink. Do not write.",
         "props": {"P": "boulder", "C": "outcrop", "I": "inkspring", "A": "roadlamp", "Z": "drygrass", "F": "tree"},
         "border": ["C", "P", "F"],

@@ -90,7 +90,7 @@ One **master palette** of about 48 to 64 colours for the whole game, so PixelLab
 - **Paper white is reserved for the Blank.** Nothing else in the world uses the near-white paper tone. This keeps the
   Blank instantly readable in a fight and is the game's signature look.
 - One **accent colour per main character**, the same as their portrait accent: Ash ink-blue, Bran rust-orange,
-  Gristle poison green, Daro to be picked (suggestion: brass yellow), Velvette/Lysandre crimson, Verity violet, Ilse icy cyan.
+  Gristle poison green, Daro to be picked (suggestion: brass yellow), Fauvette/Hortense crimson, Verity violet, Ilse icy cyan.
 - Each region gets a 6 to 8 colour **regional ramp** added to the base (meadow greens, Gutterwoods fungal teal,
   marsh olive, Concord gold).
 - Characters are slightly more saturated and contrasted than backgrounds; enemies carry a warning hue (Blank kinds
@@ -194,17 +194,17 @@ Notes:
 | Hero | Weapon in sprite | Accent | MVP? | Gens |
 |---|---|---|---|---|
 | Ash, the Unwritten | Inkblade (shortsword), cloak fading to white | Ink-blue | MVP | ~135 |
-| Brannoc "Bran" Coil | Heavy axe, contract tattoo | Rust-orange | MVP | ~135 |
+| Brannoc "Bran" Tolley | Heavy axe, contract tattoo | Rust-orange | MVP | ~135 |
 | Mother Gristle | Herb staff (ladle in gear), bottles on apron | Poison green | MVP | ~135 |
 | Corporal "Ninefingers" Daro | Concord pike (the game uses a pike; DESIGN.md still says crossbow, update it) | Brass (suggested) | MVP | ~135 |
-| Lysandre, the Velvet Marquise | Rapier | Crimson | Full (Ch. 3) | ~135 |
+| Hortense, the Velvet Marquise | Rapier | Crimson | Full (Ch. 3) | ~135 |
 | Saffron Kiss | Whip | Gold | Full (Ch. 3) | ~135 |
-| Hex & Tally | Knuckles + a separate shadow sprite for Tally (extra ~40) | Black / smoke | Full (Ch. 3) | ~175 |
+| Nan Cripps & Tally | Knuckles + a separate shadow sprite for Tally (extra ~40) | Black / smoke | Full (Ch. 3) | ~175 |
 | Ilse of the Mirror | Spear, cracked mirror armour (shimmer done in code) | Icy cyan | Full (Ch. 4) | ~135 |
 | 4 more heroes (still to design) | | | Full | ~540 |
 
-Velvette and Lysandre are **two separate characters** (decided 2026-11-19). Lysandre stays the Chapter 3 field hero above.
-Velvette (portrait already done) needs her own sprite and expressions once her role and recruitment are designed;
+Fauvette and Hortense are **two separate characters** (decided 2026-11-19). Hortense stays the Chapter 3 field hero above.
+Fauvette (portrait already done) needs her own sprite and expressions once her role and recruitment are designed;
 budget her like a hub character (~30 gens) or a field hero (~135 gens) depending on that.
 
 ### 3.2 Hub characters: core staff, recruits and story NPCs
@@ -223,13 +223,13 @@ Non-fighters only walk and idle in Hollowmark, so they need far less:
 
 | Character | Look notes for the prompt | Gens |
 |---|---|---|
-| Quill Marrow, quartermaster | Former Concord clerk, ledger, green cloth | ~30 |
+| Edwin Pask, quartermaster | Former Concord clerk, ledger, green cloth | ~30 |
 | Old Tobble, tavern keeper | Old, apron, rag over shoulder | ~30 |
-| Sister Abeyance, runaway scribe | Pale robes, a page that glows | ~30 |
-| Pell Undermoss, gravedigger | Shovel, mud | ~30 |
-| Hesper Quoin, cartographer | Rolled maps, compass | ~30 |
-| Dunmore Vell, blacksmith | Debt tattoos, hammer, leather apron | ~30 |
-| Jessamy Nightjar, smuggler | Dark coat, hood, lantern | ~30 |
+| Sister Hild, runaway scribe | Pale robes, a page that glows | ~30 |
+| Pell Mossop, gravedigger | Shovel, mud | ~30 |
+| Hetty Coyne, cartographer | Rolled maps, compass | ~30 |
+| Dunmore Vellacott, blacksmith | Debt tattoos, hammer, leather apron | ~30 |
+| Jessamy Leake, smuggler | Dark coat, hood, lantern | ~30 |
 | Mr. Biscuits, a dog (possibly) | Quadruped: PixelLab's animal / quadruped mode, 24 px | ~30 |
 | The Merrow Three, orphan choir | Three small children as one sprite group (or one child sprite placed three times with palette swaps, cheaper) | ~30 to 60 |
 | Odile Penhallow, tax collector | Concord uniform, tidy | ~30 |
@@ -247,7 +247,7 @@ Non-fighters only walk and idle in Hollowmark, so they need far less:
 | Visitors at the south gate (reuse townsfolk) | 0 |
 | **Subtotal** | **~270** |
 
-**Full game:** about 35 more recruits and staff (DESIGN.md: ~50 total, ~8 core staff incl. Vane & Vesper twins),
+**Full game:** about 35 more recruits and staff (DESIGN.md: ~50 total, ~8 core staff incl. Cass & Kit Pruett twins),
 plus faction leaders (Mercenary Guild, Gutterwood Coven, the Concord, the Abbey), the Abbot, High Scribes, the
 drowned lighthouse keeper, and townsfolk sets per region (abbey monks, Causeway masquerade guests, coast villagers).
 About **~1,400 more gens**.
@@ -282,7 +282,7 @@ Bosses are big, have several attack patterns and are the "wow" moments, so they 
 | **The Auditor** (lance-sized quill, strikes people out) | Act 1 (MVP) | 96 px | Idle, walk 4 dirs, 3 attacks (thrust, strike-out sweep, stamp), hurt, phase change, defeat | ~150 |
 | The Abbot Who Copied Himself | Ch. 2 | 64 px + copies (palette/shader tint in code) | Same as above, plus split | ~150 |
 | The Host (mostly mouth) | Ch. 3 | 128 px | Parts animated in code | ~150 |
-| The Tide That Forgot | Ch. 4 | 128 px, environmental | Wave parts, plus tiles | ~150 |
+| Low Water | Ch. 4 | 128 px, environmental | Wave parts, plus tiles | ~150 |
 | Verity, Unmade (2 phases) | Ch. 5 | 64 to 96 px | Two full sets | ~250 |
 | The Vacancy (a page that erases the HUD) | Ch. 6 | Mostly Code (redaction bars, text, shaders) + a few PL pieces | | ~100 |
 | Mini-bosses (one per chapter, recolour of a big enemy + new attack) | | | | ~100 |
@@ -311,7 +311,7 @@ static, so no "erased" tileset is ever generated. Whitewater (an erased village)
 | Hollowmark town (exterior) | Hollowmark, Whitewater | Cobbles, market stalls, crooked houses, wanted posters | ~90 |
 | Gutterwoods forest | Gutterwoods | Trees growing from letters, fungus, wet roots, Coven totems | ~90 |
 | River and marsh | Saltreed Marsh, Gallows Ferry, Old Mill Crossing | Water, reeds (some white), docks, ferry, mill wheel (animated prop) | ~95 |
-| Hills | Lampwick Hills | Ink springs (animated ink pools), rocky slopes, lamps | ~85 |
+| Hills | Wickham Hills | Ink springs (animated ink pools), rocky slopes, lamps | ~85 |
 | Concord road | Tithe Road | Paved road, checkpoints, toll booths, gold banners | ~70 |
 | **Subtotal** | | | **~520** |
 
@@ -401,20 +401,20 @@ Claude shortlists 3 font pairings with screenshots in Phase 6 for Ojon to pick.
 ### 3.9 Portraits and expressions (OpenAI image API)
 
 Uses the existing style block in `docs/PORTRAITS.md` and the cutting tool `tools/cut_portraits.py`. Six are done:
-Ash, Bran, Velvette, Verity, Mother Gristle, Ilse.
+Ash, Bran, Fauvette, Verity, Mother Gristle, Ilse.
 
 **Expressions:** deep cast and villains get all 5 (happy, angry, sad, surprised, smug). Light recruits get neutral
 plus 1 expression that fits them. Estimate 1.5 images per finished portrait for retries.
 
 | Group | Characters | Images (neutral + expressions) | With retries |
 |---|---|---|---|
-| Done, need expressions | Ash, Bran, Gristle, Verity (Ilse waits for her chapter; Velvette when her role is designed) | 4 × 5 = 20 | ~30 |
-| MVP deep cast, new | Quill, Tobble, Abeyance, Daro | 4 × 6 = 24 | ~36 |
+| Done, need expressions | Ash, Bran, Gristle, Verity (Ilse waits for her chapter; Fauvette when her role is designed) | 4 × 5 = 20 | ~30 |
+| MVP deep cast, new | Quill, Tobble, Hild, Daro | 4 × 6 = 24 | ~36 |
 | MVP boss | The Auditor | 1 + 2 (angry, surprised) = 3 | ~5 |
-| MVP light recruits | Pell, Hesper, Dunmore, Jessamy, Mr. Biscuits, Merrow Three, Odile, Ottoline | 8 × 2 = 16 | ~24 |
+| MVP light recruits | Pell, Hetty, Dunmore, Jessamy, Mr. Biscuits, Merrow Three, Odile, Ottoline | 8 × 2 = 16 | ~24 |
 | MVP story NPCs | Concord governor, a Concord clerk | 2 | ~3 |
 | **MVP total** | | **~65** | **~95** |
-| Full game additions | Lysandre / Velvette, Saffron, Hex & Tally, Ilse expressions, 4 new heroes, ~4 new core staff (incl. Vane & Vesper), ~30 light recruits, the Abbot, the Host, the lighthouse keeper, faction leaders, Verity Unmade variant, the Vacancy (a mostly-code redacted "portrait") | ~200 | ~300 |
+| Full game additions | Hortense / Fauvette, Saffron, Nan Cripps & Tally, Ilse expressions, 4 new heroes, ~4 new core staff (incl. Cass & Kit Pruett), ~30 light recruits, the Abbot, the Host, the lighthouse keeper, faction leaders, Verity Unmade variant, the Vacancy (a mostly-code redacted "portrait") | ~200 | ~300 |
 
 Tips that keep the roster consistent:
 - Every prompt starts with the style block, then the character paragraph (generations endpoint).
@@ -468,7 +468,7 @@ including retries; Claude reports actual spend with each phase PR.
 | **0. Style lock** | Detail test done (1.1b: option A); settle palette and generate the rest of the samples; build the pipeline (section 4); produce the target screenshot; write `docs/ART_PROMPTS.md` | PL, Code | ~40 | ~$1 |
 | **1. The party** | Ash, Bran, Gristle, Daro: full action sets; HUD face icons; code trails for each weapon | PL, Code | ~560 | ~$6 to $12 |
 | **2. First impression: Prologue** | Meadow biome, Nibbler, Spitter, Blank FX polish, lighting and day/night, ambient particles. After this the first 10 minutes look finished | PL, Code | ~180 | ~$3 to $5 |
-| **3. Hollowmark** | Town tileset, 6 buildings × 3 levels, Wardlamp, scaffolding, town props, Quill / Tobble / Abeyance, townsfolk, Concord clerks and governor | PL, Code | ~570 | ~$6 to $12 |
+| **3. Hollowmark** | Town tileset, 6 buildings × 3 levels, Wardlamp, scaffolding, town props, Quill / Tobble / Hild, townsfolk, Concord clerks and governor | PL, Code | ~570 | ~$6 to $12 |
 | **4. Act 1 world** | Gutterwoods, river and marsh, hills, Concord road biomes; moth, Enforcer, extra Act 1 enemies, Verity sprite. Give each province its own map dressing | PL, Code | ~520 | ~$6 to $10 |
 | **5. The Auditor and recruits** | Boss sprite and attacks; the 8 light recruits | PL, Code | ~420 | ~$5 to $10 |
 | **6. UI and icons** | Panels, buttons, cursor, ~100 icons, input prompts, font pick | PL, Code, OFL fonts, Kenney prompts | ~185 | ~$2 to $4 |
@@ -485,7 +485,7 @@ with any phase, since they use a different tool; through the API they can be mad
 | Chapter | New art |
 |---|---|
 | 2. Saint Ledger's Abbey | Abbey tilesets (exterior + interior), monks, 4 enemies, the Abbot, Abbey-faction NPCs, new recruits |
-| 3. Velvet Causeway | Bridge city and ink lake, masquerade guests, Lysandre, Saffron, Hex & Tally, 4 enemies, the Host |
+| 3. Velvet Causeway | Bridge city and ink lake, masquerade guests, Hortense, Saffron, Nan Cripps & Tally, 4 enemies, the Host |
 | 4. Unfinished Coast | Shore and frozen-wave set, lighthouse, Ilse's sprite, 4 enemies, the Tide That Forgot |
 | 5. Gilded Spire | Capital tilesets, High Scribes, 4 enemies, Verity Unmade |
 | 6. The Margin | Mostly Code (words as scenery, recombined earlier tiles), the Vacancy |
@@ -496,13 +496,13 @@ with any phase, since they use a different tool; through the API they can be mad
 ## 6. Decisions for Ojon
 
 1. ~~**Detail level**~~ Decided 2026-11-19: option A (16 px tiles, 32 px heroes), see 1.1b.
-2. ~~**Velvette vs Lysandre**~~ Decided: two separate characters (see 3.1).
+2. ~~**Fauvette vs Hortense**~~ Decided: two separate characters (see 3.1).
 3. ~~**Gear on sprites**~~ Decided: no, each hero carries a signature weapon.
 4. ~~**PixelLab paid months**~~ Decided: PixelLab API, pay per call, no subscription.
 5. ~~**ChatGPT Plus**~~ Decided: OpenAI image API, no subscription.
 6. ~~**Story CGs**~~ Decided: yes, about 6 in the MVP (Phase 7).
 
-All decided 2026-11-19. Still open for later: Velvette's role and recruitment hook.
+All decided 2026-11-19. Still open for later: Fauvette's role and recruitment hook.
 
 ---
 

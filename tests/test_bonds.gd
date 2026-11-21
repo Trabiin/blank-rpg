@@ -249,7 +249,7 @@ func test_new_hero_perks_take_effect() -> void:
 	var cut: Dictionary = e.next_level("barracks")["cost"]
 	if raw.has("gilt"):
 		check_eq(int(cut["gilt"]), int(floor(int(raw["gilt"]) * 0.8)), "Clean Books: 20% off the Barracks")
-	# Velvette: Pillow Talk (+1 on every standing gain) and Encore (15% faster gauge on missions).
+	# Fauvette: Pillow Talk (+1 on every standing gain) and Encore (15% faster gauge on missions).
 	var before: int = e.standing_of("guild")
 	e.change_standing("guild", 3, "", true)
 	check_eq(e.standing_of("guild") - before, 4, "Pillow Talk: +3 standing becomes +4")
@@ -260,4 +260,4 @@ func test_new_hero_perks_take_effect() -> void:
 	for id in ["ottoline", "jessamy", "odile", "velvette"]:
 		e.bonds.erase(id)
 	check_eq(e.damage_to_party(20), 20, "no House Rules without Ottoline's bond")
-	check(is_equal_approx(float(e.mission_boosts()["power_rate"]), 1.0), "no Encore without Velvette's bond")
+	check(is_equal_approx(float(e.mission_boosts()["power_rate"]), 1.0), "no Encore without Fauvette's bond")

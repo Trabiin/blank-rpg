@@ -43,7 +43,7 @@
 		},
 		"oil_flask": {
 			"name": "Lamp-oil Flask", "target": "throw", "range": 170, "throw": {"radius": 38, "damage": 8, "status": "burn", "time": 5}, "carry": 4, "start": 0, "drop": 0.02, "price": 18,
-			"desc": "Thrown at the nearest enemy: everything near it catches fire. Lampwick's finest, and its most common complaint."
+			"desc": "Thrown at the nearest enemy: everything near it catches fire. Wickham's finest, and its most common complaint."
 		},
 		"flash_powder": {
 			"name": "Flash Powder", "target": "throw", "range": 0, "throw": {"self": true, "radius": 72, "damage": 0, "status": "stun", "time": 2.5}, "carry": 3, "start": 0, "drop": 0.012, "price": 26,

@@ -27,7 +27,7 @@
 			"blurb": "A pen sharpened past the point of writing. Ash woke up holding it."},
 		"steel_nib": {"name": "Steel Nib", "tier": 2, "slot": "weapon", "hero": "ash", "stats": {"damage": 3}, "price": 60,
 			"blurb": "A longer, meaner nib. Signs things permanently."},
-		"ravens_quill": {"name": "Raven's Quill", "tier": 3, "slot": "weapon", "hero": "ash", "stats": {"damage": 5, "power_rate": 0.1}, "price": 150, "needs": "arms_whetstone",
+		"ravens_quill": {"name": "Crow Quill", "tier": 3, "slot": "weapon", "hero": "ash", "stats": {"damage": 5, "power_rate": 0.1}, "price": 150, "needs": "arms_whetstone",
 			"blurb": "Black, glossy and impatient. It wants the next stroke before you finish this one."},
 		"vespers_nib": {"name": "Vespers Nib", "slot": "weapon", "hero": "ash", "tier": 4, "stats": {"damage": 8, "power_rate": 0.12}, "price": 0, "shop": false,
 			"blurb": "A silver nib from the Abbey's copying desks, blessed for writing scripture. Ash uses it for punctuation."},

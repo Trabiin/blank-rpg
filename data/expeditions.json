@@ -55,12 +55,12 @@
 			}
 		},
 		{
-			"id": "rescue_abeyance", "name": "Rumour: a scribe hiding in Lampwick", "kind": "Rescue", "province": "lampwick",
-			"blurb": "A runaway from the Abbey is hiding in the Lampwick hills with a stolen page that will not stay written. The Abbey wants the page back, and the scribe.",
+			"id": "rescue_abeyance", "name": "Rumour: a scribe hiding in Wickham", "kind": "Rescue", "province": "lampwick",
+			"blurb": "A runaway from the Abbey is hiding in the Wickham hills with a stolen page that will not stay written. The Abbey wants the page back, and the scribe.",
 			"days": 2, "rations": 2, "stats": {"lore": 1.0, "charm": 0.5}, "target": 18, "danger": 1, "cooldown": 2,
 			"reward": {"insight": [2, 4]}, "recruit": "abeyance",
 			"text": {
-				"success": ["{a} found Sister Abeyance by following the sound of someone arguing with a piece of paper. {b} carried her books. All of them.", "{lead} traded the Abbey trackers a forged page for the real scribe. Sister Abeyance says the page liked {lead}. That is new."],
+				"success": ["{a} found Sister Hild by following the sound of someone arguing with a piece of paper. {b} carried her books. All of them.", "{lead} traded the Abbey trackers a forged page for the real scribe. Sister Hild says the page liked {lead}. That is new."],
 				"fail": ["{a} and {b} found the cave, a cold fire and a note that said 'not yet'. The note was in {a}'s handwriting.", "The Abbey's trackers got there first. {lead} came home with nothing but a strongly worded pamphlet."]
 			}
 		},

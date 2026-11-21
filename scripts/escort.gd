@@ -1,7 +1,7 @@
 class_name Escort
 extends Hero
 ## Someone who can't fight, brought along on a personal mission (issue #113): Quill, Tobble, Sister
-## Abeyance. They follow the leader, shy away from anything with teeth and never swing. Enemies go for
+## Hild. They follow the leader, shy away from anything with teeth and never swing. Enemies go for
 ## them like any hero (they are in the "heroes" group), so keeping them standing is the job.
 ## A step can send them somewhere (go_to) and they walk there and wait, working whatever is there.
 
