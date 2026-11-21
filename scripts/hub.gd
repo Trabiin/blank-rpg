@@ -699,6 +699,7 @@ func open_menu(note := "") -> void:
 		{"id": "gear", "label": "Party gear & shop", "detail": Prompts.key("gear")},
 		{"id": "armory", "label": "Forge & Market", "detail": Prompts.key("armory")},
 		{"id": "help", "label": "Help", "detail": "explainers, tips and controls"},
+		{"id": "report", "label": "Report a bug", "detail": "or send feedback"},
 		{"id": "save", "label": "Save game"},
 		{"id": "load", "label": "Load game", "enabled": Saves.latest_slot() != "", "note": "(no saves yet)"},
 		{"id": "options", "label": "Options"},
@@ -759,6 +760,9 @@ func _on_menu(id: String) -> void:
 		"help":  # issue #115
 			menu.visible = false
 			HelpView.popup(self).closed.connect(func(): menu.visible = true)
+		"report":  # issue #146
+			menu.visible = false
+			FeedbackView.popup(self).closed.connect(func(): menu.visible = true)
 		"options":
 			menu.visible = false
 			OptionsView.popup(self).closed.connect(func(): menu.visible = true)

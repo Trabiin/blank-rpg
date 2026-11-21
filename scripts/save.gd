@@ -32,6 +32,8 @@ var pending: Dictionary = {}
 var dir := "user://"
 ## Messages for the player about saves that were set aside (title screen shows them).
 var notices: Array = []
+## The slot this game was last loaded from or saved to ("" for a fresh game). Bug reports attach it (#146).
+var current_slot := ""
 
 
 func _ready() -> void:
@@ -58,7 +60,10 @@ func save(slot: String, data: Dictionary) -> bool:
 	data["saved_at"] = snappedf(Time.get_unix_time_from_system(), 0.001)  # ms: two saves in one second still order
 	data["playtime"] = Empire.playtime
 	data["empire"] = Empire.to_dict()
-	return _write(_path(slot), JSON.stringify(data))
+	var ok := _write(_path(slot), JSON.stringify(data))
+	if ok:
+		current_slot = slot
+	return ok
 
 
 ## Everything known about a slot: {"status": EMPTY|GOOD|NEWER|BROKEN, "data": migrated save (GOOD only),
@@ -173,6 +178,7 @@ func load_and_play(slot: String) -> bool:
 		return false
 	Empire.from_dict(d.get("empire", {}))
 	pending = d
+	current_slot = slot
 	get_tree().paused = false
 	get_tree().change_scene_to_file(d.get("scene", GAME_SCENE))
 	return true
