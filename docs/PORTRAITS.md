@@ -6,14 +6,23 @@ Large visual-novel portraits shown in dialogue and bond scenes (issue #12).
 
 | File | What |
 |---|---|
-| `assets/portraits/<id>.png` | Game portrait, 512x768, transparent background. `<id>` is the recruit id (`ash`, `bran`, `gristle`) or a speaker id from `data/dialogue.json` / `data/story.json` (`verity`, `auditor`, `clerk`, `governor`, `warden`, `captain`). |
+| `assets/portraits/<id>.png` | Game portrait: hi-res pixel art, 224x336, hard-edged transparent background (style picked by Ojon on 2026-11-21, issue #169). `<id>` is the recruit id (`ash`, `bran`, `gristle`) or a speaker id from `data/dialogue.json` / `data/story.json` (`verity`, `auditor`, `clerk`, `governor`, `warden`, `captain`). |
 | `assets/portraits/<id>_<expr>.png` | Optional expression: `happy`, `angry`, `sad`, `surprised`, `smug`. Code falls back to `<id>.png` when one is missing. |
-| `tools/cut_portraits.py` | Turns raw generator output into game portraits: cuts out the flat grey background (and grey pockets between hair strands, axe handles and so on), feathers the edge, scales to 512x768. |
+| `tools/cut_portraits.py` | Turns raw generator output into game portraits: cuts out the flat grey background (also pockets between hair strands, the pale glow the generator paints round strands, and stray specks), cleans the grey out of the edge colours, then pixelates to 224x336 with `tools/portrait_style.py` (32 colours per portrait, pulled toward the game palette, 1px ink outline). `--painted DIR` also saves the painted 512x768 cut-out. |
+| `tests/test_portraits.gd` | Fails on a portrait with the wrong size, soft alpha, stray specks or leftover background on the silhouette edge. |
 
 Raw 1024x1536 originals are kept in the project's shared files (`last-ink/portraits/`), not in the repo, to keep the web build small.
 
 To add one: save the raw image as `<id>-v2.png` (or `<id>_<expr>-v2.png`) in a folder, run
-`python3 tools/cut_portraits.py <folder>`, open the project in Godot once so it imports, commit `assets/portraits/`.
+`python3 tools/cut_portraits.py <folder> --only <id> --painted <folder>/painted`, look at the result on a dark
+background and in the dialogue box (`tools/shot.gd scene=town talk=<talk>`), run `tools/run_tests.sh portraits`,
+open the project in Godot once so it imports, commit `assets/portraits/`. Put the raw image and the painted cut-out
+in project files `last-ink/portraits/`.
+
+Why pixel art: the painted portraits looked pasted on top of the pixel world. Shown at 1 canvas pixel per art pixel
+(2 screen pixels, half the world's pixel size) they read as part of the game and faces still hold up. Comparison:
+project files `last-ink/art-pass/portrait-style/`. Code draws them at whole-number scales only
+(`Dialogue.portrait_size` / `Dialogue.fitted`; the journal thumbnail is shrunk smoothly).
 
 ## How the game uses them
 
@@ -28,6 +37,15 @@ Generated with **ChatGPT image generation** (OpenAI). OpenAI's Terms of Use assi
 ## The style prompt
 
 Every prompt starts with this block, then one paragraph describing the character and ending with their expression. Run each in a new chat, ask for 2:3 portrait.
+
+```
+Visual novel character portrait for a dark surreal fantasy game, made to be converted into pixel art. Half-body, neutral pose, plain flat light-grey background, no text, no glow or rim light against the background. Anime-influenced illustration with bold clean dark ink outlines and flat cel shading in two or three tones per material, light coming from the top left. Big readable shapes: hair drawn as a few large locks, no thin flyaway strands; no fine fabric texture, grunge, scratches or speckled weathering; no tiny repeated details. Muted palette of charcoal, bone white and rust, with one saturated accent color per character. Erased-paper edges on clothing drawn as a few clean torn shapes, not specks. Portrait 2:3 aspect ratio. Straight-on camera at the character's own eye level, never looking up from below or down from above. Body angled three-quarters toward the viewer's left, framed from the waist up, with empty space above the head and nothing (hair, weapons) cut off by the frame edges. Stylized anime faces with simple cel-shaded skin and clearly drawn eyes, even for older or rugged characters, no realistic skin texture. Same line weight and face style as a cohesive anime character roster.
+```
+
+What changed (2026-11-21, pixel style): portraits are now shrunk to 224x336 pixel art, so the prompt asks for what
+survives that: bold outlines, flat cel shading, large hair locks, top-left light like the world, and no fine texture,
+flyaway strands or background glow (those turned into noise and white specks). The old block, for matching the
+existing portraits when an expression is added for one of them:
 
 ```
 Visual novel character portrait for a dark surreal fantasy game. Half-body, neutral pose, plain flat light-grey background, no text. Painterly anime-influenced illustration with clean dark ink linework and soft cel shading. Muted palette of charcoal, bone white and rust, with one saturated accent color per character. Subtle ink-splatter and erased-paper edges on clothing. Portrait 2:3 aspect ratio. Straight-on camera at the character's own eye level, never looking up from below or down from above. Body angled three-quarters toward the viewer's left, framed from the waist up, with empty space above the head and nothing (hair, weapons) cut off by the frame edges. Stylized anime faces with simple cel-shaded skin, even for older or rugged characters, no realistic skin texture. Same line weight and face style as a cohesive anime character roster.

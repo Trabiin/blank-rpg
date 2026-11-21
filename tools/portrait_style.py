@@ -28,6 +28,7 @@ ROOT = Path(__file__).resolve().parent.parent
 PAL_FILE = ROOT / "tools" / "style_palette.hex"
 INK = np.array([0x12, 0x14, 0x1F], np.float32) / 255.0
 STYLES = ["grade", "ink", "pix336", "pix168"]
+SPECK = 20  # smallest loose island kept in pixel portraits (tests/test_portraits.gd checks the same)
 
 
 def palette() -> np.ndarray:
@@ -183,6 +184,11 @@ def pixelate(rgb, alpha, pal, height, k=24):
     blur = ndimage.gaussian_filter(c, (1.0, 1.0, 0))
     c = np.clip(c + (c - blur) * 0.5, 0, 1)
     solid = a > 0.5
+    # thin strands break into loose bits when shrunk: islands under SPECK px (8-connected) go
+    lab8, n8 = ndimage.label(solid, np.ones((3, 3)))
+    if n8 > 1:
+        sizes = ndimage.sum(solid, lab8, range(1, n8 + 1))
+        solid &= ~np.isin(lab8, np.nonzero(sizes < SPECK)[0] + 1)
     idx, cols, lab = quantize(c, solid, pal, k, 0.4)
     maj = majority(idx, 3)
     same = np.zeros_like(solid)
@@ -191,7 +197,9 @@ def pixelate(rgb, alpha, pal, height, k=24):
     idx = np.where(same, idx, maj)
     out = cols[idx]
     out[dark_lines(lab, solid, 8, 18)] = INK
-    sil = solid & ~ndimage.binary_erosion(solid)
+    # 1px ink outline; the bottom edge is where the frame cuts the figure, so no line there
+    padded = np.vstack([solid, solid[-1:]])
+    sil = solid & ~ndimage.binary_erosion(padded)[:-1]
     out[sil] = INK
     return out, solid.astype(np.float32)
 

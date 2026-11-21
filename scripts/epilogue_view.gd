@@ -98,8 +98,8 @@ func _draw() -> void:
 	for i in 32:
 		draw_circle(Vector2(150, floor_y - 170), 170.0 * (1.0 - i / 32.0), Color(accent, 0.012 * fade))
 	if tex != null:
-		var h := minf(vs.y - 40.0, 320.0)
-		var sz := Vector2(h * tex.get_width() / float(tex.get_height()), h)
+		var sz := Dialogue.portrait_size(tex, minf(vs.y - 40.0, 320.0))
+		tex = Dialogue.fitted(tex, sz.y)
 		var tint := Color(0.55, 0.55, 0.6, fade) if c.get("lost", false) else Color(1, 1, 1, fade)
 		draw_set_transform(Vector2(150 + sz.x / 2, floor_y - sz.y), 0.0, Vector2(-1, 1))
 		draw_texture_rect(tex, Rect2(Vector2.ZERO, sz), false, tint)

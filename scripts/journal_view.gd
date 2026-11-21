@@ -666,7 +666,7 @@ func _draw_page() -> void:
 		var ph := pw * float(tex.get_height()) / float(maxi(tex.get_width(), 1))
 		var prect := Rect2(pr.end.x - pw - 26.0, top - page_scroll, pw, ph)
 		if prect.end.y > top and prect.position.y < bottom:
-			_clip_tex(tex, prect, top, bottom, Color(0.16, 0.12, 0.1, 0.8) if shade else Color(1, 1, 1, 0.95))
+			_clip_tex(Dialogue.fitted(tex, ph), prect, top, bottom, Color(0.16, 0.12, 0.1, 0.8) if shade else Color(1, 1, 1, 0.95))
 	var title_w := w - (pw + 6.0 if tex else 0.0)
 	for blk in _blocks():
 		var kind: String = blk[0]
