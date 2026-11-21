@@ -52,7 +52,6 @@ const BODYGUARD_RANGE := 56.0
 const POISON_TIME := 4.0
 const LOW_HP := 0.4
 const WOUNDED := 0.35
-const STATUS_PATH := "res://scripts/status.gd"  # issue #112's shared status effects, when present
 
 static var _redirecting := false
 
@@ -168,14 +167,13 @@ static func killed(h: Hero, enemy: Node) -> void:
 				Fx.damage_number(parent, h.global_position + Vector2(0, -30), "Again!", Color("ffd166"))
 
 
-## An enemy fell (main.gd): kills that no strike credited (poison) go to whoever poisoned it.
+## An enemy fell (main.gd): kills that no strike credited (poison, burn) go to whoever put the status on
+## it (Status sets "status_source" on each damage tick).
 static func enemy_died(e: Node) -> void:
-	if e.has_meta("tree_credited"):
+	if e.has_meta("tree_credited") or not e.has_meta("status_source"):
 		return
-	var src = e.get_meta("status_source") if e.has_meta("status_source") else null
-	if src == null and e.has_meta("tree_poisoner"):
-		src = e.get_meta("tree_poisoner")
-	if src is Hero and is_instance_valid(src):
+	var src = e.get_meta("status_source")
+	if is_instance_valid(src) and src is Hero:
 		killed(src, e)
 
 
@@ -278,74 +276,14 @@ static func revive_mult(fallen: Hero, heroes: Array) -> float:
 
 # ---------------------------------------------------------------- poison
 
-## Poisons an enemy for dps a second over secs, credited to source. Uses issue #112's Status effects when
-## the build has them (scripts/status.gd); otherwise a small ticker of its own.
+## Poisons an enemy for dps a second over secs, credited to source: the shared poison status (issue #112,
+## scripts/status.gd), the same one Reedlings put on heroes and the poison mark shows. Ticks skip the hit reaction, so a
+## poisoned Nibbler isn't staggered every tick; a kill pays source's tree rewards (enemy_died).
 static func poison(enemy: Enemy, dps: float, secs: float, source: Hero) -> void:
-	if enemy == null or enemy.dead or dps <= 0.0:
+	if enemy == null or not is_instance_valid(enemy) or enemy.dead or dps <= 0.0:
 		return
-	if ResourceLoader.exists(STATUS_PATH):
-		var st = load(STATUS_PATH)
-		if st:
-			st.call("apply", enemy, "poison", secs, {"dps": dps, "source": source})
-			return
-	var t: PoisonTick = enemy.get_node_or_null("TreePoison")
-	if t == null:
-		t = PoisonTick.new()
-		t.name = "TreePoison"
-		enemy.add_child(t)
-	t.dps = maxf(t.dps, dps)
-	t.left = maxf(t.left, secs)
-	enemy.set_meta("tree_poisoner", source)
+	Status.apply(enemy, "poison", secs, {"dps": dps, "source": source})
 
 
 static func poisoned(enemy: Enemy) -> bool:
-	if ResourceLoader.exists(STATUS_PATH):
-		var st = load(STATUS_PATH)
-		if st:
-			return bool(st.call("has", enemy, "poison"))
-	var t := enemy.get_node_or_null("TreePoison") as PoisonTick
-	return t != null and t.left > 0.0
-
-
-## Ticks poison damage once a second without knocking or staggering (bosses and Blots take it as a hit,
-## so their own rules, like the Auditor's untouchable phases, still apply).
-class PoisonTick extends Node2D:
-	var dps := 0.0
-	var left := 0.0
-	var tick := 1.0
-	var _t := 0.0
-
-	func _physics_process(delta: float) -> void:
-		var e := get_parent() as Enemy
-		if e == null or e.dead:
-			queue_free()
-			return
-		_t += delta
-		left -= delta
-		tick -= delta
-		if tick <= 0.0:
-			tick = 1.0
-			_bite(e, maxi(1, roundi(dps)))
-		if left <= 0.0:
-			queue_free()
-			return
-		queue_redraw()
-
-	func _bite(e: Enemy, n: int) -> void:
-		if e.boss or e is Blot:
-			e.take_hit(n, e.global_position, 0.0)
-			return
-		n = Settings.difficulty_damage(e, e._adjust_damage(n))
-		e.hp = maxi(e.hp - n, 0)
-		Fx.damage_number(e.get_parent(), e.global_position + Vector2(0, -16), str(n), Color("9fd86a"))
-		if e.hp <= 0:
-			e.dead = true
-			e._on_death()
-			Audio.hit(false, true)
-			e.died.emit(e)
-
-	func _draw() -> void:
-		for k in 3:
-			var ph := _t * 2.2 + k * 2.1
-			var y := -14.0 - fmod(ph, 1.0) * 10.0
-			draw_circle(Vector2(sin(ph * 3.0) * 4.0 + (k - 1) * 3.0, y), 1.2, Color("9fd86a", 0.85 * (1.0 - fmod(ph, 1.0))))
+	return Status.has(enemy, "poison")
