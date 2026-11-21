@@ -93,6 +93,7 @@ jobs:
           ~/godot/godot --headless --export-release "Web" build/web/index.html
           test -f build/web/index.html
           touch build/web/.nojekyll
+          cp CREDITS.md THIRD_PARTY_LICENSES.md build/web/
 
       - uses: actions/upload-pages-artifact@v3
         with:

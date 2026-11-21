@@ -96,6 +96,7 @@ jobs:
           cp build/linux/LastInk.x86_64 "pkg/Last Ink/"
           cp assets/icon/icon.png "pkg/Last Ink/last-ink.png"
           cp tools/desktop/install-desktop-entry.sh tools/desktop/README.txt "pkg/Last Ink/"
+          cp CREDITS.md THIRD_PARTY_LICENSES.md "pkg/Last Ink/"
           chmod +x "pkg/Last Ink/LastInk.x86_64" "pkg/Last Ink/install-desktop-entry.sh"
           tar -C pkg -czf "dist/LastInk-$v-linux-x86_64.tar.gz" "Last Ink"
           cp build/macos/LastInk.zip "dist/LastInk-$v-macos.zip"
@@ -200,6 +201,7 @@ jobs:
           mkdir -p "pkg/Last Ink" dist
           cp build/windows/LastInk.exe "pkg/Last Ink/"
           cp tools/desktop/README.txt "pkg/Last Ink/"
+          cp CREDITS.md THIRD_PARTY_LICENSES.md "pkg/Last Ink/"
           (cd pkg && 7z a -tzip "../dist/LastInk-${{ steps.ver.outputs.version }}-windows-x86_64.zip" "Last Ink" > /dev/null)
 
       - uses: actions/upload-artifact@v4
