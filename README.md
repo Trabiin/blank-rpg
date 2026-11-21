@@ -10,7 +10,7 @@ Reality is being eaten by a hungry Blank, and you are the one person it spat bac
 or from [Releases](https://github.com/Trabiin/last-ink/releases) once a version is tagged. See [docs/DESKTOP.md](docs/DESKTOP.md).
 
 - Design document: [docs/DESIGN.md](docs/DESIGN.md)
-- Asset credits: [CREDITS.md](CREDITS.md)
+- Asset credits: [CREDITS.md](CREDITS.md); licence texts: [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md); licence audit and name check: [docs/LICENSES.md](docs/LICENSES.md)
 
 ## Controls (prototype)
 
