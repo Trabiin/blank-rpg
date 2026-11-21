@@ -166,8 +166,8 @@ static func draw_portrait(ci: CanvasItem, r: Rect2, who: String, expr := "", dim
 	var tint := Color(1, 1, 1).darkened(dim)
 	if tex:
 		var ts := tex.get_size()
-		var s := minf(r.size.x / ts.x, r.size.y / ts.y)
-		var sz := ts * s
+		var sz := portrait_size(tex, minf(r.size.y, r.size.x * ts.y / ts.x))
+		tex = fitted(tex, sz.y)
 		var cx := r.get_center().x
 		if flip:
 			ci.draw_set_transform(Vector2(2.0 * cx, 0), 0.0, Vector2(-1, 1))
@@ -176,6 +176,37 @@ static func draw_portrait(ci: CanvasItem, r: Rect2, who: String, expr := "", dim
 			ci.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	else:
 		draw_bust(ci, r, who, dim)
+
+
+## Portraits are pixel art (224x336, issue #169), so they are drawn at a whole-number scale wherever
+## they are shown big: asked for a height `h`, this gives the size to draw at. From three quarters of
+## the art's own height up it snaps to 1x, 2x, ...; smaller (the journal thumbnail) it scales smoothly,
+## drawn from fitted().
+static func portrait_size(tex: Texture2D, h: float) -> Vector2:
+	var ts := tex.get_size()
+	if h >= ts.y * 0.75:
+		return ts * maxf(1.0, roundf(h / ts.y))
+	return Vector2(roundf(h * ts.x / ts.y), roundf(h))
+
+
+static var _fitted := {}  # "<rid>|<h>" -> ImageTexture
+
+
+## The portrait as drawn at height h: itself when that is a whole-number scale, otherwise a copy
+## shrunk smoothly to exactly that size (nearest-neighbour shrinking would drop rows and columns).
+static func fitted(tex: Texture2D, h: float) -> Texture2D:
+	var ts := tex.get_size()
+	if h >= ts.y * 0.75 or h < 1.0:
+		return tex
+	var key := "%d|%d" % [tex.get_rid().get_id(), int(h)]
+	if not _fitted.has(key):
+		var img := tex.get_image()
+		if img == null:
+			return tex
+		img = img.duplicate()
+		img.resize(int(roundf(h * ts.x / ts.y)), int(roundf(h)), Image.INTERPOLATE_LANCZOS)
+		_fitted[key] = ImageTexture.create_from_image(img)
+	return _fitted[key]
 
 
 ## Speakers that are a letter read aloud ("stage": "letter" in their speakers entry): no portrait.

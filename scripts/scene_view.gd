@@ -200,9 +200,8 @@ static func portrait(who: String, expression := "") -> Texture2D:
 ## Draw a portrait standing with its feet at `bottom`, `h` tall. flip = face right.
 ## lit = has the floor; otherwise it is dimmed and pushed back a little.
 func _draw_portrait(tex: Texture2D, center_x: float, bottom: float, h: float, flip: bool, lit: bool, slide: float) -> void:
-	var sz := Vector2(h * tex.get_width() / float(tex.get_height()), h)
-	if not lit:
-		sz *= 0.94
+	var sz := Dialogue.portrait_size(tex, h)  # pixel art: whole-number scale, so no shrink when dimmed
+	tex = Dialogue.fitted(tex, sz.y)
 	var pos := Vector2(center_x - sz.x / 2, bottom - sz.y)
 	var a := clampf(slide, 0.0, 1.0)
 	pos.x += (1.0 - a) * (-24.0 if flip else 24.0)
