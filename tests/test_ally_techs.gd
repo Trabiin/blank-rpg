@@ -1,0 +1,252 @@
+extends "res://tests/test_case.gd"
+## Allies firing charged techs (issue #108, scripts/ally_techs.gd; this file is issue #124). For every
+## field hero, in a real mission against a stunned crowd: the ally charges and fires its tech under each
+## AI preset, "On my call" never fires on its own, "Unleash" fires within a few seconds, and taking
+## control mid-charge never lets the tech go. Also: the tech mode survives a save, and the scoring that
+## picks among several techs (#24) works for every hero. tools/ai_tech_sim.gd stays as the long soak.
+
+const MAIN := "res://scenes/main.tscn"
+const PRESETS := ["aggressive", "balanced", "distance", "support"]
+const FIRE_WAIT := 6000  # ms an ally gets to line up, charge and fire (charges take 0.8 to 2 s)
+const CALL_WAIT := 3500  # ms an ally on "On my call" is watched to make sure it holds
+## The fights run FAST times quicker than real time: physics ticks FAST times as often, each the same
+## 1/60 s step, so the game logic sees exactly what it would at normal speed. Waits are in game time.
+const FAST := 3
+
+var Empire: Node
+var D := {}
+
+
+func before_each() -> void:
+	Empire = autoload("Empire")
+	runner.clear_scratch()
+	Empire.reset()
+	D = JSON.parse_string(FileAccess.get_file_as_string("res://data/heroes.json"))
+	Engine.physics_ticks_per_second = 60 * FAST
+	Engine.max_physics_steps_per_frame = 8 * FAST
+	Engine.time_scale = FAST
+
+
+func after_each() -> void:
+	tree.paused = false
+	Engine.time_scale = 1.0
+	Engine.physics_ticks_per_second = 60
+	Engine.max_physics_steps_per_frame = 8
+
+
+## A mission with Ash and `id` in the party (Bran when the ally is Ash himself), every opening talk
+## seen. Returns [main, ally] with the leader made untouchable, or [] if the mission didn't start.
+func _field(id: String) -> Array:
+	Empire.reset()
+	for k in Dialogue.data().get("talks", {}):
+		Dialogue.mark_seen("talk:" + str(k))
+	var other := id if id != "ash" else "bran"
+	for rid in ["ash", other]:
+		Empire.recruits[rid] = {"role": "party", "target": "", "injured": 0}
+	Empire.active_mission = Missions.find("meadow_patrol").duplicate(true)
+	var main := await goto(MAIN, 20)
+	if main == null or main.leader == null:
+		return []
+	if tree.paused:  # an opening line: close it
+		main.dialogue_box.visible = false
+		tree.paused = false
+	if id == "ash":
+		for h in main.heroes:
+			if (h as Hero).hero_id == "bran":
+				main.take_control(h)
+	var ally: Hero = null
+	for h in main.heroes:
+		if (h as Hero).hero_id == id:
+			ally = h
+	if ally == null or ally.controlled:
+		return []
+	main.respawn_t = 1e9
+	Engine.time_scale = FAST  # the mission set it back to the battle speed on entry
+	return [main, ally]
+
+
+func _clear_enemies(main: Node) -> void:
+	for e in tree.get_nodes_in_group("enemies"):
+		e.queue_free()
+	main.respawn_t = 1e9
+	await frames(2)
+
+
+## Puts the ally back to a clean slate beside the leader: full HP and gauge, no charge, no order.
+func _reset(main: Node, ally: Hero, preset: String, mode := "auto") -> void:
+	Techs.cancel(ally)
+	var lead: Hero = main.leader
+	lead.invuln_t = 999.0
+	lead.hp = lead.max_hp
+	ally.ai_style = preset
+	AllyTechs.set_mode(ally, mode)
+	ally.hp = ally.max_hp
+	ally.invuln_t = 999.0  # nothing breaks the charge: this checks the decision, not the dodge
+	ally.power = 1.0
+	ally.ai_tech_cd = 0.0
+	ally.ai_tech_order_t = 0.0
+	ally.ai_think_t = 0.0
+	ally.ai_tech_promise = false
+	ally.tech_flash_t = 0.0
+	ally.global_position = lead.global_position + Vector2(24, 0)
+	ally.facing = Vector2.RIGHT
+
+
+## Four tough, stunned enemies bunched where the ally's tech reaches: a moment every preset should take.
+## The crowd keeps pace with the ally (as a pressing crowd would; stunned ones can't), so these tests
+## check the decision, the charge and the release, not the chase.
+func _crowd(main: Node, ally: Hero) -> Array:
+	await _clear_enemies(main)
+	var ts := AllyTechs.techs_of(ally)
+	var stand := AllyTechs.standoff(ts[0]) if not ts.is_empty() else 30.0
+	var at: Vector2 = ally.global_position + Vector2(maxf(stand, 22.0), 0)
+	var es := []
+	for attempt in 12:
+		if es.size() >= 4:
+			break
+		main._spawn_enemy(at)
+		await frames(1)
+		es = tree.get_nodes_in_group("enemies").filter(func(x): return not x.is_queued_for_deletion() and not x.dead)
+	es = es.slice(0, 4)
+	for i in es.size():
+		var e: Enemy = es[i]
+		e.max_hp = 9999
+		e.hp = 9999
+		e.set_meta("offset", at - ally.global_position + Vector2((i % 2) * 5.0 - 2.5, floorf(i / 2.0) * 5.0 - 2.5))
+		e.global_position = ally.global_position + e.get_meta("offset")
+		e.velocity = Vector2.ZERO
+		e.stun(30.0)
+	return es
+
+
+## Holds the crowd at its place beside the ally, topped up so it outlasts the ally's swings.
+func _press(ally: Hero) -> void:
+	for e in tree.get_nodes_in_group("enemies"):
+		if not e.dead and e.has_meta("offset"):
+			e.hp = maxi(e.hp, 500)
+			e.global_position = ally.global_position + e.get_meta("offset")
+			e.knockback = Vector2.ZERO
+
+
+## Waits up to ms for the ally's tech to go off. Returns the seconds it took, or -1. While waiting,
+## keeps the crowd pressing and records whether the ally ever started an AI charge (meta "charged").
+func _wait_fire(ally: Hero, ms: int, on_charge := Callable()) -> float:
+	var t0 := Time.get_ticks_msec()
+	var prev := ally.tech_flash_t
+	ally.set_meta("charged", false)
+	while (Time.get_ticks_msec() - t0) * Engine.time_scale < ms:
+		await tree.process_frame
+		if not is_instance_valid(ally):
+			return -1.0
+		if ally.ai_charging:
+			ally.set_meta("charged", true)
+			if on_charge.is_valid():
+				on_charge.call()
+				on_charge = Callable()
+		_press(ally)
+		if ally.tech_flash_t > prev + 0.1:
+			return float(Time.get_ticks_msec() - t0) * Engine.time_scale / 1000.0
+		prev = ally.tech_flash_t
+	return -1.0
+
+
+# ------------------------------------------------------------------ every field hero as an ally
+
+## One mission per hero (they take a second or two to load), every check on it in turn.
+func test_every_field_hero_as_an_ally() -> void:
+	for id in D["heroes"]:
+		var f := await _field(id)
+		if not check(not f.is_empty(), "%s in the field as an ally" % id):
+			continue
+		var main: Node = f[0]
+		var ally: Hero = f[1]
+		if not check(not AllyTechs.techs_of(ally).is_empty(), "%s knows a tech" % id):
+			continue
+		await _presets_fire(main, ally)
+		await _call_holds_and_unleash_fires(main, ally)
+		await _hand_over_never_fires(main, ally)
+		await _scoring_covers_every_tech(main, ally)
+
+
+## Under each AI preset the ally charges and fires at a crowd in reach.
+func _presets_fire(main: Node, ally: Hero) -> void:
+	for preset in PRESETS:
+		_reset(main, ally, preset)
+		await _crowd(main, ally)
+		var took := await _wait_fire(ally, FIRE_WAIT)
+		check(took >= 0.0, "%s/%s fires its tech at a crowd (charged: %s)" % [ally.hero_id, preset, ally.get_meta("charged")])
+
+
+## "On my call" never fires on its own; "Unleash" fires within a few seconds and the mode stays.
+func _call_holds_and_unleash_fires(main: Node, ally: Hero) -> void:
+	var id := ally.hero_id
+	_reset(main, ally, "aggressive", "call")
+	check_eq(Empire.ai_techs.get(id), "call", "%s: the mode is kept for the next mission" % id)
+	await _crowd(main, ally)
+	var took := await _wait_fire(ally, CALL_WAIT)
+	check(took < 0.0 and not ally.get_meta("charged"), "%s on my call never charges or fires by itself" % id)
+	ally.power = 1.0  # it swung while it waited; an order still needs a full gauge
+	check_eq(AllyTechs.order_blocker(ally), "", "%s can be ordered" % id)
+	AllyTechs.order(ally)
+	check_eq(AllyTechs.state_text(ally), "ordered", "%s: the menu shows the order" % id)
+	took = await _wait_fire(ally, FIRE_WAIT)
+	if check(took >= 0.0, "%s unleashes on order" % id):
+		check(ally.ai_tech_order_t <= 0.0, "%s: the order is spent once fired" % id)
+		check_eq(AllyTechs.mode_of(ally), "call", "%s: back to waiting for the call" % id)
+	AllyTechs.set_mode(ally, "auto")
+
+
+## The player takes the ally over the moment it starts charging: the tech never goes off by itself.
+func _hand_over_never_fires(main: Node, ally: Hero) -> void:
+	var id := ally.hero_id
+	var was: Hero = main.leader
+	_reset(main, ally, "aggressive")
+	await _crowd(main, ally)
+	var took := await _wait_fire(ally, FIRE_WAIT, func(): main.take_control(ally))
+	if not check(ally.get_meta("charged"), "%s starts a charge" % id):
+		return
+	check(ally.controlled, "%s is under the player's control" % id)
+	check(took < 0.0, "%s does not fire after the hand-over" % id)
+	took = await _wait_fire(ally, 1200)  # nor a moment later
+	check(took < 0.0, "%s does not fire late after the hand-over" % id)
+	check(not ally.charging and not ally.ai_charging, "%s: the charge was dropped" % id)
+	check(ally.power >= 1.0, "%s keeps its gauge" % id)
+	main.take_control(was)
+	await frames(2)
+	check(not ally.controlled and was.controlled, "%s: control goes back" % id)
+
+
+## The scoring has to work for every tech a hero can learn (#24), not just the first one: with all
+## five known, each scores against a crowd at its own standoff, and pick() chooses one of them.
+func _scoring_covers_every_tech(main: Node, ally: Hero) -> void:
+	var id := ally.hero_id
+	Skills.add_weapon(id, 100000)
+	var ts := AllyTechs.techs_of(ally)
+	check_eq(ts.size(), 5, "%s: all five techs under AI" % id)
+	_reset(main, ally, "balanced")
+	var es := await _crowd(main, ally)
+	var best := AllyTechs.pick(ally, "balanced", main.leader, 14.0)
+	check(not best["tech"].is_empty() and best["score"] > 0.0, "%s: a tech is worth it against a crowd" % id)
+	check(best["tech"] in ts, "%s: one it knows" % id)
+	for t in ts:
+		var stand := AllyTechs.standoff(t)
+		check(stand > 0.0, "%s/%s: a standoff distance" % [id, t.get("id")])
+		for i in es.size():
+			(es[i] as Enemy).global_position = ally.global_position + Vector2(maxf(stand, 22.0) + (i % 2) * 5.0 - 2.5, floorf(i / 2.0) * 5.0 - 2.5)
+		var aim := AllyTechs.best_aim(ally, t, "balanced", main.leader, 0.0, false)
+		check(aim["score"] > 0.0, "%s/%s: scores against a crowd at its standoff" % [id, t.get("id")])
+
+
+# ------------------------------------------------------------------ saves and scoring
+
+func test_tech_modes_survive_a_save() -> void:
+	Empire.ai_techs = {"bran": "call", "odile": "auto"}
+	var d = JSON.parse_string(JSON.stringify(Empire.to_dict()))
+	Empire.reset()
+	check(Empire.ai_techs.is_empty(), "a new campaign starts with no modes")
+	Empire.from_dict(d)
+	check_eq(Empire.ai_techs.get("bran"), "call", "Bran stays on my call")
+	check_eq(Empire.ai_techs.get("odile"), "auto", "Odile stays on auto")
+	(d as Dictionary).erase("ai_techs")  # a save from before #108
+	Empire.from_dict(d)
+	check(Empire.ai_techs.is_empty(), "an old save gives everyone Auto")

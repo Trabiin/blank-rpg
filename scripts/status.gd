@@ -246,11 +246,18 @@ static func _dot(t: Actor, id: String, e: Dictionary) -> void:
 
 
 ## Damage that skips the hit reaction (no knockback, flash or stagger), used by ticks and perks.
-## floor_one: stop at 1 HP. A lethal amount goes through take_hit so death runs as usual.
+## floor_one: stop at 1 HP. A lethal amount goes through take_hit so death runs as usual. Bosses and
+## Blots take it as a hit without knockback, so their own rules (the Auditor's untouchable phases, his
+## phase change) still apply; an Audited enemy takes its mark's extra like any other damage.
 static func hurt(t: Actor, amount: int, col: Color, floor_one := false) -> void:
 	if t.dead or amount <= 0:
 		return
+	if t is Enemy and ((t as Enemy).boss or t is Blot):
+		t.take_hit(amount, t.global_position, 0.0)
+		return
 	amount = Settings.difficulty_damage(t, amount)
+	if t is Enemy:
+		amount = t._adjust_damage(amount)
 	if floor_one:
 		amount = mini(amount, t.hp - 1)
 		if amount <= 0:
