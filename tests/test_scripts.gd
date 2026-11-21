@@ -5,6 +5,7 @@ extends "res://tests/test_case.gd"
 func _scripts(dir: String) -> Array:
 	var out := []
 	for f in DirAccess.get_files_at(dir):
+		f = f.trim_suffix(".remap")  # exported builds (desktop smoke test, #145)
 		if f.ends_with(".gd"):
 			out.append(dir.path_join(f))
 	for d in DirAccess.get_directories_at(dir):

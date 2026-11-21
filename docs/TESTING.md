@@ -34,6 +34,7 @@ Tests never touch your real saves: they write to `user://test_run/`.
 | `tests/test_journal.gd` | The journal (#114): `data/journal.json` is well formed and complete (every region, faction, enemy kind and Ink colour has a codex entry, every story goal names a chapter, figure portraits exist), the quest log through the story, personal stories, factions, surges and Verity's plans, enemies and history recorded and saved, the save step on an old save, and the screen in town (I, the menu, show on map to the Command Table), at the table and from the mission pause menu. |
 | `tests/test_items.gd` | Items, Forge and Market (#112): about a dozen consumables of every kind including the Blank ward, every material with a source, a use and an icon, every recipe well formed with an icon, six-tier weapon lines, armour and perk trinkets, Forge/Market sprites and status icons, satchel capacity and restock, Forge jobs (blockers, crafting over days, weapon upgrades, saved), Market income, stable rotating stock, buying and selling, statuses taking hold, curing, stun immunity, boons, the ward, trinket perks, and the Forge & Market screen in town and at the table. |
 | `tests/test_help.gd` | Onboarding and help (#115): `data/help.json` is well formed (every voice exists with a portrait, every Command screen has an explainer, every unlock says why it is shut and opens by a set day, button tokens name real actions), button tokens follow the device, pad style and remaps, the story opens Bonds, Expeditions, Research and Diplomacy over the first days (no envoys before), old saves are not told their first week, first-time tips come due (surge, erasure, injury, Concord trouble, hunger), the Command Table explainer and screen explainers play once and hold the screen still, locked screens stay shut with a reason, unlocks wait for story beats in town, the Help screen from the town, table and mission pause menus (replay, tips switch, controls per device), the codex holds every topic, and a new player running the clock reaches day 5 with everything open and explained. |
+| `tests/test_display.gd` | Desktop builds (#145): Windows, macOS and Linux export presets (no test shortcuts, no debug console, one-file builds, icons, version from `project.godot`), the app name, icon and own save folder, the Display options (step, persist, survive `Settings.save`, pixel-perfect scaling), Alt+Enter and F11, pause and mute when the window loses focus (in town, and the pause menu in a fight), the Display page and Save folder button on the options screen, and Quit on the title screen. |
 | `tests/test_scripts.gd` | Every script in `scripts/` compiles. |
 
 ## Writing a test
@@ -54,3 +55,10 @@ func test_something() -> void:
 Each `test_*` method gets a fresh instance; `before_each()` / `after_each()` run around it. Helpers:
 `check`, `check_eq`, `frames(n)`, `goto(scene)`, `wait_scene(scene)` (after the game changed scene
 itself), `autoload(name)`, `allow_log(regex)`.
+
+## Exported builds
+
+`.github/workflows/desktop.yml` also runs the `scenes`, `saves` and `display` tests inside the exported
+Windows, macOS and Linux builds (`tools/smoke_build.sh`, see [DESKTOP.md](DESKTOP.md)). Tests that list
+files in `res://` must accept the names an export uses (`x.gd.remap`, `x.png.import`).
+

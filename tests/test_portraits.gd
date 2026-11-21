@@ -22,7 +22,8 @@ const SPECK := 20  # opaque islands (8-connected) smaller than this float free o
 func _portrait_files() -> Array:
 	var out := []
 	for f in DirAccess.get_files_at(DIR):
-		if f.ends_with(".png"):
+		f = f.trim_suffix(".import")  # exported builds list only the import files (desktop smoke test, #145)
+		if f.ends_with(".png") and not out.has(f):
 			out.append(f)
 	return out
 
