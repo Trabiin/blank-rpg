@@ -33,7 +33,7 @@ const CONTROLS := [
 		["Research", ["research"]], ["Diplomacy", ["diplomacy"]], ["Bonds", ["bonds"]], ["Newcomers", ["newcomers"]],
 		["Party gear & shop", ["gear"]], ["Forge & Market", ["armory"]], ["Journal", ["journal"]]]],
 	["In the field", [["Move", "move"], ["Attack (hold: charged tech)", ["attack"]], ["Swap hero", ["swap"]],
-		["Abilities", ["ability_1", "ability_2", "ability_3", "ability_4"]], ["Quick menu", ["quick_menu"]], ["Pause", ["pause"]]]],
+		["Abilities", ["ability_1", "ability_2", "ability_3", "ability_4"]], ["Quick menu", ["quick_menu"]], ["Pause", ["pause"]], ["Screenshot", ["screenshot"]]]],
 ]
 const TOUCH_CONTROLS := [
 	["In town and at the table", ["Drag the stick on the left to walk; tap the hand button to talk or use.",

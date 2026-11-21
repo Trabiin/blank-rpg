@@ -1,0 +1,16 @@
+# Optional: deploy with the Wrangler CLI instead of pasting worker.js into the Cloudflare dashboard.
+#   npx wrangler deploy            (then: npx wrangler secret put GITHUB_TOKEN)
+name = "last-ink-reports"
+main = "worker.js"
+compatibility_date = "2026-11-01"
+
+[vars]
+REPORTS_REPO = "Trabiin/last-ink-reports"
+GAME_KEY = "last-ink-reports-1"
+
+# Free per-IP rate limit (6 reports a minute here; the worker's own fallback is 6 an hour per instance).
+[[unsafe.bindings]]
+name = "RATE_LIMITER"
+type = "ratelimit"
+namespace_id = "1146"
+simple = { limit = 6, period = 60 }

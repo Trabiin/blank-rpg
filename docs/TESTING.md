@@ -20,12 +20,18 @@ The script imports the project, runs `tests/run.gd` headless, and fails when:
 
 Tests never touch your real saves: they write to `user://test_run/`.
 
+## Player reports
+
+Bug reports and feedback from players land in a private repository; the triage routine that turns
+them into issues here is in [FEEDBACK.md](FEEDBACK.md#triage-routine-claude).
+
 ## What is covered
 
 | File | Checks |
 |---|---|
 | `tests/test_data.gd` | Every `data/*.json` parses. Every id it points at exists: recruits, traits, join hooks, field heroes, abilities, AI styles, techs, gear, items, bonds and their scenes, provinces, factions and deals, buildings, research, expeditions, missions, mission types, personal missions (steps, spots on their maps, speakers and talks), maps and their @spot lines, enemies and rosters, Verity's plans, dialogue and story speakers, talks, beats and goals, portraits, sprite sets and every sprite frame. |
 | `tests/test_saves.gd` | Save migrations (docs/SAVES.md): every step is well formed and has a fixture, every fixture upgrades and loads, cut content is dropped safely, newer saves are kept and not loaded, broken saves are set aside and reported, backups before overwriting, and old saves resume in the real scenes. |
+| `tests/test_feedback.gd` | Crash reports and feedback (#146): error counting ignores shutdown noise, session logs rotate and carry the header and breadcrumbs, a session without a clean exit counts as a crash, the title offers a report once (never during tests, muted until the next version), reports hold only what was ticked (text capped, save in use, halved screenshot, no key), the zip, sending to a local fake endpoint (success and refusal), the form from the title, town, table and mission pause menus (asks before throwing away typed text, Save to file), F12, and nothing depends on the test shortcuts. The report worker has its own tests: `node tools/feedback_worker/test.mjs`. |
 | `tests/test_scenes.gd` | Boots the title, New Game into the prologue, the hub, the Command Table and every screen on it, one mission of each type (patrol, boss, defense, reclaim, rescue, raid, salvage, and a personal mission with a forced hero and one with an escort) launched and settled, map layouts varying between visits, a retreat, the quick menu, and save/load round trips in a mission, in town and at the table. |
 | `tests/test_skills.gd` | Weapon and Ink skills (#24): five techs per hero with known keys, motifs and sounds, Ink colours and tiers on every ability, skill levels, the Barracks cap, the save step, every tech fired at an enemy in a real mission, allies choosing among techs, and the Techs tab and Skills screen. |
 | `tests/test_ally_techs.gd` | Allies' charged techs (#108, #124): every field hero as an AI ally in a real mission fires its tech at a crowd under each preset, "On my call" never charges or fires by itself, "Unleash" fires within a few seconds, taking control mid-charge never fires the tech and keeps the gauge, every tech a hero can learn scores at its standoff, and tech modes survive a save. Fights run three times faster with three times the physics ticks, so the game sees the same 1/60 s steps. `tools/ai_tech_sim.gd` stays as the long soak test. |
